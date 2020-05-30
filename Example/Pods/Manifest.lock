@@ -1,0 +1,106 @@
+PODS:
+  - CocoaAsyncSocket (7.6.4)
+  - CocoaHTTPServer (2.3):
+    - CocoaAsyncSocket
+    - CocoaLumberjack
+  - CocoaLumberjack (3.6.1):
+    - CocoaLumberjack/Core (= 3.6.1)
+  - CocoaLumberjack/Core (3.6.1)
+  - Masonry (1.1.0)
+  - Reachability (3.2)
+  - SJBaseVideoPlayer (3.3.2):
+    - Masonry
+    - Reachability
+    - SJBaseVideoPlayer/AVPlayer (= 3.3.2)
+    - SJBaseVideoPlayer/Common (= 3.3.2)
+    - SJUIKit/AttributesFactory (>= 0.0.0.38)
+    - SJUIKit/ObserverHelper
+    - SJUIKit/Queues
+    - SJUIKit/SQLite3
+  - SJBaseVideoPlayer/AVPlayer (3.3.2):
+    - Masonry
+    - Reachability
+    - SJBaseVideoPlayer/Common
+    - SJUIKit/AttributesFactory (>= 0.0.0.38)
+    - SJUIKit/ObserverHelper
+    - SJUIKit/Queues
+    - SJUIKit/SQLite3
+  - SJBaseVideoPlayer/Common (3.3.2):
+    - Masonry
+    - Reachability
+    - SJBaseVideoPlayer/ResourceLoader
+    - SJUIKit/AttributesFactory (>= 0.0.0.38)
+    - SJUIKit/ObserverHelper
+    - SJUIKit/Queues
+    - SJUIKit/SQLite3
+  - SJBaseVideoPlayer/ResourceLoader (3.3.2):
+    - Masonry
+    - Reachability
+    - SJUIKit/AttributesFactory (>= 0.0.0.38)
+    - SJUIKit/ObserverHelper
+    - SJUIKit/Queues
+    - SJUIKit/SQLite3
+  - SJMediaCacheServer (0.1.0):
+    - CocoaHTTPServer
+  - SJUIKit/AttributesFactory (0.0.0.44):
+    - SJUIKit/AttributesFactory/Deprecated (= 0.0.0.44)
+    - SJUIKit/AttributesFactory/UIKitText (= 0.0.0.44)
+  - SJUIKit/AttributesFactory/Deprecated (0.0.0.44)
+  - SJUIKit/AttributesFactory/UIKitText (0.0.0.44)
+  - SJUIKit/ObserverHelper (0.0.0.44)
+  - SJUIKit/Queues (0.0.0.44)
+  - SJUIKit/SQLite3 (0.0.0.44):
+    - SJUIKit/SQLite3/Core (= 0.0.0.44)
+    - SJUIKit/SQLite3/Protocol (= 0.0.0.44)
+  - SJUIKit/SQLite3/Core (0.0.0.44):
+    - SJUIKit/SQLite3/Protocol
+  - SJUIKit/SQLite3/Protocol (0.0.0.44)
+  - SJVideoPlayer (3.2.4):
+    - SJBaseVideoPlayer (>= 3.2.5)
+    - SJVideoPlayer/Common (= 3.2.4)
+    - SJVideoPlayer/ControlLayers (= 3.2.4)
+    - SJVideoPlayer/ResourceLoader (= 3.2.4)
+  - SJVideoPlayer/Common (3.2.4):
+    - Masonry
+    - SJBaseVideoPlayer (>= 3.2.5)
+    - SJUIKit/AttributesFactory
+    - SJVideoPlayer/ResourceLoader
+  - SJVideoPlayer/ControlLayers (3.2.4):
+    - SJBaseVideoPlayer (>= 3.2.5)
+    - SJVideoPlayer/Common
+  - SJVideoPlayer/ResourceLoader (3.2.4):
+    - SJBaseVideoPlayer (>= 3.2.5)
+
+DEPENDENCIES:
+  - SJMediaCacheServer (from `../`)
+  - SJVideoPlayer
+
+SPEC REPOS:
+  trunk:
+    - CocoaAsyncSocket
+    - CocoaHTTPServer
+    - CocoaLumberjack
+    - Masonry
+    - Reachability
+    - SJBaseVideoPlayer
+    - SJUIKit
+    - SJVideoPlayer
+
+EXTERNAL SOURCES:
+  SJMediaCacheServer:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  CocoaAsyncSocket: 694058e7c0ed05a9e217d1b3c7ded962f4180845
+  CocoaHTTPServer: 5624681fc3473d43b18202f635f9b3abb013b530
+  CocoaLumberjack: b17ae15142558d08bbacf69775fa10c4abbebcc9
+  Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
+  Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
+  SJBaseVideoPlayer: 14e0ff71b3b2944e17f9475c7b42d26daeed3755
+  SJMediaCacheServer: a9f78b042caed35d64eb494934d2e0f9e6b9890c
+  SJUIKit: 5546e42cadf85111037face2a09390f276a99550
+  SJVideoPlayer: acee9fab2b384fc87ed7636c05977d8dd3cdb4ee
+
+PODFILE CHECKSUM: 6e3a87990260649a758bbc7bb1357f78faae952d
+
+COCOAPODS: 1.9.2

@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0B25BE8C3DB42A68D9549829 /* Pods_SJMediaCacheServer_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 645EBC684E892F555C8EDE4A /* Pods_SJMediaCacheServer_Tests.framework */; };
-		527C745E20FB5E86BE7D98BC /* Pods_SJMediaCacheServer_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D5DCD421B6E37D37A8787735 /* Pods_SJMediaCacheServer_Example.framework */; };
+		1119437D190260A401F3783D /* libPods-SJMediaCacheServer_Tests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5BE1145C1383D0CE4EDE7F39 /* libPods-SJMediaCacheServer_Tests.a */; };
+		3D3A5962E0F03F48714ECC02 /* libPods-SJMediaCacheServer_Example.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9EB0F0D442524CE20AF77D /* libPods-SJMediaCacheServer_Example.a */; };
 		6003F58E195388D20070C39A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58D195388D20070C39A /* Foundation.framework */; };
 		6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58F195388D20070C39A /* CoreGraphics.framework */; };
 		6003F592195388D20070C39A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F591195388D20070C39A /* UIKit.framework */; };
@@ -23,6 +23,10 @@
 		6003F5BA195388D20070C39A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5B8195388D20070C39A /* InfoPlist.strings */; };
 		6003F5BC195388D20070C39A /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5BB195388D20070C39A /* Tests.m */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
+		770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E1248228A900057D05 /* SJMediaCacheServer.m */; };
+		770194E6248228BD00057D05 /* SJLocalProxyServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E5248228BD00057D05 /* SJLocalProxyServer.m */; };
+		770194F8248253CB00057D05 /* SJTestResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194F7248253CB00057D05 /* SJTestResponse.m */; };
+		770194FC24826ADE00057D05 /* audio.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 770194FB24826ADE00057D05 /* audio.m4a */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
@@ -38,8 +42,9 @@
 
 /* Begin PBXFileReference section */
 		0EAD9717E3A27FDC1D0559B6 /* Pods-SJMediaCacheServer_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Tests.debug.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Tests/Pods-SJMediaCacheServer_Tests.debug.xcconfig"; sourceTree = "<group>"; };
-		1274DFD2FCE27CB01B3807BF /* SJMediaCacheServer.podspec */ = {isa = PBXFileReference; includeInIndex = 1; name = SJMediaCacheServer.podspec; path = ../SJMediaCacheServer.podspec; sourceTree = "<group>"; };
+		1274DFD2FCE27CB01B3807BF /* SJMediaCacheServer.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = SJMediaCacheServer.podspec; path = ../SJMediaCacheServer.podspec; sourceTree = "<group>"; };
 		1CAB383AA04CE69DD6095F3E /* Pods-SJMediaCacheServer_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Tests.release.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Tests/Pods-SJMediaCacheServer_Tests.release.xcconfig"; sourceTree = "<group>"; };
+		5BE1145C1383D0CE4EDE7F39 /* libPods-SJMediaCacheServer_Tests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SJMediaCacheServer_Tests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F58A195388D20070C39A /* SJMediaCacheServer_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SJMediaCacheServer_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F58D195388D20070C39A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		6003F58F195388D20070C39A /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -59,14 +64,21 @@
 		6003F5B9195388D20070C39A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		6003F5BB195388D20070C39A /* Tests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Tests.m; sourceTree = "<group>"; };
 		606FC2411953D9B200FFA9A0 /* Tests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tests-Prefix.pch"; sourceTree = "<group>"; };
-		645EBC684E892F555C8EDE4A /* Pods_SJMediaCacheServer_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SJMediaCacheServer_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C9EB0F0D442524CE20AF77D /* libPods-SJMediaCacheServer_Example.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SJMediaCacheServer_Example.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		71719F9E1E33DC2100824A3D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		770194E0248228A900057D05 /* SJMediaCacheServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJMediaCacheServer.h; sourceTree = "<group>"; };
+		770194E1248228A900057D05 /* SJMediaCacheServer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJMediaCacheServer.m; sourceTree = "<group>"; };
+		770194E4248228BD00057D05 /* SJLocalProxyServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJLocalProxyServer.h; sourceTree = "<group>"; };
+		770194E5248228BD00057D05 /* SJLocalProxyServer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJLocalProxyServer.m; sourceTree = "<group>"; };
+		770194F42482369500057D05 /* SJMediaCacheServerDefines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJMediaCacheServerDefines.h; sourceTree = "<group>"; };
+		770194F6248253CB00057D05 /* SJTestResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJTestResponse.h; sourceTree = "<group>"; };
+		770194F7248253CB00057D05 /* SJTestResponse.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJTestResponse.m; sourceTree = "<group>"; };
+		770194FB24826ADE00057D05 /* audio.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = audio.m4a; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		9086DD852505476A19109266 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
+		9086DD852505476A19109266 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Example.debug.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		B54C6837CBAA07093C7830B7 /* Pods-SJMediaCacheServer_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Example.release.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example.release.xcconfig"; sourceTree = "<group>"; };
-		D5DCD421B6E37D37A8787735 /* Pods_SJMediaCacheServer_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SJMediaCacheServer_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		F64D69C34EAB3D8F86AD1E6C /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		F64D69C34EAB3D8F86AD1E6C /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,7 +89,7 @@
 				6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */,
 				6003F592195388D20070C39A /* UIKit.framework in Frameworks */,
 				6003F58E195388D20070C39A /* Foundation.framework in Frameworks */,
-				527C745E20FB5E86BE7D98BC /* Pods_SJMediaCacheServer_Example.framework in Frameworks */,
+				3D3A5962E0F03F48714ECC02 /* libPods-SJMediaCacheServer_Example.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,7 +100,7 @@
 				6003F5B0195388D20070C39A /* XCTest.framework in Frameworks */,
 				6003F5B2195388D20070C39A /* UIKit.framework in Frameworks */,
 				6003F5B1195388D20070C39A /* Foundation.framework in Frameworks */,
-				0B25BE8C3DB42A68D9549829 /* Pods_SJMediaCacheServer_Tests.framework in Frameworks */,
+				1119437D190260A401F3783D /* libPods-SJMediaCacheServer_Tests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,7 +115,6 @@
 				0EAD9717E3A27FDC1D0559B6 /* Pods-SJMediaCacheServer_Tests.debug.xcconfig */,
 				1CAB383AA04CE69DD6095F3E /* Pods-SJMediaCacheServer_Tests.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -135,8 +146,8 @@
 				6003F58F195388D20070C39A /* CoreGraphics.framework */,
 				6003F591195388D20070C39A /* UIKit.framework */,
 				6003F5AF195388D20070C39A /* XCTest.framework */,
-				D5DCD421B6E37D37A8787735 /* Pods_SJMediaCacheServer_Example.framework */,
-				645EBC684E892F555C8EDE4A /* Pods_SJMediaCacheServer_Tests.framework */,
+				6C9EB0F0D442524CE20AF77D /* libPods-SJMediaCacheServer_Example.a */,
+				5BE1145C1383D0CE4EDE7F39 /* libPods-SJMediaCacheServer_Tests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -149,6 +160,8 @@
 				873B8AEA1B1F5CCA007FD442 /* Main.storyboard */,
 				6003F5A5195388D20070C39A /* SJViewController.h */,
 				6003F5A6195388D20070C39A /* SJViewController.m */,
+				770194F5248253C000057D05 /* Test */,
+				770194DF2482289E00057D05 /* Lib */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
 				6003F594195388D20070C39A /* Supporting Files */,
@@ -197,6 +210,36 @@
 			name = "Podspec Metadata";
 			sourceTree = "<group>";
 		};
+		770194DF2482289E00057D05 /* Lib */ = {
+			isa = PBXGroup;
+			children = (
+				770194E0248228A900057D05 /* SJMediaCacheServer.h */,
+				770194E1248228A900057D05 /* SJMediaCacheServer.m */,
+				770194E3248228B000057D05 /* Core */,
+			);
+			path = Lib;
+			sourceTree = "<group>";
+		};
+		770194E3248228B000057D05 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				770194F42482369500057D05 /* SJMediaCacheServerDefines.h */,
+				770194E4248228BD00057D05 /* SJLocalProxyServer.h */,
+				770194E5248228BD00057D05 /* SJLocalProxyServer.m */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		770194F5248253C000057D05 /* Test */ = {
+			isa = PBXGroup;
+			children = (
+				770194FB24826ADE00057D05 /* audio.m4a */,
+				770194F6248253CB00057D05 /* SJTestResponse.h */,
+				770194F7248253CB00057D05 /* SJTestResponse.m */,
+			);
+			path = Test;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -208,7 +251,7 @@
 				6003F586195388D20070C39A /* Sources */,
 				6003F587195388D20070C39A /* Frameworks */,
 				6003F588195388D20070C39A /* Resources */,
-				AEF81306977D547688279A14 /* [CP] Embed Pods Frameworks */,
+				F64733AFB98FE10FC10E160A /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -248,6 +291,9 @@
 				LastUpgradeCheck = 0720;
 				ORGANIZATIONNAME = "changsanjiang@gmail.com";
 				TargetAttributes = {
+					6003F589195388D20070C39A = {
+						DevelopmentTeam = U5A7L7SMNP;
+					};
 					6003F5AD195388D20070C39A = {
 						TestTargetID = 6003F589195388D20070C39A;
 					};
@@ -258,6 +304,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -280,6 +327,7 @@
 				873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */,
 				71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */,
 				6003F5A9195388D20070C39A /* Images.xcassets in Resources */,
+				770194FC24826ADE00057D05 /* audio.m4a in Resources */,
 				6003F598195388D20070C39A /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -295,24 +343,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		AEF81306977D547688279A14 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/SJMediaCacheServer/SJMediaCacheServer.framework",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SJMediaCacheServer.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		B7117CF8124B4B7288DF6616 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -333,6 +363,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F64733AFB98FE10FC10E160A /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example-resources.sh",
+				"${PODS_ROOT}/SJBaseVideoPlayer/SJBaseVideoPlayer/ResourceLoader/SJBaseVideoPlayerResources.bundle",
+				"${PODS_ROOT}/SJVideoPlayer/SJVideoPlayer/ResourceLoader/SJVideoPlayer.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SJBaseVideoPlayerResources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SJVideoPlayer.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		F84A277B93FC93326C6F6F33 /* [CP] Check Pods Manifest.lock */ = {
@@ -364,9 +414,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				770194E6248228BD00057D05 /* SJLocalProxyServer.m in Sources */,
+				770194F8248253CB00057D05 /* SJTestResponse.m in Sources */,
 				6003F59E195388D20070C39A /* SJAppDelegate.m in Sources */,
 				6003F5A7195388D20070C39A /* SJViewController.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
+				770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -494,6 +547,7 @@
 			baseConfigurationReference = A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = U5A7L7SMNP;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SJMediaCacheServer/SJMediaCacheServer-Prefix.pch";
 				INFOPLIST_FILE = "SJMediaCacheServer/SJMediaCacheServer-Info.plist";
@@ -510,6 +564,7 @@
 			baseConfigurationReference = B54C6837CBAA07093C7830B7 /* Pods-SJMediaCacheServer_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = U5A7L7SMNP;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SJMediaCacheServer/SJMediaCacheServer-Prefix.pch";
 				INFOPLIST_FILE = "SJMediaCacheServer/SJMediaCacheServer-Info.plist";

@@ -30,7 +30,9 @@ TODO: Add long description of the pod here.
 
   s.ios.deployment_target = '8.0'
 
-  s.source_files = 'SJMediaCacheServer/Classes/**/*'
+  s.source_files = 'SJMediaCacheServer/**/*'
+  
+  s.dependency 'CocoaHTTPServer'
   
   # s.resource_bundles = {
   #   'SJMediaCacheServer' => ['SJMediaCacheServer/Assets/*.png']

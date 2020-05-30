@@ -1,0 +1,1 @@
+../../../SJVideoPlayer/SJVideoPlayer/Common/Interfaces/SJScrollingTextMarqueeViewDefines.h

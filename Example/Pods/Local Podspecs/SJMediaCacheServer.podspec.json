@@ -1,0 +1,27 @@
+{
+  "name": "SJMediaCacheServer",
+  "version": "0.1.0",
+  "summary": "A short description of SJMediaCacheServer.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/changsanjiang@gmail.com/SJMediaCacheServer",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "changsanjiang@gmail.com": "changsanjiang@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/changsanjiang@gmail.com/SJMediaCacheServer.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "8.0"
+  },
+  "source_files": "SJMediaCacheServer/**/*",
+  "dependencies": {
+    "CocoaHTTPServer": [
+
+    ]
+  }
+}

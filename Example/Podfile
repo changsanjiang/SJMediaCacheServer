@@ -1,13 +1,10 @@
-use_frameworks!
+#use_frameworks!
 
 platform :ios, '8.0'
 
 target 'SJMediaCacheServer_Example' do
   pod 'SJMediaCacheServer', :path => '../'
 
-  target 'SJMediaCacheServer_Tests' do
-    inherit! :search_paths
-
-    
-  end
+  pod 'SJVideoPlayer'
+   
 end
