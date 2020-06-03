@@ -7,4 +7,5 @@ target 'SJMediaCacheServer_Example' do
 
   pod 'SJVideoPlayer'
    
+  pod 'SJUIKit/SQLite3', :podspec => 'https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec'
 end

@@ -15,6 +15,14 @@
     return [SJResourceManager.shared resourceWithURL:URL];
 }
 
+- (instancetype)initWithPath:(NSString *)path {
+    self = [super init];
+    if ( self ) {
+        
+    }
+    return self;
+}
+
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request {
     return nil;
 }

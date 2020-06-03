@@ -7,12 +7,15 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SJURLConvertor.h"
 @class SJResource;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResourceManager : NSObject
 + (instancetype)shared;
+
+@property (nonatomic, strong, readonly) SJURLConvertor *convertor;
 
 - (SJResource *)resourceWithURL:(NSURL *)URL;
 

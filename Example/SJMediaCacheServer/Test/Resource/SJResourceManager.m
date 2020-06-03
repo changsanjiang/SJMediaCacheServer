@@ -8,6 +8,11 @@
 
 #import "SJResourceManager.h"
 
+@interface SJResourceManager ()<NSLocking>
+@property (nonatomic, strong) NSMutableDictionary<NSString *, SJResource *> *resources;
+@property (nonatomic, strong) dispatch_semaphore_t semaphore;
+@end
+
 @implementation SJResourceManager
 + (instancetype)shared {
     static id obj = nil;
@@ -18,7 +23,33 @@
     return obj;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if ( self ) {
+        _resources = NSMutableDictionary.dictionary;
+        _convertor = SJURLConvertor.alloc.init;
+    }
+    return self;
+}
+
 - (SJResource *)resourceWithURL:(NSURL *)URL {
-    return nil;;
+    [self lock];
+    @try {
+        return nil;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+#pragma mark -
+
+- (void)lock {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+}
+
+- (void)unlock {
+    dispatch_semaphore_signal(_semaphore);
 }
 @end
