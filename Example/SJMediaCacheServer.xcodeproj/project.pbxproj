@@ -243,12 +243,12 @@
 				77CC43FB248774ED006C5B45 /* Resource */,
 				77CC43EA2487513F006C5B45 /* Common */,
 				77CC43E424874562006C5B45 /* Download */,
-				770194E3248228B000057D05 /* Core */,
+				770194E3248228B000057D05 /* LocalProxyServer */,
 			);
 			path = Lib;
 			sourceTree = "<group>";
 		};
-		770194E3248228B000057D05 /* Core */ = {
+		770194E3248228B000057D05 /* LocalProxyServer */ = {
 			isa = PBXGroup;
 			children = (
 				77CC440224877BAE006C5B45 /* SJDataRequest.h */,
@@ -259,7 +259,7 @@
 				770194E5248228BD00057D05 /* SJLocalProxyServer.m */,
 				770194F42482369500057D05 /* SJMediaCacheServerDefines.h */,
 			);
-			path = Core;
+			path = LocalProxyServer;
 			sourceTree = "<group>";
 		};
 		770194F5248253C000057D05 /* Test */ = {
