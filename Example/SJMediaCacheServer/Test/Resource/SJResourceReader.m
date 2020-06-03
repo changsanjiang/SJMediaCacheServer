@@ -9,14 +9,14 @@
 #import "SJResourceReader.h"
 
 @interface SJResourceReader ()
-
+@property (nonatomic, copy) NSArray<id<SJReader>> *readers;
 @end
 
 @implementation SJResourceReader
-- (instancetype)initWithPartialContents:(NSArray<SJResourcePartialContent *> *)contents {
+- (instancetype)initWithReaders:(NSArray<id<SJReader>> *)readers {
     self = [super init];
     if ( self ) {
-        _contents = contents.copy;
+        _readers = readers.copy;
     }
     return self;
 }

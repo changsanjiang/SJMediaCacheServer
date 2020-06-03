@@ -7,6 +7,7 @@
 //
 
 #import "SJResource.h"
+#import "SJResourcePartialContent.h"
 
 @interface SJResourceManager : NSObject
 + (instancetype)shared;
@@ -36,6 +37,14 @@
 }
 
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request {
+    return nil;
+}
+
+- (NSString *)filePathWithContent:(SJResourcePartialContent *)content {
+    return nil;
+}
+
+- (SJResourcePartialContent *)newContentWithOffset:(UInt64)offset {
     return nil;
 }
 @end

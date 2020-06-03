@@ -7,13 +7,12 @@
 //
 
 #import "SJMediaCacheServerDefines.h"
-#import "SJResourcePartialContent.h"
+#import "SJResourceDefines.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResourceReader : NSObject<SJResourceReader>
-- (instancetype)initWithPartialContents:(NSArray<SJResourcePartialContent *> *)contents;
-@property (nonatomic, copy, readonly) NSArray<SJResourcePartialContent *> *contents;
+- (instancetype)initWithReaders:(NSArray<id<SJReader>> *)readers;
 @property (nonatomic, weak, nullable) id<SJResourceReaderDelegate> delegate;
 
 - (void)prepare;
