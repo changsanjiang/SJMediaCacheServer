@@ -13,7 +13,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol SJDataReader <NSObject>
-@property (nonatomic, weak, nullable) id<SJDataReaderDelegate> delegate;
+- (void)setDelegate:(id<SJDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
 @property (nonatomic, readonly) UInt64 offset;
