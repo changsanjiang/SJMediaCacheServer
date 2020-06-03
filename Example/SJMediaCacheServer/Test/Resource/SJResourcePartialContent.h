@@ -7,14 +7,17 @@
 //
 
 #import <Foundation/Foundation.h>
-@protocol SJResourcePartialContentDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
 @interface SJResourcePartialContent : NSObject
+- (instancetype)initWithName:(NSString *)name;
+- (instancetype)initWithName:(NSString *)name offset:(UInt64)offset;
 
-@end
+@property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, readonly) UInt64 offset;
+@property (nonatomic, readonly) UInt64 length;
 
-@protocol SJResourcePartialContentDelegate <NSObject>
+- (void)updateLength:(UInt64)length;
 
 @end
 NS_ASSUME_NONNULL_END

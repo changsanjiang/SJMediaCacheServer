@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;
-
 @end
+
 NS_ASSUME_NONNULL_END
 #endif /* SJResourceDefines_h */
