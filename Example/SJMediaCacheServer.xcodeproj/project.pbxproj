@@ -34,8 +34,8 @@
 		77CC43FE248774F6006C5B45 /* SJResourceReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43FD248774F6006C5B45 /* SJResourceReader.m */; };
 		77CC4401248778CC006C5B45 /* SJResourcePartialContent.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43FF248778CC006C5B45 /* SJResourcePartialContent.m */; };
 		77CC440424877BAE006C5B45 /* SJDataRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC440324877BAE006C5B45 /* SJDataRequest.m */; };
-		77D25D7B24877E6000BB1B1A /* SJFileDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7A24877E6000BB1B1A /* SJFileDataReader.m */; };
-		77D25D7E24877E6A00BB1B1A /* SJNetworkDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7D24877E6A00BB1B1A /* SJNetworkDataReader.m */; };
+		77D25D7B24877E6000BB1B1A /* SJResourceFileDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7A24877E6000BB1B1A /* SJResourceFileDataReader.m */; };
+		77D25D7E24877E6A00BB1B1A /* SJResourceNetworkDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7D24877E6A00BB1B1A /* SJResourceNetworkDataReader.m */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
@@ -97,10 +97,10 @@
 		77CC4400248778CC006C5B45 /* SJResourcePartialContent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SJResourcePartialContent.h; sourceTree = "<group>"; };
 		77CC440224877BAE006C5B45 /* SJDataRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDataRequest.h; sourceTree = "<group>"; };
 		77CC440324877BAE006C5B45 /* SJDataRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDataRequest.m; sourceTree = "<group>"; };
-		77D25D7924877E6000BB1B1A /* SJFileDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJFileDataReader.h; sourceTree = "<group>"; };
-		77D25D7A24877E6000BB1B1A /* SJFileDataReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJFileDataReader.m; sourceTree = "<group>"; };
-		77D25D7C24877E6A00BB1B1A /* SJNetworkDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJNetworkDataReader.h; sourceTree = "<group>"; };
-		77D25D7D24877E6A00BB1B1A /* SJNetworkDataReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJNetworkDataReader.m; sourceTree = "<group>"; };
+		77D25D7924877E6000BB1B1A /* SJResourceFileDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceFileDataReader.h; sourceTree = "<group>"; };
+		77D25D7A24877E6000BB1B1A /* SJResourceFileDataReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJResourceFileDataReader.m; sourceTree = "<group>"; };
+		77D25D7C24877E6A00BB1B1A /* SJResourceNetworkDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceNetworkDataReader.h; sourceTree = "<group>"; };
+		77D25D7D24877E6A00BB1B1A /* SJResourceNetworkDataReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJResourceNetworkDataReader.m; sourceTree = "<group>"; };
 		77D25D7F24877ED600BB1B1A /* SJResourceDefines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceDefines.h; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9086DD852505476A19109266 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
@@ -296,13 +296,13 @@
 		77CC43FB248774ED006C5B45 /* Resource */ = {
 			isa = PBXGroup;
 			children = (
-				77D25D7924877E6000BB1B1A /* SJFileDataReader.h */,
-				77D25D7A24877E6000BB1B1A /* SJFileDataReader.m */,
-				77D25D7C24877E6A00BB1B1A /* SJNetworkDataReader.h */,
-				77D25D7D24877E6A00BB1B1A /* SJNetworkDataReader.m */,
 				7729D8362486174C00462899 /* SJResource.h */,
 				7729D8372486174C00462899 /* SJResource.m */,
 				77D25D7F24877ED600BB1B1A /* SJResourceDefines.h */,
+				77D25D7924877E6000BB1B1A /* SJResourceFileDataReader.h */,
+				77D25D7A24877E6000BB1B1A /* SJResourceFileDataReader.m */,
+				77D25D7C24877E6A00BB1B1A /* SJResourceNetworkDataReader.h */,
+				77D25D7D24877E6A00BB1B1A /* SJResourceNetworkDataReader.m */,
 				77CC4400248778CC006C5B45 /* SJResourcePartialContent.h */,
 				77CC43FF248778CC006C5B45 /* SJResourcePartialContent.m */,
 				77CC43FC248774F6006C5B45 /* SJResourceReader.h */,
@@ -492,9 +492,9 @@
 				770194E6248228BD00057D05 /* SJLocalProxyServer.m in Sources */,
 				6003F59E195388D20070C39A /* SJAppDelegate.m in Sources */,
 				6003F5A7195388D20070C39A /* SJViewController.m in Sources */,
-				77D25D7B24877E6000BB1B1A /* SJFileDataReader.m in Sources */,
+				77D25D7B24877E6000BB1B1A /* SJResourceFileDataReader.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
-				77D25D7E24877E6A00BB1B1A /* SJNetworkDataReader.m in Sources */,
+				77D25D7E24877E6A00BB1B1A /* SJResourceNetworkDataReader.m in Sources */,
 				7729D8382486174C00462899 /* SJResource.m in Sources */,
 				77CC440424877BAE006C5B45 /* SJDataRequest.m in Sources */,
 				77CC43ED24875150006C5B45 /* SJError.m in Sources */,

@@ -1,15 +1,15 @@
 //
-//  SJFileDataReader.m
+//  SJResourceFileDataReader.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/3.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "SJFileDataReader.h"
+#import "SJResourceFileDataReader.h"
 #import "SJError.h"
 
-@interface SJFileDataReader()<NSLocking>
+@interface SJResourceFileDataReader()<NSLocking>
 @property (nonatomic, strong) dispatch_queue_t delegateQueue;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @property (nonatomic) NSRange readRange;
@@ -20,7 +20,7 @@
 @property (nonatomic) BOOL isClosed;
 @end
 
-@implementation SJFileDataReader
+@implementation SJResourceFileDataReader
 @synthesize delegate = _delegate;
 - (instancetype)initWithPath:(NSString *)path readRange:(NSRange)range {
     self = [super init];

@@ -1,5 +1,5 @@
 //
-//  SJFileDataReader.h
+//  SJResourceFileDataReader.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/3.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJFileDataReader : NSObject<SJDataReader>
+@interface SJResourceFileDataReader : NSObject<SJDataReader>
 - (instancetype)initWithPath:(NSString *)path readRange:(NSRange)range;
 - (void)setDelegate:(id<SJDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 

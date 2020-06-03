@@ -1,12 +1,12 @@
 //
-//  SJNetworkDataReader.m
+//  SJResourceNetworkDataReader.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/3.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "SJNetworkDataReader.h"
+#import "SJResourceNetworkDataReader.h"
 #import "SJError.h"
 #import "SJDownload.h"
 #import "SJResource.h"
@@ -17,7 +17,7 @@
 - (SJResourcePartialContent *)newContentWithOffset:(UInt64)offset;
 @end
 
-@interface SJNetworkDataReader ()<SJDownloadTaskDelegate, NSLocking>
+@interface SJResourceNetworkDataReader ()<SJDownloadTaskDelegate, NSLocking>
 @property (nonatomic, strong, nullable) dispatch_queue_t delegateQueue;
 
 @property (nonatomic, strong) SJDataRequest *request;
@@ -36,7 +36,7 @@
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @end
 
-@implementation SJNetworkDataReader
+@implementation SJResourceNetworkDataReader
 @synthesize delegate = _delegate;
 
 - (instancetype)initWithRequest:(SJDataRequest *)request {

@@ -1,5 +1,5 @@
 //
-//  SJNetworkDataReader.h
+//  SJResourceNetworkDataReader.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/3.
@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJNetworkDataReader : NSObject<SJDataReader>
+@interface SJResourceNetworkDataReader : NSObject<SJDataReader>
 - (instancetype)initWithRequest:(SJDataRequest *)request;
 - (void)setDelegate:(id<SJDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
