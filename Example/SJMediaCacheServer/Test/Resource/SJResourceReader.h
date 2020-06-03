@@ -12,7 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResourceReader : NSObject<SJResourceReader>
-- (instancetype)initWithReaders:(NSArray<id<SJReader>> *)readers;
+- (instancetype)initWithReaders:(NSArray<id<SJDataReader>> *)readers;
 @property (nonatomic, weak, nullable) id<SJResourceReaderDelegate> delegate;
 
 - (void)prepare;

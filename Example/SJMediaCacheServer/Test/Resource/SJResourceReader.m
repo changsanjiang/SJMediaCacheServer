@@ -9,11 +9,11 @@
 #import "SJResourceReader.h"
 
 @interface SJResourceReader ()
-@property (nonatomic, copy) NSArray<id<SJReader>> *readers;
+@property (nonatomic, copy) NSArray<id<SJDataReader>> *readers;
 @end
 
 @implementation SJResourceReader
-- (instancetype)initWithReaders:(NSArray<id<SJReader>> *)readers {
+- (instancetype)initWithReaders:(NSArray<id<SJDataReader>> *)readers {
     self = [super init];
     if ( self ) {
         _readers = readers.copy;

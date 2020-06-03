@@ -9,11 +9,11 @@
 #ifndef SJResourceDefines_h
 #define SJResourceDefines_h
 #import <Foundation/Foundation.h>
-@protocol SJReaderDelegate;
+@protocol SJDataReaderDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
-@protocol SJReader <NSObject>
-@property (nonatomic, weak, nullable) id<SJReaderDelegate> delegate;
+@protocol SJDataReader <NSObject>
+@property (nonatomic, weak, nullable) id<SJDataReaderDelegate> delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) UInt64 offset;
@@ -22,10 +22,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)close;
 @end
 
-@protocol SJReaderDelegate <NSObject>
-- (void)readerPrepareDidFinish:(id<SJReader>)reader;
-- (void)readerHasAvailableData:(id<SJReader>)reader;
-- (void)reader:(id<SJReader>)reader anErrorOccurred:(NSError *)error;
+@protocol SJDataReaderDelegate <NSObject>
+- (void)readerPrepareDidFinish:(id<SJDataReader>)reader;
+- (void)readerHasAvailableData:(id<SJDataReader>)reader;
+- (void)reader:(id<SJDataReader>)reader anErrorOccurred:(NSError *)error;
 @end
 NS_ASSUME_NONNULL_END
 #endif /* SJResourceDefines_h */
