@@ -36,25 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)responseHasAvailableData:(id<SJDataResponse>)response;
 - (void)response:(id<SJDataResponse>)response anErrorOccurred:(NSError *)error;
 @end
-
-@protocol SJResourcePartialContentReader <NSObject>
-@property (nonatomic, weak, nullable) id<SJResourcePartialContentReaderDelegate> delegate;
-
-- (void)prepare;
-@property (nonatomic, readonly) NSRange readRange;
-@property (nonatomic, readonly) UInt64 offset;
-- (nullable NSData *)readDataOfLength:(NSUInteger)length;
-@property (nonatomic, readonly) BOOL isDone;
-- (void)close;
-@end
-
-@protocol SJResourcePartialContentReaderDelegate <NSObject>
-- (void)readerPrepareDidFinish:(id<SJResourcePartialContentReader>)reader;
-- (void)readerHasAvailableData:(id<SJResourcePartialContentReader>)reader;
-- (void)reader:(id<SJResourcePartialContentReader>)reader anErrorOccurred:(NSError *)error;
-@end
-
-
+ 
 #pragma mark -
 
 @protocol SJResourceReader <NSObject>
