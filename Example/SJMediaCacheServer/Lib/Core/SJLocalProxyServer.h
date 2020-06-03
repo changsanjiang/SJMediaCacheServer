@@ -20,6 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol SJLocalProxyServerDelegate <NSObject>
-- (id<SJDataResponse>)server:(SJLocalProxyServer *)server responseWithRequest:(id<SJDataRequest>)request delegate:(id<SJDataResponseDelegate>)delegate;
+- (id<SJDataResponse>)server:(SJLocalProxyServer *)server responseWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate;
 @end
 NS_ASSUME_NONNULL_END

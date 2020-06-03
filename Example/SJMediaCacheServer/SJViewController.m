@@ -32,7 +32,7 @@
 
 #pragma mark - SJLocalProxyServerDelegate
 
-- (id<SJDataResponse>)server:(SJLocalProxyServer *)server responseWithRequest:(id<SJDataRequest>)request delegate:(id<SJDataResponseDelegate>)delegate {
+- (id<SJDataResponse>)server:(SJLocalProxyServer *)server responseWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate {
     return [SJDataResponse.alloc initWithRequest:request delegate:delegate];
 }
 

@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJDataResponse : NSObject<SJDataResponse>
-- (instancetype)initWithRequest:(id<SJDataRequest>)request delegate:(id<SJDataResponseDelegate>)delegate;
+- (instancetype)initWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) UInt64 contentLength;

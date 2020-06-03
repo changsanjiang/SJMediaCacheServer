@@ -9,11 +9,9 @@
 #ifndef SJMediaCacheServerDefines_h
 #define SJMediaCacheServerDefines_h
 #import <Foundation/Foundation.h>
-
+#import "SJDataRequest.h"
 @protocol SJDataResponseDelegate, SJResourcePartialContentReaderDelegate;
-
 @protocol SJResourceReaderDelegate;
-
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol SJURLConvertor <NSObject>
@@ -22,14 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSString *)URLKeyWithURL:(NSURL *)URL;
 @end
 
-@protocol SJDataRequest <NSObject>
-@property (nonatomic, copy, readonly, nullable) NSURL *URL;
-@property (nonatomic, copy, readonly, nullable) NSDictionary *headers;
-@property (nonatomic, readonly) NSRange range;
-@end
-
 @protocol SJDataResponse <NSObject>
-- (instancetype)initWithRequest:(id<SJDataRequest>)request delegate:(id<SJDataResponseDelegate>)delegate;
+- (instancetype)initWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) UInt64 contentLength;
@@ -86,7 +78,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol SJResource <NSObject>
 + (instancetype)resourceWithURL:(NSURL *)URL;
  
-- (id<SJResourceReader>)readDataWithRequest:(id<SJDataRequest>)request;
+- (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request;
 
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;

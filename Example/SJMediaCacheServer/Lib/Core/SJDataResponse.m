@@ -11,13 +11,13 @@
 
 @interface SJDataResponse ()<SJResourceReaderDelegate>
 @property (nonatomic, weak) id<SJDataResponseDelegate> delegate;
-@property (nonatomic, strong) id<SJDataRequest> request;
+@property (nonatomic, strong) SJDataRequest * request;
 @property (nonatomic, strong) SJResource *resource;
 @property (nonatomic, strong) id<SJResourceReader> reader;
 @end
 
 @implementation SJDataResponse
-- (instancetype)initWithRequest:(id<SJDataRequest>)request delegate:(id<SJDataResponseDelegate>)delegate {
+- (instancetype)initWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _request = request;

@@ -7,9 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
+@protocol SJResourcePartialContentDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
 @interface SJResourcePartialContent : NSObject
+
+@end
+
+@protocol SJResourcePartialContentDelegate <NSObject>
 
 @end
 NS_ASSUME_NONNULL_END

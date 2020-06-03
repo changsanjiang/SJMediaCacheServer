@@ -35,7 +35,7 @@
     return [SJResourceManager.shared resourceWithURL:URL];
 }
 
-- (id<SJResourceReader>)readDataWithRequest:(id<SJDataRequest>)request {
+- (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request {
     return nil;
 }
 @end
