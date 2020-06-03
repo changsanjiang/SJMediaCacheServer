@@ -27,40 +27,6 @@ static NSString *rootDirectoryPath;
     });
 }
 
-+ (NSString *)resourceDirectoryPathWithURLKey:(NSString *)URLKey {
-    return [rootDirectoryPath stringByAppendingPathComponent:URLKey];
-}
-
-+ (NSString *)partialContentPathWithURLKey:(NSString *)URLKey atOffset:(NSUInteger)offset sequence:(NSUInteger)sequence {
-    return [[self resourceDirectoryPathWithURLKey:URLKey] stringByAppendingPathComponent:[NSString stringWithFormat:@"%lu_%lu", (unsigned long)offset, (unsigned long)sequence]];
-}
-
-+ (BOOL)checkoutDirectoryWithPath:(NSString *)path error:(NSError **)error {
-    if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
-        if ( ![NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:error] ) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
-+ (NSString *)checkoutPartialContentFileWithURLKey:(NSString *)URLKey atOffset:(NSUInteger)offset {
-    @autoreleasepool {
-        NSUInteger sequence = 0;
-        while (1) {
-            NSString *filepath = [self partialContentPathWithURLKey:URLKey atOffset:offset sequence:sequence++];
-            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-                [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-                return filepath;
-            }
-        }
-    }
-    return nil;
-}
-
-
-#pragma mark -
-
 + (NSString *)getResourcePathWithName:(NSString *)name {
     return [rootDirectoryPath stringByAppendingPathComponent:name];
 }
