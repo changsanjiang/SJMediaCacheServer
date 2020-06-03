@@ -126,9 +126,18 @@
 }
 
 - (void)readerPrepareDidFinish:(id<SJDataReader>)reader {
-    [self callbackWithBlock:^{
-        [self.delegate readerPrepareDidFinish:self];
-    }];
+    [self lock];
+    @try {
+        if ( self.currentIndex == 0 ) {
+            [self callbackWithBlock:^{
+                [self.delegate readerPrepareDidFinish:self];
+            }];
+        }
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (void)readerHasAvailableData:(id<SJDataReader>)reader {

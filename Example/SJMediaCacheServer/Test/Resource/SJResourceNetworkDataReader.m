@@ -191,7 +191,7 @@
             [self _onError:error];
         }
         else {
-            // finished
+            // finished download
         }
     } @catch (__unused NSException *exception) {
         
