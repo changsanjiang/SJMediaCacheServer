@@ -9,17 +9,7 @@
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
-
 @interface SJResourcePartialContent : NSObject
-//- (instancetype)initWithURL:(NSURL *)URL headers:(NSDictionary *)headers inRange:(NSRange)range;
-//@property (nonatomic, strong, readonly) NSURL *URL;
-//@property (nonatomic, copy, readonly) NSDictionary *headers;
-//@property (nonatomic, readonly) NSRange range;
-//@property (nonatomic, readonly) NSUInteger availableLength;
-//@property (nonatomic, copy, readonly, nullable) NSString *contentType;
-//@property (nonatomic, copy, readonly, nullable) NSString *filename;
-//
-//- (void)setFilename:(NSString * _Nullable)filename contentType:(NSString * _Nullable)contentType;
-@end
 
+@end
 NS_ASSUME_NONNULL_END

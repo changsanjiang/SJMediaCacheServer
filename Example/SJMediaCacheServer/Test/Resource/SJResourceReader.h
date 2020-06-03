@@ -10,8 +10,9 @@
 #import "SJResourcePartialContent.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
 @interface SJResourceReader : NSObject<SJResourceReader>
-- (instancetype)initWithPartialContents:(NSArray<SJResourcePartialContent *> *)contents;
+- (instancetype)initWithRange:(NSRange)range partialContents:(NSArray<SJResourcePartialContent *> *)contents;
 @property (nonatomic, copy, readonly) NSArray<SJResourcePartialContent *> *contents;
 @property (nonatomic, weak, nullable) id<SJResourceReaderDelegate> delegate;
 @property (nonatomic, readonly) NSRange range;
@@ -23,4 +24,5 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
 - (void)close;
 @end
+
 NS_ASSUME_NONNULL_END

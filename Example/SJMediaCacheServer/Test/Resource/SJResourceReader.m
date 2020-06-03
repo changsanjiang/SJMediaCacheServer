@@ -8,6 +8,29 @@
 
 #import "SJResourceReader.h"
 
-@implementation SJResourceReader
+@interface SJResourceReader ()
 
+@end
+
+@implementation SJResourceReader
+- (instancetype)initWithRange:(NSRange)range partialContents:(NSArray<SJResourcePartialContent *> *)contents {
+    self = [super init];
+    if ( self ) {
+        _contents = contents.copy;
+        _range = range;
+    }
+    return self;
+}
+
+- (void)prepare {
+    
+}
+
+- (NSData *)readDataOfLength:(NSUInteger)length {
+    return nil;
+}
+
+- (void)close {
+    
+}
 @end
