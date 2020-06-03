@@ -56,7 +56,7 @@
     }
 }
 
-- (UInt64)offset {
+- (NSUInteger)offset {
     [self lock];
     @try {
         return self.reader.offsetInFile - self.readRange.location;

@@ -61,7 +61,11 @@ static NSString *rootDirectoryPath;
 
 #pragma mark -
 
-+ (NSString *)createFileWithDirectoryPath:(NSString *)directoryPath atOffset:(UInt64)offset {
++ (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)directory {
+    return [directory stringByAppendingPathComponent:name];
+}
+
++ (NSString *)createContentFileWithResourcePath:(NSString *)directoryPath atOffset:(NSUInteger)offset {
     @autoreleasepool {
         NSUInteger sequence = 0;
         while (1) {

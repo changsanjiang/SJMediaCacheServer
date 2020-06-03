@@ -32,7 +32,7 @@
     [_reader prepare];
 }
 
-- (UInt64)contentLength {
+- (NSUInteger)contentLength {
     return _reader.contentLength;
 }
 
@@ -40,7 +40,7 @@
     return [_reader readDataOfLength:length];
 }
 
-- (UInt64)offset {
+- (NSUInteger)offset {
     return _reader.offset;
 }
 

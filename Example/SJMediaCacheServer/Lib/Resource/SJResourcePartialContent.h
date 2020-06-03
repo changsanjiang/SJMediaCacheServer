@@ -11,13 +11,13 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface SJResourcePartialContent : NSObject
 - (instancetype)initWithName:(NSString *)name;
-- (instancetype)initWithName:(NSString *)name offset:(UInt64)offset;
+- (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset;
 
 @property (nonatomic, copy, readonly) NSString *name;
-@property (nonatomic, readonly) UInt64 offset;
-@property (nonatomic, readonly) UInt64 length;
+@property (nonatomic, readonly) NSUInteger offset;
+@property (nonatomic, readonly) NSUInteger length;
 
-- (void)updateLength:(UInt64)length;
+- (void)updateLength:(NSUInteger)length;
 
 @end
 NS_ASSUME_NONNULL_END

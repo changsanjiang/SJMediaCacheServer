@@ -18,7 +18,7 @@
 
 @property (nonatomic) NSInteger currentIndex;
 @property (nonatomic, strong) id<SJResourceDataReader> currentReader;
-@property (nonatomic) UInt64 offset;
+@property (nonatomic) NSUInteger offset;
 @end
 
 @implementation SJResourceReader
@@ -49,7 +49,7 @@
     }
 }
 
-- (UInt64)contentLength {
+- (NSUInteger)contentLength {
     return self.range.length;
 }
  

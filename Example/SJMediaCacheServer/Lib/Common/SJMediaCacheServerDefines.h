@@ -24,9 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate;
 
 - (void)prepare;
-@property (nonatomic, readonly) UInt64 contentLength;
+@property (nonatomic, readonly) NSUInteger contentLength;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
-@property (nonatomic, readonly) UInt64 offset;
+@property (nonatomic, readonly) NSUInteger offset;
 @property (nonatomic, readonly) BOOL isDone;
 - (void)close;
 @end
@@ -43,8 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, nullable) id<SJResourceReaderDelegate> delegate;
 
 - (void)prepare;
-@property (nonatomic, readonly) UInt64 contentLength;
-@property (nonatomic, readonly) UInt64 offset;
+@property (nonatomic, readonly) NSUInteger contentLength;
+@property (nonatomic, readonly) NSUInteger offset;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
 - (void)close;

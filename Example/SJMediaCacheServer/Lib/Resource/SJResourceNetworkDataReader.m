@@ -14,14 +14,17 @@
 
 @interface SJResource (Private)
 - (NSString *)createFileWithContent:(SJResourcePartialContent *)content;
-- (SJResourcePartialContent *)newContentWithOffset:(UInt64)offset;
+- (SJResourcePartialContent *)newContentWithOffset:(NSUInteger)offset;
 @end
 
 @interface SJResourceNetworkDataReader ()<SJDownloadTaskDelegate, NSLocking>
 @property (nonatomic, strong, nullable) dispatch_queue_t delegateQueue;
 @property (nonatomic, weak) id<SJResourceDataReaderDelegate> delegate;
 
-@property (nonatomic, strong) SJDataRequest *request;
+@property (nonatomic, strong) NSURL *URL;
+@property (nonatomic, copy) NSDictionary *headers;
+@property (nonatomic) NSRange range;
+
 @property (nonatomic, strong) NSURLSessionTask *task;
 
 @property (nonatomic, strong) NSFileHandle *reader;
@@ -31,17 +34,20 @@
 @property (nonatomic) BOOL isClosed;
 
 @property (nonatomic, strong) SJResourcePartialContent *content;
-@property (nonatomic) UInt64 downloadedLength;
+@property (nonatomic) NSUInteger downloadedLength;
 @property (nonatomic, strong) NSError *error;
 
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @end
 
 @implementation SJResourceNetworkDataReader
-- (instancetype)initWithRequest:(SJDataRequest *)request {
+
+- (instancetype)initWithURL:(NSURL *)URL headers:(NSDictionary *)headers range:(NSRange)range {
     self = [super init];
     if ( self ) {
-        _request = request;
+        _URL = URL;
+        _headers = headers.copy;
+        _range = range;
         _semaphore = dispatch_semaphore_create(1);
         _delegateQueue = dispatch_get_global_queue(0, 0);
     }
@@ -62,9 +68,9 @@
             return;
         
         self.isCalledPrepare = YES;
-        NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_request.URL];
-        [request setAllHTTPHeaderFields:_request.headers];
-        [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_request.range.location, (unsigned long)_request.range.length - 1] forHTTPHeaderField:@"Range"];
+        NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
+        [request setAllHTTPHeaderFields:_headers];
+        [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)_range.length - 1] forHTTPHeaderField:@"Range"];
         self.task = [SJDownload.shared downloadWithRequest:request delegate:self];
     } @catch (__unused NSException *exception) {
         
@@ -73,7 +79,7 @@
     }
 }
 
-- (UInt64)offset {
+- (NSUInteger)offset {
     [self lock];
     @try {
         return self.reader.offsetInFile;
@@ -87,7 +93,7 @@
 - (BOOL)isDone {
     [self lock];
     @try {
-        return self.reader.offsetInFile == self.request.range.length;
+        return self.reader.offsetInFile == _range.length;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -101,9 +107,9 @@
         if ( self.isClosed )
             return nil;
         
-        UInt64 offset = self.reader.offsetInFile;
+        NSUInteger offset = (NSUInteger)self.reader.offsetInFile;
         if ( offset < self.downloadedLength ) {
-            UInt64 length = MIN(lengthParam, self.downloadedLength - self.reader.offsetInFile);
+            NSUInteger length = (NSUInteger)MIN(lengthParam, self.downloadedLength - self.reader.offsetInFile);
             if ( length > 0 ) {
                 NSData *data = [self.reader readDataOfLength:length];
                 return data;
@@ -147,8 +153,8 @@
         if ( self.isClosed )
             return;
         
-        SJResource *resource = [SJResource resourceWithURL:_request.URL];
-        _content = [resource newContentWithOffset:_request.range.location];
+        SJResource *resource = [SJResource resourceWithURL:_URL];
+        _content = [resource newContentWithOffset:_range.location];
         NSString *filePath = [resource createFileWithContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];

@@ -178,15 +178,15 @@
     return self;
 }
 
-- (UInt64)contentLength {
+- (NSUInteger)contentLength {
     return _response.contentLength;
 }
 
-- (UInt64)offset {
+- (NSUInteger)offset {
     return _response.offset;
 }
 
-- (void)setOffset:(UInt64)offset { }
+- (void)setOffset:(NSUInteger)offset { }
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
     return [_response readDataOfLength:length];

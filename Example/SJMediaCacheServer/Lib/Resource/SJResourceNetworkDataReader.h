@@ -13,11 +13,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResourceNetworkDataReader : NSObject<SJResourceDataReader>
-- (instancetype)initWithRequest:(SJDataRequest *)request;
+- (instancetype)initWithURL:(NSURL *)URL headers:(NSDictionary *)headers range:(NSRange)range;
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
-@property (nonatomic, readonly) UInt64 offset;
+@property (nonatomic, readonly) NSUInteger offset;
 @property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;
