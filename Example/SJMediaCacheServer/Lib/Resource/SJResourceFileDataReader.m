@@ -49,6 +49,10 @@
         self.isCalledPrepare = YES;
         self.reader = [NSFileHandle fileHandleForReadingAtPath:self.path];
         [self.reader seekToFileOffset:self.readRange.location];
+        
+#ifdef DEBUG
+        NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
+#endif
     } @catch (__unused NSException *exception) {
         
     } @finally {

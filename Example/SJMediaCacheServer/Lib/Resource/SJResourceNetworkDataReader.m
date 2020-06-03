@@ -138,6 +138,10 @@
         self.writer = nil;
         [self.reader closeFile];
         self.reader = nil;
+
+#ifdef DEBUG
+        NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
+#endif
     } @catch (__unused NSException *exception) {
         
     } @finally {

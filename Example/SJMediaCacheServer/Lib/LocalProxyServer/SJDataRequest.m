@@ -37,6 +37,10 @@
         NSUInteger location = (NSUInteger)[components.firstObject longLongValue];
         NSUInteger length = (NSUInteger)[components.lastObject longLongValue] - location + 1;
         _range = NSMakeRange(location, length);
+        
+#ifdef DEBUG
+        NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
+#endif
     }
     return self;
 }

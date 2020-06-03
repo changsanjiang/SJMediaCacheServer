@@ -21,6 +21,7 @@
     self = [super init];
     if ( self ) {
         _request = request;
+        _delegate = delegate;
     }
     return self;
 }
