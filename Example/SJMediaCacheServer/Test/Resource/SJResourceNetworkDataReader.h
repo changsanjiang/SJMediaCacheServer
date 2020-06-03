@@ -12,9 +12,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJResourceNetworkDataReader : NSObject<SJDataReader>
+@interface SJResourceNetworkDataReader : NSObject<SJResourceDataReader>
 - (instancetype)initWithRequest:(SJDataRequest *)request;
-- (void)setDelegate:(id<SJDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
+- (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
 @property (nonatomic, readonly) UInt64 offset;

@@ -19,7 +19,7 @@
 
 @interface SJResourceNetworkDataReader ()<SJDownloadTaskDelegate, NSLocking>
 @property (nonatomic, strong, nullable) dispatch_queue_t delegateQueue;
-@property (nonatomic, weak) id<SJDataReaderDelegate> delegate;
+@property (nonatomic, weak) id<SJResourceDataReaderDelegate> delegate;
 
 @property (nonatomic, strong) SJDataRequest *request;
 @property (nonatomic, strong) NSURLSessionTask *task;
@@ -48,7 +48,7 @@
     return self;
 }
 
-- (void)setDelegate:(id<SJDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
+- (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
     [self lock];
     self.delegate = delegate;
     self.delegateQueue = queue;

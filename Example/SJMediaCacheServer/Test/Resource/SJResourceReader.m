@@ -8,21 +8,21 @@
 
 #import "SJResourceReader.h"
 
-@interface SJResourceReader ()<NSLocking, SJDataReaderDelegate>
+@interface SJResourceReader ()<NSLocking, SJResourceDataReaderDelegate>
 @property (nonatomic, strong) dispatch_queue_t delegateQueue;
 @property (nonatomic) NSRange range;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
-@property (nonatomic, copy) NSArray<id<SJDataReader>> *readers;
+@property (nonatomic, copy) NSArray<id<SJResourceDataReader>> *readers;
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isClosed;
 
 @property (nonatomic) NSInteger currentIndex;
-@property (nonatomic, strong) id<SJDataReader> currentReader;
+@property (nonatomic, strong) id<SJResourceDataReader> currentReader;
 @property (nonatomic) UInt64 offset;
 @end
 
 @implementation SJResourceReader
-- (instancetype)initWithRange:(NSRange)range readers:(NSArray<id<SJDataReader>> *)readers {
+- (instancetype)initWithRange:(NSRange)range readers:(NSArray<id<SJResourceDataReader>> *)readers {
     self = [super init];
     if ( self ) {
         _delegateQueue = dispatch_get_global_queue(0, 0);
@@ -89,7 +89,7 @@
             return;
         
         self.isClosed = YES;
-        for ( id<SJDataReader> reader in self.readers ) {
+        for ( id<SJResourceDataReader> reader in self.readers ) {
             [reader close];
         }
     } @catch (__unused NSException *exception) {
@@ -107,7 +107,7 @@
     [self.currentReader prepare];
 }
 
-- (id<SJDataReader>)currentReader {
+- (id<SJResourceDataReader>)currentReader {
     return self.readers[_currentIndex];
 }
 
@@ -125,7 +125,7 @@
     });
 }
 
-- (void)readerPrepareDidFinish:(id<SJDataReader>)reader {
+- (void)readerPrepareDidFinish:(id<SJResourceDataReader>)reader {
     [self lock];
     @try {
         if ( self.currentIndex == 0 ) {
@@ -140,13 +140,13 @@
     }
 }
 
-- (void)readerHasAvailableData:(id<SJDataReader>)reader {
+- (void)readerHasAvailableData:(id<SJResourceDataReader>)reader {
     [self callbackWithBlock:^{
         [self.delegate readerHasAvailableData:self];
     }];
 }
 
-- (void)reader:(id<SJDataReader>)reader anErrorOccurred:(NSError *)error {
+- (void)reader:(id<SJResourceDataReader>)reader anErrorOccurred:(NSError *)error {
     [self callbackWithBlock:^{
         [self.delegate reader:self anErrorOccurred:error];
     }];

@@ -12,7 +12,7 @@
 @interface SJResourceFileDataReader()<NSLocking>
 @property (nonatomic, strong) dispatch_queue_t delegateQueue;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
-@property (nonatomic, weak) id<SJDataReaderDelegate> delegate;
+@property (nonatomic, weak) id<SJResourceDataReaderDelegate> delegate;
 @property (nonatomic) NSRange readRange;
 @property (nonatomic, copy) NSString *path;
 @property (nonatomic, strong) NSFileHandle *reader;
@@ -33,7 +33,7 @@
     return self;
 }
 
-- (void)setDelegate:(id<SJDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
+- (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
     [self lock];
     self.delegate = delegate;
     self.delegateQueue = queue;

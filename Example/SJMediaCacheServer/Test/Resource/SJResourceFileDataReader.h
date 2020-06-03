@@ -10,9 +10,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJResourceFileDataReader : NSObject<SJDataReader>
+@interface SJResourceFileDataReader : NSObject<SJResourceDataReader>
 - (instancetype)initWithPath:(NSString *)path readRange:(NSRange)range;
-- (void)setDelegate:(id<SJDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
+- (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
 @property (nonatomic, readonly) UInt64 offset;
