@@ -48,15 +48,17 @@
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
-    @try {
-        UInt64 length = MIN(lengthParam, self.downloadedLength - self.offset);
-        if ( length > 0 ) {
-            NSData *data = [self.reader readDataOfLength:length];
-            self.offset += length;
-            return data;
+    if ( self.downloadedLength > self.offset ) {
+        @try {
+            UInt64 length = MIN(lengthParam, self.downloadedLength - self.offset);
+            if ( length > 0 ) {
+                NSData *data = [self.reader readDataOfLength:length];
+                self.offset += length;
+                return data;
+            }
+        } @catch (NSException *exception) {
+            [self _onError:[SJError errorForException:exception]];
         }
-    } @catch (NSException *exception) {
-        [self _onError:[SJError errorForException:exception]];
     }
     return nil;
 }
