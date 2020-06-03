@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SJNetworkReader : NSObject<SJReader>
 - (instancetype)initWithRequest:(SJDataRequest *)request;
+@property (nonatomic, weak, nullable) id<SJReaderDelegate> delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) UInt64 offset;
