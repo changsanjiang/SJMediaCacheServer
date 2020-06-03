@@ -7,6 +7,20 @@
 //
 
 #import "SJURLConvertor.h"
+#include <CommonCrypto/CommonCrypto.h>
+
+static inline NSString *
+SJMD5(NSString *str) {
+    NSData *data = [str dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char result[CC_MD5_DIGEST_LENGTH];
+    CC_MD5(data.bytes, (CC_LONG)data.length, result);
+    return [NSString stringWithFormat:
+            @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            result[0], result[1], result[2], result[3],
+            result[4], result[5], result[6], result[7],
+            result[8], result[9], result[10], result[11],
+            result[12], result[13], result[14], result[15]];
+}
 
 @implementation SJURLConvertor
 + (instancetype)shared {
@@ -18,15 +32,22 @@
     return instance;
 }
 
-- (nullable NSURL *)proxyURLWithURL:(NSURL *)URL {
-    return nil;
+- (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL {
+    NSURLComponents *components = [NSURLComponents componentsWithURL:serverURL resolvingAgainstBaseURL:NO];
+    [components setQuery:[NSString stringWithFormat:@"url=%@", URL]];
+    return components.URL;
 }
 
 - (nullable NSURL *)URLWithProxyURL:(NSURL *)proxyURL {
+    NSURLComponents *components = [NSURLComponents componentsWithURL:proxyURL resolvingAgainstBaseURL:NO];
+    for ( NSURLQueryItem *query in components.queryItems ) {
+        if ( [query.name isEqualToString:@"url"] )
+            return [NSURL URLWithString:query.value];
+    }
     return nil;
 }
 
-- (nullable NSString *)URLKeyWithURL:(NSURL *)URL {
-    return nil;
+- (nullable NSString *)resourceNameWithURL:(NSURL *)URL {
+    return SJMD5(URL.absoluteString);
 }
 @end

@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithPort:(UInt16)port;
 @property (nonatomic, weak, nullable) id<SJLocalProxyServerDelegate> delegate;
 
+@property (nonatomic, readonly) UInt16 port;
 @property (nonatomic, readonly, getter=isRunning) BOOL running;
 - (BOOL)start:(NSError **)error;
 - (void)stop;

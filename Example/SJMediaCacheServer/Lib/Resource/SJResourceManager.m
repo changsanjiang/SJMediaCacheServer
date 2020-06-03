@@ -11,7 +11,7 @@
 #import <SJUIKit/SJSQLite3.h>
 
 @interface SJResource (Private)
-- (instancetype)initWithPath:(NSString *)path;
+- (instancetype)initWithName:(NSString *)name;
 @end
 
 #pragma mark -
@@ -44,6 +44,7 @@
 - (instancetype)init {
     self = [super init];
     if ( self ) {
+        _semaphore = dispatch_semaphore_create(1);
         _resources = NSMutableDictionary.dictionary;
         _convertor = SJURLConvertor.alloc.init;
     }
@@ -53,7 +54,11 @@
 - (SJResource *)resourceWithURL:(NSURL *)URL {
     [self lock];
     @try {
-        return nil;
+        NSString *name = [self.convertor resourceNameWithURL:URL];
+        if ( self.resources[name] == nil ) {
+            self.resources[name] = [SJResource.alloc initWithName:name];
+        }
+        return self.resources[name];
     } @catch (__unused NSException *exception) {
         
     } @finally {

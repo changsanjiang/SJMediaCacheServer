@@ -8,6 +8,7 @@
 
 #import "SJLocalProxyServer.h"
 #import "SJDataRequest.h"
+#import "SJURLConvertor.h"
 #import <objc/message.h>
 #import <CocoaHTTPServer/HTTPServer.h>
 #import <CocoaHTTPServer/HTTPConnection.h>
@@ -46,6 +47,8 @@
 - (instancetype)initWithPort:(UInt16)port {
     self = [super init];
     if ( self ) {
+        _port = port;
+        
         _localServer = HTTPServer.alloc.init;
         _localServer.sj_server = self;
         [_localServer setConnectionClass:SJHTTPConnection.class];
@@ -160,7 +163,7 @@
 
 @implementation SJDataRequest (SJLocalProxyServerExtended)
 - (instancetype)initWithHTTPRequest:(HTTPMessage *)request {
-    return [self initWithURL:[request url] headers:[request allHeaderFields]];
+    return [self initWithURL:[SJURLConvertor.shared URLWithProxyURL:[request url]] headers:[request allHeaderFields]];
 }
 @end
 

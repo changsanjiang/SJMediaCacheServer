@@ -15,9 +15,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol SJURLConvertor <NSObject>
-- (nullable NSURL *)proxyURLWithURL:(NSURL *)URL;
+- (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL;
 - (nullable NSURL *)URLWithProxyURL:(NSURL *)proxyURL;
-- (nullable NSString *)URLKeyWithURL:(NSURL *)URL;
+- (nullable NSString *)resourceNameWithURL:(NSURL *)URL;
 @end
 
 @protocol SJDataResponse <NSObject>

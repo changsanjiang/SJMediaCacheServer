@@ -13,6 +13,7 @@
 #import <Masonry/Masonry.h>
 
 #import "SJDataResponse.h"
+#import "SJURLConvertor.h"
 
 @interface SJViewController ()<SJLocalProxyServerDelegate>
 @property (nonatomic, strong, nullable) SJLocalProxyServer *server;
@@ -27,7 +28,10 @@
     [self _startLocalProxyServer];
 
     // 播放
-    _player.assetURL = [NSURL URLWithString:@"http://localhost:80/audio.m4a"];
+    
+    NSURL *proxyURL = [SJURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
+    
+    _player.assetURL = proxyURL;
 }
 
 #pragma mark - SJLocalProxyServerDelegate

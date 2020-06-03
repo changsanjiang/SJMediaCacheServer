@@ -37,6 +37,11 @@ static NSString *rootDirectoryPath;
 
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset {
     @autoreleasepool {
+        NSString *resourcePath = [self getResourcePathWithName:resourceName];
+        if ( ![NSFileManager.defaultManager fileExistsAtPath:resourcePath] ) {
+            [NSFileManager.defaultManager createDirectoryAtPath:resourcePath withIntermediateDirectories:YES attributes:nil error:nil];
+        }
+        
         NSUInteger sequence = 0;
         while (1) {
             NSString *filename = [NSString stringWithFormat:@"%lu_%lu", (unsigned long)offset, (unsigned long)sequence++];

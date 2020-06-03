@@ -29,6 +29,7 @@
 - (instancetype)initWithName:(NSString *)name {
     self = [super init];
     if ( self ) {
+        _semaphore = dispatch_semaphore_create(1);
         _name = name.copy;
     }
     return self;

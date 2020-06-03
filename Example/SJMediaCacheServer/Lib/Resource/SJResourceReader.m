@@ -102,13 +102,20 @@
 #pragma mark -
 
 - (void)prepareNextReader {
-    self.currentIndex += 1;
+    [self.currentReader close];
+    if ( self.currentIndex == NSNotFound )
+        self.currentIndex = 0;
+    else
+        self.currentIndex += 1;
     [self.currentReader setDelegate:self delegateQueue:self.delegateQueue];
     [self.currentReader prepare];
 }
 
-- (id<SJResourceDataReader>)currentReader {
-    return self.readers[_currentIndex];
+- (nullable id<SJResourceDataReader>)currentReader {
+    if ( self.currentIndex != NSNotFound && self.currentIndex < self.readers.count ) {
+        return self.readers[_currentIndex];
+    }
+    return nil;
 }
 
 - (void)lock {
