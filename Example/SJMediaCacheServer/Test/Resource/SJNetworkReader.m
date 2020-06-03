@@ -31,7 +31,6 @@
 
 @property (nonatomic, strong) SJResourcePartialContent *content;
 @property (nonatomic) UInt64 downloadedLength;
-@property (nonatomic) UInt64 offset;
 @property (nonatomic, strong) NSError *error;
 
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
@@ -76,18 +75,33 @@
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     [self lock];
     @try {
-        UInt64 length = MIN(lengthParam, self.downloadedLength - self.offset);
-        if ( length > 0 ) {
-            NSData *data = [self.reader readDataOfLength:length];
-            self.offset += length;
-            return data;
+        if ( self.isClosed )
+            return nil;
+        
+        UInt64 offset = self.reader.offsetInFile;
+        if ( offset < self.downloadedLength ) {
+            UInt64 length = MIN(lengthParam, self.downloadedLength - self.reader.offsetInFile);
+            if ( length > 0 ) {
+                NSData *data = [self.reader readDataOfLength:length];
+                return data;
+            }
         }
+        
+        return nil;
     } @catch (NSException *exception) {
         [self _onError:[SJError errorForException:exception]];
     } @finally {
         [self unlock];
     }
-    return nil;
+}
+
+- (UInt64)offset {
+    [self lock];
+    @try {
+        return self.reader.offsetInFile;
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (void)close {
@@ -98,6 +112,14 @@
         
         self.isClosed = YES;
         if ( self.task.state == NSURLSessionTaskStateRunning ) [self.task cancel];
+        self.task = nil;
+        [self.writer synchronizeFile];
+        [self.writer closeFile];
+        self.writer = nil;
+        [self.reader closeFile];
+        self.reader = nil;
+    } @catch (__unused NSException *exception) {
+        
     } @finally {
         [self unlock];
     }
@@ -108,6 +130,9 @@
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSURLResponse *)response {
     [self lock];
     @try {
+        if ( self.isClosed )
+            return;
+        
         SJResource *resource = [SJResource resourceWithURL:_request.URL];
         _content = [resource newContentWithOffset:_request.range.location];
         NSString *filePath = [resource filePathWithContent:_content];
@@ -124,6 +149,9 @@
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
     [self lock];
     @try {
+        if ( self.isClosed )
+            return;
+
         [_writer writeData:data];
         self.downloadedLength += data.length;
         [self.content updateLength:self.downloadedLength];
