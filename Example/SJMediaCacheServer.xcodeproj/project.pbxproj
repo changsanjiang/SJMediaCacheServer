@@ -257,7 +257,6 @@
 				7729D83D2486201300462899 /* SJDataResponse.m */,
 				770194E4248228BD00057D05 /* SJLocalProxyServer.h */,
 				770194E5248228BD00057D05 /* SJLocalProxyServer.m */,
-				770194F42482369500057D05 /* SJMediaCacheServerDefines.h */,
 			);
 			path = LocalProxyServer;
 			sourceTree = "<group>";
@@ -282,6 +281,7 @@
 		77CC43EA2487513F006C5B45 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				770194F42482369500057D05 /* SJMediaCacheServerDefines.h */,
 				7729D848248657DE00462899 /* SJURLConvertor.h */,
 				7729D849248657DE00462899 /* SJURLConvertor.m */,
 				77CC43EC24875150006C5B45 /* SJError.h */,
