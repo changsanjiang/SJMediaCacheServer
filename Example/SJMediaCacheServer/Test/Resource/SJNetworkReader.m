@@ -26,7 +26,7 @@
 @property (nonatomic, strong) NSFileHandle *reader;
 @property (nonatomic, strong) NSFileHandle *writer;
 
-@property (nonatomic) BOOL isPreparing;
+@property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isClosed;
 
 @property (nonatomic, strong) SJResourcePartialContent *content;
@@ -59,14 +59,38 @@
 - (void)prepare {
     [self lock];
     @try {
-        if ( self.isClosed || self.isPreparing )
+        if ( self.isClosed || self.isCalledPrepare )
             return;
         
-        self.isPreparing = YES;
+        self.isCalledPrepare = YES;
         NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_request.URL];
         [request setAllHTTPHeaderFields:_request.headers];
         [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_request.range.location, (unsigned long)_request.range.length - 1] forHTTPHeaderField:@"Range"];
         self.task = [SJDownload.shared downloadWithRequest:request delegate:self];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (UInt64)offset {
+    [self lock];
+    @try {
+        return self.reader.offsetInFile;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (BOOL)isDone {
+    [self lock];
+    @try {
+        return self.reader.offsetInFile == self.request.range.length;
+    } @catch (__unused NSException *exception) {
+        
     } @finally {
         [self unlock];
     }
@@ -90,15 +114,6 @@
         return nil;
     } @catch (NSException *exception) {
         [self _onError:[SJError errorForException:exception]];
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (UInt64)offset {
-    [self lock];
-    @try {
-        return self.reader.offsetInFile;
     } @finally {
         [self unlock];
     }
@@ -141,6 +156,8 @@
         [self callbackWithBlock:^{
             [self.delegate readerPrepareDidFinish:self];
         }];
+    } @catch (__unused NSException *exception) {
+        
     } @finally {
         [self unlock];
     }
@@ -177,6 +194,8 @@
         else {
             // finished
         }
+    } @catch (__unused NSException *exception) {
+        
     } @finally {
         [self unlock];
     }
