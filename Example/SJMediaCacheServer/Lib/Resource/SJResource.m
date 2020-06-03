@@ -9,6 +9,7 @@
 #import "SJResource.h"
 #import "SJResourcePartialContent.h"
 #import "SJResourceManager.h"
+#import "SJResourceFileManager.h"
 
 @interface SJResource ()<NSLocking>
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
@@ -40,11 +41,10 @@
     }
 }
 
-- (NSString *)filePathWithContent:(SJResourcePartialContent *)content {
+- (NSString *)createFileWithContent:(SJResourcePartialContent *)content {
     [self lock];
     @try {
-#warning next ...
-        return nil;
+        return [SJResourceFileManager createFileWithDirectoryPath:self.path atOffset:content.offset];
     } @catch (__unused NSException *exception) {
         
     } @finally {

@@ -1,5 +1,5 @@
 //
-//  SJFileManager.h
+//  SJResourceFileManager.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
@@ -10,14 +10,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJFileManager : NSObject
+@interface SJResourceFileManager : NSObject
 + (NSString *)resourceDirectoryPathWithURLKey:(NSString *)URLKey;
 + (NSString *)partialContentPathWithURLKey:(NSString *)URLKey atOffset:(NSUInteger)offset sequence:(NSUInteger)sequence;
 + (BOOL)checkoutDirectoryWithPath:(NSString *)path error:(NSError **)error;
 
 
-
-+ (NSString *)partialContentFileNameWithURLKey:(NSString *)URLKey atOffset:(NSUInteger)offset;
++ (NSString *)createFileWithDirectoryPath:(NSString *)directoryPath atOffset:(UInt64)offset;
 @end
 
 NS_ASSUME_NONNULL_END

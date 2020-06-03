@@ -1,17 +1,17 @@
 //
-//  SJFileManager.m
+//  SJResourceFileManager.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "SJFileManager.h"
+#import "SJResourceFileManager.h"
 #import <sys/xattr.h>
 
 static NSString *rootDirectoryPath;
 
-@implementation SJFileManager
+@implementation SJResourceFileManager
 
 + (void)initialize {
     static dispatch_once_t onceToken;
@@ -61,15 +61,15 @@ static NSString *rootDirectoryPath;
 
 #pragma mark -
 
-+ (NSString *)partialContentFileNameWithURLKey:(NSString *)URLKey atOffset:(NSUInteger)offset {
++ (NSString *)createFileWithDirectoryPath:(NSString *)directoryPath atOffset:(UInt64)offset {
     @autoreleasepool {
         NSUInteger sequence = 0;
         while (1) {
             NSString *filename = [NSString stringWithFormat:@"%lu_%lu", (unsigned long)offset, (unsigned long)sequence++];
-            NSString *filepath = [[self resourceDirectoryPathWithURLKey:URLKey] stringByAppendingPathComponent:filename];
+            NSString *filepath = [directoryPath stringByAppendingPathComponent:filename];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-                return filename;
+                return filepath;
             }
         }
     }
