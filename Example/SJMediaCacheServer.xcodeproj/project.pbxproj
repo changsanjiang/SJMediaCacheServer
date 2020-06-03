@@ -36,6 +36,7 @@
 		77CC440424877BAE006C5B45 /* SJDataRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC440324877BAE006C5B45 /* SJDataRequest.m */; };
 		77D25D7B24877E6000BB1B1A /* SJResourceFileDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7A24877E6000BB1B1A /* SJResourceFileDataReader.m */; };
 		77D25D7E24877E6A00BB1B1A /* SJResourceNetworkDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7D24877E6A00BB1B1A /* SJResourceNetworkDataReader.m */; };
+		77D25D902487AB1400BB1B1A /* SJResourceManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D8F2487AB1400BB1B1A /* SJResourceManager.m */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
@@ -102,6 +103,8 @@
 		77D25D7C24877E6A00BB1B1A /* SJResourceNetworkDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceNetworkDataReader.h; sourceTree = "<group>"; };
 		77D25D7D24877E6A00BB1B1A /* SJResourceNetworkDataReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJResourceNetworkDataReader.m; sourceTree = "<group>"; };
 		77D25D7F24877ED600BB1B1A /* SJResourceDefines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceDefines.h; sourceTree = "<group>"; };
+		77D25D8E2487AB1400BB1B1A /* SJResourceManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceManager.h; sourceTree = "<group>"; };
+		77D25D8F2487AB1400BB1B1A /* SJResourceManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJResourceManager.m; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9086DD852505476A19109266 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Example.debug.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example.debug.xcconfig"; sourceTree = "<group>"; };
@@ -301,6 +304,8 @@
 				77D25D7F24877ED600BB1B1A /* SJResourceDefines.h */,
 				77D25D7924877E6000BB1B1A /* SJResourceFileDataReader.h */,
 				77D25D7A24877E6000BB1B1A /* SJResourceFileDataReader.m */,
+				77D25D8E2487AB1400BB1B1A /* SJResourceManager.h */,
+				77D25D8F2487AB1400BB1B1A /* SJResourceManager.m */,
 				77D25D7C24877E6A00BB1B1A /* SJResourceNetworkDataReader.h */,
 				77D25D7D24877E6A00BB1B1A /* SJResourceNetworkDataReader.m */,
 				77CC4400248778CC006C5B45 /* SJResourcePartialContent.h */,
@@ -499,6 +504,7 @@
 				77CC440424877BAE006C5B45 /* SJDataRequest.m in Sources */,
 				77CC43ED24875150006C5B45 /* SJError.m in Sources */,
 				770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */,
+				77D25D902487AB1400BB1B1A /* SJResourceManager.m in Sources */,
 				7729D83E2486201300462899 /* SJDataResponse.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

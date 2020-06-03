@@ -8,28 +8,7 @@
 
 #import "SJResource.h"
 #import "SJResourcePartialContent.h"
-
-@interface SJResourceManager : NSObject
-+ (instancetype)shared;
-
-- (SJResource *)resourceWithURL:(NSURL *)URL;
-@end
-
-@implementation SJResourceManager
-+ (instancetype)shared {
-    static id obj = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        obj = [[self alloc] init];
-    });
-    return obj;
-}
-
-- (SJResource *)resourceWithURL:(NSURL *)URL {
-    return nil;;
-}
-@end
-
+#import "SJResourceManager.h"
 
 @implementation SJResource
 + (instancetype)resourceWithURL:(NSURL *)URL {
