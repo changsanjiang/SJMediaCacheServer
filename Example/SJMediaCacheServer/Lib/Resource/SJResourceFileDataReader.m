@@ -59,7 +59,7 @@
 - (NSUInteger)offset {
     [self lock];
     @try {
-        return self.reader.offsetInFile - self.readRange.location;
+        return (NSUInteger)self.reader.offsetInFile - self.readRange.location;
     } @catch (__unused NSException *exception) {
         
     } @finally {

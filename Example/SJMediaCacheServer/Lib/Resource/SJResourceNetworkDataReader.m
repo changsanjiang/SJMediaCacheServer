@@ -82,7 +82,7 @@
 - (NSUInteger)offset {
     [self lock];
     @try {
-        return self.reader.offsetInFile;
+        return (NSUInteger)self.reader.offsetInFile;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -176,7 +176,7 @@
 
         [_writer writeData:data];
         self.downloadedLength += data.length;
-        [self.content updateLength:self.downloadedLength];
+        self.content.length += self.downloadedLength;
         [self callbackWithBlock:^{
             [self.delegate readerHasAvailableData:self];
         }];

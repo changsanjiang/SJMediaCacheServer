@@ -9,21 +9,12 @@
 #import "SJResourcePartialContent.h"
 
 @implementation SJResourcePartialContent
-//- (instancetype)initWithURL:(NSURL *)URL headers:(NSDictionary *)headers inRange:(NSRange)range {
-//    self = [super init];
-//    if ( self ) {
-//        _URL = URL;
-//        _headers = headers;
-//        _range = range;
-//        
-//#warning next .. 移除`headers`中的`range`
-//        
-//    }
-//    return self;
-//}
-//
-//- (void)setFilename:(NSString * _Nullable)filename contentType:(NSString * _Nullable)contentType {
-//    _filename = filename;
-//    _contentType = contentType;
-//}
+- (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset {
+    self = [super init];
+    if ( self ) {
+        _name = name;
+        _offset = offset;
+    }
+    return self;
+}
 @end
