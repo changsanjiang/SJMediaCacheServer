@@ -10,7 +10,8 @@
 #import "SJResourcePartialContent.h"
 #import "SJResourceManager.h"
 
-@interface SJResource ()
+@interface SJResource ()<NSLocking>
+@property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @property (nonatomic, copy) NSString *path;
 @end
 
@@ -28,14 +29,48 @@
 }
 
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request {
-    return nil;
+    [self lock];
+    @try {
+#warning next ...
+        return nil;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (NSString *)filePathWithContent:(SJResourcePartialContent *)content {
-    return nil;
+    [self lock];
+    @try {
+#warning next ...
+        return nil;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (SJResourcePartialContent *)newContentWithOffset:(UInt64)offset {
-    return nil;
+    [self lock];
+    @try {
+#warning next ...
+        return nil;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+#pragma mark -
+
+- (void)lock {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+}
+
+- (void)unlock {
+    dispatch_semaphore_signal(_semaphore);
 }
 @end
