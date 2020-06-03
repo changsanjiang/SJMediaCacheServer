@@ -10,6 +10,10 @@
 #import "SJResourcePartialContent.h"
 #import "SJResourceManager.h"
 
+@interface SJResource ()
+@property (nonatomic, copy) NSString *path;
+@end
+
 @implementation SJResource
 + (instancetype)resourceWithURL:(NSURL *)URL {
     return [SJResourceManager.shared resourceWithURL:URL];
@@ -18,7 +22,7 @@
 - (instancetype)initWithPath:(NSString *)path {
     self = [super init];
     if ( self ) {
-        
+        _path = path.copy;
     }
     return self;
 }
