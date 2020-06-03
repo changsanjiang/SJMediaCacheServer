@@ -6,7 +6,6 @@
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "SJMediaCacheServerDefines.h"
 @protocol SJLocalProxyServerDelegate;
 

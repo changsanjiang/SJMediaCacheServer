@@ -25,8 +25,13 @@
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
 		770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E1248228A900057D05 /* SJMediaCacheServer.m */; };
 		770194E6248228BD00057D05 /* SJLocalProxyServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E5248228BD00057D05 /* SJLocalProxyServer.m */; };
-		770194F8248253CB00057D05 /* SJTestResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194F7248253CB00057D05 /* SJTestResponse.m */; };
 		770194FC24826ADE00057D05 /* audio.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 770194FB24826ADE00057D05 /* audio.m4a */; };
+		7729D8382486174C00462899 /* SJResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D8372486174C00462899 /* SJResource.m */; };
+		7729D83E2486201300462899 /* SJDataResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D83D2486201300462899 /* SJDataResponse.m */; };
+		7729D84A248657DE00462899 /* SJURLConvertor.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D849248657DE00462899 /* SJURLConvertor.m */; };
+		77CC43E92487487F006C5B45 /* SJDownload.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43E72487487F006C5B45 /* SJDownload.m */; };
+		77CC43ED24875150006C5B45 /* SJError.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43EB24875150006C5B45 /* SJError.m */; };
+		77CC43FE248774F6006C5B45 /* SJResourceReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43FD248774F6006C5B45 /* SJResourceReader.m */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
@@ -71,9 +76,19 @@
 		770194E4248228BD00057D05 /* SJLocalProxyServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJLocalProxyServer.h; sourceTree = "<group>"; };
 		770194E5248228BD00057D05 /* SJLocalProxyServer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJLocalProxyServer.m; sourceTree = "<group>"; };
 		770194F42482369500057D05 /* SJMediaCacheServerDefines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJMediaCacheServerDefines.h; sourceTree = "<group>"; };
-		770194F6248253CB00057D05 /* SJTestResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJTestResponse.h; sourceTree = "<group>"; };
-		770194F7248253CB00057D05 /* SJTestResponse.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJTestResponse.m; sourceTree = "<group>"; };
 		770194FB24826ADE00057D05 /* audio.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = audio.m4a; sourceTree = "<group>"; };
+		7729D8362486174C00462899 /* SJResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResource.h; sourceTree = "<group>"; };
+		7729D8372486174C00462899 /* SJResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJResource.m; sourceTree = "<group>"; };
+		7729D83C2486201300462899 /* SJDataResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDataResponse.h; sourceTree = "<group>"; };
+		7729D83D2486201300462899 /* SJDataResponse.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDataResponse.m; sourceTree = "<group>"; };
+		7729D848248657DE00462899 /* SJURLConvertor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJURLConvertor.h; sourceTree = "<group>"; };
+		7729D849248657DE00462899 /* SJURLConvertor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJURLConvertor.m; sourceTree = "<group>"; };
+		77CC43E72487487F006C5B45 /* SJDownload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SJDownload.m; sourceTree = "<group>"; };
+		77CC43E82487487F006C5B45 /* SJDownload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SJDownload.h; sourceTree = "<group>"; };
+		77CC43EB24875150006C5B45 /* SJError.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SJError.m; sourceTree = "<group>"; };
+		77CC43EC24875150006C5B45 /* SJError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SJError.h; sourceTree = "<group>"; };
+		77CC43FC248774F6006C5B45 /* SJResourceReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceReader.h; sourceTree = "<group>"; };
+		77CC43FD248774F6006C5B45 /* SJResourceReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJResourceReader.m; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9086DD852505476A19109266 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Example.debug.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example.debug.xcconfig"; sourceTree = "<group>"; };
@@ -215,6 +230,7 @@
 			children = (
 				770194E0248228A900057D05 /* SJMediaCacheServer.h */,
 				770194E1248228A900057D05 /* SJMediaCacheServer.m */,
+				770194F42482369500057D05 /* SJMediaCacheServerDefines.h */,
 				770194E3248228B000057D05 /* Core */,
 			);
 			path = Lib;
@@ -223,9 +239,10 @@
 		770194E3248228B000057D05 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				770194F42482369500057D05 /* SJMediaCacheServerDefines.h */,
 				770194E4248228BD00057D05 /* SJLocalProxyServer.h */,
 				770194E5248228BD00057D05 /* SJLocalProxyServer.m */,
+				7729D848248657DE00462899 /* SJURLConvertor.h */,
+				7729D849248657DE00462899 /* SJURLConvertor.m */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -234,10 +251,42 @@
 			isa = PBXGroup;
 			children = (
 				770194FB24826ADE00057D05 /* audio.m4a */,
-				770194F6248253CB00057D05 /* SJTestResponse.h */,
-				770194F7248253CB00057D05 /* SJTestResponse.m */,
+				7729D83C2486201300462899 /* SJDataResponse.h */,
+				7729D83D2486201300462899 /* SJDataResponse.m */,
+				77CC43FB248774ED006C5B45 /* Resource */,
+				77CC43EA2487513F006C5B45 /* Common */,
+				77CC43E424874562006C5B45 /* Download */,
 			);
 			path = Test;
+			sourceTree = "<group>";
+		};
+		77CC43E424874562006C5B45 /* Download */ = {
+			isa = PBXGroup;
+			children = (
+				77CC43E82487487F006C5B45 /* SJDownload.h */,
+				77CC43E72487487F006C5B45 /* SJDownload.m */,
+			);
+			path = Download;
+			sourceTree = "<group>";
+		};
+		77CC43EA2487513F006C5B45 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				77CC43EC24875150006C5B45 /* SJError.h */,
+				77CC43EB24875150006C5B45 /* SJError.m */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		77CC43FB248774ED006C5B45 /* Resource */ = {
+			isa = PBXGroup;
+			children = (
+				7729D8362486174C00462899 /* SJResource.h */,
+				7729D8372486174C00462899 /* SJResource.m */,
+				77CC43FC248774F6006C5B45 /* SJResourceReader.h */,
+				77CC43FD248774F6006C5B45 /* SJResourceReader.m */,
+			);
+			path = Resource;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -414,12 +463,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7729D84A248657DE00462899 /* SJURLConvertor.m in Sources */,
+				77CC43E92487487F006C5B45 /* SJDownload.m in Sources */,
+				77CC43FE248774F6006C5B45 /* SJResourceReader.m in Sources */,
 				770194E6248228BD00057D05 /* SJLocalProxyServer.m in Sources */,
-				770194F8248253CB00057D05 /* SJTestResponse.m in Sources */,
 				6003F59E195388D20070C39A /* SJAppDelegate.m in Sources */,
 				6003F5A7195388D20070C39A /* SJViewController.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
+				7729D8382486174C00462899 /* SJResource.m in Sources */,
+				77CC43ED24875150006C5B45 /* SJError.m in Sources */,
 				770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */,
+				7729D83E2486201300462899 /* SJDataResponse.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

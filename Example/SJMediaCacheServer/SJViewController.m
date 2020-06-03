@@ -12,7 +12,7 @@
 #import <SJVideoPlayer/SJVideoPlayer.h>
 #import <Masonry/Masonry.h>
 
-#import "SJTestResponse.h"
+#import "SJDataResponse.h"
 
 @interface SJViewController ()<SJLocalProxyServerDelegate>
 @property (nonatomic, strong, nullable) SJLocalProxyServer *server;
@@ -33,7 +33,7 @@
 #pragma mark - SJLocalProxyServerDelegate
 
 - (id<SJDataResponse>)server:(SJLocalProxyServer *)server responseWithRequest:(id<SJDataRequest>)request delegate:(id<SJDataResponseDelegate>)delegate {
-    return [SJTestResponse.alloc initWithRequest:request delegate:delegate];
+    return [SJDataResponse.alloc initWithRequest:request delegate:delegate];
 }
 
 #pragma mark -

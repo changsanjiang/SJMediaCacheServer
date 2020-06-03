@@ -169,10 +169,12 @@
         // https://tools.ietf.org/html/rfc7233#section-3.1
         //
         NSString *bytes = self.headers[@"Range"];
-        NSString *rangeString = [bytes substringWithRange:NSMakeRange(6, bytes.length - 6)];
+        NSString *prefix = @"bytes=";
+        NSString *rangeString = [bytes substringWithRange:NSMakeRange(prefix.length, bytes.length - prefix.length)];
         NSArray<NSString *> *components = [rangeString componentsSeparatedByString:@"-"];
-        NSUInteger location = [components.firstObject longLongValue];
-        NSUInteger length = [components.lastObject longLongValue] - location + 1;
+#warning next .... 其他range的情况
+        NSUInteger location = (NSUInteger)[components.firstObject longLongValue];
+        NSUInteger length = (NSUInteger)[components.lastObject longLongValue] - location + 1;
         _range = NSMakeRange(location, length);
     }
     return self;
@@ -229,7 +231,7 @@
     [_response close];
 }
 
-/// => [KTVHCHTTPResponse httpHeaders]
+/// => [SJHTTPResponse httpHeaders]
 - (NSDictionary *)httpHeaders {
     NSMutableDictionary *headers = [self.request.headers mutableCopy];
     [headers removeObjectForKey:@"Content-Range"];

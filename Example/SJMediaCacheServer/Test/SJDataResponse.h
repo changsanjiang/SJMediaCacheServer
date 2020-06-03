@@ -1,17 +1,16 @@
 //
-//  SJTestResponse.h
+//  SJDataResponse.h
 //  SJMediaCacheServer_Example
 //
-//  Created by BlueDancer on 2020/5/30.
+//  Created by BlueDancer on 2020/6/2.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "SJMediaCacheServerDefines.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJTestResponse : NSObject<SJDataResponse>
+@interface SJDataResponse : NSObject<SJDataResponse>
 - (instancetype)initWithRequest:(id<SJDataRequest>)request delegate:(id<SJDataResponseDelegate>)delegate;
 
 - (void)prepare;
