@@ -16,9 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)checkoutDirectoryWithPath:(NSString *)path error:(NSError **)error;
 
 
-+ (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)directory;
 
-+ (NSString *)createContentFileWithResource:(NSString *)directory atOffset:(NSUInteger)offset;
++ (NSString *)getResourcePathWithName:(NSString *)name;
++ (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)resourceName;
++ (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;
 @end
 
 NS_ASSUME_NONNULL_END

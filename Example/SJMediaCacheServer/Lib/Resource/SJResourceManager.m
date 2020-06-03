@@ -7,6 +7,24 @@
 //
 
 #import "SJResourceManager.h"
+#import "SJResource.h"
+#import <SJUIKit/SJSQLite3.h>
+
+@interface SJResource (Private)
+- (instancetype)initWithPath:(NSString *)path;
+@end
+
+#pragma mark -
+
+@interface SJResource (SJResourceManagerExtended)
+
+@end
+
+@implementation SJResource (SJResourceManagerExtended)
+
+@end
+
+#pragma mark -
 
 @interface SJResourceManager ()<NSLocking>
 @property (nonatomic, strong) NSMutableDictionary<NSString *, SJResource *> *resources;

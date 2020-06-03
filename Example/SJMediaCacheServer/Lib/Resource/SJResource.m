@@ -17,7 +17,7 @@
 
 @interface SJResource ()<NSLocking>
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
-@property (nonatomic, copy) NSString *path;
+@property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) NSMutableArray<SJResourcePartialContent *> *contents;
 @end
 
@@ -26,10 +26,10 @@
     return [SJResourceManager.shared resourceWithURL:URL];
 }
 
-- (instancetype)initWithPath:(NSString *)path {
+- (instancetype)initWithName:(NSString *)name {
     self = [super init];
     if ( self ) {
-        _path = path.copy;
+        _name = name.copy;
     }
     return self;
 }
@@ -58,7 +58,7 @@
 
                 // downloaded part
                 NSRange readRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
-                NSString *path = [SJResourceFileManager getContentFilePathWithName:content.name inResource:self.path];
+                NSString *path = [SJResourceFileManager getContentFilePathWithName:content.name inResource:self.name];
                 SJResourceFileDataReader *reader = [SJResourceFileDataReader.alloc initWithPath:path readRange:readRange];
                 [readers addObject:reader];
 
@@ -85,7 +85,7 @@
 - (NSString *)createFileWithContent:(SJResourcePartialContent *)content {
     [self lock];
     @try {
-        return [SJResourceFileManager createContentFileWithResource:self.path atOffset:content.offset];
+        return [SJResourceFileManager createContentFileInResource:self.name atOffset:content.offset];
     } @catch (__unused NSException *exception) {
         
     } @finally {
