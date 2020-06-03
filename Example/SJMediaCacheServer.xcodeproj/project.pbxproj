@@ -34,6 +34,8 @@
 		77CC43FE248774F6006C5B45 /* SJResourceReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43FD248774F6006C5B45 /* SJResourceReader.m */; };
 		77CC4401248778CC006C5B45 /* SJResourcePartialContent.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43FF248778CC006C5B45 /* SJResourcePartialContent.m */; };
 		77CC440424877BAE006C5B45 /* SJDataRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC440324877BAE006C5B45 /* SJDataRequest.m */; };
+		77D25D7B24877E6000BB1B1A /* SJFileReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7A24877E6000BB1B1A /* SJFileReader.m */; };
+		77D25D7E24877E6A00BB1B1A /* SJNetworkReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7D24877E6A00BB1B1A /* SJNetworkReader.m */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
@@ -95,6 +97,11 @@
 		77CC4400248778CC006C5B45 /* SJResourcePartialContent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SJResourcePartialContent.h; sourceTree = "<group>"; };
 		77CC440224877BAE006C5B45 /* SJDataRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDataRequest.h; sourceTree = "<group>"; };
 		77CC440324877BAE006C5B45 /* SJDataRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDataRequest.m; sourceTree = "<group>"; };
+		77D25D7924877E6000BB1B1A /* SJFileReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJFileReader.h; sourceTree = "<group>"; };
+		77D25D7A24877E6000BB1B1A /* SJFileReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJFileReader.m; sourceTree = "<group>"; };
+		77D25D7C24877E6A00BB1B1A /* SJNetworkReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJNetworkReader.h; sourceTree = "<group>"; };
+		77D25D7D24877E6A00BB1B1A /* SJNetworkReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJNetworkReader.m; sourceTree = "<group>"; };
+		77D25D7F24877ED600BB1B1A /* SJResourceDefines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceDefines.h; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9086DD852505476A19109266 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Example.debug.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example.debug.xcconfig"; sourceTree = "<group>"; };
@@ -289,12 +296,17 @@
 		77CC43FB248774ED006C5B45 /* Resource */ = {
 			isa = PBXGroup;
 			children = (
+				77D25D7924877E6000BB1B1A /* SJFileReader.h */,
+				77D25D7A24877E6000BB1B1A /* SJFileReader.m */,
+				77D25D7C24877E6A00BB1B1A /* SJNetworkReader.h */,
+				77D25D7D24877E6A00BB1B1A /* SJNetworkReader.m */,
 				7729D8362486174C00462899 /* SJResource.h */,
 				7729D8372486174C00462899 /* SJResource.m */,
-				77CC43FC248774F6006C5B45 /* SJResourceReader.h */,
-				77CC43FD248774F6006C5B45 /* SJResourceReader.m */,
+				77D25D7F24877ED600BB1B1A /* SJResourceDefines.h */,
 				77CC4400248778CC006C5B45 /* SJResourcePartialContent.h */,
 				77CC43FF248778CC006C5B45 /* SJResourcePartialContent.m */,
+				77CC43FC248774F6006C5B45 /* SJResourceReader.h */,
+				77CC43FD248774F6006C5B45 /* SJResourceReader.m */,
 			);
 			path = Resource;
 			sourceTree = "<group>";
@@ -480,7 +492,9 @@
 				770194E6248228BD00057D05 /* SJLocalProxyServer.m in Sources */,
 				6003F59E195388D20070C39A /* SJAppDelegate.m in Sources */,
 				6003F5A7195388D20070C39A /* SJViewController.m in Sources */,
+				77D25D7B24877E6000BB1B1A /* SJFileReader.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
+				77D25D7E24877E6A00BB1B1A /* SJNetworkReader.m in Sources */,
 				7729D8382486174C00462899 /* SJResource.m in Sources */,
 				77CC440424877BAE006C5B45 /* SJDataRequest.m in Sources */,
 				77CC43ED24875150006C5B45 /* SJError.m in Sources */,
