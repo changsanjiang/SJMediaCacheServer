@@ -67,7 +67,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol SJResourceReader <NSObject>
 @property (nonatomic, weak, nullable) id<SJResourceReaderDelegate> delegate;
-@property (nonatomic, readonly) NSRange range;
 
 - (void)prepare;
 @property (nonatomic, readonly) UInt64 contentLength;
@@ -86,9 +85,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol SJResource <NSObject>
 + (instancetype)resourceWithURL:(NSURL *)URL;
-
-@property (nonatomic, copy, readonly) NSString *path;
-
+ 
 - (id<SJResourceReader>)readDataWithRequest:(id<SJDataRequest>)request;
 
 + (instancetype)new NS_UNAVAILABLE;

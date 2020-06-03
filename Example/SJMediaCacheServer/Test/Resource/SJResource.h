@@ -10,10 +10,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJResource : NSObject
+@interface SJResource : NSObject<SJResource>
 + (instancetype)resourceWithURL:(NSURL *)URL;
-
-@property (nonatomic, copy, readonly) NSString *path;
 
 - (id<SJResourceReader>)readDataWithRequest:(id<SJDataRequest>)request;
 

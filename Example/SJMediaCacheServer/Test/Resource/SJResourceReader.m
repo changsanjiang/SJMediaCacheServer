@@ -13,17 +13,20 @@
 @end
 
 @implementation SJResourceReader
-- (instancetype)initWithRange:(NSRange)range partialContents:(NSArray<SJResourcePartialContent *> *)contents {
+- (instancetype)initWithPartialContents:(NSArray<SJResourcePartialContent *> *)contents {
     self = [super init];
     if ( self ) {
         _contents = contents.copy;
-        _range = range;
     }
     return self;
 }
 
 - (void)prepare {
     
+}
+
+- (UInt64)contentLength {
+    return 0;
 }
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
