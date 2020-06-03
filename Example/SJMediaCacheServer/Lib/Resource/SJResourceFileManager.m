@@ -65,12 +65,12 @@ static NSString *rootDirectoryPath;
     return [directory stringByAppendingPathComponent:name];
 }
 
-+ (NSString *)createContentFileWithResourcePath:(NSString *)directoryPath atOffset:(NSUInteger)offset {
++ (NSString *)createContentFileWithResource:(NSString *)directory atOffset:(NSUInteger)offset {
     @autoreleasepool {
         NSUInteger sequence = 0;
         while (1) {
             NSString *filename = [NSString stringWithFormat:@"%lu_%lu", (unsigned long)offset, (unsigned long)sequence++];
-            NSString *filepath = [directoryPath stringByAppendingPathComponent:filename];
+            NSString *filepath = [directory stringByAppendingPathComponent:filename];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
                 return filepath;

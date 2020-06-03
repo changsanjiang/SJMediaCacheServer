@@ -85,7 +85,7 @@
 - (NSString *)createFileWithContent:(SJResourcePartialContent *)content {
     [self lock];
     @try {
-        return [SJResourceFileManager createContentFileWithResourcePath:self.path atOffset:content.offset];
+        return [SJResourceFileManager createContentFileWithResource:self.path atOffset:content.offset];
     } @catch (__unused NSException *exception) {
         
     } @finally {

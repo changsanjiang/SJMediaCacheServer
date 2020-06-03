@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)directory;
 
-+ (NSString *)createContentFileWithResourcePath:(NSString *)directoryPath atOffset:(NSUInteger)offset;
++ (NSString *)createContentFileWithResource:(NSString *)directory atOffset:(NSUInteger)offset;
 @end
 
 NS_ASSUME_NONNULL_END
