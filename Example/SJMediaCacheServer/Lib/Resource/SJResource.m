@@ -37,6 +37,7 @@
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request {
     [self lock];
     @try {
+        // length经常变动, 就在这里排序吧
         __auto_type contents = [self.contents sortedArrayUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
             if ( obj1.offset == obj2.offset )
                 return obj1.length >= obj2.length ? NSOrderedAscending : NSOrderedDescending;
@@ -82,22 +83,17 @@
     }
 }
 
-- (NSString *)createFileWithContent:(SJResourcePartialContent *)content {
-    [self lock];
-    @try {
-        return [SJResourceFileManager createContentFileInResource:self.name atOffset:content.offset];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+- (NSString *)contentFilePathWithContent:(SJResourcePartialContent *)content {
+    return [SJResourceFileManager getContentFilePathWithName:content.name inResource:self.name];
 }
 
 - (SJResourcePartialContent *)newContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
-#warning next ...
-        return nil;
+        NSString *filename = [SJResourceFileManager createContentFileInResource:self.name atOffset:offset];
+        SJResourcePartialContent *content = [SJResourcePartialContent.alloc initWithName:filename offset:offset];
+        [self.contents addObject:content];
+        return content;
     } @catch (__unused NSException *exception) {
         
     } @finally {

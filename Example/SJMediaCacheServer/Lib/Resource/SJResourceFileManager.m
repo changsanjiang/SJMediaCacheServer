@@ -77,7 +77,7 @@ static NSString *rootDirectoryPath;
             NSString *filepath = [self getContentFilePathWithName:filename inResource:resourceName];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-                return filepath;
+                return filename;
             }
         }
     }

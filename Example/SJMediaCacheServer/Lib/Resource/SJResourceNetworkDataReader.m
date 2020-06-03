@@ -13,7 +13,7 @@
 #import "SJResourcePartialContent.h"
 
 @interface SJResource (Private)
-- (NSString *)createFileWithContent:(SJResourcePartialContent *)content;
+- (NSString *)contentFilePathWithContent:(SJResourcePartialContent *)content;
 - (SJResourcePartialContent *)newContentWithOffset:(NSUInteger)offset;
 @end
 
@@ -155,7 +155,7 @@
         
         SJResource *resource = [SJResource resourceWithURL:_URL];
         _content = [resource newContentWithOffset:_range.location];
-        NSString *filePath = [resource createFileWithContent:_content];
+        NSString *filePath = [resource contentFilePathWithContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
         [self callbackWithBlock:^{
