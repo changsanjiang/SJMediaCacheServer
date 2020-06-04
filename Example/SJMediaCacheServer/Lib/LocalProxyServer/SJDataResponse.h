@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate;
 
 - (void)prepare;
+@property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
 @property (nonatomic, readonly) NSUInteger contentLength;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 @property (nonatomic, readonly) NSUInteger offset;

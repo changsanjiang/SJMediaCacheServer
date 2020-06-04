@@ -11,7 +11,7 @@
 #import <Foundation/Foundation.h>
 #import "SJDataRequest.h"
 @protocol SJDataResponseDelegate, SJResourcePartialContentReaderDelegate;
-@protocol SJResourceReaderDelegate;
+@protocol SJResourceReaderDelegate, SJResourceResponse;
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol SJURLConvertor <NSObject>
@@ -24,9 +24,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate;
 
 - (void)prepare;
+@property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
 @property (nonatomic, readonly) NSUInteger contentLength;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 @property (nonatomic, readonly) NSUInteger offset;
+@property (nonatomic, readonly) BOOL isPrepared;
 @property (nonatomic, readonly) BOOL isDone;
 - (void)close;
 @end
@@ -43,9 +45,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, nullable) id<SJResourceReaderDelegate> delegate;
 
 - (void)prepare;
-@property (nonatomic, readonly) NSUInteger contentLength;
+@property (nonatomic, strong, readonly, nullable) id<SJResourceResponse> response;
 @property (nonatomic, readonly) NSUInteger offset;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
+@property (nonatomic, readonly) BOOL isPrepared;
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
 - (void)close;
 @end
@@ -54,6 +57,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)readerPrepareDidFinish:(id<SJResourceReader>)reader;
 - (void)readerHasAvailableData:(id<SJResourceReader>)reader;
 - (void)reader:(id<SJResourceReader>)reader anErrorOccurred:(NSError *)error;
+@end
+
+
+@protocol SJResourceResponse <NSObject>
+@property (nonatomic, readonly) NSUInteger contentLength;
+@property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
+@property (nonatomic, readonly) NSRange contentRange;
 @end
 
 

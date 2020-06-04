@@ -54,7 +54,7 @@
                 // undownloaded part
                 NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
                 if ( leftRange.length != 0 ) {
-                    SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:request.URL headers:request.headers range:leftRange];
+                    SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:request.URL requestHeaders:request.headers range:leftRange];
                     [readers addObject:reader];
                 }
 
@@ -73,10 +73,13 @@
 
         if ( current.length != 0 ) {
             // undownloaded part
-            SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:request.URL headers:request.headers range:current];
+            SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:request.URL requestHeaders:request.headers range:current];
             [readers addObject:reader];
         }
-        return [SJResourceReader.alloc initWithRange:request.range readers:readers];
+        
+#warning next ... headers
+        
+        return [SJResourceReader.alloc initWithRequest:request readers:readers presetResponseHeaders:nil];
     } @catch (__unused NSException *exception) {
         
     } @finally {

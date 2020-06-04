@@ -33,8 +33,12 @@
     [_reader prepare];
 }
 
+- (NSDictionary *)responseHeaders {
+    return _reader.response.responseHeaders;
+}
+
 - (NSUInteger)contentLength {
-    return _reader.contentLength;
+    return _reader.response.contentLength;
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)length {
@@ -43,6 +47,10 @@
 
 - (NSUInteger)offset {
     return _reader.offset;
+}
+
+- (BOOL)isPrepared {
+    return _reader.isPrepared;
 }
 
 - (BOOL)isDone {

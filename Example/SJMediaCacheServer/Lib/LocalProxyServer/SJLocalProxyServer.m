@@ -203,25 +203,29 @@
     [_response close];
 }
 
-/// => [SJHTTPResponse httpHeaders]
 - (NSDictionary *)httpHeaders {
-    NSMutableDictionary *headers = [self.request.headers mutableCopy];
-    [headers removeObjectForKey:@"Content-Range"];
-    [headers removeObjectForKey:@"content-range"];
-    [headers removeObjectForKey:@"Content-Length"];
-    [headers removeObjectForKey:@"content-length"];
-    return headers;
+    return _response.responseHeaders;
+//    NSMutableDictionary *headers = [self.response.responseHeaders mutableCopy];
+//    [headers removeObjectForKey:@"Content-Range"];
+//    [headers removeObjectForKey:@"content-range"];
+//    [headers removeObjectForKey:@"Content-Length"];
+//    [headers removeObjectForKey:@"content-length"];
+//    return headers;
+}
+
+- (BOOL)delayResponseHeaders {
+    return _response.isPrepared;
 }
 
 - (void)responsePrepareDidFinish:(id<SJDataResponse>)response {
-    [self.connection responseHasAvailableData:self];
+    [_connection responseHasAvailableData:self];
 }
 
 - (void)responseHasAvailableData:(id<SJDataResponse>)response {
-    [self.connection responseHasAvailableData:self];
+    [_connection responseHasAvailableData:self];
 }
 
 - (void)response:(id<SJDataResponse>)response anErrorOccurred:(NSError *)error {
-    [self.connection responseDidAbort:self];
+    [_connection responseDidAbort:self];
 }
 @end

@@ -10,6 +10,7 @@
 #import "SJError.h"
 #import "SJDownload.h"
 #import "SJResource.h"
+#import "SJResourceResponse.h"
 #import "SJResourcePartialContent.h"
 
 @interface SJResource (Private)
@@ -18,35 +19,34 @@
 @end
 
 @interface SJResourceNetworkDataReader ()<SJDownloadTaskDelegate, NSLocking>
-@property (nonatomic, strong, nullable) dispatch_queue_t delegateQueue;
-@property (nonatomic, weak) id<SJResourceDataReaderDelegate> delegate;
+@property (nonatomic, weak, nullable) id<SJResourceDataReaderDelegate> delegate;
+@property (nonatomic, strong) dispatch_queue_t delegateQueue;
+@property (nonatomic, strong) dispatch_semaphore_t semaphore;
 
 @property (nonatomic, strong) NSURL *URL;
-@property (nonatomic, copy) NSDictionary *headers;
+@property (nonatomic, copy) NSDictionary *requestHeaders;
 @property (nonatomic) NSRange range;
 
-@property (nonatomic, strong) NSURLSessionTask *task;
+@property (nonatomic, strong, nullable) NSURLSessionTask *task;
+@property (nonatomic, strong, nullable) SJResourceResponse *response;
 
-@property (nonatomic, strong) NSFileHandle *reader;
-@property (nonatomic, strong) NSFileHandle *writer;
+@property (nonatomic, strong, nullable) NSFileHandle *reader;
+@property (nonatomic, strong, nullable) NSFileHandle *writer;
 
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isClosed;
 
-@property (nonatomic, strong) SJResourcePartialContent *content;
+@property (nonatomic, strong, nullable) SJResourcePartialContent *content;
 @property (nonatomic) NSUInteger downloadedLength;
-@property (nonatomic, strong) NSError *error;
-
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @end
 
 @implementation SJResourceNetworkDataReader
 
-- (instancetype)initWithURL:(NSURL *)URL headers:(NSDictionary *)headers range:(NSRange)range {
+- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range {
     self = [super init];
     if ( self ) {
         _URL = URL;
-        _headers = headers.copy;
+        _requestHeaders = headers.copy;
         _range = range;
         _semaphore = dispatch_semaphore_create(1);
         _delegateQueue = dispatch_get_global_queue(0, 0);
@@ -69,9 +69,20 @@
         
         self.isCalledPrepare = YES;
         NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
-        [request setAllHTTPHeaderFields:_headers];
+        [request setAllHTTPHeaderFields:_requestHeaders];
         [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)_range.length - 1] forHTTPHeaderField:@"Range"];
         self.task = [SJDownload.shared downloadWithRequest:request delegate:self];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (SJResourceResponse *)response {
+    [self lock];
+    @try {
+        return _response;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -151,17 +162,20 @@
 
 #pragma mark -
 
-- (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSURLResponse *)response {
+- (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
     [self lock];
     @try {
         if ( self.isClosed )
             return;
-        
+        _response = [SJResourceResponse.alloc initWithRange:_range allHeaderFields:response.allHeaderFields];
+
         SJResource *resource = [SJResource resourceWithURL:_URL];
         _content = [resource newContentWithOffset:_range.location];
+        
         NSString *filePath = [resource contentFilePathWithContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
+        
         [self callbackWithBlock:^{
             [self.delegate readerPrepareDidFinish:self];
         }];
