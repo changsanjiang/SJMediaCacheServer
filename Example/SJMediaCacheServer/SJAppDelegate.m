@@ -12,6 +12,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    NSLog(@"%@", NSTemporaryDirectory());
     // Override point for customization after application launch.
     return YES;
 }

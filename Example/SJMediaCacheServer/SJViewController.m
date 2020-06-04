@@ -32,6 +32,15 @@
     NSURL *proxyURL = [SJURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
     
     _player.assetURL = proxyURL;
+    
+    
+    [self.view addSubview:_player.view];
+    [_player.view mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.offset(0);
+        make.centerY.offset(0);
+        make.height.offset(210);
+    }];
+    
 }
 
 #pragma mark - SJLocalProxyServerDelegate

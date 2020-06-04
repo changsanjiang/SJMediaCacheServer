@@ -43,7 +43,7 @@
     @try {
         
 #ifdef DEBUG
-        NSLog(@"%@", request);
+        NSLog(@"[SJResource readDataWithRequest:%@];", request);
 #endif
         
         // length经常变动, 就在这里排序吧

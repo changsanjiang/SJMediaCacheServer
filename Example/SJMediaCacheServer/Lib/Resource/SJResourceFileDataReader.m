@@ -33,6 +33,10 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"SJResourceFileDataReader:<%p> { range: %@\n };", self, NSStringFromRange(_readRange)];
+}
+
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
     [self lock];
     self.delegate = delegate;
@@ -112,6 +116,10 @@
     } @finally {
         [self unlock];
     }
+    
+#ifdef DEBUG
+    NSLog(@"[%@ close];", self);
+#endif
 }
 
 #pragma mark -

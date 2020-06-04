@@ -51,14 +51,7 @@
 }
 
 - (NSString *)description {
-    [self lock];
-    @try {
-        return [NSString stringWithFormat:@"SJResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@, response: %@\n};", self, _URL, _requestHeaders, NSStringFromRange(_range), _response];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    return [NSString stringWithFormat:@"SJResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@\n};", self, _URL, _requestHeaders, NSStringFromRange(_range)];
 }
 
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
