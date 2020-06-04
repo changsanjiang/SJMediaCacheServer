@@ -7,7 +7,6 @@
 //
 
 #import "SJMediaCacheServerDefines.h"
-@protocol SJResourceDelegate;
 @class SJResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -21,22 +20,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, readonly) NSString *name;
 
-@property (nonatomic, weak, nullable) id<SJResourceDelegate> delegate;
-
 - (NSString *)filePathOfContent:(SJResourcePartialContent *)content;
 
 - (SJResourcePartialContent *)createContentWithOffset:(NSUInteger)offset;
 
-@property (nonatomic, readonly) NSUInteger totalLength;
-
 @property (nonatomic, copy, readonly, nullable) NSString *contentType;
+@property (nonatomic, copy, readonly, nullable) NSString *server;
+@property (nonatomic, readonly) NSUInteger totalLength;
 
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
-@end
-
-@protocol SJResourceDelegate <NSObject>
-- (void)resource:(SJResource *)resource contentTypeDidChange:(NSString *)contentType;
-- (void)resource:(SJResource *)resource totalLengthDidChange:(NSUInteger)totalLength;
 @end
 NS_ASSUME_NONNULL_END

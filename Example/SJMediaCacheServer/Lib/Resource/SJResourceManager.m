@@ -68,6 +68,10 @@
     }
 }
 
+- (void)save:(SJResource *)resource {
+    
+}
+
 #pragma mark -
 
 - (void)lock {

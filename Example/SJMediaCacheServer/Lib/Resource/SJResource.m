@@ -116,22 +116,6 @@
 }
 
 @synthesize totalLength = _totalLength;
-- (void)setTotalLength:(NSUInteger)totalLength {
-    [self lock];
-    @try {
-        if ( _totalLength != totalLength ) {
-            _totalLength = totalLength;
-            [self callbackWithBlock:^{
-                [self.delegate resource:self totalLengthDidChange:totalLength];
-            }];
-        }
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
 - (NSUInteger)totalLength {
     [self lock];
     @try {
@@ -144,23 +128,6 @@
 }
 
 @synthesize contentType = _contentType;
-- (void)setContentType:(NSString *)contentType {
-    [self lock];
-    @try {
-        if ( ![_contentType isEqualToString:contentType] ) {
-            NSString *type = contentType.copy;
-            _contentType = type;
-            [self callbackWithBlock:^{
-                [self.delegate resource:self contentTypeDidChange:type];
-            }];
-        }
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
 - (NSString *)contentType {
     [self lock];
     @try {
@@ -169,6 +136,41 @@
         
     } @finally {
         [self unlock];
+    }
+}
+
+@synthesize server = _server;
+- (NSString *)server {
+    [self lock];
+    @try {
+        return _server;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (void)setServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength {
+    BOOL updated = NO;
+    [self lock];
+    if ( ![server isEqualToString:_server] ) {
+        _server = server.copy;
+        updated = YES;
+    }
+    
+    if ( ![contentType isEqualToString:_contentType] ) {
+        _contentType = contentType;
+        updated = YES;
+    }
+    
+    if ( _totalLength != totalLength ) {
+        _totalLength = totalLength;
+        updated = YES;
+    }
+    [self unlock];
+    if ( updated ) {
+        [SJResourceManager.shared save:self];
     }
 }
 

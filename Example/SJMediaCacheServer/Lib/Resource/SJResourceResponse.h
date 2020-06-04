@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
 @property (nonatomic, copy, readonly, nullable) NSString *contentType;
+@property (nonatomic, copy, readonly, nullable) NSString *server;
 @property (nonatomic, readonly) NSUInteger totalLength;
 @property (nonatomic, readonly) NSRange contentRange;
 @end

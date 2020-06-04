@@ -33,7 +33,8 @@
 //            @"Content-Length" : @(totalLength),
 //            @"Content-Range" : [NSString stringWithFormat:@"bytes %lu-%lu/%lu", (unsigned long)_contentRange.location, (unsigned long)_contentRange.length - 1, (unsigned long)totalLength],
 
-        _contentType = contentType;
+        _server = server.copy;
+        _contentType = contentType.copy;
         _totalLength = totalLength;
         _contentRange = contentRange;
         

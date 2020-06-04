@@ -7,6 +7,7 @@
 //
 
 #import "SJResourceReader.h"
+#import "SJResource+SJPrivate.h"
 #import "SJResourceResponse.h"
 #import "SJResourceNetworkDataReader.h"
 
@@ -187,6 +188,11 @@
             }
             self.isPrepared = YES;
         }
+        
+        SJResource *resource = [SJResource resourceWithURL:_request.URL];
+        resource.contentType = _response.contentType;
+        resource.totalLength = _response.totalLength;
+        resource.server = _response.server;
         
         [self callbackWithBlock:^{
             [self.delegate readerPrepareDidFinish:self];

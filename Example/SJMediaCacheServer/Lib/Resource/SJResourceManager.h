@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (SJResource *)resourceWithURL:(NSURL *)URL;
 
+- (void)save:(SJResource *)resource;
 @end
 
 NS_ASSUME_NONNULL_END

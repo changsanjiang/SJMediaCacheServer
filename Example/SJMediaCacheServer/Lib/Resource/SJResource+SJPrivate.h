@@ -11,8 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResource (SJPrivate)
-- (void)setContentType:(NSString *)contentType;
-- (void)setTotalLength:(NSUInteger)totalLength;
+- (void)setServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength;
 @end
 
 NS_ASSUME_NONNULL_END
