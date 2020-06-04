@@ -13,6 +13,7 @@
 @property (nonatomic, strong) dispatch_queue_t delegateQueue;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @property (nonatomic, weak) id<SJResourceDataReaderDelegate> delegate;
+@property (nonatomic) NSRange range;
 @property (nonatomic) NSRange readRange;
 @property (nonatomic, copy) NSString *path;
 @property (nonatomic, strong) NSFileHandle *reader;
@@ -24,11 +25,12 @@
 @end
 
 @implementation SJResourceFileDataReader
-- (instancetype)initWithPath:(NSString *)path readRange:(NSRange)range {
+- (instancetype)initWithRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange {
     self = [super init];
     if ( self ) {
         _path = path.copy;
-        _readRange = range;
+        _range = range;
+        _readRange = readRange;
         _semaphore = dispatch_semaphore_create(1);
         _delegateQueue = dispatch_get_global_queue(0, 0);
     }
@@ -36,7 +38,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"SJResourceFileDataReader:<%p> { range: %@\n };", self, NSStringFromRange(_readRange)];
+    return [NSString stringWithFormat:@"SJResourceFileDataReader:<%p> { range: %@\n };", self, NSStringFromRange(_range)];
 }
 
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
@@ -53,7 +55,7 @@
             return;
         
 #ifdef DEBUG
-        printf("SJResourceFileDataReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_readRange).UTF8String);
+        printf("SJResourceFileDataReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_range).UTF8String);
 #endif
         _isCalledPrepare = YES;
         _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
@@ -91,13 +93,17 @@
     }
 }
 
-- (nullable NSData *)readDataOfLength:(NSUInteger)length {
+- (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     [self lock];
     @try {
         if ( _isClosed )
             return nil;
         
+        NSUInteger length = MIN(lengthParam, _readRange.length - _offset);
         NSData *data = [_reader readDataOfLength:length];
+        if ( data == nil ) {
+            NSLog(@"..");
+        }
         _offset += data.length;
         return data;
     } @catch (NSException *exception) {

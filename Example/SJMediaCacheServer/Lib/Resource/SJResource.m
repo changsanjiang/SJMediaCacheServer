@@ -64,9 +64,10 @@
                 }
 
                 // downloaded part
-                NSRange readRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
+                NSRange range = NSMakeRange(NSMaxRange(leftRange), intersection.length);
+                NSRange readRange = NSMakeRange(range.location - content.offset, intersection.length);
                 NSString *path = [SJResourceFileManager getContentFilePathWithName:content.name inResource:_name];
-                SJResourceFileDataReader *reader = [SJResourceFileDataReader.alloc initWithPath:path readRange:readRange];
+                SJResourceFileDataReader *reader = [SJResourceFileDataReader.alloc initWithRange:range path:path readRange:readRange];
                 [readers addObject:reader];
 
                 // next part

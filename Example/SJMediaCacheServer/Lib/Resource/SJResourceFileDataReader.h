@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResourceFileDataReader : NSObject<SJResourceDataReader>
-- (instancetype)initWithPath:(NSString *)path readRange:(NSRange)range;
+- (instancetype)initWithRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange;
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
