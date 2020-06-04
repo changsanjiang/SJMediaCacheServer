@@ -47,7 +47,7 @@
         
         NSUInteger sequence = 0;
         while (1) {
-            NSString *filename = [NSString stringWithFormat:@"%lu_%lu", (unsigned long)offset, (unsigned long)sequence++];
+            NSString *filename = [NSString stringWithFormat:@"%@%lu_%lu", [self contentPrefix], (unsigned long)offset, (unsigned long)sequence++];
             NSString *filepath = [self getContentFilePathWithName:filename inResource:resourceName];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
@@ -58,8 +58,12 @@
     return nil;
 }
 
++ (NSString *)contentPrefix {
+    return @"c_";
+}
+
 + (NSUInteger)offsetOfContent:(NSString *)name {
-    return [name longLongValue];
+    return [[name substringFromIndex:[self contentPrefix].length] longLongValue];
 }
 
 + (nullable NSArray<SJResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName {
@@ -67,11 +71,13 @@
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
         NSMutableArray *m = NSMutableArray.array;
         [[NSFileManager.defaultManager contentsOfDirectoryAtPath:resourcePath error:NULL] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
-            NSString *path = [resourcePath stringByAppendingPathComponent:name];
-            NSUInteger offset = [self offsetOfContent:name];
-            NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL][NSFileSize] longLongValue];
-            __auto_type content = [SJResourcePartialContent.alloc initWithName:name offset:offset length:length];
-            [m addObject:content];
+            if ( [name hasPrefix:[self contentPrefix]] ) {
+                NSString *path = [resourcePath stringByAppendingPathComponent:name];
+                NSUInteger offset = [self offsetOfContent:name];
+                NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL][NSFileSize] longLongValue];
+                __auto_type content = [SJResourcePartialContent.alloc initWithName:name offset:offset length:length];
+                [m addObject:content];
+            }
         }];
         return m;
     }

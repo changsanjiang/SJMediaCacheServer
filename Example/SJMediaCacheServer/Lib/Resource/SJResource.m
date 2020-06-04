@@ -31,6 +31,14 @@
     return [SJResourceManager.shared resourceWithURL:URL];
 }
 
+- (instancetype)initWithName:(NSString *)name {
+    self = [self init];
+    if ( self ) {
+        _name = name;
+    }
+    return self;
+}
+
 - (instancetype)init {
     self = [super init];
     if ( self ) {

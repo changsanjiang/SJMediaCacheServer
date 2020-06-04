@@ -43,6 +43,12 @@
     return self;
 }
 
+- (void)dealloc {
+#ifdef DEBUG
+    printf("SJResourceReader: <%p>.dealloc;\n\n", self);
+#endif
+}
+
 - (void)prepare {
     [self lock];
     @try {
@@ -50,7 +56,7 @@
             return;
         
 #ifdef DEBUG
-        printf("\nSJResourceReader: <%p>.prepare { range: %s }];\n", self, NSStringFromRange(_request.range).UTF8String);
+        printf("\nSJResourceReader: <%p>.prepare { range: %s, count: %lu }];\n", self, NSStringFromRange(_request.range).UTF8String, _readers.count);
 #endif
         
         _isCalledPrepare = YES;
@@ -146,6 +152,10 @@
 
 - (void)prepareNextReader {
     [self.currentReader close];
+
+    if ( self.currentReader == self.readers.lastObject )
+        return;
+    
     if ( self.currentIndex == NSNotFound )
         self.currentIndex = 0;
     else

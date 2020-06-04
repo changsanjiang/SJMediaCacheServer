@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSInteger id;
 - (void)setServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength;
 - (void)addContents:(nullable NSArray<SJResourcePartialContent *> *)contents;
+
+- (instancetype)initWithName:(NSString *)name;
 @end
 
 NS_ASSUME_NONNULL_END

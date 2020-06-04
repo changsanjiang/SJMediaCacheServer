@@ -125,7 +125,13 @@
             if ( length > 0 ) {
                 NSData *data = [_reader readDataOfLength:length];
                 _offset += data.length;
-                return data;
+                
+#ifdef DEBUG
+                if ( _offset == _range.length ) {
+                    printf("SJResourceNetworkDataReader: <%p>.isDone;\n", self);
+#endif
+                    return data;
+                }
             }
         }
         
@@ -197,6 +203,11 @@
         [_writer writeData:data];
         _downloadedLength += data.length;
         _content.length = _downloadedLength;
+        
+#ifdef DEBUG
+        printf("SJResourceNetworkDataReader: <%p>.downloadProgress: %lu;\n", self, _downloadedLength);
+#endif
+        
         [self callbackWithBlock:^{
             [self.delegate readerHasAvailableData:self];
         }];

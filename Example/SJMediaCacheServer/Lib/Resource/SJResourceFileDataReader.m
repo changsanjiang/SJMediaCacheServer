@@ -101,10 +101,13 @@
         
         NSUInteger length = MIN(lengthParam, _readRange.length - _offset);
         NSData *data = [_reader readDataOfLength:length];
-        if ( data == nil ) {
-            NSLog(@"..");
-        }
         _offset += data.length;
+        
+#ifdef DEBUG
+        if ( _offset == _readRange.length ) {
+            printf("SJResourceFileDataReader: <%p>.isDone;\n", self);
+        }
+#endif
         return data;
     } @catch (NSException *exception) {
         [self callbackWithBlock:^{
