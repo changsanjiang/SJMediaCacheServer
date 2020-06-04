@@ -13,11 +13,6 @@
 #import "SJResourceResponse.h"
 #import "SJResourcePartialContent.h"
 
-@interface SJResource (Private)
-- (NSString *)contentFilePathWithContent:(SJResourcePartialContent *)content;
-- (SJResourcePartialContent *)newContentWithOffset:(NSUInteger)offset;
-@end
-
 @interface SJResourceNetworkDataReader ()<SJDownloadTaskDelegate, NSLocking>
 @property (nonatomic, weak, nullable) id<SJResourceDataReaderDelegate> delegate;
 @property (nonatomic, strong) dispatch_queue_t delegateQueue;
@@ -28,7 +23,7 @@
 @property (nonatomic) NSRange range;
 
 @property (nonatomic, strong, nullable) NSURLSessionTask *task;
-@property (nonatomic, strong, nullable) SJResourceResponse *response;
+@property (nonatomic, strong, nullable) NSHTTPURLResponse *response;
 
 @property (nonatomic, strong, nullable) NSFileHandle *reader;
 @property (nonatomic, strong, nullable) NSFileHandle *writer;
@@ -38,6 +33,7 @@
 
 @property (nonatomic, strong, nullable) SJResourcePartialContent *content;
 @property (nonatomic) NSUInteger downloadedLength;
+@property (nonatomic) NSUInteger offset;
 @end
 
 @implementation SJResourceNetworkDataReader
@@ -52,6 +48,17 @@
         _delegateQueue = dispatch_get_global_queue(0, 0);
     }
     return self;
+}
+
+- (NSString *)description {
+    [self lock];
+    @try {
+        return [NSString stringWithFormat:@"SJResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@, response: %@\n};", self, _URL, _requestHeaders, NSStringFromRange(_range), _response];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
@@ -79,7 +86,7 @@
     }
 }
 
-- (SJResourceResponse *)response {
+- (NSHTTPURLResponse *)response {
     [self lock];
     @try {
         return _response;
@@ -93,7 +100,7 @@
 - (NSUInteger)offset {
     [self lock];
     @try {
-        return (NSUInteger)self.reader.offsetInFile;
+        return _offset;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -104,7 +111,7 @@
 - (BOOL)isDone {
     [self lock];
     @try {
-        return self.reader.offsetInFile == _range.length;
+        return _offset == _range.length;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -118,11 +125,11 @@
         if ( self.isClosed )
             return nil;
         
-        NSUInteger offset = (NSUInteger)self.reader.offsetInFile;
-        if ( offset < self.downloadedLength ) {
-            NSUInteger length = (NSUInteger)MIN(lengthParam, self.downloadedLength - self.reader.offsetInFile);
+        if ( _offset < self.downloadedLength ) {
+            NSUInteger length = MIN(lengthParam, self.downloadedLength - _offset);
             if ( length > 0 ) {
                 NSData *data = [self.reader readDataOfLength:length];
+                _offset += data.length;
                 return data;
             }
         }
@@ -149,15 +156,15 @@
         self.writer = nil;
         [self.reader closeFile];
         self.reader = nil;
-
-#ifdef DEBUG
-        NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-#endif
     } @catch (__unused NSException *exception) {
         
     } @finally {
         [self unlock];
     }
+     
+#ifdef DEBUG
+    NSLog(@"[%@ close];", self);
+#endif
 }
 
 #pragma mark -
@@ -167,12 +174,12 @@
     @try {
         if ( self.isClosed )
             return;
-        _response = [SJResourceResponse.alloc initWithRange:_range allHeaderFields:response.allHeaderFields];
+        _response = response;
 
         SJResource *resource = [SJResource resourceWithURL:_URL];
-        _content = [resource newContentWithOffset:_range.location];
+        _content = [resource createContentWithOffset:_range.location];
         
-        NSString *filePath = [resource contentFilePathWithContent:_content];
+        NSString *filePath = [resource filePathOfContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
         

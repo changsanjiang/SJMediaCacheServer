@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "SJURLConvertor.h"
-@class SJResource;
+@class SJResource, SJResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
 

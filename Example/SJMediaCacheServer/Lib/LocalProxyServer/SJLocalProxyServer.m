@@ -214,7 +214,7 @@
 }
 
 - (BOOL)delayResponseHeaders {
-    return _response.isPrepared;
+    return _response != nil ? !_response.isPrepared : YES;
 }
 
 - (void)responsePrepareDidFinish:(id<SJDataResponse>)response {

@@ -91,6 +91,7 @@
 		774AB9302487B44C0049CAC3 /* SJResourceFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SJResourceFileManager.h; sourceTree = "<group>"; };
 		77A4BBEA2488901A0007836D /* SJResourceResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceResponse.h; sourceTree = "<group>"; };
 		77A4BBEB2488901A0007836D /* SJResourceResponse.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJResourceResponse.m; sourceTree = "<group>"; };
+		77A4BBEF2488BFB80007836D /* SJResource+SJPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SJResource+SJPrivate.h"; sourceTree = "<group>"; };
 		77CC43E72487487F006C5B45 /* SJDownload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SJDownload.m; sourceTree = "<group>"; };
 		77CC43E82487487F006C5B45 /* SJDownload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SJDownload.h; sourceTree = "<group>"; };
 		77CC43EB24875150006C5B45 /* SJError.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SJError.m; sourceTree = "<group>"; };
@@ -301,6 +302,7 @@
 			children = (
 				7729D8362486174C00462899 /* SJResource.h */,
 				7729D8372486174C00462899 /* SJResource.m */,
+				77A4BBEF2488BFB80007836D /* SJResource+SJPrivate.h */,
 				77D25D7F24877ED600BB1B1A /* SJResourceDefines.h */,
 				77D25D7924877E6000BB1B1A /* SJResourceFileDataReader.h */,
 				77D25D7A24877E6000BB1B1A /* SJResourceFileDataReader.m */,

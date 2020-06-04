@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
-@property (nonatomic, strong, readonly, nullable) SJResourceResponse *response;
+@property (nonatomic, strong, readonly, nullable) NSHTTPURLResponse *response;
 @property (nonatomic, readonly) NSUInteger offset;
 @property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;

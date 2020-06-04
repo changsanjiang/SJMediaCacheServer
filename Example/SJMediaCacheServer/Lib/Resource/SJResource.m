@@ -19,6 +19,9 @@
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) NSMutableArray<SJResourcePartialContent *> *contents;
+
+@property (nonatomic) NSUInteger totalLength;
+@property (nonatomic, copy, nullable) NSString *contentType;
 @end
 
 @implementation SJResource
@@ -38,6 +41,11 @@
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request {
     [self lock];
     @try {
+        
+#ifdef DEBUG
+        NSLog(@"%@", request);
+#endif
+        
         // length经常变动, 就在这里排序吧
         __auto_type contents = [self.contents sortedArrayUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
             if ( obj1.offset == obj2.offset )
@@ -87,17 +95,76 @@
     }
 }
 
-- (NSString *)contentFilePathWithContent:(SJResourcePartialContent *)content {
+#pragma mark - 
+
+- (NSString *)filePathOfContent:(SJResourcePartialContent *)content {
     return [SJResourceFileManager getContentFilePathWithName:content.name inResource:self.name];
 }
 
-- (SJResourcePartialContent *)newContentWithOffset:(NSUInteger)offset {
+- (SJResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
         NSString *filename = [SJResourceFileManager createContentFileInResource:self.name atOffset:offset];
         SJResourcePartialContent *content = [SJResourcePartialContent.alloc initWithName:filename offset:offset];
         [self.contents addObject:content];
         return content;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+@synthesize totalLength = _totalLength;
+- (void)setTotalLength:(NSUInteger)totalLength {
+    [self lock];
+    @try {
+        if ( _totalLength != totalLength ) {
+            _totalLength = totalLength;
+            [self callbackWithBlock:^{
+                [self.delegate resource:self totalLengthDidChange:totalLength];
+            }];
+        }
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSUInteger)totalLength {
+    [self lock];
+    @try {
+        return _totalLength;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+@synthesize contentType = _contentType;
+- (void)setContentType:(NSString *)contentType {
+    [self lock];
+    @try {
+        if ( ![_contentType isEqualToString:contentType] ) {
+            NSString *type = contentType.copy;
+            _contentType = type;
+            [self callbackWithBlock:^{
+                [self.delegate resource:self contentTypeDidChange:type];
+            }];
+        }
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSString *)contentType {
+    [self lock];
+    @try {
+        return _contentType;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -113,5 +180,11 @@
 
 - (void)unlock {
     dispatch_semaphore_signal(_semaphore);
+}
+
+- (void)callbackWithBlock:(void(^)(void))block {
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        if ( block ) block();
+    });
 }
 @end

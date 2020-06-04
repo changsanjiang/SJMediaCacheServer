@@ -38,7 +38,7 @@
 }
 
 - (NSUInteger)contentLength {
-    return _reader.response.contentLength;
+    return _reader.response.totalLength;
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)length {

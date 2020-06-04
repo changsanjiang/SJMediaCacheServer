@@ -8,6 +8,8 @@
 
 #import "SJResourceManager.h"
 #import "SJResource.h"
+#import "SJResourcePartialContent.h"
+#import "SJResourceFileManager.h"
 #import <SJUIKit/SJSQLite3.h>
 
 @interface SJResource (Private)

@@ -167,30 +167,30 @@
 }
 
 - (void)readerPrepareDidFinish:(id<SJResourceDataReader>)reader {
+    if ( self.isPrepared )
+        return;
+    
     [self lock];
     @try {
-        if ( self.isPrepared == NO ) {
-            
-#warning next .. responseHeader 的保存
-            
-            if      ( self.presetResponseHeaders != nil ) {
-                self.response = [SJResourceResponse.alloc initWithRange:self.request.range allHeaderFields:self.presetResponseHeaders];
-                self.isPrepared = YES;
-            }
-            else if ( [reader isKindOfClass:SJResourceNetworkDataReader.class] ) {
-                SJResourceNetworkDataReader *networkReader = (SJResourceNetworkDataReader *)reader;
-                self.response = [SJResourceResponse.alloc initWithRange:self.request.range allHeaderFields:networkReader.response.responseHeaders];
-                if ( networkReader == self.tmpReader ) {
-                    [self.tmpReader close];
-                    self.tmpReader = nil;
-                }
-                self.isPrepared = YES;
-            }
-            
-            [self callbackWithBlock:^{
-                [self.delegate readerPrepareDidFinish:self];
-            }];
+        if      ( self.presetResponseHeaders != nil ) {
+#warning next ...
+//            self.response = [SJResourceResponse.alloc initWithAllHeaderFields:self.presetResponseHeaders];
+            self.isPrepared = YES;
         }
+        else if ( [reader isKindOfClass:SJResourceNetworkDataReader.class] ) {
+            SJResourceNetworkDataReader *networkReader = (SJResourceNetworkDataReader *)reader;
+            self.response = [SJResourceResponse.alloc initWithResponse:networkReader.response];
+            
+            if ( networkReader == self.tmpReader ) {
+                [self.tmpReader close];
+                self.tmpReader = nil;
+            }
+            self.isPrepared = YES;
+        }
+        
+        [self callbackWithBlock:^{
+            [self.delegate readerPrepareDidFinish:self];
+        }];
     } @catch (__unused NSException *exception) {
         
     } @finally {

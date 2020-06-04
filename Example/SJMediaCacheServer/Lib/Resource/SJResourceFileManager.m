@@ -8,6 +8,7 @@
 
 #import "SJResourceFileManager.h"
 #import <sys/xattr.h>
+#import "SJResource+SJPrivate.h"
 
 static NSString *rootDirectoryPath;
 
