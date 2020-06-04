@@ -52,6 +52,11 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
+#ifdef DEBUG
+        printf("SJResourceFileDataReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_readRange).UTF8String);
+#endif
+
+        
         _isCalledPrepare = YES;
         _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
         [_reader seekToFileOffset:_readRange.location];
@@ -122,7 +127,7 @@
     }
     
 #ifdef DEBUG
-    NSLog(@"[%@ close];", self);
+    printf("SJResourceFileDataReader: <%p>.close;\n", self);
 #endif
 }
 

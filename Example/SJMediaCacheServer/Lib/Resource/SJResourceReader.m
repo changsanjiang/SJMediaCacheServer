@@ -49,6 +49,10 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
+#ifdef DEBUG
+        printf("\nSJResourceReader: <%p>.init { range: %s }];\n", self, NSStringFromRange(_request.range).UTF8String);
+#endif
+        
         _isCalledPrepare = YES;
         
         // 处理 header 丢失的情况
@@ -132,6 +136,10 @@
     } @finally {
         [self unlock];
     }
+    
+#ifdef DEBUG
+    printf("SJResourceReader: <%p>.close;\n\n", self);
+#endif
 }
 
 #pragma mark -

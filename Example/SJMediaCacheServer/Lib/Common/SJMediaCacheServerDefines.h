@@ -73,9 +73,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)resourceWithURL:(NSURL *)URL;
  
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request;
-
-+ (instancetype)new NS_UNAVAILABLE;
-- (instancetype)init NS_UNAVAILABLE;
 @end
 
 NS_ASSUME_NONNULL_END

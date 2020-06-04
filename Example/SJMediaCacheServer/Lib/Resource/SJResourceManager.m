@@ -70,7 +70,7 @@
         if ( _resources[name] == nil ) {
             SJResource *resource = (id)[_sqlite3 objectsForClass:SJResource.class conditions:@[
                 [SJSQLite3Condition conditionWithColumn:@"name" value:name]
-            ] orderBy:nil error:NULL];
+            ] orderBy:nil error:NULL].firstObject;
             if ( resource == nil ) {
                 resource = [SJResource.alloc initWithName:name];
                 [_sqlite3 save:resource error:NULL];

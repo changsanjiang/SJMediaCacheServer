@@ -20,6 +20,10 @@
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) NSMutableArray<SJResourcePartialContent *> *contents;
+
+@property (nonatomic, copy, nullable) NSString *contentType;
+@property (nonatomic, copy, nullable) NSString *server;
+@property (nonatomic) NSUInteger totalLength;
 @end
 
 @implementation SJResource
@@ -27,11 +31,10 @@
     return [SJResourceManager.shared resourceWithURL:URL];
 }
 
-- (instancetype)initWithName:(NSString *)name {
+- (instancetype)init {
     self = [super init];
     if ( self ) {
         _semaphore = dispatch_semaphore_create(1);
-        _name = name.copy;
     }
     return self;
 }
@@ -39,11 +42,6 @@
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request {
     [self lock];
     @try {
-        
-#ifdef DEBUG
-        NSLog(@"[SJResource readDataWithRequest:%@];", request);
-#endif
-        
         // length经常变动, 就在这里排序吧
         __auto_type contents = [_contents sortedArrayUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
             if ( obj1.offset == obj2.offset )
@@ -115,8 +113,7 @@
         [self unlock];
     }
 }
-
-@synthesize totalLength = _totalLength;
+ 
 - (NSUInteger)totalLength {
     [self lock];
     @try {
@@ -127,8 +124,7 @@
         [self unlock];
     }
 }
-
-@synthesize contentType = _contentType;
+ 
 - (NSString *)contentType {
     [self lock];
     @try {
@@ -139,8 +135,7 @@
         [self unlock];
     }
 }
-
-@synthesize server = _server;
+ 
 - (NSString *)server {
     [self lock];
     @try {

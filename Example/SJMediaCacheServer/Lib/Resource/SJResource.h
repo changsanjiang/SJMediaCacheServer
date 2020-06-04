@@ -27,8 +27,5 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly, nullable) NSString *contentType;
 @property (nonatomic, copy, readonly, nullable) NSString *server;
 @property (nonatomic, readonly) NSUInteger totalLength;
-
-+ (instancetype)new NS_UNAVAILABLE;
-- (instancetype)init NS_UNAVAILABLE;
 @end
 NS_ASSUME_NONNULL_END

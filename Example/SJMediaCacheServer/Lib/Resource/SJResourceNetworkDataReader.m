@@ -66,7 +66,9 @@
     @try {
         if ( _isClosed || _isCalledPrepare )
             return;
-        
+#ifdef DEBUG
+        printf("SJResourceNetworkDataReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_range).UTF8String);
+#endif
         _isCalledPrepare = YES;
         NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
         [request setAllHTTPHeaderFields:_requestHeaders];
@@ -156,7 +158,7 @@
     }
      
 #ifdef DEBUG
-    NSLog(@"[%@ close];", self);
+    printf("SJResourceNetworkDataReader: <%p>.close;\n", self);
 #endif
 }
 
