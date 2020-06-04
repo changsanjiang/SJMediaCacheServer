@@ -105,7 +105,7 @@
         
 #ifdef DEBUG
         if ( _offset == _readRange.length ) {
-            printf("SJResourceFileDataReader: <%p>.isDone;\n", self);
+            printf("SJResourceFileDataReader: <%p>.done;\n", self);
         }
 #endif
         return data;

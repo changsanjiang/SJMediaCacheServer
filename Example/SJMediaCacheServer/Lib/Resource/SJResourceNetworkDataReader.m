@@ -128,7 +128,7 @@
                 
 #ifdef DEBUG
                 if ( _offset == _range.length ) {
-                    printf("SJResourceNetworkDataReader: <%p>.isDone;\n", self);
+                    printf("SJResourceNetworkDataReader: <%p>.done;\n", self);
 #endif
                     return data;
                 }
