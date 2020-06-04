@@ -72,6 +72,29 @@
         _isCalledPrepare = YES;
         NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
         [request setAllHTTPHeaderFields:_requestHeaders];
+//
+//        https://tools.ietf.org/html/rfc7233#section-4.1
+//
+//        Additional examples, assuming a representation of length 10000:
+//
+//        o  The final 500 bytes (byte offsets 9500-9999, inclusive):
+//
+//             bytes=-500
+//
+//        Or:
+//
+//             bytes=9500-
+//
+//        o  The first and last bytes only (bytes 0 and 9999):
+//
+//             bytes=0-0,-1
+//
+//        o  Other valid (but not canonical) specifications of the second 500
+//           bytes (byte offsets 500-999, inclusive):
+//
+//             bytes=500-600,601-999
+//             bytes=500-700,601-999
+//
         [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)_range.length - 1] forHTTPHeaderField:@"Range"];
         _task = [SJDownload.shared downloadWithRequest:request delegate:self];
     } @catch (__unused NSException *exception) {
@@ -115,6 +138,9 @@
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
+    if ( self.isDone )
+        return nil;
+
     [self lock];
     @try {
         if ( _isClosed )
@@ -127,6 +153,8 @@
                 _offset += data.length;
                 
 #ifdef DEBUG
+                printf("SJResourceNetworkDataReader: <%p>.read { offset: %lu };\n", self, _offset);
+
                 if ( _offset == _range.length ) {
                     printf("SJResourceNetworkDataReader: <%p>.done;\n", self);
 #endif

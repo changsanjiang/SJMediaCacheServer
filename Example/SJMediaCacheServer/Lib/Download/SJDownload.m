@@ -127,6 +127,9 @@ NSString * const SJContentTypeBinaryOctetStream      = @"binary/octet-stream";
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(NSHTTPURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     [self lock];
+    
+    NSLog(@"%@", response);
+    
 //    SJDataRequest *dataRequest = [self.requestDictionary objectForKey:task];
 //    SJDataResponse *dataResponse = [[SJDataResponse alloc] initWithURL:dataRequest.URL headers:response.allHeaderFields];
     NSError *error = nil;

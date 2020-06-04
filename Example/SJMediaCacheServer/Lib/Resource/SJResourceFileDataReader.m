@@ -94,6 +94,9 @@
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
+    if ( self.isDone )
+        return nil;
+    
     [self lock];
     @try {
         if ( _isClosed )
@@ -104,6 +107,8 @@
         _offset += data.length;
         
 #ifdef DEBUG
+        printf("SJResourceFileDataReader: <%p>.read { offset: %lu };\n", self, _offset);
+        
         if ( _offset == _readRange.length ) {
             printf("SJResourceFileDataReader: <%p>.done;\n", self);
         }
