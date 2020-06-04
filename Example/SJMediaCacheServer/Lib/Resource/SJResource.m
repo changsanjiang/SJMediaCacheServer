@@ -17,11 +17,9 @@
 
 @interface SJResource ()<NSLocking>
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
+@property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) NSMutableArray<SJResourcePartialContent *> *contents;
-
-@property (nonatomic) NSUInteger totalLength;
-@property (nonatomic, copy, nullable) NSString *contentType;
 @end
 
 @implementation SJResource
@@ -47,7 +45,7 @@
 #endif
         
         // length经常变动, 就在这里排序吧
-        __auto_type contents = [self.contents sortedArrayUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
+        __auto_type contents = [_contents sortedArrayUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
             if ( obj1.offset == obj2.offset )
                 return obj1.length >= obj2.length ? NSOrderedAscending : NSOrderedDescending;
             return obj1.offset < obj2.offset ? NSOrderedAscending : NSOrderedDescending;
@@ -68,7 +66,7 @@
 
                 // downloaded part
                 NSRange readRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
-                NSString *path = [SJResourceFileManager getContentFilePathWithName:content.name inResource:self.name];
+                NSString *path = [SJResourceFileManager getContentFilePathWithName:content.name inResource:_name];
                 SJResourceFileDataReader *reader = [SJResourceFileDataReader.alloc initWithPath:path readRange:readRange];
                 [readers addObject:reader];
 
@@ -85,9 +83,12 @@
             [readers addObject:reader];
         }
         
-#warning next ... headers
+        SJResourceResponse *response = nil;
+        if ( _server != nil && _contentType != nil && _totalLength != 0 ) {
+            response = [SJResourceResponse.alloc initWithServer:_server contentType:_contentType totalLength:_totalLength contentRange:request.range];
+        }
         
-        return [SJResourceReader.alloc initWithRequest:request readers:readers presetResponseHeaders:nil];
+        return [SJResourceReader.alloc initWithRequest:request readers:readers presetResponse:response];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -104,9 +105,9 @@
 - (SJResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
-        NSString *filename = [SJResourceFileManager createContentFileInResource:self.name atOffset:offset];
+        NSString *filename = [SJResourceFileManager createContentFileInResource:_name atOffset:offset];
         SJResourcePartialContent *content = [SJResourcePartialContent.alloc initWithName:filename offset:offset];
-        [self.contents addObject:content];
+        [_contents addObject:content];
         return content;
     } @catch (__unused NSException *exception) {
         
@@ -170,7 +171,7 @@
     }
     [self unlock];
     if ( updated ) {
-        [SJResourceManager.shared save:self];
+        [SJResourceManager.shared update:self];
     }
 }
 

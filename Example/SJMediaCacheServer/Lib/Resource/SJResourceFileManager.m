@@ -8,13 +8,10 @@
 
 #import "SJResourceFileManager.h"
 #import <sys/xattr.h>
-#import "SJResource+SJPrivate.h"
-
-static NSString *rootDirectoryPath;
 
 @implementation SJResourceFileManager
-
-+ (void)initialize {
++ (NSString *)rootDirectoryPath {
+    static NSString *rootDirectoryPath;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         rootDirectoryPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"com.SJMediaCacheServer.cache"];
@@ -26,10 +23,15 @@ static NSString *rootDirectoryPath;
             setxattr(filePath, attrName, &attrValue, sizeof(attrValue), 0, 0);
         }
     });
+    return rootDirectoryPath;
 }
 
 + (NSString *)getResourcePathWithName:(NSString *)name {
-    return [rootDirectoryPath stringByAppendingPathComponent:name];
+    return [[self rootDirectoryPath] stringByAppendingPathComponent:name];
+}
+
++ (NSString *)databasePath {
+    return [[self rootDirectoryPath] stringByAppendingPathComponent:@"cache.db"];
 }
 
 + (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)resourceName {

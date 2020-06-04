@@ -17,6 +17,8 @@
 @property (nonatomic, copy) NSString *path;
 @property (nonatomic, strong) NSFileHandle *reader;
 
+@property (nonatomic) NSUInteger offset;
+
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isClosed;
 @end
@@ -39,20 +41,20 @@
 
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
     [self lock];
-    self.delegate = delegate;
-    self.delegateQueue = queue;
+    _delegate = delegate;
+    _delegateQueue = queue;
     [self unlock];
 }
 
 - (void)prepare {
     [self lock];
     @try {
-        if ( self.isClosed || self.isCalledPrepare )
+        if ( _isClosed || _isCalledPrepare )
             return;
         
-        self.isCalledPrepare = YES;
-        self.reader = [NSFileHandle fileHandleForReadingAtPath:self.path];
-        [self.reader seekToFileOffset:self.readRange.location];
+        _isCalledPrepare = YES;
+        _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
+        [_reader seekToFileOffset:_readRange.location];
         
 #ifdef DEBUG
         NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
@@ -67,7 +69,7 @@
 - (NSUInteger)offset {
     [self lock];
     @try {
-        return (NSUInteger)self.reader.offsetInFile - self.readRange.location;
+        return _offset;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -78,7 +80,7 @@
 - (BOOL)isDone {
     [self lock];
     @try {
-        return self.reader.offsetInFile - self.readRange.location == self.readRange.length;
+        return _offset == _readRange.length;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -89,10 +91,12 @@
 - (nullable NSData *)readDataOfLength:(NSUInteger)length {
     [self lock];
     @try {
-        if ( self.isClosed )
+        if ( _isClosed )
             return nil;
         
-        return [self.reader readDataOfLength:length];
+        NSData *data = [_reader readDataOfLength:length];
+        _offset += data.length;
+        return data;
     } @catch (NSException *exception) {
         [self callbackWithBlock:^{
             [self.delegate reader:self anErrorOccurred:[SJError errorForException:exception]];
@@ -105,12 +109,12 @@
 - (void)close {
     [self lock];
     @try {
-        if ( self.isClosed )
+        if ( _isClosed )
             return;
         
-        self.isClosed = YES;
-        [self.reader closeFile];
-        self.reader = nil;
+        _isClosed = YES;
+        [_reader closeFile];
+        _reader = nil;
     } @catch (__unused NSException *exception) {
         
     } @finally {

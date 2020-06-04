@@ -56,22 +56,22 @@
 
 - (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
     [self lock];
-    self.delegate = delegate;
-    self.delegateQueue = queue;
+    _delegate = delegate;
+    _delegateQueue = queue;
     [self unlock];
 }
 
 - (void)prepare {
     [self lock];
     @try {
-        if ( self.isClosed || self.isCalledPrepare )
+        if ( _isClosed || _isCalledPrepare )
             return;
         
-        self.isCalledPrepare = YES;
+        _isCalledPrepare = YES;
         NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
         [request setAllHTTPHeaderFields:_requestHeaders];
         [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)_range.length - 1] forHTTPHeaderField:@"Range"];
-        self.task = [SJDownload.shared downloadWithRequest:request delegate:self];
+        _task = [SJDownload.shared downloadWithRequest:request delegate:self];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -115,13 +115,13 @@
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     [self lock];
     @try {
-        if ( self.isClosed )
+        if ( _isClosed )
             return nil;
         
-        if ( _offset < self.downloadedLength ) {
-            NSUInteger length = MIN(lengthParam, self.downloadedLength - _offset);
+        if ( _offset < _downloadedLength ) {
+            NSUInteger length = MIN(lengthParam, _downloadedLength - _offset);
             if ( length > 0 ) {
-                NSData *data = [self.reader readDataOfLength:length];
+                NSData *data = [_reader readDataOfLength:length];
                 _offset += data.length;
                 return data;
             }
@@ -138,17 +138,17 @@
 - (void)close {
     [self lock];
     @try {
-        if ( self.isClosed )
+        if ( _isClosed )
             return;
         
-        self.isClosed = YES;
-        if ( self.task.state == NSURLSessionTaskStateRunning ) [self.task cancel];
-        self.task = nil;
-        [self.writer synchronizeFile];
-        [self.writer closeFile];
-        self.writer = nil;
-        [self.reader closeFile];
-        self.reader = nil;
+        _isClosed = YES;
+        if ( _task.state == NSURLSessionTaskStateRunning ) [_task cancel];
+        _task = nil;
+        [_writer synchronizeFile];
+        [_writer closeFile];
+        _writer = nil;
+        [_reader closeFile];
+        _reader = nil;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -165,7 +165,7 @@
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
     [self lock];
     @try {
-        if ( self.isClosed )
+        if ( _isClosed )
             return;
         _response = response;
 
@@ -189,12 +189,12 @@
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
     [self lock];
     @try {
-        if ( self.isClosed )
+        if ( _isClosed )
             return;
 
         [_writer writeData:data];
-        self.downloadedLength += data.length;
-        self.content.length += self.downloadedLength;
+        _downloadedLength += data.length;
+        _content.length = _downloadedLength;
         [self callbackWithBlock:^{
             [self.delegate readerHasAvailableData:self];
         }];
@@ -208,7 +208,7 @@
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     [self lock];
     @try {
-        if ( self.isClosed )
+        if ( _isClosed )
             return;
         
         if ( error != nil && error.code != NSURLErrorCancelled ) {

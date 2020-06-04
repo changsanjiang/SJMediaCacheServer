@@ -9,11 +9,12 @@
 #import "SJMediaCacheServerDefines.h"
 #import "SJResourceDefines.h"
 #import "SJDataRequest.h"
+#import "SJResourceResponse.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResourceReader : NSObject<SJResourceReader>
-- (instancetype)initWithRequest:(SJDataRequest *)request readers:(NSArray<id<SJResourceDataReader>> *)readers presetResponseHeaders:(nullable NSDictionary *)headers;
+- (instancetype)initWithRequest:(SJDataRequest *)request readers:(NSArray<id<SJResourceDataReader>> *)readers presetResponse:(nullable SJResourceResponse *)response;
 
 @property (nonatomic, weak, nullable) id<SJResourceReaderDelegate> delegate;
 

@@ -11,6 +11,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResourceFileManager : NSObject
++ (NSString *)rootDirectoryPath;
++ (NSString *)databasePath;
 + (NSString *)getResourcePathWithName:(NSString *)name;
 + (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)resourceName;
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;

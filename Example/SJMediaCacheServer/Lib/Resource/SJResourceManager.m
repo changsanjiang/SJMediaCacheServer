@@ -11,6 +11,7 @@
 #import "SJResourcePartialContent.h"
 #import "SJResourceFileManager.h"
 #import <SJUIKit/SJSQLite3.h>
+#import <SJUIKit/SJSQLite3+QueryExtended.h>
 
 @interface SJResource (Private)
 - (instancetype)initWithName:(NSString *)name;
@@ -18,18 +19,25 @@
 
 #pragma mark -
 
-@interface SJResource (SJResourceManagerExtended)
+@interface SJResource (SJResourceManagerExtended)<SJSQLiteTableModelProtocol>
 
 @end
 
 @implementation SJResource (SJResourceManagerExtended)
++ (NSString *)sql_primaryKey {
+    return @"id";
+}
 
++ (NSArray<NSString *> *)sql_autoincrementlist {
+    return @[@"id"];
+}
 @end
 
 #pragma mark -
 
 @interface SJResourceManager ()<NSLocking>
 @property (nonatomic, strong) NSMutableDictionary<NSString *, SJResource *> *resources;
+@property (nonatomic, strong) SJSQLite3 *sqlite3;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @end
 
@@ -46,9 +54,11 @@
 - (instancetype)init {
     self = [super init];
     if ( self ) {
+        _sqlite3 = [SJSQLite3.alloc initWithDatabasePath:[SJResourceFileManager databasePath]];
+        _convertor = SJURLConvertor.alloc.init;
+        
         _semaphore = dispatch_semaphore_create(1);
         _resources = NSMutableDictionary.dictionary;
-        _convertor = SJURLConvertor.alloc.init;
     }
     return self;
 }
@@ -56,11 +66,18 @@
 - (SJResource *)resourceWithURL:(NSURL *)URL {
     [self lock];
     @try {
-        NSString *name = [self.convertor resourceNameWithURL:URL];
-        if ( self.resources[name] == nil ) {
-            self.resources[name] = [SJResource.alloc initWithName:name];
+        NSString *name = [_convertor resourceNameWithURL:URL];
+        if ( _resources[name] == nil ) {
+            SJResource *resource = (id)[_sqlite3 objectsForClass:SJResource.class conditions:@[
+                [SJSQLite3Condition conditionWithColumn:@"name" value:name]
+            ] orderBy:nil error:NULL];
+            if ( resource == nil ) {
+                resource = [SJResource.alloc initWithName:name];
+                [_sqlite3 save:resource error:NULL];
+            }
+            _resources[name] = resource;
         }
-        return self.resources[name];
+        return _resources[name];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -68,8 +85,8 @@
     }
 }
 
-- (void)save:(SJResource *)resource {
-    
+- (void)update:(SJResource *)resource {
+    [_sqlite3 save:resource error:NULL];
 }
 
 #pragma mark -

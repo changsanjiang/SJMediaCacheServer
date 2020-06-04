@@ -17,8 +17,6 @@
 
 @property (nonatomic, strong) SJDataRequest *request;
 @property (nonatomic, copy) NSArray<id<SJResourceDataReader>> *readers;
-
-@property (nonatomic, copy, nullable) NSDictionary *presetResponseHeaders;
 @property (nonatomic, strong, nullable) id<SJResourceResponse> response;
 
 @property (nonatomic) BOOL isCalledPrepare;
@@ -32,11 +30,11 @@
 @end
 
 @implementation SJResourceReader
-- (instancetype)initWithRequest:(SJDataRequest *)request readers:(NSArray<id<SJResourceDataReader>> *)readers presetResponseHeaders:(NSDictionary *)headers {
+- (instancetype)initWithRequest:(SJDataRequest *)request readers:(NSArray<id<SJResourceDataReader>> *)readers presetResponse:(nullable SJResourceResponse *)response {
     self = [super init];
     if ( self ) {
         _request = request;
-        _presetResponseHeaders = headers.copy;
+        _response = response;
         _delegateQueue = dispatch_get_global_queue(0, 0);
         _semaphore = dispatch_semaphore_create(1);
         _readers = readers.copy;
@@ -48,17 +46,19 @@
 - (void)prepare {
     [self lock];
     @try {
-        if ( self.isClosed || self.isCalledPrepare )
+        if ( _isClosed || _isCalledPrepare )
             return;
         
-        self.isCalledPrepare = YES;
-        [self prepareNextReader];
-        // header丢失
-        if ( self.presetResponseHeaders == nil && ![self.readers.firstObject isKindOfClass:SJResourceNetworkDataReader.class] ) {
-            self.tmpReader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 1)];
-            [self.tmpReader setDelegate:self delegateQueue:self.delegateQueue];
-            [self.tmpReader prepare];
+        _isCalledPrepare = YES;
+        
+        // 处理 header 丢失的情况
+        if ( _response == nil && ![_readers.firstObject isKindOfClass:SJResourceNetworkDataReader.class] ) {
+            _tmpReader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 1)];
+            [_tmpReader setDelegate:self delegateQueue:_delegateQueue];
+            [_tmpReader prepare];
         }
+
+        [self prepareNextReader];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -69,11 +69,11 @@
 - (NSData *)readDataOfLength:(NSUInteger)length {
     [self lock];
     @try {
-        if ( self.isClosed || self.currentIndex == NSNotFound )
+        if ( _isClosed || _currentIndex == NSNotFound )
             return nil;
         
         NSData *data = [self.currentReader readDataOfLength:length];
-        self.offset += data.length;
+        _offset += data.length;
         if ( self.currentReader.isDone )
             [self prepareNextReader];
         return data;
@@ -109,7 +109,7 @@
 - (BOOL)isReadingEndOfData {
     [self lock];
     @try {
-        return self.readers.lastObject.isDone;
+        return _readers.lastObject.isDone;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -120,11 +120,11 @@
 - (void)close {
     [self lock];
     @try {
-        if ( self.isClosed )
+        if ( _isClosed )
             return;
         
-        self.isClosed = YES;
-        for ( id<SJResourceDataReader> reader in self.readers ) {
+        _isClosed = YES;
+        for ( id<SJResourceDataReader> reader in _readers ) {
             [reader close];
         }
     } @catch (__unused NSException *exception) {
@@ -173,27 +173,24 @@
     
     [self lock];
     @try {
-        if      ( self.presetResponseHeaders != nil ) {
-#warning next ...
-//            self.response = [SJResourceResponse.alloc initWithAllHeaderFields:self.presetResponseHeaders];
-            self.isPrepared = YES;
+        if      ( _response != nil ) {
+            _isPrepared = YES;
         }
         else if ( [reader isKindOfClass:SJResourceNetworkDataReader.class] ) {
             SJResourceNetworkDataReader *networkReader = (SJResourceNetworkDataReader *)reader;
-            self.response = [SJResourceResponse.alloc initWithResponse:networkReader.response];
+            _response = [SJResourceResponse.alloc initWithResponse:networkReader.response];
             
-            if ( networkReader == self.tmpReader ) {
-                [self.tmpReader close];
-                self.tmpReader = nil;
+            if ( networkReader == _tmpReader ) {
+                [_tmpReader close];
+                _tmpReader = nil;
             }
-            self.isPrepared = YES;
+            _isPrepared = YES;
+            
+            // update resource
+            SJResource *resource = [SJResource resourceWithURL:_request.URL];
+            [resource setServer:_response.server contentType:_response.contentType totalLength:_response.totalLength];
         }
-        
-        SJResource *resource = [SJResource resourceWithURL:_request.URL];
-        resource.contentType = _response.contentType;
-        resource.totalLength = _response.totalLength;
-        resource.server = _response.server;
-        
+
         [self callbackWithBlock:^{
             [self.delegate readerPrepareDidFinish:self];
         }];
