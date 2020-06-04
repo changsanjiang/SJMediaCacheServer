@@ -50,7 +50,7 @@
             return;
         
 #ifdef DEBUG
-        printf("\nSJResourceReader: <%p>.init { range: %s }];\n", self, NSStringFromRange(_request.range).UTF8String);
+        printf("\nSJResourceReader: <%p>.prepare { range: %s }];\n", self, NSStringFromRange(_request.range).UTF8String);
 #endif
         
         _isCalledPrepare = YES;

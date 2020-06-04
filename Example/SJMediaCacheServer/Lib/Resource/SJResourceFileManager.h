@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SJResourcePartialContent.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)getResourcePathWithName:(NSString *)name;
 + (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)resourceName;
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;
++ (nullable NSArray<SJResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end
 
 NS_ASSUME_NONNULL_END

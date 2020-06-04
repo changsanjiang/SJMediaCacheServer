@@ -205,12 +205,6 @@
 
 - (NSDictionary *)httpHeaders {
     return _response.responseHeaders;
-//    NSMutableDictionary *headers = [self.response.responseHeaders mutableCopy];
-//    [headers removeObjectForKey:@"Content-Range"];
-//    [headers removeObjectForKey:@"content-range"];
-//    [headers removeObjectForKey:@"Content-Length"];
-//    [headers removeObjectForKey:@"content-length"];
-//    return headers;
 }
 
 - (BOOL)delayResponseHeaders {

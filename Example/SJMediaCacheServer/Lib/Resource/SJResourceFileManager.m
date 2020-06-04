@@ -57,4 +57,24 @@
     }
     return nil;
 }
+
++ (NSUInteger)offsetOfContent:(NSString *)name {
+    return [name longLongValue];
+}
+
++ (nullable NSArray<SJResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName {
+    @autoreleasepool {
+        NSString *resourcePath = [self getResourcePathWithName:resourceName];
+        NSMutableArray *m = NSMutableArray.array;
+        [[NSFileManager.defaultManager contentsOfDirectoryAtPath:resourcePath error:NULL] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSString *path = [resourcePath stringByAppendingPathComponent:name];
+            NSUInteger offset = [self offsetOfContent:name];
+            NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL][NSFileSize] longLongValue];
+            __auto_type content = [SJResourcePartialContent.alloc initWithName:name offset:offset length:length];
+            [m addObject:content];
+        }];
+        return m;
+    }
+    return nil;
+}
 @end

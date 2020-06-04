@@ -55,15 +55,13 @@
 #ifdef DEBUG
         printf("SJResourceFileDataReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_readRange).UTF8String);
 #endif
-
-        
         _isCalledPrepare = YES;
         _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
         [_reader seekToFileOffset:_readRange.location];
         
-#ifdef DEBUG
-        NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-#endif
+        [self callbackWithBlock:^{
+            [self.delegate readerPrepareDidFinish:self];
+        }];
     } @catch (__unused NSException *exception) {
         
     } @finally {

@@ -34,6 +34,7 @@
 - (instancetype)init {
     self = [super init];
     if ( self ) {
+        _contents = NSMutableArray.array;
         _semaphore = dispatch_semaphore_create(1);
     }
     return self;
@@ -94,7 +95,15 @@
     }
 }
 
-#pragma mark - 
+#pragma mark -
+
+- (void)addContents:(nullable NSMutableArray<SJResourcePartialContent *> *)contents {
+    if ( contents.count != 0 ) {
+        [self lock];
+        [_contents addObjectsFromArray:contents];
+        [self unlock];
+    }
+}
 
 - (NSString *)filePathOfContent:(SJResourcePartialContent *)content {
     return [SJResourceFileManager getContentFilePathWithName:content.name inResource:self.name];

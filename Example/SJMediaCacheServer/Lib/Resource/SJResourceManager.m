@@ -8,6 +8,7 @@
 
 #import "SJResourceManager.h"
 #import "SJResource.h"
+#import "SJResource+SJPrivate.h"
 #import "SJResourcePartialContent.h"
 #import "SJResourceFileManager.h"
 #import <SJUIKit/SJSQLite3.h>
@@ -75,6 +76,7 @@
                 resource = [SJResource.alloc initWithName:name];
                 [_sqlite3 save:resource error:NULL];
             }
+            [resource addContents:[SJResourceFileManager getContentsInResource:name]];
             _resources[name] = resource;
         }
         return _resources[name];
