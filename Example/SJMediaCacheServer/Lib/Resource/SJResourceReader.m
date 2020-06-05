@@ -61,13 +61,16 @@
             return;
          
 #ifdef DEBUG
-        printf("\nSJResourceReader: <%p>.prepare { range: %s }];\n", self, NSStringFromRange(_request.range).UTF8String);
+        printf("\nSJResourceReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_request.range).UTF8String);
 #endif
         
         _isCalledPrepare = YES;
         
         if ( _resource.totalLength == 0 || _resource.contentType.length == 0 ) {
-            _tmpReader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 1) totalLength:NSNotFound];
+            _tmpReader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 2) totalLength:NSNotFound];
+#ifdef DEBUG
+            printf("SJResourceReader: <%p>.createTmpReader: <%p>;\n", self, _tmpReader);
+#endif
             [_tmpReader setDelegate:self delegateQueue:_delegateQueue];
             [_tmpReader prepare];
         }
@@ -176,7 +179,7 @@
     else if ( current.location != NSNotFound && current.length == NSNotFound ) {
         current.length = totalLength - current.location;
     }
-    else {
+    else if ( current.location == NSNotFound && current.length == NSNotFound ) {
         current.location = 0;
         current.length = totalLength;
     }
@@ -216,7 +219,7 @@
     _readers = readers.copy;
     
 #ifdef DEBUG
-    printf("\nSJResourceReader: <%p>.createSubreaders { range: %s, count: %lu }];\n", self, NSStringFromRange(_request.range).UTF8String, _readers.count);
+    printf("SJResourceReader: <%p>.createSubreaders { range: %s, count: %lu };\n", self, NSStringFromRange(_request.range).UTF8String, _readers.count);
 #endif
 }
 

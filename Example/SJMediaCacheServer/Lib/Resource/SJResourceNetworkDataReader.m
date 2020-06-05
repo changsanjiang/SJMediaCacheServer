@@ -97,12 +97,12 @@
 //             bytes=500-600,601-999
 //             bytes=500-700,601-999
 //
-//        if ( _totalLength == NSMaxRange(_range) ) {
-//            [request setValue:[NSString stringWithFormat:@"bytes=%lu-", (unsigned long)_range.location] forHTTPHeaderField:@"Range"];
-//        }
-//        else {
+        if ( _totalLength == NSMaxRange(_range) ) {
+            [request setValue:[NSString stringWithFormat:@"bytes=%lu-", (unsigned long)_range.location] forHTTPHeaderField:@"Range"];
+        }
+        else {
             [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
-//        }
+        }
         _task = [SJDownload.shared downloadWithRequest:request delegate:self];
     } @catch (__unused NSException *exception) {
         
