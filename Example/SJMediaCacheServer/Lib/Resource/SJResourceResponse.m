@@ -22,10 +22,10 @@
             @"Server" : server ?: @"localhost",
             @"Content-Type" : contentType ?: @"",
             @"Accept-Ranges" : @"bytes",
+            
+            @"Content-Length" : [NSString stringWithFormat:@"%lu", (unsigned long)contentRange.length],
+            @"Content-Range" : [NSString stringWithFormat:@"bytes %lu-%lu/%lu", (unsigned long)contentRange.location, (unsigned long)NSMaxRange(contentRange) - 1, (unsigned long)totalLength],
         };
-
-//            @"Content-Length" : @(totalLength),
-//            @"Content-Range" : [NSString stringWithFormat:@"bytes %lu-%lu/%lu", (unsigned long)_contentRange.location, (unsigned long)_contentRange.length - 1, (unsigned long)totalLength],
 
         _server = server.copy;
         _contentType = contentType.copy;
