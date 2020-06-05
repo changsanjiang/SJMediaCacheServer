@@ -154,7 +154,7 @@
     }
     
 #ifdef DEBUG
-    printf("SJResourceReader: <%p>.close;\n", self);
+    printf("SJResourceReader: <%p>.close { range: %s };\n", self, NSStringFromRange(_request.range).UTF8String);
 #endif
 }
 
