@@ -153,24 +153,24 @@
         if ( _isClosed )
             return nil;
         
+        NSData *data = nil;
+        
         if ( _offset < _downloadedLength ) {
             NSUInteger length = MIN(lengthParam, _downloadedLength - _offset);
             if ( length > 0 ) {
-                NSData *data = [_reader readDataOfLength:length];
+                data = [_reader readDataOfLength:length];
                 _offset += data.length;
                 
 #ifdef DEBUG
                 printf("SJResourceNetworkDataReader: <%p>.read { offset: %lu };\n", self, _offset);
-
                 if ( _offset == _range.length ) {
                     printf("SJResourceNetworkDataReader: <%p>.done;\n", self);
-#endif
-                    return data;
                 }
+#endif
             }
         }
         
-        return nil;
+        return data;
     } @catch (NSException *exception) {
         [self _onError:[SJError errorForException:exception]];
     } @finally {
