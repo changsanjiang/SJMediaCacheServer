@@ -110,7 +110,7 @@
         printf("SJResourceFileDataReader: <%p>.read { offset: %lu };\n", self, _offset);
         
         if ( _offset == _readRange.length ) {
-            printf("SJResourceFileDataReader: <%p>.done;\n", self);
+            printf("SJResourceFileDataReader: <%p>.done { range: %s };\n", self, NSStringFromRange(_range).UTF8String);
         }
 #endif
         return data;

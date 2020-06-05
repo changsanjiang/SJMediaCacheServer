@@ -164,7 +164,7 @@
 #ifdef DEBUG
                 printf("SJResourceNetworkDataReader: <%p>.read { offset: %lu };\n", self, _offset);
                 if ( _offset == _range.length ) {
-                    printf("SJResourceNetworkDataReader: <%p>.done;\n", self);
+                    printf("SJResourceNetworkDataReader: <%p>.done { range: %s };\n", self, NSStringFromRange(_range).UTF8String);
                 }
 #endif
             }

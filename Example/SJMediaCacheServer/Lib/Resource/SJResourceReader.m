@@ -50,7 +50,7 @@
 
 - (void)dealloc {
 #ifdef DEBUG
-    printf("SJResourceReader: <%p>.dealloc;\n\n", self);
+    printf("SJResourceReader: <%p>.dealloc;\n", self);
 #endif
 }
 
@@ -61,7 +61,7 @@
             return;
          
 #ifdef DEBUG
-        printf("\nSJResourceReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_request.range).UTF8String);
+        printf("SJResourceReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_request.range).UTF8String);
 #endif
         
         _isCalledPrepare = YES;
@@ -154,7 +154,7 @@
     }
     
 #ifdef DEBUG
-    printf("SJResourceReader: <%p>.close;\n\n", self);
+    printf("SJResourceReader: <%p>.close;\n", self);
 #endif
 }
 
@@ -163,7 +163,7 @@
 - (void)_createSubreaders {
     NSAssert(_response != nil, @"`response`不能为`nil`!");
      
-    // `length`经常变动, 就在这里排序吧
+    // `length`经常变动, 暂时这里排序吧
     __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
         if ( obj1.offset == obj2.offset )
             return obj1.length >= obj2.length ? NSOrderedAscending : NSOrderedDescending;

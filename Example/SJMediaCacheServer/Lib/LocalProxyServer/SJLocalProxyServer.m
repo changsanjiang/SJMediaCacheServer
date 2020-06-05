@@ -149,6 +149,9 @@
 
 @implementation SJHTTPConnection
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
+#ifdef DEBUG
+    printf("\nSJHTTPConnection: <%p>.response { URI: %s, method: %s };\n", self, path.UTF8String, method.UTF8String);
+#endif
     return [SJHTTPResponse.alloc initWithConnection:self];
 }
 
@@ -158,6 +161,12 @@
 
 - (SJLocalProxyServer *)sj_server {
     return config.server.sj_server;
+}
+
+- (void)dealloc {
+#ifdef DEBUG
+    printf("SJHTTPConnection: <%p>.dealloc;\n\n", self);
+#endif
 }
 @end
 
