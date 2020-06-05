@@ -29,6 +29,7 @@
 		7729D83E2486201300462899 /* SJDataResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D83D2486201300462899 /* SJDataResponse.m */; };
 		7729D84A248657DE00462899 /* SJURLConvertor.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D849248657DE00462899 /* SJURLConvertor.m */; };
 		774AB9312487B44C0049CAC3 /* SJResourceFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 774AB92F2487B44C0049CAC3 /* SJResourceFileManager.m */; };
+		77785CEF248A112E00543F1B /* SJUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 77785CEE248A112E00543F1B /* SJUtils.m */; };
 		77A4BBEC2488901A0007836D /* SJResourceResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 77A4BBEB2488901A0007836D /* SJResourceResponse.m */; };
 		77CC43E92487487F006C5B45 /* SJDownload.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43E72487487F006C5B45 /* SJDownload.m */; };
 		77CC43ED24875150006C5B45 /* SJError.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43EB24875150006C5B45 /* SJError.m */; };
@@ -89,6 +90,8 @@
 		7729D849248657DE00462899 /* SJURLConvertor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJURLConvertor.m; sourceTree = "<group>"; };
 		774AB92F2487B44C0049CAC3 /* SJResourceFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SJResourceFileManager.m; sourceTree = "<group>"; };
 		774AB9302487B44C0049CAC3 /* SJResourceFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SJResourceFileManager.h; sourceTree = "<group>"; };
+		77785CED248A112E00543F1B /* SJUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJUtils.h; sourceTree = "<group>"; };
+		77785CEE248A112E00543F1B /* SJUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJUtils.m; sourceTree = "<group>"; };
 		77A4BBEA2488901A0007836D /* SJResourceResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJResourceResponse.h; sourceTree = "<group>"; };
 		77A4BBEB2488901A0007836D /* SJResourceResponse.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJResourceResponse.m; sourceTree = "<group>"; };
 		77A4BBEF2488BFB80007836D /* SJResource+SJPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SJResource+SJPrivate.h"; sourceTree = "<group>"; };
@@ -293,6 +296,8 @@
 				7729D849248657DE00462899 /* SJURLConvertor.m */,
 				77CC43EC24875150006C5B45 /* SJError.h */,
 				77CC43EB24875150006C5B45 /* SJError.m */,
+				77785CED248A112E00543F1B /* SJUtils.h */,
+				77785CEE248A112E00543F1B /* SJUtils.m */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -487,6 +492,7 @@
 				77D25D7E24877E6A00BB1B1A /* SJResourceNetworkDataReader.m in Sources */,
 				7729D8382486174C00462899 /* SJResource.m in Sources */,
 				77CC440424877BAE006C5B45 /* SJDataRequest.m in Sources */,
+				77785CEF248A112E00543F1B /* SJUtils.m in Sources */,
 				774AB9312487B44C0049CAC3 /* SJResourceFileManager.m in Sources */,
 				77CC43ED24875150006C5B45 /* SJError.m in Sources */,
 				770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */,

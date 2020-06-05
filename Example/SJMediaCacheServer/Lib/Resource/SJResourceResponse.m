@@ -7,18 +7,12 @@
 //
 
 #import "SJResourceResponse.h"
+#import "SJUtils.h"
 
 @implementation SJResourceResponse
 - (instancetype)initWithResponse:(NSHTTPURLResponse *)response {
-    NSDictionary *responseHeaders = response.allHeaderFields;
-    NSString *bytes = responseHeaders[@"Content-Range"];
-    NSString *prefix = @"bytes ";
-    NSString *rangeString = [bytes substringWithRange:NSMakeRange(prefix.length, bytes.length - prefix.length)];
-    NSArray<NSString *> *components = [rangeString componentsSeparatedByString:@"-"];
-    NSUInteger location = (NSUInteger)[components.firstObject longLongValue];
-    NSUInteger length = (NSUInteger)[components.lastObject longLongValue] - location + 1;
-    NSUInteger totalLength = (NSUInteger)[components.lastObject.lastPathComponent longLongValue];
-    return [self initWithServer:responseHeaders[@"Server"] contentType:responseHeaders[@"Content-Type"] totalLength:totalLength contentRange:NSMakeRange(location, length)];
+    SJResponseContentRange contentRange = SJGetResponseContentRange(response);
+    return [self initWithServer:SJGetResponseServer(response) contentType:SJGetResponseContentType(response) totalLength:contentRange.totalLength contentRange:SJGetResponseNSRange(contentRange)];
 }
 
 - (instancetype)initWithServer:(NSString *)server contentType:(NSString *)contentType totalLength:(NSUInteger)totalLength contentRange:(NSRange)contentRange {

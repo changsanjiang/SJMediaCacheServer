@@ -12,7 +12,7 @@ NSString * const SJErrorUserInfoKeyURL      = @"SJErrorUserInfoKeyURL";
 NSString * const SJErrorUserInfoKeyRequest  = @"SJErrorUserInfoKeyRequest";
 NSString * const SJErrorUserInfoKeyResponse = @"SJErrorUserInfoKeyResponse";
 
-NSErrorDomain const SJErrorDomain    = @"SJMediaCacheServer error";
+NSErrorDomain const SJErrorDomain           = @"SJMediaCacheServer error";
 
 @implementation SJError
 
@@ -36,9 +36,9 @@ NSErrorDomain const SJErrorDomain    = @"SJMediaCacheServer error";
     return error;
 }
 
-+ (NSError *)errorForUnsupportContentType:(NSURL *)URL
-                                  request:(NSURLRequest *)request
-                                 response:(NSURLResponse *)response
++ (NSError *)errorForNonsupportContentType:(NSURL *)URL
+                                   request:(NSURLRequest *)request
+                                  response:(NSURLResponse *)response
 {
     NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
     if (URL) {
@@ -51,7 +51,7 @@ NSErrorDomain const SJErrorDomain    = @"SJMediaCacheServer error";
         [userInfo setObject:response forKey:SJErrorUserInfoKeyResponse];
     }
     NSError *error = [NSError errorWithDomain:SJErrorDomain
-                                         code:SJErrorCodeUnsupportContentType
+                                         code:SJErrorCodeNonsupportContentType
                                      userInfo:userInfo];
     return error;
 }

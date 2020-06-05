@@ -8,21 +8,15 @@
 
 #import "SJDownload.h"
 #import "SJError.h"
-
-NSString * const SJContentTypeVideo                  = @"video/";
-NSString * const SJContentTypeAudio                  = @"audio/";
-NSString * const SJContentTypeApplicationMPEG4       = @"application/mp4";
-NSString * const SJContentTypeApplicationOctetStream = @"application/octet-stream";
-NSString * const SJContentTypeBinaryOctetStream      = @"binary/octet-stream";
+#import "SJUtils.h"
 
 @interface SJDownload () <NSURLSessionDataDelegate, NSLocking>
-@property (nonatomic, strong) NSLock *coreLock;
+@property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @property (nonatomic, strong) NSURLSession *session;
 @property (nonatomic, strong) NSOperationQueue *sessionDelegateQueue;
 @property (nonatomic, strong) NSURLSessionConfiguration *sessionConfiguration;
-@property (nonatomic, strong) NSMutableDictionary<NSURLSessionTask *, NSError *> *errorDictionary;
-@property (nonatomic, strong) NSMutableDictionary<NSURLSessionTask *, NSURLRequest *> *requestDictionary;
-@property (nonatomic, strong) NSMutableDictionary<NSURLSessionTask *, id<SJDownloadTaskDelegate>> *delegateDictionary;
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSError *> *errorDictionary;
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, id<SJDownloadTaskDelegate>> *delegateDictionary;
 @property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
 @end
 
@@ -38,24 +32,17 @@ NSString * const SJContentTypeBinaryOctetStream      = @"binary/octet-stream";
 
 - (instancetype)init {
     if (self = [super init]) {
-        self.timeoutInterval = 30.0f;
-        self.backgroundTask = UIBackgroundTaskInvalid;
-        self.errorDictionary = [NSMutableDictionary dictionary];
-        self.requestDictionary = [NSMutableDictionary dictionary];
-        self.delegateDictionary = [NSMutableDictionary dictionary];
-        self.sessionDelegateQueue = [[NSOperationQueue alloc] init];
-        self.sessionDelegateQueue.qualityOfService = NSQualityOfServiceUserInteractive;
-        self.sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
-        self.sessionConfiguration.timeoutIntervalForRequest = self.timeoutInterval;
-        self.sessionConfiguration.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
-        self.session = [NSURLSession sessionWithConfiguration:self.sessionConfiguration
-                                                     delegate:self
-                                                delegateQueue:self.sessionDelegateQueue];
-        self.acceptableContentTypes = @[SJContentTypeVideo,
-                                        SJContentTypeAudio,
-                                        SJContentTypeApplicationMPEG4,
-                                        SJContentTypeApplicationOctetStream,
-                                        SJContentTypeBinaryOctetStream];
+        _semaphore = dispatch_semaphore_create(1);
+        _timeoutInterval = 30.0f;
+        _backgroundTask = UIBackgroundTaskInvalid;
+        _errorDictionary = [NSMutableDictionary dictionary];
+        _delegateDictionary = [NSMutableDictionary dictionary];
+        _sessionDelegateQueue = [[NSOperationQueue alloc] init];
+        _sessionDelegateQueue.qualityOfService = NSQualityOfServiceUserInteractive;
+        _sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+        _sessionConfiguration.timeoutIntervalForRequest = _timeoutInterval;
+        _sessionConfiguration.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
+        _session = [NSURLSession sessionWithConfiguration:_sessionConfiguration delegate:self delegateQueue:_sessionDelegateQueue];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidEnterBackground:)
                                                      name:UIApplicationDidEnterBackgroundNotification
@@ -72,124 +59,104 @@ NSString * const SJContentTypeBinaryOctetStream      = @"binary/octet-stream";
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (NSArray<NSString *> *)availableHeaderKeys {
-    static NSArray<NSString *> *obj = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        obj = @[@"User-Agent",
-                @"Connection",
-                @"Accept",
-                @"Accept-Encoding",
-                @"Accept-Language",
-                @"Range"];
-    });
-    return obj;
-}
-
-- (NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)request delegate:(id<SJDownloadTaskDelegate>)delegate {
+- (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)requestParam delegate:(id<SJDownloadTaskDelegate>)delegate {
     [self lock];
-    NSMutableURLRequest *mRequest = [NSMutableURLRequest requestWithURL:request.URL];
-    mRequest.timeoutInterval = self.timeoutInterval;
-    mRequest.cachePolicy = NSURLRequestReloadIgnoringCacheData;
-    [request.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *obj, BOOL *stop) {
-        if ([self.availableHeaderKeys containsObject:key] ||
-            [self.whitelistHeaderKeys containsObject:key]) {
-            [mRequest setValue:obj forHTTPHeaderField:key];
-        }
-    }];
-    [self.additionalHeaders enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *obj, BOOL *stop) {
-        [mRequest setValue:obj forHTTPHeaderField:key];
-    }];
-    NSURLSessionDataTask *task = [self.session dataTaskWithRequest:mRequest];
-    [self.requestDictionary setObject:request forKey:task];
-    [self.delegateDictionary setObject:delegate forKey:task];
-    task.priority = 1.0;
-    [task resume];
-    [self unlock];
-    return task;
+    @try {
+        NSURLRequest *request = requestParam;
+        if ( _requestHandler != nil )
+            request = _requestHandler(request);
+        
+        if ( request == nil )
+            return nil;
+        
+        NSMutableURLRequest *m = [request mutableCopy];
+        m.cachePolicy = NSURLRequestReloadIgnoringCacheData;
+        m.timeoutInterval = _timeoutInterval;
+        
+        NSURLSessionDataTask *task = [_session dataTaskWithRequest:m];
+        _delegateDictionary[@(task.taskIdentifier)] = delegate;
+        task.priority = 1.0;
+        [task resume];
+        return task;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     [self lock];
-    if ([self.errorDictionary objectForKey:task]) {
-        error = [self.errorDictionary objectForKey:task];
+    @try {
+        NSNumber *key = @(task.taskIdentifier);
+        if ( _errorDictionary[key] != nil )
+            error = _errorDictionary[key];
+        
+        __auto_type delegate = _delegateDictionary[key];
+        [delegate downloadTask:task didCompleteWithError:error];
+        
+        _delegateDictionary[key] = nil;
+        _errorDictionary[key] = nil;
+        
+        if ( _delegateDictionary.count == 0 )
+            [self endBackgroundTaskDelay];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
     }
-    id<SJDownloadTaskDelegate> delegate = [self.delegateDictionary objectForKey:task];
-    [delegate downloadTask:task didCompleteWithError:error];
-    [self.delegateDictionary removeObjectForKey:task];
-    [self.requestDictionary removeObjectForKey:task];
-    [self.errorDictionary removeObjectForKey:task];
-    if (self.delegateDictionary.count <= 0) {
-        [self endBackgroundTaskDelay];
-    }
-    [self unlock];
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(NSHTTPURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     [self lock];
-    
-    NSLog(@"%@", response);
-    
-//    SJDataRequest *dataRequest = [self.requestDictionary objectForKey:task];
-//    SJDataResponse *dataResponse = [[SJDataResponse alloc] initWithURL:dataRequest.URL headers:response.allHeaderFields];
-    NSError *error = nil;
-    if (!error) {
-        if (response.statusCode > 400) {
+    @try {
+        NSError *error = nil;
+        if ( response.statusCode != 206 ) {
             error = [SJError errorForResponseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
         }
+        
+        NSRange requestRange = SJGetRequestNSRange(SJGetRequestContentRange(task.currentRequest.allHTTPHeaderFields));
+        NSRange responseRange = SJGetResponseNSRange(SJGetResponseContentRange(response));
+        
+        if ( !SJNSRangeIsUndefined(requestRange) ) {
+            if ( SJNSRangeIsUndefined(responseRange) || !NSEqualRanges(requestRange, responseRange) ) {
+                error = [SJError errorForNonsupportContentType:task.currentRequest.URL request:task.currentRequest response:task.response];
+            }
+        }
+
+#warning next ...
+        //    if (!error) {
+        //        long long (^getDeletionLength)(long long) = ^(long long desireLength){
+        //            return desireLength + [SJDataStorage storage].totalCacheLength - [SJDataStorage storage].maxCacheLength;
+        //        };
+        //        long long length = getDeletionLength(dataResponse.contentLength);
+        //        if (length > 0) {
+        //            [[SJDataUnitPool pool] deleteUnitsWithLength:length];
+        //            length = getDeletionLength(dataResponse.contentLength);
+        //            if (length > 0) {
+        //                error = [SJError errorForNotEnoughDiskSpace:dataResponse.totalLength
+        //                                                       request:dataResponse.contentLength
+        //                                              totalCacheLength:[SJDataStorage storage].totalCacheLength
+        //                                                maxCacheLength:[SJDataStorage storage].maxCacheLength];
+        //            }
+        //        }
+        //    }
+        
+        NSNumber *key = @(task.taskIdentifier);
+        if ( error == nil ) {
+            id<SJDownloadTaskDelegate> delegate = _delegateDictionary[key];
+            [delegate downloadTask:task didReceiveResponse:response];
+            completionHandler(NSURLSessionResponseAllow);
+        }
+        else {
+            _errorDictionary[key] = error;
+            completionHandler(NSURLSessionResponseCancel);
+        }
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
     }
-//    if (!error) {
-//        BOOL vaild = NO;
-//        if (dataResponse.contentType.length > 0) {
-//            for (NSString *obj in self.acceptableContentTypes) {
-//                if ([[dataResponse.contentType lowercaseString] containsString:[obj lowercaseString]]) {
-//                    vaild = YES;
-//                }
-//            }
-//            if (!vaild && self.unacceptableContentTypeDisposer) {
-//                vaild = self.unacceptableContentTypeDisposer(dataRequest.URL, dataResponse.contentType);
-//            }
-//        }
-//        if (!vaild) {
-//            error = [SJError errorForUnsupportContentType:task.currentRequest.URL
-//                                                     request:task.currentRequest
-//                                                    response:task.response];
-//        }
-//    }
-//    if (!error) {
-//        if (dataResponse.contentLength <= 0 ||
-//            (!SJRangeIsFull(dataRequest.range) &&
-//             (dataResponse.contentLength != SJRangeGetLength(dataRequest.range)))) {
-//                error = [SJError errorForUnsupportContentType:task.currentRequest.URL
-//                                                         request:task.currentRequest
-//                                                        response:task.response];
-//            }
-//    }
-//    if (!error) {
-//        long long (^getDeletionLength)(long long) = ^(long long desireLength){
-//            return desireLength + [SJDataStorage storage].totalCacheLength - [SJDataStorage storage].maxCacheLength;
-//        };
-//        long long length = getDeletionLength(dataResponse.contentLength);
-//        if (length > 0) {
-//            [[SJDataUnitPool pool] deleteUnitsWithLength:length];
-//            length = getDeletionLength(dataResponse.contentLength);
-//            if (length > 0) {
-//                error = [SJError errorForNotEnoughDiskSpace:dataResponse.totalLength
-//                                                       request:dataResponse.contentLength
-//                                              totalCacheLength:[SJDataStorage storage].totalCacheLength
-//                                                maxCacheLength:[SJDataStorage storage].maxCacheLength];
-//            }
-//        }
-//    }
-    if ( error ) {
-        [self.errorDictionary setObject:error forKey:task];
-        completionHandler(NSURLSessionResponseCancel);
-    } else {
-        id<SJDownloadTaskDelegate> delegate = [self.delegateDictionary objectForKey:task];
-        [delegate downloadTask:task didReceiveResponse:response];
-        completionHandler(NSURLSessionResponseAllow);
-    }
-    [self unlock];
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
@@ -200,56 +167,70 @@ NSString * const SJContentTypeBinaryOctetStream      = @"binary/octet-stream";
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
     [self lock];
-    id<SJDownloadTaskDelegate> delegate = [self.delegateDictionary objectForKey:dataTask];
-    [delegate downloadTask:dataTask didReceiveData:data];
-    [self unlock];
+    @try {
+        NSNumber *key = @(dataTask.taskIdentifier);
+        __auto_type delegate = _delegateDictionary[key];
+        [delegate downloadTask:dataTask didReceiveData:data];
+    } @catch (__unused NSException *exception) {
+            
+    } @finally {
+        [self unlock];
+    }
 }
 
+#pragma mark -
+
 - (void)lock {
-    if (!self.coreLock) {
-        self.coreLock = [[NSLock alloc] init];
-    }
-    [self.coreLock lock];
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
 }
 
 - (void)unlock {
-    [self.coreLock unlock];
+    dispatch_semaphore_signal(_semaphore);
 }
 
 #pragma mark - Background Task
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification {
     [self lock];
-    if (self.delegateDictionary.count > 0) {
-        [self beginBackgroundTask];
+    @try {
+        if ( _delegateDictionary.count > 0 )
+            [self beginBackgroundTask];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
     }
-    [self unlock];
 }
 
 - (void)applicationWillEnterForeground:(NSNotification *)notification {
     [self endBackgroundTask];
 }
 
+- (void)endBackgroundTaskDelay {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self lock];
+        @try {
+            if ( _delegateDictionary.count == 0 )
+                [self endBackgroundTask];
+        } @catch (__unused NSException *exception) {
+            
+        } @finally {
+            [self unlock];
+        }
+    });
+}
+
 - (void)beginBackgroundTask {
-    self.backgroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+    _backgroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
         [self endBackgroundTask];
     }];
 }
 
 - (void)endBackgroundTask {
-    if (self.backgroundTask != UIBackgroundTaskInvalid) {
-        [[UIApplication sharedApplication] endBackgroundTask:self.backgroundTask];
-        self.backgroundTask = UIBackgroundTaskInvalid;
+    if ( _backgroundTask != UIBackgroundTaskInvalid ) {
+        [UIApplication.sharedApplication endBackgroundTask:_backgroundTask];
+        _backgroundTask = UIBackgroundTaskInvalid;
     }
 }
 
-- (void)endBackgroundTaskDelay {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self lock];
-        if (self.delegateDictionary.count <= 0) {
-            [self endBackgroundTask];
-        }
-        [self unlock];
-    });
-}
 @end
