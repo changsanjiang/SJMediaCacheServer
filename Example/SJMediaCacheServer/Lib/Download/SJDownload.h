@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) NSTimeInterval timeoutInterval;
 
-@property (nonatomic, copy, nullable) NSURLRequest *_Nullable(^requestHandler)(NSURLRequest *request);
+@property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request);
 
 - (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)request delegate:(id<SJDownloadTaskDelegate>)delegate;
 

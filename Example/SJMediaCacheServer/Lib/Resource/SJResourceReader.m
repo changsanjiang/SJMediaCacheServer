@@ -13,9 +13,7 @@
 #import "SJResourceFileManager.h"
 #import "SJResourceFileDataReader.h"
 #import "SJResourceNetworkDataReader.h"
-
-#warning next .. 文件大小是0的时候, 报错!
-
+ 
 @interface SJResourceReader ()<NSLocking, SJResourceDataReaderDelegate>
 @property (nonatomic, strong) dispatch_queue_t delegateQueue;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
@@ -169,7 +167,6 @@
         return obj1.offset < obj2.offset ? NSOrderedAscending : NSOrderedDescending;
     }];
     
-    NSMutableArray<id<SJResourceDataReader>> *readers = NSMutableArray.array;
     NSRange current = _request.range;
     NSUInteger totalLength = _response.totalLength;
     // bytes=-500
@@ -184,6 +181,7 @@
         current.length = totalLength;
     }
     
+    NSMutableArray<id<SJResourceDataReader>> *readers = NSMutableArray.array;
     for ( SJResourcePartialContent *content in contents ) {
         NSRange available = NSMakeRange(content.offset, content.length);
         NSRange intersection = NSIntersectionRange(current, available);

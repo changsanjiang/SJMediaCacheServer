@@ -59,21 +59,38 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (NSArray<NSString *> *)availableHeaderKeys {
+    static NSArray<NSString *> *obj = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        obj = @[@"User-Agent",
+                @"Connection",
+                @"Accept",
+                @"Accept-Encoding",
+                @"Accept-Language",
+                @"Range"];
+    });
+    return obj;
+}
+ 
 - (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)requestParam delegate:(id<SJDownloadTaskDelegate>)delegate {
     [self lock];
     @try {
-        NSURLRequest *request = requestParam;
+        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:requestParam.URL cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:_timeoutInterval];
+        __auto_type availableHeaderKeys = self.availableHeaderKeys;
+        [requestParam.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+            if ( [availableHeaderKeys containsObject:key] ) {
+                [request setValue:obj forHTTPHeaderField:key];
+            }
+        }];
+        
         if ( _requestHandler != nil )
             request = _requestHandler(request);
         
         if ( request == nil )
             return nil;
         
-        NSMutableURLRequest *m = [request mutableCopy];
-        m.cachePolicy = NSURLRequestReloadIgnoringCacheData;
-        m.timeoutInterval = _timeoutInterval;
-        
-        NSURLSessionDataTask *task = [_session dataTaskWithRequest:m];
+        NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
         _delegateDictionary[@(task.taskIdentifier)] = delegate;
         task.priority = 1.0;
         [task resume];
