@@ -10,11 +10,12 @@
 #import "SJResourceDefines.h"
 #import "SJDataRequest.h"
 #import "SJResourceResponse.h"
+@class SJResource;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJResourceReader : NSObject<SJResourceReader>
-- (instancetype)initWithRequest:(SJDataRequest *)request readers:(NSArray<id<SJResourceDataReader>> *)readers presetResponse:(nullable SJResourceResponse *)response;
+- (instancetype)initWithResource:(__weak SJResource *)resource request:(SJDataRequest *)request;
 
 @property (nonatomic, weak, nullable) id<SJResourceReaderDelegate> delegate;
 

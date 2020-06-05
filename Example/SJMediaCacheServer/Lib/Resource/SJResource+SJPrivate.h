@@ -8,14 +8,14 @@
 
 #import "SJResource.h"
 
-NS_ASSUME_NONNULL_BEGIN
+// 私有方法, 请勿使用
 
+NS_ASSUME_NONNULL_BEGIN
 @interface SJResource (SJPrivate)
+- (instancetype)initWithName:(NSString *)name;
 @property (nonatomic) NSInteger id;
+@property (nonatomic, strong) NSMutableArray<SJResourcePartialContent *> *contents;
 - (void)setServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength;
 - (void)addContents:(nullable NSArray<SJResourcePartialContent *> *)contents;
-
-- (instancetype)initWithName:(NSString *)name;
 @end
-
 NS_ASSUME_NONNULL_END

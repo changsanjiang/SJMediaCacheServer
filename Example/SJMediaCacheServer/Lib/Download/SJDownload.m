@@ -85,46 +85,39 @@
     }
 }
 
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
     [self lock];
-    @try {
-        NSNumber *key = @(task.taskIdentifier);
-        if ( _errorDictionary[key] != nil )
-            error = _errorDictionary[key];
-        
-        __auto_type delegate = _delegateDictionary[key];
-        [delegate downloadTask:task didCompleteWithError:error];
-        
-        _delegateDictionary[key] = nil;
-        _errorDictionary[key] = nil;
-        
-        if ( _delegateDictionary.count == 0 )
-            [self endBackgroundTaskDelay];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    completionHandler(request);
+    [self unlock];
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(NSHTTPURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     [self lock];
     @try {
         NSError *error = nil;
-        if ( response.statusCode != 206 ) {
+        if ( response.statusCode > 400 ) {
             error = [SJError errorForResponseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
         }
         
-        NSRange requestRange = SJGetRequestNSRange(SJGetRequestContentRange(task.currentRequest.allHTTPHeaderFields));
-        NSRange responseRange = SJGetResponseNSRange(SJGetResponseContentRange(response));
-        
-        if ( !SJNSRangeIsUndefined(requestRange) ) {
-            if ( SJNSRangeIsUndefined(responseRange) || !NSEqualRanges(requestRange, responseRange) ) {
-                error = [SJError errorForNonsupportContentType:task.currentRequest.URL request:task.currentRequest response:task.response];
+        if ( error == nil ) {
+            NSUInteger contentLength = SJGetResponseContentLength(response);
+            if ( contentLength == 0 ) {
+                error = [SJError errorForResponseUnavailable:task.currentRequest.URL request:task.currentRequest response:response];
             }
         }
-
-#warning next ...
+        
+        if ( error == nil ) {
+            NSRange requestRange = SJGetRequestNSRange(SJGetRequestContentRange(task.currentRequest.allHTTPHeaderFields));
+            NSRange responseRange = SJGetResponseNSRange(SJGetResponseContentRange(response));
+            
+            if ( !SJNSRangeIsUndefined(requestRange) ) {
+                if ( SJNSRangeIsUndefined(responseRange) || !NSEqualRanges(requestRange, responseRange) ) {
+                    error = [SJError errorForNonsupportContentType:task.currentRequest.URL request:task.currentRequest response:task.response];
+                }
+            }
+        }
+        
+#warning next ... storage
         //    if (!error) {
         //        long long (^getDeletionLength)(long long) = ^(long long desireLength){
         //            return desireLength + [SJDataStorage storage].totalCacheLength - [SJDataStorage storage].maxCacheLength;
@@ -159,12 +152,6 @@
     }
 }
 
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
-    [self lock];
-    completionHandler(request);
-    [self unlock];
-}
-
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
     [self lock];
     @try {
@@ -173,6 +160,28 @@
         [delegate downloadTask:dataTask didReceiveData:data];
     } @catch (__unused NSException *exception) {
             
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+    [self lock];
+    @try {
+        NSNumber *key = @(task.taskIdentifier);
+        if ( _errorDictionary[key] != nil )
+            error = _errorDictionary[key];
+        
+        __auto_type delegate = _delegateDictionary[key];
+        [delegate downloadTask:task didCompleteWithError:error];
+        
+        _delegateDictionary[key] = nil;
+        _errorDictionary[key] = nil;
+        
+        if ( _delegateDictionary.count == 0 )
+            [self endBackgroundTaskDelay];
+    } @catch (__unused NSException *exception) {
+        
     } @finally {
         [self unlock];
     }

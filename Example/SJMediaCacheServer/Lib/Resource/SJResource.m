@@ -49,59 +49,8 @@
 }
 
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request {
-    [self lock];
-    @try {
-        // length经常变动, 就在这里排序吧
-        __auto_type contents = [_contents sortedArrayUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
-            if ( obj1.offset == obj2.offset )
-                return obj1.length >= obj2.length ? NSOrderedAscending : NSOrderedDescending;
-            return obj1.offset < obj2.offset ? NSOrderedAscending : NSOrderedDescending;
-        }];
-
-        NSMutableArray<id<SJResourceDataReader>> *readers = NSMutableArray.array;
-        NSRange current = request.range;
-        for ( SJResourcePartialContent *content in contents ) {
-            NSRange available = NSMakeRange(content.offset, content.length);
-            NSRange intersection = NSIntersectionRange(current, available);
-            if ( intersection.length != 0 ) {
-                // undownloaded part
-                NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
-                if ( leftRange.length != 0 ) {
-                    SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:request.URL requestHeaders:request.headers range:leftRange];
-                    [readers addObject:reader];
-                }
-
-                // downloaded part
-                NSRange range = NSMakeRange(NSMaxRange(leftRange), intersection.length);
-                NSRange readRange = NSMakeRange(range.location - content.offset, intersection.length);
-                NSString *path = [SJResourceFileManager getContentFilePathWithName:content.name inResource:_name];
-                SJResourceFileDataReader *reader = [SJResourceFileDataReader.alloc initWithRange:range path:path readRange:readRange];
-                [readers addObject:reader];
-
-                // next part
-                current = NSMakeRange(NSMaxRange(intersection), NSMaxRange(request.range) - NSMaxRange(intersection));
-            }
-            
-            if ( current.length == 0 || available.location > NSMaxRange(current) ) break;
-        }
-
-        if ( current.length != 0 ) {
-            // undownloaded part
-            SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:request.URL requestHeaders:request.headers range:current];
-            [readers addObject:reader];
-        }
-        
-        SJResourceResponse *response = nil;
-        if ( _server != nil && _contentType != nil && _totalLength != 0 ) {
-            response = [SJResourceResponse.alloc initWithServer:_server contentType:_contentType totalLength:_totalLength contentRange:request.range];
-        }
-        
-        return [SJResourceReader.alloc initWithRequest:request readers:readers presetResponse:response];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+#warning next 考虑一下文件的合并
+    return [SJResourceReader.alloc initWithResource:self request:request];
 }
 
 #pragma mark -

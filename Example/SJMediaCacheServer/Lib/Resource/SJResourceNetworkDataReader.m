@@ -21,6 +21,7 @@
 @property (nonatomic, strong) NSURL *URL;
 @property (nonatomic, copy) NSDictionary *requestHeaders;
 @property (nonatomic) NSRange range;
+@property (nonatomic) NSUInteger totalLength;
 
 @property (nonatomic, strong, nullable) NSURLSessionTask *task;
 @property (nonatomic, strong, nullable) NSHTTPURLResponse *response;
@@ -38,12 +39,13 @@
 
 @implementation SJResourceNetworkDataReader
 
-- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range {
+- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range totalLength:(NSUInteger)totalLength {
     self = [super init];
     if ( self ) {
         _URL = URL;
         _requestHeaders = headers.copy;
         _range = range;
+        _totalLength = totalLength;
         _semaphore = dispatch_semaphore_create(1);
         _delegateQueue = dispatch_get_global_queue(0, 0);
     }
@@ -95,6 +97,8 @@
 //             bytes=500-600,601-999
 //             bytes=500-700,601-999
 //
+        
+#warning next ...
         [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)_range.length - 1] forHTTPHeaderField:@"Range"];
         _task = [SJDownload.shared downloadWithRequest:request delegate:self];
     } @catch (__unused NSException *exception) {
