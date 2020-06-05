@@ -9,7 +9,6 @@
 #import "SJResourceNetworkDataReader.h"
 #import "SJError.h"
 #import "SJDownload.h"
-#import "SJResource.h"
 #import "SJResourceResponse.h"
 #import "SJResourcePartialContent.h"
 
@@ -212,10 +211,9 @@
             return;
         _response = response;
 
-        SJResource *resource = [SJResource resourceWithURL:_URL];
-        _content = [resource createContentWithOffset:_range.location];
-        
-        NSString *filePath = [resource filePathOfContent:_content];
+        id<SJResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
+        _content = [delegate newPartialContentForReader:self];
+        NSString *filePath = [delegate pathOfPartialContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
         

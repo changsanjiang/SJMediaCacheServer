@@ -31,9 +31,10 @@
     
     NSURL *proxyURL = [SJURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
 
-    _player.assetURL = proxyURL;
-
-
+    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:30];
+    
+    _player.pauseWhenAppDidEnterBackground = NO;
+ 
     [self.view addSubview:_player.view];
     [_player.view mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
@@ -41,6 +42,13 @@
         make.height.offset(210);
     }];
     
+    
+//    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:proxyURL];
+//    [request setValue:[NSString stringWithFormat:@"bytes=0-2"] forHTTPHeaderField:@"Range"];
+//
+//    [[NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+//        NSLog(@"");
+//    }] resume];
 }
 
 #pragma mark - SJLocalProxyServerDelegate

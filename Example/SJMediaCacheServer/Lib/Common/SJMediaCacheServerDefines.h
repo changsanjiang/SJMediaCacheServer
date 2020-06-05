@@ -62,10 +62,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol SJResourceResponse <NSObject>
 @property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
-@property (nonatomic, copy, readonly, nullable) NSString *contentType;
-@property (nonatomic, copy, readonly, nullable) NSString *server;
-@property (nonatomic, readonly) NSUInteger totalLength;
-@property (nonatomic, readonly) NSRange contentRange;
+- (nullable NSString *)contentType;
+- (nullable NSString *)server;
+- (NSUInteger)totalLength;
+- (NSRange)contentRange;
 @end
 
 

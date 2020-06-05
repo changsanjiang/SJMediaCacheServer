@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, readonly) NSUInteger offset;
-@property NSUInteger length;
+@property (nonatomic) NSUInteger length;
 
 @end
 NS_ASSUME_NONNULL_END

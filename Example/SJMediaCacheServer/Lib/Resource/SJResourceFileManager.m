@@ -74,7 +74,7 @@
             if ( [name hasPrefix:[self contentPrefix]] ) {
                 NSString *path = [resourcePath stringByAppendingPathComponent:name];
                 NSUInteger offset = [self offsetOfContent:name];
-                NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL][NSFileSize] longLongValue];
+                NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];
                 __auto_type content = [SJResourcePartialContent.alloc initWithName:name offset:offset length:length];
                 [m addObject:content];
             }

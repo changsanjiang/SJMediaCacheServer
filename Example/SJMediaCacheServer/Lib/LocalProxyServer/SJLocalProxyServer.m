@@ -149,10 +149,11 @@
 
 @implementation SJHTTPConnection
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
+    SJHTTPResponse *response = [SJHTTPResponse.alloc initWithConnection:self];
 #ifdef DEBUG
-    printf("\nSJHTTPConnection: <%p>.response { URI: %s, method: %s };\n", self, path.UTF8String, method.UTF8String);
+    printf("\nSJHTTPConnection: <%p>.response { Range: %s, URI: %s, method: %s };\n", self, NSStringFromRange(response.request.range).UTF8String, path.UTF8String, method.UTF8String);
 #endif
-    return [SJHTTPResponse.alloc initWithConnection:self];
+    return response;
 }
 
 - (HTTPMessage *)sj_request {

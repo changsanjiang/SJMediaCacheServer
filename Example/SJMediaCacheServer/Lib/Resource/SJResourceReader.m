@@ -31,6 +31,8 @@
 @property (nonatomic, strong) SJDataRequest *request;
 @property (nonatomic, copy, nullable) NSArray<id<SJResourceDataReader>> *readers;
 @property (nonatomic, strong, nullable) id<SJResourceResponse> response;
+
+@property (nonatomic, strong) NSMutableArray<SJResourcePartialContent *> *referencedContents;
 @end
 
 @implementation SJResourceReader
@@ -38,6 +40,7 @@
 - (instancetype)initWithResource:(__weak SJResource *)resource request:(SJDataRequest *)request {
     self = [super init];
     if ( self ) {
+        _referencedContents = NSMutableArray.array;
         _delegateQueue = dispatch_get_global_queue(0, 0);
         _semaphore = dispatch_semaphore_create(1);
         _currentIndex = NSNotFound;
@@ -95,7 +98,7 @@
         NSData *data = [self.currentReader readDataOfLength:length];
         _offset += data.length;
         if ( self.currentReader.isDone )
-            [self _prepareNextReader];
+            self.currentReader != self.readers.lastObject ? [self _prepareNextReader] : [self _close];
         return data;
     } @catch (__unused NSException *exception) {
         
@@ -140,19 +143,27 @@
 - (void)close {
     [self lock];
     @try {
-        if ( _isClosed )
-            return;
-        
-        _isClosed = YES;
-        for ( id<SJResourceDataReader> reader in _readers ) {
-            [reader close];
-        }
+        [self _close];
     } @catch (__unused NSException *exception) {
         
     } @finally {
         [self unlock];
     }
+}
+
+- (void)_close {
+    if ( _isClosed )
+        return;
     
+    _isClosed = YES;
+    for ( id<SJResourceDataReader> reader in _readers ) {
+        [reader close];
+    }
+    
+    for ( SJResourcePartialContent *content in _referencedContents ) {
+        [content reference_release];
+    }
+            
 #ifdef DEBUG
     printf("SJResourceReader: <%p>.close { range: %s };\n", self, NSStringFromRange(_request.range).UTF8String);
 #endif
@@ -202,6 +213,10 @@
             NSString *path = [SJResourceFileManager getContentFilePathWithName:content.name inResource:_resource.name];
             SJResourceFileDataReader *reader = [SJResourceFileDataReader.alloc initWithRange:matchedRange path:path readRange:fileRange];
             [readers addObject:reader];
+            
+            // retain
+            [content reference_retain];
+            [_referencedContents addObject:content];
             
             // next part
             current = NSMakeRange(NSMaxRange(intersection), NSMaxRange(_request.range) - NSMaxRange(intersection));
@@ -303,4 +318,26 @@
         [self.delegate reader:self anErrorOccurred:error];
     }];
 }
+
+- (SJResourcePartialContent *)newPartialContentForReader:(SJResourceNetworkDataReader *)reader {
+    [self lock];
+    @try {
+        SJResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
+        
+#warning next ... 引用的处理
+        
+        [content reference_retain];
+        [_referencedContents addObject:content];
+        return content;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSString *)pathOfPartialContent:(SJResourcePartialContent *)content {
+    return [_resource filePathOfContent:content];
+}
+
 @end
