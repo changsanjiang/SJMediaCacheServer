@@ -459,13 +459,11 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example-resources.sh",
 				"${PODS_ROOT}/SJBaseVideoPlayer/SJBaseVideoPlayer/ResourceLoader/SJBaseVideoPlayerResources.bundle",
-				"${PODS_ROOT}/SJDownloadDataTask/SJDownloadDataTask/Core/ResourceLoader/SJDownloadDataTask.bundle",
 				"${PODS_ROOT}/SJVideoPlayer/SJVideoPlayer/ResourceLoader/SJVideoPlayer.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SJBaseVideoPlayerResources.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SJDownloadDataTask.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SJVideoPlayer.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
