@@ -1,11 +1,9 @@
 PODS:
   - CocoaAsyncSocket (7.6.4)
-  - CocoaHTTPServer (2.3):
+  - KTVCocoaHTTPServer (1.0.0):
     - CocoaAsyncSocket
-    - CocoaLumberjack
-  - CocoaLumberjack (3.6.1):
-    - CocoaLumberjack/Core (= 3.6.1)
-  - CocoaLumberjack/Core (3.6.1)
+  - KTVHTTPCache (2.0.1):
+    - KTVCocoaHTTPServer
   - Masonry (1.1.0)
   - Reachability (3.2)
   - SJBaseVideoPlayer (3.3.2):
@@ -41,7 +39,7 @@ PODS:
     - SJUIKit/Queues
     - SJUIKit/SQLite3
   - SJMediaCacheServer (0.1.0):
-    - CocoaHTTPServer
+    - KTVCocoaHTTPServer
   - SJUIKit/AttributesFactory (0.0.0.46):
     - SJUIKit/AttributesFactory/Deprecated (= 0.0.0.46)
     - SJUIKit/AttributesFactory/UIKitText (= 0.0.0.46)
@@ -76,6 +74,7 @@ PODS:
   - YYModel (1.0.4)
 
 DEPENDENCIES:
+  - KTVHTTPCache
   - SJMediaCacheServer (from `../`)
   - SJUIKit/SQLite3 (from `https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec`)
   - SJVideoPlayer
@@ -83,8 +82,8 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - CocoaAsyncSocket
-    - CocoaHTTPServer
-    - CocoaLumberjack
+    - KTVCocoaHTTPServer
+    - KTVHTTPCache
     - Masonry
     - Reachability
     - SJBaseVideoPlayer
@@ -99,16 +98,16 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 694058e7c0ed05a9e217d1b3c7ded962f4180845
-  CocoaHTTPServer: 5624681fc3473d43b18202f635f9b3abb013b530
-  CocoaLumberjack: b17ae15142558d08bbacf69775fa10c4abbebcc9
+  KTVCocoaHTTPServer: df8d7b861e603ff8037e9b2138aca2563a6b768d
+  KTVHTTPCache: 588c3eb16f6bd1e6fde1e230dabfb7bd4e490a4d
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
   SJBaseVideoPlayer: 14e0ff71b3b2944e17f9475c7b42d26daeed3755
-  SJMediaCacheServer: a9f78b042caed35d64eb494934d2e0f9e6b9890c
+  SJMediaCacheServer: faf012dd2c116a9f912888f5c9a282fdd67bcf7e
   SJUIKit: dfb3d4085215b33d18250fb2f49fbefe22dd5079
   SJVideoPlayer: acee9fab2b384fc87ed7636c05977d8dd3cdb4ee
   YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30
 
-PODFILE CHECKSUM: f7196c952f092ae67805f7901dafd7755b883a11
+PODFILE CHECKSUM: 0dc9c04bb956e788d6ba26bb67b4030f8c42a42a
 
 COCOAPODS: 1.9.2

@@ -10,10 +10,10 @@
 #import "SJDataRequest.h"
 #import "SJURLConvertor.h"
 #import <objc/message.h>
-#import <CocoaHTTPServer/HTTPServer.h>
-#import <CocoaHTTPServer/HTTPConnection.h>
-#import <CocoaHTTPServer/HTTPResponse.h>
-#import <CocoaHTTPServer/HTTPMessage.h>
+#import <KTVCocoaHTTPServer/HTTPServer.h>
+#import <KTVCocoaHTTPServer/HTTPConnection.h>
+#import <KTVCocoaHTTPServer/HTTPResponse.h>
+#import <KTVCocoaHTTPServer/HTTPMessage.h>
 
 
 @interface HTTPServer (SJLocalProxyServerExtended)
@@ -153,7 +153,7 @@
     self = [super initWithAsyncSocket:newSocket configuration:aConfig];
     if ( self ) {
 #ifdef DEBUG
-        printf("\nSJHTTPConnection: <%p>.init;\n", self);
+        printf("\%s: <%p>.init;\n", NSStringFromClass(self.class).UTF8String, self);
 #endif
     }
     return self;
@@ -162,7 +162,7 @@
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
     SJHTTPResponse *response = [SJHTTPResponse.alloc initWithConnection:self];
 #ifdef DEBUG
-    printf("SJHTTPConnection: <%p>.response { Range: %s, URI: %s, method: %s };\n", self, NSStringFromRange(response.request.range).UTF8String, path.UTF8String, method.UTF8String);
+    printf("%s: <%p>.response { Range: %s, URI: %s, method: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(response.request.range).UTF8String, path.UTF8String, method.UTF8String);
 #endif
     [response prepareForReadingData];
     return response;
@@ -179,13 +179,20 @@
 - (void)finishResponse {
     [super finishResponse];
 #ifdef DEBUG
-    printf("SJHTTPConnection: <%p>.finishResponse;\n\n", self);
+    printf("%s: <%p>.finishResponse;\n\n", NSStringFromClass(self.class).UTF8String, self);
+#endif
+}
+
+- (void)die {
+    [super die];
+#ifdef DEBUG
+    printf("%s: <%p>.die;\n", NSStringFromClass(self.class).UTF8String, self);
 #endif
 }
 
 - (void)dealloc {
 #ifdef DEBUG
-    printf("SJHTTPConnection: <%p>.dealloc;\n\n", self);
+    printf("%s: <%p>.dealloc;\n\n", NSStringFromClass(self.class).UTF8String, self);
 #endif
 }
 @end

@@ -22,6 +22,7 @@
             @"Server" : server ?: @"localhost",
             @"Content-Type" : contentType ?: @"",
             @"Accept-Ranges" : @"bytes",
+            @"Connection" : @"keep-alive",
             
             @"Content-Length" : [NSString stringWithFormat:@"%lu", (unsigned long)contentRange.length],
             @"Content-Range" : [NSString stringWithFormat:@"bytes %lu-%lu/%lu", (unsigned long)contentRange.location, (unsigned long)NSMaxRange(contentRange) - 1, (unsigned long)totalLength],

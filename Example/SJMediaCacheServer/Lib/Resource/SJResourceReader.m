@@ -64,13 +64,13 @@
             return;
          
 #ifdef DEBUG
-        printf("SJResourceReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_request.range).UTF8String);
+        printf("%s: <%p>.prepare { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_request.range).UTF8String);
 #endif
         
         _isCalledPrepare = YES;
         
         if ( _resource.totalLength == 0 || _resource.contentType.length == 0 ) {
-            _tmpReader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 2) totalLength:NSNotFound];
+            _tmpReader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 2)];
 #ifdef DEBUG
             printf("SJResourceReader: <%p>.createTmpReader: <%p>;\n", self, _tmpReader);
 #endif
@@ -165,7 +165,7 @@
     }
             
 #ifdef DEBUG
-    printf("SJResourceReader: <%p>.close { range: %s };\n", self, NSStringFromRange(_request.range).UTF8String);
+    printf("%s: <%p>.close { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_request.range).UTF8String);
 #endif
 }
 
@@ -203,7 +203,7 @@
             // undownloaded part
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
-                SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:leftRange totalLength:totalLength];
+                SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:leftRange];
                 [readers addObject:reader];
             }
             
@@ -227,14 +227,14 @@
     
     if ( current.length != 0 ) {
         // undownloaded part
-        SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:current totalLength:totalLength];
+        SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:current];
         [readers addObject:reader];
     }
     
     _readers = readers.copy;
     
 #ifdef DEBUG
-    printf("SJResourceReader: <%p>.createSubreaders { range: %s, count: %lu };\n", self, NSStringFromRange(_request.range).UTF8String, _readers.count);
+    printf("%s: <%p>.createSubreaders { range: %s, count: %lu };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_request.range).UTF8String, _readers.count);
 #endif
 }
 

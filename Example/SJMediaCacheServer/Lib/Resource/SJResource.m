@@ -159,12 +159,13 @@
             NSRange range2 = NSMakeRange(obj2.offset, obj2.length);
             
             // 1 包含 2
-            if ( SJNSRangeContains(range1, range2) && ![deleteContents containsObject:obj2] )
-                [deleteContents addObject:obj2];
-            
+            if ( SJNSRangeContains(range1, range2) ) {
+                if ( ![deleteContents containsObject:obj2] ) [deleteContents addObject:obj2];
+            }
             // 2 包含 1
-            if ( SJNSRangeContains(range2, range1) && ![deleteContents containsObject:obj1] )
-                [deleteContents addObject:obj1];
+            else if ( SJNSRangeContains(range2, range1) ) {
+                if ( ![deleteContents containsObject:obj1] ) [deleteContents addObject:obj1];;
+            }
             
             return range1.location < range2.location ? NSOrderedAscending : NSOrderedDescending;
         }];

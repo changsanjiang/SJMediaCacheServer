@@ -20,7 +20,6 @@
 @property (nonatomic, strong) NSURL *URL;
 @property (nonatomic, copy) NSDictionary *requestHeaders;
 @property (nonatomic) NSRange range;
-@property (nonatomic) NSUInteger totalLength;
 
 @property (nonatomic, strong, nullable) NSURLSessionTask *task;
 @property (nonatomic, strong, nullable) NSHTTPURLResponse *response;
@@ -39,13 +38,12 @@
 
 @implementation SJResourceNetworkDataReader
 
-- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range totalLength:(NSUInteger)totalLength {
+- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range {
     self = [super init];
     if ( self ) {
         _URL = URL;
         _requestHeaders = headers.copy;
         _range = range;
-        _totalLength = totalLength;
         _semaphore = dispatch_semaphore_create(1);
         _delegateQueue = dispatch_get_global_queue(0, 0);
     }
@@ -69,7 +67,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
 #ifdef DEBUG
-        printf("SJResourceNetworkDataReader: <%p>.prepare { range: %s };\n", self, NSStringFromRange(_range).UTF8String);
+        printf("%s: <%p>.prepare { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String);
 #endif
         _isCalledPrepare = YES;
         NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
@@ -97,12 +95,8 @@
 //             bytes=500-600,601-999
 //             bytes=500-700,601-999
 //
-        if ( _totalLength == NSMaxRange(_range) ) {
-            [request setValue:[NSString stringWithFormat:@"bytes=%lu-", (unsigned long)_range.location] forHTTPHeaderField:@"Range"];
-        }
-        else {
-            [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
-        }
+        [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
+        
         _task = [SJDownload.shared downloadWithRequest:request delegate:self];
     } @catch (__unused NSException *exception) {
         
@@ -159,10 +153,10 @@
                 _offset += data.length;
                 _isDone = _offset == _range.length;
 #ifdef DEBUG
-                printf("SJResourceNetworkDataReader: <%p>.read { offset: %lu };\n", self, _offset);
+                printf("%s: <%p>.read { offset: %lu };\n", NSStringFromClass(self.class).UTF8String, self, _offset);
                 
                 if ( _isDone ) {
-                    printf("SJResourceNetworkDataReader: <%p>.done { range: %s };\n", self, NSStringFromRange(_range).UTF8String);
+                    printf("%s: <%p>.done { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String);
                 }
 #endif
             }
@@ -197,7 +191,7 @@
     }
      
 #ifdef DEBUG
-    printf("SJResourceNetworkDataReader: <%p>.close;\n", self);
+    printf("%s: <%p>.close;\n", NSStringFromClass(self.class).UTF8String, self);
 #endif
 }
 
