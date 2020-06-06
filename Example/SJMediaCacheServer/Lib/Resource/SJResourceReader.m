@@ -13,7 +13,8 @@
 #import "SJResourceFileManager.h"
 #import "SJResourceFileDataReader.h"
 #import "SJResourceNetworkDataReader.h"
- 
+#import "SJUtils.h"
+
 @interface SJResourceReader ()<NSLocking, SJResourceDataReaderDelegate>
 @property (nonatomic, strong) dispatch_queue_t delegateQueue;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
@@ -78,9 +79,7 @@
             [_tmpReader prepare];
         }
         else {
-            _response = [SJResourceResponse.alloc initWithServer:_resource.server contentType:_resource.contentType totalLength:_resource.totalLength contentRange:_request.range];
-            [self _createSubreaders];
-            [self _prepareNextReader];
+            [self _prepare];
         }
     } @catch (__unused NSException *exception) {
         
@@ -171,8 +170,9 @@
 
 #pragma mark -
 
-- (void)_createSubreaders {
-    NSAssert(_response != nil, @"`response`不能为`nil`!");
+- (void)_prepare {
+    NSUInteger totalLength = _resource.totalLength;
+    NSAssert(totalLength != 0, @"`_resource.totalLength`不能为`0`!");
      
     // `length`经常变动, 暂时这里排序吧
     __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
@@ -182,7 +182,6 @@
     }];
     
     NSRange current = _request.range;
-    NSUInteger totalLength = _response.totalLength;
     // bytes=-500
     if      ( current.location == NSNotFound && current.length != NSNotFound )
         current.location = totalLength - current.length;
@@ -195,6 +194,8 @@
         current.length = totalLength;
     }
     
+    _response = [SJResourceResponse.alloc initWithServer:_resource.server contentType:_resource.contentType totalLength:totalLength contentRange:current];
+
     NSMutableArray<id<SJResourceDataReader>> *readers = NSMutableArray.array;
     for ( SJResourcePartialContent *content in contents ) {
         NSRange available = NSMakeRange(content.offset, content.length);
@@ -236,25 +237,27 @@
 #ifdef DEBUG
     printf("%s: <%p>.createSubreaders { range: %s, count: %lu };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_request.range).UTF8String, _readers.count);
 #endif
+
+    [self _prepareNextReader];
 }
 
 - (void)_prepareNextReader {
     [self.currentReader close];
 
-    if ( self.currentReader == self.readers.lastObject )
+    if ( self.currentReader == _readers.lastObject )
         return;
     
-    if ( self.currentIndex == NSNotFound )
-        self.currentIndex = 0;
+    if ( _currentIndex == NSNotFound )
+        _currentIndex = 0;
     else
-        self.currentIndex += 1;
-    [self.currentReader setDelegate:self delegateQueue:self.delegateQueue];
+        _currentIndex += 1;
+    [self.currentReader setDelegate:self delegateQueue:_delegateQueue];
     [self.currentReader prepare];
 }
 
 - (nullable id<SJResourceDataReader>)currentReader {
-    if ( self.currentIndex != NSNotFound && self.currentIndex < self.readers.count ) {
-        return self.readers[_currentIndex];
+    if ( _currentIndex != NSNotFound && _currentIndex < _readers.count ) {
+        return _readers[_currentIndex];
     }
     return nil;
 }
@@ -283,18 +286,17 @@
             _isPrepared = YES;
         }
         else if ( reader == _tmpReader ) {
+            
+#warning next ...
+            // update contentType & totalLength & server for `resource`
+            [_resource setServer:SJGetResponseServer(_tmpReader.response) contentType:SJGetResponseContentType(_tmpReader.response) totalLength:SJGetResponseContentRange(_tmpReader.response).totalLength];
+
             // create response
-            _response = [SJResourceResponse.alloc initWithResponse:_tmpReader.response];
             [_tmpReader close];
             _tmpReader = nil;
             
-            // update contentType & totalLength & server for `resource`
-            SJResource *resource = [SJResource resourceWithURL:_request.URL];
-            [resource setServer:_response.server contentType:_response.contentType totalLength:_response.totalLength];
-            
             // prepare
-            [self _createSubreaders];
-            [self _prepareNextReader];
+            [self _prepare];
         }
 
         [self callbackWithBlock:^{
