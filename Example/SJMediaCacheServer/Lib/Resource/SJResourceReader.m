@@ -54,7 +54,7 @@
 
 - (void)dealloc {
 #ifdef DEBUG
-    printf("SJResourceReader: <%p>.dealloc;\n", self);
+    printf("%s: <%p>.dealloc;\n", NSStringFromClass(self.class).UTF8String, self);
 #endif
 }
 
@@ -73,7 +73,7 @@
         if ( _resource.totalLength == 0 || _resource.contentType.length == 0 ) {
             _tmpReader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 2)];
 #ifdef DEBUG
-            printf("SJResourceReader: <%p>.createTmpReader: <%p>;\n", self, _tmpReader);
+            printf("%s: <%p>.createTmpReader: <%p>;\n", NSStringFromClass(self.class).UTF8String, self, _tmpReader);
 #endif
             [_tmpReader setDelegate:self delegateQueue:_delegateQueue];
             [_tmpReader prepare];
@@ -286,8 +286,6 @@
             _isPrepared = YES;
         }
         else if ( reader == _tmpReader ) {
-            
-#warning next ...
             // update contentType & totalLength & server for `resource`
             [_resource setServer:SJGetResponseServer(_tmpReader.response) contentType:SJGetResponseContentType(_tmpReader.response) totalLength:SJGetResponseContentRange(_tmpReader.response).totalLength];
 

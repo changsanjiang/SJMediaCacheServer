@@ -231,7 +231,7 @@
         _content.length = _downloadedLength;
         
 #ifdef DEBUG
-        printf("SJResourceNetworkDataReader: <%p>.downloadProgress: %lu;\n", self, _downloadedLength);
+        printf("%s: <%p>.downloadProgress: %lu;\n", NSStringFromClass(self.class).UTF8String, self, _downloadedLength);
 #endif
         
         [self callbackWithBlock:^{

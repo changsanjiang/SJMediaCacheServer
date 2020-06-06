@@ -56,7 +56,7 @@
             return;
         
 #ifdef DEBUG
-        printf("SJResourceFileDataReader: <%p>.prepare { range: %s, file: %s.%s };\n", self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
+        printf("%s: <%p>.prepare { range: %s, file: %s.%s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
 #endif
         _isCalledPrepare = YES;
         _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
@@ -106,10 +106,10 @@
         _isDone = _offset == _readRange.length;
         
 #ifdef DEBUG
-        printf("SJResourceFileDataReader: <%p>.read { offset: %lu };\n", self, _offset);
+        printf("%s: <%p>.read { offset: %lu };\n", NSStringFromClass(self.class).UTF8String, self, _offset);
         
         if ( _isDone ) {
-            printf("SJResourceFileDataReader: <%p>.done { range: %s , file: %s.%s };\n", self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
+            printf("%s: <%p>.done { range: %s , file: %s.%s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
         }
 #endif
         return data;
@@ -138,7 +138,7 @@
     }
     
 #ifdef DEBUG
-    printf("SJResourceFileDataReader: <%p>.close;\n", self);
+    printf("%s: <%p>.close;\n", NSStringFromClass(self.class).UTF8String, self);
 #endif
 }
 
