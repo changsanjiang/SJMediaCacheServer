@@ -10,10 +10,10 @@
 #import "SJDataRequest.h"
 #import "SJURLConvertor.h"
 #import <objc/message.h>
-#import <KTVCocoaHTTPServer/HTTPServer.h>
-#import <KTVCocoaHTTPServer/HTTPConnection.h>
-#import <KTVCocoaHTTPServer/HTTPResponse.h>
-#import <KTVCocoaHTTPServer/HTTPMessage.h>
+#import <CocoaHTTPServer/HTTPServer.h>
+#import <CocoaHTTPServer/HTTPConnection.h>
+#import <CocoaHTTPServer/HTTPResponse.h>
+#import <CocoaHTTPServer/HTTPMessage.h>
 
 
 @interface HTTPServer (SJLocalProxyServerExtended)

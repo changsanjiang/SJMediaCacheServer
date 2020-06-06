@@ -63,20 +63,20 @@
 
 @synthesize referenceCount = _referenceCount;
 - (void)setReferenceCount:(NSInteger)referenceCount {
-    BOOL changed = NO;
     [self lock];
     @try {
         if ( _referenceCount != referenceCount ) {
             _referenceCount = referenceCount;;
-            changed = YES;
+            
+            dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                [self.delegate referenceCountDidChangeForPartialContent:self];
+            });
         }
     } @catch (__unused NSException *exception) {
         
     } @finally {
         [self unlock];
     }
-    
-    [self.delegate partialContent:self referenceCountDidChange:referenceCount];
 }
 
 - (NSInteger)referenceCount {

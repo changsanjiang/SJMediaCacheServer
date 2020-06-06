@@ -36,6 +36,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol SJResourcePartialContentDelegate <NSObject>
-- (void)partialContent:(SJResourcePartialContent *)content referenceCountDidChange:(NSUInteger)referenceCount;
+- (void)referenceCountDidChangeForPartialContent:(SJResourcePartialContent *)content;
 @end
 NS_ASSUME_NONNULL_END

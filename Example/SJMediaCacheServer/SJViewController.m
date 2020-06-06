@@ -12,8 +12,6 @@
 #import <SJVideoPlayer/SJVideoPlayer.h>
 #import <Masonry/Masonry.h>
 
-#import <KTVHTTPCache/KTVHTTPCache.h>
-
 #import "SJDataResponse.h"
 #import "SJURLConvertor.h"
  
@@ -34,10 +32,7 @@
     NSURL *proxyURL = [SJURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
 
 //    NSURL *proxyURL = [SJURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
-
-//    [KTVHTTPCache proxyStart:NULL];
-//    NSURL *proxyURL = [KTVHTTPCache proxyURLWithOriginalURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"]];
-    
+ 
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:0];
     
     _player.pauseWhenAppDidEnterBackground = NO;

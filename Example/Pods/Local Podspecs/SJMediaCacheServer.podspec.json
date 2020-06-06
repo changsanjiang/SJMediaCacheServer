@@ -20,7 +20,7 @@
   },
   "source_files": "SJMediaCacheServer/**/*",
   "dependencies": {
-    "KTVCocoaHTTPServer": [
+    "CocoaHTTPServer": [
 
     ]
   }

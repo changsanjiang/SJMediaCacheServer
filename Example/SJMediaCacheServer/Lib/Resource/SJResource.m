@@ -140,8 +140,8 @@
     }
 }
 
-- (void)partialContent:(SJResourcePartialContent *)content referenceCountDidChange:(NSUInteger)referenceCount {
-    if ( referenceCount > 0 ) return;
+- (void)referenceCountDidChangeForPartialContent:(SJResourcePartialContent *)content {
+    if ( content.referenceCount > 0 ) return;
     [self lock];
     @try {
         if ( _contents.count <= 1 ) return;
@@ -180,7 +180,7 @@
             NSUInteger maxA = write.offset + write.length;
             NSUInteger maxR = read.offset + read.length;
             if ( maxA >= read.offset && maxA < maxR ) // 有交集
-                readRange = NSMakeRange(maxA - read.offset, maxR - maxA); // 减去有交集的部分
+                readRange = NSMakeRange(maxA - read.offset, maxR - maxA); // 读取read中未相交的部分
 
             if ( readRange.length != 0 ) {
                 NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];

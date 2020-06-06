@@ -32,7 +32,7 @@ TODO: Add long description of the pod here.
 
   s.source_files = 'SJMediaCacheServer/**/*'
   
-  s.dependency 'KTVCocoaHTTPServer'
+  s.dependency 'CocoaHTTPServer'
   
   # s.resource_bundles = {
   #   'SJMediaCacheServer' => ['SJMediaCacheServer/Assets/*.png']
