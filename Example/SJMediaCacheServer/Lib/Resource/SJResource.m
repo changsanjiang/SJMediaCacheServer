@@ -198,6 +198,7 @@
                     [reader closeFile];
                     [writer synchronizeFile];
                     [writer closeFile];
+                    write.length += readRange.length;
                     [deleteContents addObject:read];
                 } @catch (NSException *exception) {
                     break;
