@@ -147,72 +147,60 @@
         if ( _contents.count <= 1 ) return;
         
         // 合并文件
-        NSMutableArray<SJResourcePartialContent *> *mergeContents = NSMutableArray.array;
+        NSMutableArray<SJResourcePartialContent *> *list = NSMutableArray.array;
         for ( SJResourcePartialContent *content in _contents ) {
             if ( content.referenceCount == 0 )
-                [mergeContents addObject:content];
+                [list addObject:content];
         }
         
-        [mergeContents sortUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
+        NSMutableArray<SJResourcePartialContent *> *deleteContents = NSMutableArray.array;
+        [list sortUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
             if ( obj1.offset < obj2.offset )
                 return NSOrderedAscending;
-            if ( obj1.offset == obj2.offset && obj1.length > obj2.length )
+            if ( obj1.offset == obj2.offset && obj1.length > obj2.length ) {
+                if ( ![deleteContents containsObject:obj2] ) [deleteContents addObject:obj2];
                 return NSOrderedAscending;
+            }
+            
             return NSOrderedDescending;
         }];
         
-        NSMutableArray<SJResourcePartialContent *> *deleteContents = NSMutableArray.array;
-        for ( NSInteger i = 0 ; i < mergeContents.count ; ++ i ) {
-            SJResourcePartialContent *c1 = mergeContents[i];
-            for ( NSInteger j = i + 1 ; j < mergeContents.count ; ++ j ) {
-                SJResourcePartialContent *c2 = mergeContents[j];
-                NSRange range1 = NSMakeRange(c1.offset, c1.length);
-                NSRange range2 = NSMakeRange(c2.offset, c2.length);
-                if      ( SJNSRangeContains(range1, range2) ) {
-                    if ( ![deleteContents containsObject:c2] ) [deleteContents addObject:c2];
-                    continue;
-                }
-                else if ( SJNSRangeContains(range2, range1) ) {
-                    if ( ![deleteContents containsObject:c1] ) [deleteContents addObject:c1];
-                    continue;
-                }
-                 
-                SJResourcePartialContent *write = range1.location < range2.location ? c1 : c2;
-                SJResourcePartialContent *read  = write == c1 ? c2 : c1;
-                NSRange loadRange = NSMakeRange(0, 0);
+        [list removeObjectsInArray:deleteContents];
 
-                NSUInteger w = write.offset + write.length;
-                NSUInteger r = read.offset + read.length;
-                if ( w >= read.offset && w < r ) // 有交集
-                    loadRange = NSMakeRange(w, r - w);
+        for ( NSInteger i = 0 ; i < list.count - 1; i += 2 ) {
+            SJResourcePartialContent *write = list[i];
+            SJResourcePartialContent *read  = list[i + 1];
+            NSRange readRange = NSMakeRange(0, 0);
 
-                if ( loadRange.length != 0 ) {
-                    NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];
-                    NSFileHandle *reader = [NSFileHandle fileHandleForReadingAtPath:[self filePathOfContent:read]];
-                    @try {
-                        [writer seekToEndOfFile];
-                        [reader seekToFileOffset:loadRange.location - read.offset];
-                        while (true) {
-                            @autoreleasepool {
-                                NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
-                                if ( data.length == 0 )
-                                    break;
-                                [writer writeData:data];
-                            }
+            NSUInteger maxA = write.offset + write.length;
+            NSUInteger maxR = read.offset + read.length;
+            if ( maxA >= read.offset && maxA < maxR ) // 有交集
+                readRange = NSMakeRange(maxA - read.offset, maxR - maxA);
+
+            if ( readRange.length != 0 ) {
+                NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];
+                NSFileHandle *reader = [NSFileHandle fileHandleForReadingAtPath:[self filePathOfContent:read]];
+                @try {
+                    [writer seekToEndOfFile];
+                    [reader seekToFileOffset:readRange.location];
+                    while (true) {
+                        @autoreleasepool {
+                            NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
+                            if ( data.length == 0 )
+                                break;
+                            [writer writeData:data];
                         }
-                        [reader closeFile];
-                        [writer synchronizeFile];
-                        [writer closeFile];
-                    } @catch (NSException *exception) {
-                        break;
                     }
+                    [reader closeFile];
+                    [writer synchronizeFile];
+                    [writer closeFile];
+                } @catch (NSException *exception) {
+                    break;
                 }
-                
-                if ( NSUnionRange(range1, range2).length == range1.length + range2.length )
-                   if ( ![deleteContents containsObject:read] ) [deleteContents addObject:read];
             }
             
-            [_contents removeObjectsInArray:deleteContents];
+            if ( maxA == read.offset )
+               [deleteContents addObject:read];
         }
         
         for ( SJResourcePartialContent *content in deleteContents ) {
