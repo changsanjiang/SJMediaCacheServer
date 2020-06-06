@@ -333,7 +333,7 @@
     }
 }
 
-- (NSString *)pathOfPartialContent:(SJResourcePartialContent *)content {
+- (NSString *)savePathOfPartialContent:(SJResourcePartialContent *)content {
     return [_resource filePathOfContent:content];
 }
 

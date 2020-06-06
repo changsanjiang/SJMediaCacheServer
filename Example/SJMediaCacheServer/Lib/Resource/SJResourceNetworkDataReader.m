@@ -213,7 +213,7 @@
 
         id<SJResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
         _content = [delegate newPartialContentForReader:self];
-        NSString *filePath = [delegate pathOfPartialContent:_content];
+        NSString *filePath = [delegate savePathOfPartialContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
         

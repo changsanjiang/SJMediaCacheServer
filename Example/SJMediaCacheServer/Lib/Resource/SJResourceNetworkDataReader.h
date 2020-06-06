@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol SJResourceNetworkDataReaderDelegate <SJResourceDataReaderDelegate>
 - (SJResourcePartialContent *)newPartialContentForReader:(SJResourceNetworkDataReader *)reader;
-- (NSString *)pathOfPartialContent:(SJResourcePartialContent *)content;
+- (NSString *)savePathOfPartialContent:(SJResourcePartialContent *)content;
 @end
 
 NS_ASSUME_NONNULL_END
