@@ -30,6 +30,7 @@
 @property (nonatomic, strong) SJDataRequest * request;
 @property (nonatomic, strong) id<SJDataResponse> response;
 @property (nonatomic, weak) SJHTTPConnection *connection;
+- (void)prepareForReadingData;
 @end
 
 #pragma mark -
@@ -153,6 +154,7 @@
 #ifdef DEBUG
     printf("\nSJHTTPConnection: <%p>.response { Range: %s, URI: %s, method: %s };\n", self, NSStringFromRange(response.request.range).UTF8String, path.UTF8String, method.UTF8String);
 #endif
+    [response prepareForReadingData];
     return response;
 }
 
@@ -186,9 +188,12 @@
         SJLocalProxyServer *server = [connection sj_server];
         _request = [SJDataRequest.alloc initWithHTTPRequest:[connection sj_request]];
         _response = [server responseWithRequest:_request delegate:self];
-        [_response prepare];
     }
     return self;
+}
+
+- (void)prepareForReadingData {
+    [_response prepare];
 }
 
 - (UInt64)contentLength {
