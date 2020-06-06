@@ -141,16 +141,19 @@
 }
 
 - (void)partialContent:(SJResourcePartialContent *)content referenceCountDidChange:(NSUInteger)referenceCount {
+    if ( referenceCount > 0 ) return;
     [self lock];
     @try {
+        if ( _contents.count <= 1 ) return;
+        
         // 合并文件
-        NSMutableArray<SJResourcePartialContent *> *merge = NSMutableArray.array;
+        NSMutableArray<SJResourcePartialContent *> *mergeContents = NSMutableArray.array;
         for ( SJResourcePartialContent *content in _contents ) {
             if ( content.referenceCount == 0 )
-                [merge addObject:content];
+                [mergeContents addObject:content];
         }
         
-        [merge sortUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
+        [mergeContents sortUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
             if ( obj1.offset < obj2.offset )
                 return NSOrderedAscending;
             if ( obj1.offset == obj2.offset && obj1.length > obj2.length )
@@ -158,22 +161,22 @@
             return NSOrderedDescending;
         }];
         
-        NSMutableArray<SJResourcePartialContent *> *delete = NSMutableArray.array;
-        for ( NSInteger i = 0 ; i < merge.count ; ++ i ) {
-            SJResourcePartialContent *c1 = merge[i];
-            for ( NSInteger j = i ; j < merge.count ; ++ j ) {
-                SJResourcePartialContent *c2 = merge[j];
+        NSMutableArray<SJResourcePartialContent *> *deleteContents = NSMutableArray.array;
+        for ( NSInteger i = 0 ; i < mergeContents.count ; ++ i ) {
+            SJResourcePartialContent *c1 = mergeContents[i];
+            for ( NSInteger j = i + 1 ; j < mergeContents.count ; ++ j ) {
+                SJResourcePartialContent *c2 = mergeContents[j];
                 NSRange range1 = NSMakeRange(c1.offset, c1.length);
                 NSRange range2 = NSMakeRange(c2.offset, c2.length);
                 if      ( SJNSRangeContains(range1, range2) ) {
-                    [delete addObject:c2];
+                    if ( ![deleteContents containsObject:c2] ) [deleteContents addObject:c2];
                     continue;
                 }
                 else if ( SJNSRangeContains(range2, range1) ) {
-                    [delete addObject:c1];
+                    if ( ![deleteContents containsObject:c1] ) [deleteContents addObject:c1];
                     continue;
                 }
-                
+                 
                 SJResourcePartialContent *write = range1.location < range2.location ? c1 : c2;
                 SJResourcePartialContent *read  = write == c1 ? c2 : c1;
                 NSRange loadRange = NSMakeRange(0, 0);
@@ -182,42 +185,41 @@
                 NSUInteger r = read.offset + read.length;
                 if ( w >= read.offset && w < r ) // 有交集
                     loadRange = NSMakeRange(w, r - w);
-                    
-#warning next ... 删除拼接的情况
-                
+
                 if ( loadRange.length != 0 ) {
                     NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];
                     NSFileHandle *reader = [NSFileHandle fileHandleForReadingAtPath:[self filePathOfContent:read]];
                     @try {
                         [writer seekToEndOfFile];
                         [reader seekToFileOffset:loadRange.location - read.offset];
-                    } @catch (NSException *exception) {
-                        continue;
-                    }
-                    while (true) {
-                        @autoreleasepool {
-                            NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
-                            if ( data.length == 0 )
-                                break;
-                            @try {
+                        while (true) {
+                            @autoreleasepool {
+                                NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
+                                if ( data.length == 0 )
+                                    break;
                                 [writer writeData:data];
-                            } @catch (__unused NSException *exception) {
-                                break;
                             }
                         }
-                    }
-                    [reader closeFile];
-                    
-                    @try {
+                        [reader closeFile];
                         [writer synchronizeFile];
                         [writer closeFile];
-                    } @catch (__unused NSException *exception) {
-                        continue;
+                    } @catch (NSException *exception) {
+                        break;
                     }
                 }
+                
+                if ( NSUnionRange(range1, range2).length == range1.length + range2.length )
+                   if ( ![deleteContents containsObject:read] ) [deleteContents addObject:read];
             }
             
-            [_contents removeObjectsInArray:delete];
+            [_contents removeObjectsInArray:deleteContents];
+        }
+        
+        for ( SJResourcePartialContent *content in deleteContents ) {
+            NSString *path = [self filePathOfContent:content];
+            if ( [NSFileManager.defaultManager removeItemAtPath:path error:NULL] ) {
+                [_contents removeObject:content];
+            }
         }
     } @catch (__unused NSException *exception) {
         
