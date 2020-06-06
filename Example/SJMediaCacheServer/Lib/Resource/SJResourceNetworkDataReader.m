@@ -30,6 +30,7 @@
 
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isClosed;
+@property (nonatomic) BOOL isDone;
 
 @property (nonatomic, strong, nullable) SJResourcePartialContent *content;
 @property (nonatomic) NSUInteger downloadedLength;
@@ -135,7 +136,7 @@
 - (BOOL)isDone {
     [self lock];
     @try {
-        return _offset == _range.length;
+        return _isDone;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -144,12 +145,9 @@
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
-    if ( self.isDone )
-        return nil;
-
     [self lock];
     @try {
-        if ( _isClosed )
+        if ( _isClosed || _isDone )
             return nil;
         
         NSData *data = nil;
@@ -159,10 +157,11 @@
             if ( length > 0 ) {
                 data = [_reader readDataOfLength:length];
                 _offset += data.length;
-                
+                _isDone = _offset == _range.length;
 #ifdef DEBUG
                 printf("SJResourceNetworkDataReader: <%p>.read { offset: %lu };\n", self, _offset);
-                if ( _offset == _range.length ) {
+                
+                if ( _isDone ) {
                     printf("SJResourceNetworkDataReader: <%p>.done { range: %s };\n", self, NSStringFromRange(_range).UTF8String);
                 }
 #endif

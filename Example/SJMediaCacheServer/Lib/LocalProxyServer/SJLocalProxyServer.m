@@ -166,6 +166,13 @@
     return config.server.sj_server;
 }
 
+- (void)finishResponse {
+    [super finishResponse];
+#ifdef DEBUG
+    printf("SJHTTPConnection: <%p>.finishResponse;\n", self);
+#endif
+}
+
 - (void)dealloc {
 #ifdef DEBUG
     printf("SJHTTPConnection: <%p>.dealloc;\n\n", self);
