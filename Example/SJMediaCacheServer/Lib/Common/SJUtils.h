@@ -48,4 +48,7 @@ SJGetRequestNSRange(SJRequestContentRange requestRange);
 
 FOUNDATION_EXPORT BOOL
 SJNSRangeIsUndefined(NSRange range);
+
+FOUNDATION_EXPORT BOOL
+SJNSRangeContains(NSRange main, NSRange sub);
 NS_ASSUME_NONNULL_END

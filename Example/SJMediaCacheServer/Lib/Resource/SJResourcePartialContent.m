@@ -30,13 +30,12 @@
         _name = name;
         _offset = offset;
         _length = length;
-        _referenceCount = 1;
     }
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"SJResourcePartialContent: <%p> { name: %@, offset: %lu, length: %lu};", self, _name, _offset, self.length];
+    return [NSString stringWithFormat:@"SJResourcePartialContent: <%p> { name: %@, offset: %lu, length: %lu };", self, _name, _offset, self.length];
 }
 
 @synthesize length = _length;

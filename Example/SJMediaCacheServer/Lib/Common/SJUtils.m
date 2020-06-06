@@ -168,3 +168,8 @@ BOOL
 SJNSRangeIsUndefined(NSRange range) {
     return range.location == NSNotFound || range.length == NSNotFound;
 }
+
+BOOL
+SJNSRangeContains(NSRange main, NSRange sub) {
+    return (main.location <= sub.location) && (main.location + main.length >= sub.location + sub.length);
+}

@@ -16,16 +16,5 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id<SJResourceReader>)readDataWithRequest:(SJDataRequest *)request;
 
-#pragma mark -
-
-@property (nonatomic, copy, readonly) NSString *name;
-
-- (NSString *)filePathOfContent:(SJResourcePartialContent *)content;
-
-- (SJResourcePartialContent *)createContentWithOffset:(NSUInteger)offset;
-
-@property (nonatomic, copy, readonly, nullable) NSString *contentType;
-@property (nonatomic, copy, readonly, nullable) NSString *server;
-@property (nonatomic, readonly) NSUInteger totalLength;
 @end
 NS_ASSUME_NONNULL_END

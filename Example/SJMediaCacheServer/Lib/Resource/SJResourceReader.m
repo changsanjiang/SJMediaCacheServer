@@ -323,9 +323,6 @@
     [self lock];
     @try {
         SJResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
-        
-#warning next ... 引用的处理
-        
         [content reference_retain];
         [_referencedContents addObject:content];
         return content;

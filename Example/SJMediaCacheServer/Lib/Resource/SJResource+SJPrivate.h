@@ -16,9 +16,15 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SJResource (SJPrivate)
 - (instancetype)initWithName:(NSString *)name;
 @property (nonatomic) NSInteger id;
-@property (nonatomic, strong) NSMutableArray<SJResourcePartialContent *> *contents;
+@property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, strong, readonly) NSMutableArray<SJResourcePartialContent *> *contents;
 - (void)setServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength;
 - (void)addContents:(nullable NSArray<SJResourcePartialContent *> *)contents;
+- (NSString *)filePathOfContent:(SJResourcePartialContent *)content;
+- (SJResourcePartialContent *)createContentWithOffset:(NSUInteger)offset;
+@property (nonatomic, copy, readonly, nullable) NSString *contentType;
+@property (nonatomic, copy, readonly, nullable) NSString *server;
+@property (nonatomic, readonly) NSUInteger totalLength;
 @end
 
 @interface SJResourcePartialContent (SJPrivate)
