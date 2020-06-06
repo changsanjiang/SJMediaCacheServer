@@ -149,10 +149,20 @@
 @end
 
 @implementation SJHTTPConnection
+- (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig {
+    self = [super initWithAsyncSocket:newSocket configuration:aConfig];
+    if ( self ) {
+#ifdef DEBUG
+        printf("\nSJHTTPConnection: <%p>.init;\n", self);
+#endif
+    }
+    return self;
+}
+
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
     SJHTTPResponse *response = [SJHTTPResponse.alloc initWithConnection:self];
 #ifdef DEBUG
-    printf("\nSJHTTPConnection: <%p>.response { Range: %s, URI: %s, method: %s };\n", self, NSStringFromRange(response.request.range).UTF8String, path.UTF8String, method.UTF8String);
+    printf("SJHTTPConnection: <%p>.response { Range: %s, URI: %s, method: %s };\n", self, NSStringFromRange(response.request.range).UTF8String, path.UTF8String, method.UTF8String);
 #endif
     [response prepareForReadingData];
     return response;
@@ -169,7 +179,7 @@
 - (void)finishResponse {
     [super finishResponse];
 #ifdef DEBUG
-    printf("SJHTTPConnection: <%p>.finishResponse;\n", self);
+    printf("SJHTTPConnection: <%p>.finishResponse;\n\n", self);
 #endif
 }
 
