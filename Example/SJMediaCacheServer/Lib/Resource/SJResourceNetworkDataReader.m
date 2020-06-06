@@ -153,7 +153,7 @@
                 _offset += data.length;
                 _isDone = _offset == _range.length;
 #ifdef DEBUG
-                printf("%s: <%p>.read { offset: %lu };\n", NSStringFromClass(self.class).UTF8String, self, _offset);
+                printf("%s: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class).UTF8String, self, _offset, data.length);
                 
                 if ( _isDone ) {
                     printf("%s: <%p>.done { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String);

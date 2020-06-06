@@ -301,7 +301,9 @@ enum GCDAsyncUdpSocketConfig
 		buffer = d;
 		timeout = t;
 		tag = i;
-		
+        #ifdef DEBUG
+                NSLog(@"%d - -[%@ %s] - %ld", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd), i);
+        #endif
 		resolveInProgress = NO;
 	}
 	return self;

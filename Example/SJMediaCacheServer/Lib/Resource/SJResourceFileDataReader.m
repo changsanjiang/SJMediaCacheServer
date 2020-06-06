@@ -106,7 +106,7 @@
         _isDone = _offset == _readRange.length;
         
 #ifdef DEBUG
-        printf("%s: <%p>.read { offset: %lu };\n", NSStringFromClass(self.class).UTF8String, self, _offset);
+        printf("%s: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class).UTF8String, self, _offset, data.length);
         
         if ( _isDone ) {
             printf("%s: <%p>.done { range: %s , file: %s.%s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
