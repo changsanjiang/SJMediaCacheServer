@@ -155,17 +155,21 @@
         
         NSMutableArray<SJResourcePartialContent *> *deleteContents = NSMutableArray.array;
         [list sortUsingComparator:^NSComparisonResult(SJResourcePartialContent *obj1, SJResourcePartialContent *obj2) {
-            if ( obj1.offset < obj2.offset )
-                return NSOrderedAscending;
-            if ( obj1.offset == obj2.offset && obj1.length > obj2.length ) {
-                if ( ![deleteContents containsObject:obj2] ) [deleteContents addObject:obj2];
-                return NSOrderedAscending;
-            }
+            NSRange range1 = NSMakeRange(obj1.offset, obj1.length);
+            NSRange range2 = NSMakeRange(obj2.offset, obj2.length);
             
-            return NSOrderedDescending;
+            // 1 包含 2
+            if ( SJNSRangeContains(range1, range2) && ![deleteContents containsObject:obj2] )
+                [deleteContents addObject:obj2];
+            
+            // 2 包含 1
+            if ( SJNSRangeContains(range2, range1) && ![deleteContents containsObject:obj1] )
+                [deleteContents addObject:obj1];
+            
+            return range1.location < range2.location ? NSOrderedAscending : NSOrderedDescending;
         }];
         
-        [list removeObjectsInArray:deleteContents];
+        if ( deleteContents.count != 0 ) [list removeObjectsInArray:deleteContents];
 
         for ( NSInteger i = 0 ; i < list.count - 1; i += 2 ) {
             SJResourcePartialContent *write = list[i];
@@ -175,7 +179,7 @@
             NSUInteger maxA = write.offset + write.length;
             NSUInteger maxR = read.offset + read.length;
             if ( maxA >= read.offset && maxA < maxR ) // 有交集
-                readRange = NSMakeRange(maxA - read.offset, maxR - maxA);
+                readRange = NSMakeRange(maxA - read.offset, maxR - maxA); // 减去有交集的部分
 
             if ( readRange.length != 0 ) {
                 NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];
@@ -194,13 +198,11 @@
                     [reader closeFile];
                     [writer synchronizeFile];
                     [writer closeFile];
+                    [deleteContents addObject:read];
                 } @catch (NSException *exception) {
                     break;
                 }
             }
-            
-            if ( maxA == read.offset )
-               [deleteContents addObject:read];
         }
         
         for ( SJResourcePartialContent *content in deleteContents ) {
