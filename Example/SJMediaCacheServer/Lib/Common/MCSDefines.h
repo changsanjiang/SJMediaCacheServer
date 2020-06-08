@@ -10,8 +10,9 @@
 #define MCSDefines_h
 #import <Foundation/Foundation.h>
 #import "MCSDataRequest.h"
-@protocol MCSDataResponseDelegate, MCSResourcePartialContentReaderDelegate;
-@protocol MCSResourcePrefetcherDelegate, MCSResourceReaderDelegate, MCSResourceResponse;
+@protocol MCSDataResponseDelegate, MCSResourcePrefetcherDelegate, MCSResourceReaderDelegate;
+@protocol MCSResource, MCSResourceResponse, MCSResourceReader, MCSResourcePrefetcher;
+
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol MCSURLConvertor <NSObject>
@@ -41,6 +42,25 @@ NS_ASSUME_NONNULL_BEGIN
  
 #pragma mark -
 
+@protocol MCSResource <NSObject>
++ (instancetype)resourceWithURL:(NSURL *)URL;
+ 
+- (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request;
+- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(MCSDataRequest *)request;
+@end
+
+#pragma mark -
+
+@protocol MCSResourceResponse <NSObject>
+@property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
+- (nullable NSString *)contentType;
+- (nullable NSString *)server;
+- (NSUInteger)totalLength;
+- (NSRange)contentRange;
+@end
+
+#pragma mark -
+
 @protocol MCSResourceReader <NSObject>
 @property (nonatomic, weak, nullable) id<MCSResourceReaderDelegate> delegate;
 
@@ -60,15 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error;
 @end
 
-
-@protocol MCSResourceResponse <NSObject>
-@property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
-- (nullable NSString *)contentType;
-- (nullable NSString *)server;
-- (NSUInteger)totalLength;
-- (NSRange)contentRange;
-@end
-
+#pragma mark -
 
 @protocol MCSResourcePrefetcher <NSObject>
 @property (nonatomic, weak, nullable) id<MCSResourcePrefetcherDelegate> delegate;
@@ -85,15 +97,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)prefetcherPrefetchDidFinish:(id<MCSResourcePrefetcher>)prefetcher;
 - (void)prefetcher:(id<MCSResourcePrefetcher>)prefetcher anErrorOccurred:(NSError *)error;
 @end
-
-
-@protocol MCSResource <NSObject>
-+ (instancetype)resourceWithURL:(NSURL *)URL;
- 
-- (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request;
-- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(MCSDataRequest *)request;
-@end
-
 NS_ASSUME_NONNULL_END
 
 #endif /* MCSDefines_h */

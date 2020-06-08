@@ -15,9 +15,9 @@ typedef NS_ENUM(NSUInteger, MCSErrorCode) {
     MCSErrorNonsupportContentType = 100001,
     MCSErrorException             = 100002,
     MCSErrorRemoved               = 100003,
-#warning next ...
-    // 暂时保留
-    //    MCSNotEnoughDiscSpace = 100004,
+
+    // unused
+//    MCSErrorOutOfDiskSpace        = 100004,
 };
 
 FOUNDATION_EXTERN NSString * const MCSErrorDomain;
