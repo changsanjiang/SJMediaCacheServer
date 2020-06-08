@@ -28,7 +28,7 @@
 
 - (void)prepare {
     _resource = [MCSResource resourceWithURL:_request.URL];
-    _reader = [_resource readDataWithRequest:_request];
+    _reader = [_resource readerWithRequest:_request];
     _reader.delegate = self;
     [_reader prepare];
 }

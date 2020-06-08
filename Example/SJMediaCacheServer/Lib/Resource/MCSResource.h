@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSResource : NSObject<MCSResource>
 + (instancetype)resourceWithURL:(NSURL *)URL;
 
-- (id<MCSResourceReader>)readDataWithRequest:(MCSDataRequest *)request;
+- (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request;
 
 @end
 NS_ASSUME_NONNULL_END

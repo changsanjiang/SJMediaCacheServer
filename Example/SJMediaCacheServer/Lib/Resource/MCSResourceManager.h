@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (MCSResource *)resourceWithURL:(NSURL *)URL;
 
 - (void)update:(MCSResource *)resource;
+
+//- (void)
 @end
 
 NS_ASSUME_NONNULL_END

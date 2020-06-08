@@ -50,7 +50,7 @@
     return self;
 }
 
-- (id<MCSResourceReader>)readDataWithRequest:(MCSDataRequest *)request {
+- (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request {
     return [MCSResourceReader.alloc initWithResource:self request:request];
 }
 
