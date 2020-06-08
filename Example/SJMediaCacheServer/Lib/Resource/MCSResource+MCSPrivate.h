@@ -52,5 +52,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MCSResourcePartialContentDelegate <NSObject>
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content;
+- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content;
 @end
 NS_ASSUME_NONNULL_END

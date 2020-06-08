@@ -225,6 +225,10 @@
     }
 }
 
+- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
+    [MCSResourceManager.shared didWriteDataForResource:self];
+}
+
 #pragma mark -
 
 @synthesize readWriteCount = _readWriteCount;

@@ -32,6 +32,14 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 ///
 @property (nonatomic) NSTimeInterval maxDiskAgeForResource;
 
+/// The maximum length of free disk space the device should reserved, in bytes.
+///
+///     When the free disk space of device is less than or equal to this value, unread resources will be removed.
+///
+///     If 0, there is no disk space limit. The default value is 0.
+///
+@property (nonatomic) NSUInteger reservedFreeDiskSpace;
+
 /// Empties the cache. This method may blocks the calling thread until file delete finished.
 ///
 - (void)removeAllResources;
@@ -40,6 +48,7 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 - (void)update:(MCSResource *)resource;
 - (void)reader:(MCSResourceReader *)reader willReadResource:(MCSResource *)resource;
 - (void)reader:(MCSResourceReader *)reader didEndReadResource:(MCSResource *)resource;
+- (void)didWriteDataForResource:(MCSResource *)resource;
 @end
 
 NS_ASSUME_NONNULL_END
