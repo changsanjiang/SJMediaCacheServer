@@ -28,7 +28,7 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 
 /// The maximum length of time to keep a resource in the cache, in seconds.
 ///
-///     The default value is 24h (24 * 60 * 60).
+///     If 0, there is no expiring limit.  The default value is 0.
 ///
 @property (nonatomic) NSTimeInterval maxDiskAgeForResource;
 
