@@ -11,7 +11,7 @@
 #import <Foundation/Foundation.h>
 #import "MCSDataRequest.h"
 @protocol MCSDataResponseDelegate, MCSResourcePartialContentReaderDelegate;
-@protocol MCSResourceReaderDelegate, MCSResourceResponse;
+@protocol MCSResourcePrefetcherDelegate, MCSResourceReaderDelegate, MCSResourceResponse;
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol MCSURLConvertor <NSObject>
@@ -70,10 +70,28 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
+@protocol MCSResourcePrefetcher <NSObject>
+@property (nonatomic, weak, nullable) id<MCSResourcePrefetcherDelegate> delegate;
+@property (nonatomic, readonly) BOOL isPrepared;
+@property (nonatomic, readonly) BOOL isFinished;
+@property (nonatomic, readonly) BOOL isClosed;
+- (void)prepare;
+- (void)close;
+@end
+
+
+@protocol MCSResourcePrefetcherDelegate <NSObject>
+- (void)prefetcherPrepareDidFinish:(id<MCSResourcePrefetcher>)prefetcher;
+- (void)prefetcherPrefetchDidFinish:(id<MCSResourcePrefetcher>)prefetcher;
+- (void)prefetcher:(id<MCSResourcePrefetcher>)prefetcher anErrorOccurred:(NSError *)error;
+@end
+
+
 @protocol MCSResource <NSObject>
 + (instancetype)resourceWithURL:(NSURL *)URL;
  
 - (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request;
+- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(MCSDataRequest *)request;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -49,6 +49,9 @@ MCSGetResponseContentLength(NSHTTPURLResponse *response) {
 
 MCSRequestContentRange
 MCSGetRequestContentRange(NSDictionary *requestHeaders) {
+    if ( requestHeaders.count == 0 )
+        return (MCSRequestContentRange){NSNotFound, NSNotFound};
+    
     /*
      https://tools.ietf.org/html/rfc7233#section-2.1
      

@@ -16,5 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request;
 
+- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(MCSDataRequest *)request;
 @end
 NS_ASSUME_NONNULL_END

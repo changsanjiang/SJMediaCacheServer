@@ -15,6 +15,7 @@
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceManager.h"
 #import "MCSResourceFileManager.h"
+#import "MCSResourcePrefetcher.h"
 #import "MCSUtils.h"
 
 @interface MCSResource ()<NSLocking, MCSResourcePartialContentDelegate>
@@ -57,6 +58,10 @@
 
 - (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request {
     return [MCSResourceReader.alloc initWithResource:self request:request];
+}
+
+- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(MCSDataRequest *)request {
+    return [MCSResourcePrefetcher.alloc initWithResource:self request:request];
 }
 
 #pragma mark -
