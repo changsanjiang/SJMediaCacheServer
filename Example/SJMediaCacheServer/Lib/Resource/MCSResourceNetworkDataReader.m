@@ -146,7 +146,7 @@
     
     id<MCSResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
     _content = [delegate newPartialContentForReader:self];
-    NSString *filePath = [delegate savePathOfPartialContent:_content];
+    NSString *filePath = [delegate writePathOfPartialContent:_content];
     _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
     _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
     

@@ -17,6 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly) MCSURLConvertor *convertor;
 
+// default value is 20;
+@property (nonatomic) NSUInteger countLimit;
+
 - (MCSResource *)resourceWithURL:(NSURL *)URL;
 
 - (void)update:(MCSResource *)resource;

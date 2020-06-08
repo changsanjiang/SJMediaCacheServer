@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MCSResourceNetworkDataReaderDelegate <MCSResourceDataReaderDelegate>
 - (MCSResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader;
-- (NSString *)savePathOfPartialContent:(MCSResourcePartialContent *)content;
+- (NSString *)writePathOfPartialContent:(MCSResourcePartialContent *)content;
 @end
 
 NS_ASSUME_NONNULL_END

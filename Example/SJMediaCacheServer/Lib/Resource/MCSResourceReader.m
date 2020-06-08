@@ -344,7 +344,7 @@
     }
 }
 
-- (NSString *)savePathOfPartialContent:(MCSResourcePartialContent *)content {
+- (NSString *)writePathOfPartialContent:(MCSResourcePartialContent *)content {
     return [_resource filePathOfContent:content];
 }
 

@@ -229,10 +229,4 @@
 - (void)unlock {
     dispatch_semaphore_signal(_semaphore);
 }
-
-- (void)callbackWithBlock:(void(^)(void))block {
-    dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        if ( block ) block();
-    });
-}
 @end
