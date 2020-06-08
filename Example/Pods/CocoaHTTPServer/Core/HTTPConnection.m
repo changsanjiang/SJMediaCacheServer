@@ -2036,10 +2036,6 @@ static NSMutableArray *recentNonces;
 **/
 - (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData*)data withTag:(long)tag
 {
-#ifdef DEBUG
-    NSLog(@"%d - -[%@ %s] - %ld", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd), tag);
-#endif
-    
 	if (tag == HTTP_REQUEST_HEADER)
 	{
 		// Append the header line to the http message
@@ -2387,11 +2383,6 @@ static NSMutableArray *recentNonces;
 **/
 - (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag
 {
-    
-#ifdef DEBUG
-    NSLog(@"%d - -[%@ %s] - %ld", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd), tag);
-#endif
-    
 	BOOL doneSendingResponse = NO;
 	
 	if (tag == HTTP_PARTIAL_RESPONSE_BODY)

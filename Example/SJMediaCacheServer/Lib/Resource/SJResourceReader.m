@@ -119,7 +119,7 @@
 - (NSUInteger)offset {
     [self lock];
     @try {
-        return _offset;
+        return _offset + _request.range.location;
     } @catch (__unused NSException *exception) {
         
     } @finally {

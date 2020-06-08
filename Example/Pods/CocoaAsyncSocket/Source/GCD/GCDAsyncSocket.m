@@ -837,11 +837,6 @@ enum GCDAsyncSocketConfig
 {
 	if((self = [super init]))
 	{
-        
-#ifdef DEBUG
-        NSLog(@"%d - -[%@ %s] - %ld", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd), i);
-#endif
-        
 		buffer = d; // Retain not copy. For performance as documented in header file.
 		bytesDone = 0;
 		timeout = t;
@@ -5893,10 +5888,6 @@ enum GCDAsyncSocketConfig
 - (void)writeData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag
 {
 	if ([data length] == 0) return;
-    
-#ifdef DEBUG
-    printf("\n%s: <%p>.send { length: %lu };\n\n", NSStringFromClass(self.class).UTF8String, self, data.length);
-#endif
 	
 	GCDAsyncWritePacket *packet = [[GCDAsyncWritePacket alloc] initWithData:data timeout:timeout tag:tag];
 	
