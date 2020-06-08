@@ -295,7 +295,7 @@
             // update contentType & totalLength & server for `resource`
             [_resource setServer:SJGetResponseServer(_tmpReader.response) contentType:SJGetResponseContentType(_tmpReader.response) totalLength:SJGetResponseContentRange(_tmpReader.response).totalLength];
 
-            // create response
+            // clean
             [_tmpReader close];
             _tmpReader = nil;
             

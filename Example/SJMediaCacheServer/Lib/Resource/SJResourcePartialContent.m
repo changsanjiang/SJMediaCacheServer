@@ -9,8 +9,9 @@
 #import "SJResourcePartialContent.h"
 #import "SJResource+SJPrivate.h"
 
-@interface SJResourcePartialContent ()<NSLocking>
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
+@interface SJResourcePartialContent ()<NSLocking> {
+    NSRecursiveLock *_lock;
+}
 @property (nonatomic, weak, nullable) id<SJResourcePartialContentDelegate> delegate;
 @property NSInteger referenceCount;
 
@@ -26,7 +27,7 @@
 - (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset length:(NSUInteger)length {
     self = [super init];
     if ( self ) {
-        _semaphore = dispatch_semaphore_create(1);
+        _lock = NSRecursiveLock.alloc.init;
         _name = name;
         _offset = offset;
         _length = length;
@@ -68,9 +69,7 @@
         if ( _referenceCount != referenceCount ) {
             _referenceCount = referenceCount;;
             
-            dispatch_async(dispatch_get_global_queue(0, 0), ^{
-                [self.delegate referenceCountDidChangeForPartialContent:self];
-            });
+            [_delegate referenceCountDidChangeForPartialContent:self];
         }
     } @catch (__unused NSException *exception) {
         
@@ -99,10 +98,10 @@
 }
 
 - (void)lock {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    [_lock lock];
 }
 
 - (void)unlock {
-    dispatch_semaphore_signal(_semaphore);
+    [_lock unlock];
 }
 @end
