@@ -43,7 +43,11 @@
 - (void)setLength:(NSUInteger)length {
     [self lock];
     @try {
-        _length = length;
+        if ( length != _length ) {
+            _length = length;
+            
+            [_delegate contentLengthDidChangeForPartialContent:self];
+        }
     } @catch (__unused NSException *exception) {
         
     } @finally {
