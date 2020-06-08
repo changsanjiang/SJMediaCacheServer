@@ -50,6 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 @property (nonatomic, readonly) BOOL isPrepared;
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
+@property (nonatomic, readonly) BOOL isClosed;
 - (void)close;
 @end
 

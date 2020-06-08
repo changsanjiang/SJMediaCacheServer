@@ -14,12 +14,6 @@
 #import <SJUIKit/SJSQLite3.h>
 #import <SJUIKit/SJSQLite3+QueryExtended.h>
 
-@interface MCSResource (Private)
-- (instancetype)initWithName:(NSString *)name;
-@end
-
-#pragma mark -
-
 @interface MCSResource (MCSResourceManagerExtended)<SJSQLiteTableModelProtocol>
 
 @end
@@ -101,3 +95,9 @@
     dispatch_semaphore_signal(_semaphore);
 }
 @end
+
+/*
+ 
+ 最近最少使用, 并且未被使用
+ 
+ */

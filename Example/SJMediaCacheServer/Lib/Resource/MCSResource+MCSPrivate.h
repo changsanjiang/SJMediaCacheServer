@@ -29,13 +29,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResourcePartialContent (MCSPrivate)
 @property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
-@property (readonly) NSInteger referenceCount;
+@property (readonly) NSInteger readWriteCount;
 
-- (void)reference_retain;
-- (void)reference_release;
+- (void)readWrite_retain;
+- (void)readWrite_release;
 @end
 
 @protocol MCSResourcePartialContentDelegate <NSObject>
-- (void)referenceCountDidChangeForPartialContent:(MCSResourcePartialContent *)content;
+- (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content;
 @end
 NS_ASSUME_NONNULL_END

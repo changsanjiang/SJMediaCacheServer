@@ -33,7 +33,7 @@
 @property (nonatomic, copy, nullable) NSArray<id<MCSResourceDataReader>> *readers;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 
-@property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *referencedContents;
+@property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *readWriteContents;
 @end
 
 @implementation MCSResourceReader
@@ -41,7 +41,7 @@
 - (instancetype)initWithResource:(__weak MCSResource *)resource request:(MCSDataRequest *)request {
     self = [super init];
     if ( self ) {
-        _referencedContents = NSMutableArray.array;
+        _readWriteContents = NSMutableArray.array;
         _lock = NSRecursiveLock.alloc.init;
         _currentIndex = NSNotFound;
 
@@ -95,12 +95,12 @@
         
         NSData *data = [self.currentReader readDataOfLength:length];
         _offset += data.length;
-        if ( self.currentReader.isDone )
-            self.currentReader != self.readers.lastObject ? [self _prepareNextReader] : [self _close];
         return data;
     } @catch (__unused NSException *exception) {
         
     } @finally {
+        if ( self.currentReader.isDone )
+            self.currentReader != self.readers.lastObject ? [self _prepareNextReader] : [self _close];
         [self unlock];
     }
 }
@@ -169,8 +169,8 @@
         [reader close];
     }
     
-    for ( MCSResourcePartialContent *content in _referencedContents ) {
-        [content reference_release];
+    for ( MCSResourcePartialContent *content in _readWriteContents ) {
+        [content readWrite_release];
     }
             
 #ifdef DEBUG
@@ -228,8 +228,8 @@
             [readers addObject:reader];
             
             // retain
-            [content reference_retain];
-            [_referencedContents addObject:content];
+            [content readWrite_retain];
+            [_readWriteContents addObject:content];
             
             // next part
             current = NSMakeRange(NSMaxRange(intersection), NSMaxRange(_request.range) - NSMaxRange(intersection));
@@ -323,8 +323,8 @@
     [self lock];
     @try {
         MCSResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
-        [content reference_retain];
-        [_referencedContents addObject:content];
+        [content readWrite_retain];
+        [_readWriteContents addObject:content];
         return content;
     } @catch (__unused NSException *exception) {
         

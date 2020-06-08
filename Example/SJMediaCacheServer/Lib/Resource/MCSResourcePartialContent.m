@@ -13,10 +13,10 @@
     NSRecursiveLock *_lock;
 }
 @property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
-@property NSInteger referenceCount;
+@property NSInteger readWriteCount;
 
-- (void)reference_retain;
-- (void)reference_release;
+- (void)readWrite_retain;
+- (void)readWrite_release;
 @end
 
 @implementation MCSResourcePartialContent
@@ -62,14 +62,14 @@
     }
 }
 
-@synthesize referenceCount = _referenceCount;
-- (void)setReferenceCount:(NSInteger)referenceCount {
+@synthesize readWriteCount = _readWriteCount;
+- (void)setReadWriteCount:(NSInteger)readWriteCount {
     [self lock];
     @try {
-        if ( _referenceCount != referenceCount ) {
-            _referenceCount = referenceCount;;
+        if ( _readWriteCount != readWriteCount ) {
+            _readWriteCount = readWriteCount;;
             
-            [_delegate referenceCountDidChangeForPartialContent:self];
+            [_delegate readWriteCountDidChangeForPartialContent:self];
         }
     } @catch (__unused NSException *exception) {
         
@@ -78,10 +78,10 @@
     }
 }
 
-- (NSInteger)referenceCount {
+- (NSInteger)readWriteCount {
     [self lock];
     @try {
-        return _referenceCount;;
+        return _readWriteCount;;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -89,12 +89,12 @@
     }
 }
  
-- (void)reference_retain {
-    self.referenceCount += 1;
+- (void)readWrite_retain {
+    self.readWriteCount += 1;
 }
 
-- (void)reference_release {
-    self.referenceCount -= 1;
+- (void)readWrite_release {
+    self.readWriteCount -= 1;
 }
 
 - (void)lock {

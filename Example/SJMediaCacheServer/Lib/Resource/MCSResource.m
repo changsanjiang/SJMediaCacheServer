@@ -140,8 +140,8 @@
     }
 }
 
-- (void)referenceCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-    if ( content.referenceCount > 0 ) return;
+- (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
+    if ( content.readWriteCount > 0 ) return;
     [self lock];
     @try {
         if ( _contents.count <= 1 ) return;
@@ -149,7 +149,7 @@
         // 合并文件
         NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.array;
         for ( MCSResourcePartialContent *content in _contents ) {
-            if ( content.referenceCount == 0 )
+            if ( content.readWriteCount == 0 )
                 [list addObject:content];
         }
         

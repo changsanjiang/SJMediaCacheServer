@@ -64,14 +64,14 @@
 #pragma mark -
 
 - (void)readerPrepareDidFinish:(id<MCSResourceReader>)reader {
-    [_delegate responsePrepareDidFinish:self];
+    if ( !_reader.isClosed ) [_delegate responsePrepareDidFinish:self];
 }
 
 - (void)readerHasAvailableData:(id<MCSResourceReader>)reader {
-    [_delegate responseHasAvailableData:self];
+    if ( !_reader.isClosed ) [_delegate responseHasAvailableData:self];
 }
 
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error {
-    [_delegate response:self anErrorOccurred:error];
+    if ( !_reader.isClosed ) [_delegate response:self anErrorOccurred:error];
 }
 @end
