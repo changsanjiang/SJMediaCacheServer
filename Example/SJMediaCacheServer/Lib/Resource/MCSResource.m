@@ -10,8 +10,6 @@
 #import "MCSResourceDefines.h"
 #import "MCSResource+MCSPrivate.h"
 #import "MCSResourceReader.h"
-#import "MCSResourceFileDataReader.h"
-#import "MCSResourceNetworkDataReader.h"
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceManager.h"
 #import "MCSResourceFileManager.h"

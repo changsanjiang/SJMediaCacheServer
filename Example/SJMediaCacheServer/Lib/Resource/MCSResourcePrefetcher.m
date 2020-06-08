@@ -101,6 +101,9 @@
         while (true) {
             @autoreleasepool {
                 NSData *data = [_reader readDataOfLength:1 * 1024 * 1024];
+                if ( data.length == 0 )
+                    break;
+                
                 _offset += data.length;
                 
                 if ( _offset >= _request.range.length || _offset >= _resource.totalLength ) {
