@@ -74,7 +74,6 @@ NSString *MCSResourceManagerUserInfoResourceKey = @"resource";
     self = [super init];
     if ( self ) {
         _sqlite3 = [SJSQLite3.alloc initWithDatabasePath:[MCSResourceFileManager databasePath]];
-        _convertor = MCSURLConvertor.alloc.init;
         _cacheCountLimit = 20;
         
         _lock = NSRecursiveLock.alloc.init;
@@ -88,7 +87,7 @@ NSString *MCSResourceManagerUserInfoResourceKey = @"resource";
 - (MCSResource *)resourceWithURL:(NSURL *)URL {
     [self lock];
     @try {
-        NSString *name = [_convertor resourceNameWithURL:URL];
+        NSString *name = [MCSURLConvertor.shared resourceNameWithURL:URL];
         if ( _resources[name] == nil ) {
             MCSResource *resource = (id)[_sqlite3 objectsForClass:MCSResource.class conditions:@[
                 [SJSQLite3Condition conditionWithColumn:@"name" value:name]

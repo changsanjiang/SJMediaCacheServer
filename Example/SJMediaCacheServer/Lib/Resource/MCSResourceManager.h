@@ -18,28 +18,32 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 @interface MCSResourceManager : NSObject
 + (instancetype)shared;
 
-@property (nonatomic, strong, readonly) MCSURLConvertor *convertor;
-
-/// default value is 20;
+/// The maximum number of resources the cache should hold.
+///
+///     If 0, there is no count limit. The default value is 0.
+///
+///     This is not a strict limit—if the cache goes over the limit, a resource in the cache could be evicted instantly, later, or possibly never, depending on the usage details of the resource.
+///
 @property (nonatomic) NSUInteger cacheCountLimit;
 
-- (MCSResource *)resourceWithURL:(NSURL *)URL;
+/// The maximum length of time to keep a resource in the cache, in seconds.
+///
+///     The default value is 24h (24 * 60 * 60).
+///
+@property (nonatomic) NSTimeInterval maxDiskAgeForResource;
 
-/// 将更新的数据同步到数据库中
-- (void)update:(MCSResource *)resource;
-
-- (void)reader:(MCSResourceReader *)reader willReadResource:(MCSResource *)resource;
-- (void)reader:(MCSResourceReader *)reader didEndReadResource:(MCSResource *)resource;
-
-/// 删除当前未被使用, 并且最近更新时间与使用次数最少的资源
+/// Removes the eldest resources from the cache.
 ///
 - (void)removeEldestResourcesIfNeeded;
 
-/// 移除全部资源
-///
-///     注意正在使用的资源也会被删除
+/// Empties the cache. This method may blocks the calling thread until file delete finished.
 ///
 - (void)removeAllResources;
+
+- (MCSResource *)resourceWithURL:(NSURL *)URL;
+- (void)update:(MCSResource *)resource;
+- (void)reader:(MCSResourceReader *)reader willReadResource:(MCSResource *)resource;
+- (void)reader:(MCSResourceReader *)reader didEndReadResource:(MCSResource *)resource;
 @end
 
 NS_ASSUME_NONNULL_END
