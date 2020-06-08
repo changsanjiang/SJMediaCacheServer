@@ -13,7 +13,14 @@
 // 私有方法, 请勿使用
 
 NS_ASSUME_NONNULL_BEGIN
-@interface MCSResource (MCSPrivate)
+@protocol MCSReadWrite <NSObject>
+@property (nonatomic, readonly) NSInteger readWriteCount;
+
+- (void)readWrite_retain;
+- (void)readWrite_release;
+@end
+
+@interface MCSResource (MCSPrivate)<MCSReadWrite>
 - (instancetype)initWithName:(NSString *)name;
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy, readonly) NSString *name;
@@ -25,12 +32,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly, nullable) NSString *contentType;
 @property (nonatomic, copy, readonly, nullable) NSString *server;
 @property (nonatomic, readonly) NSUInteger totalLength;
+
+@property (nonatomic, readonly) NSInteger readWriteCount;
+- (void)readWrite_retain;
+- (void)readWrite_release;
 @end
 
-@interface MCSResourcePartialContent (MCSPrivate)
+@interface MCSResourcePartialContent (MCSPrivate)<MCSReadWrite>
 @property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
-@property (readonly) NSInteger readWriteCount;
 
+@property (nonatomic, readonly) NSInteger readWriteCount;
 - (void)readWrite_retain;
 - (void)readWrite_release;
 @end

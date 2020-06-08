@@ -47,11 +47,15 @@
 
         _resource = resource;
         _request = request;
+        
+        [_resource readWrite_retain];
     }
     return self;
 }
 
 - (void)dealloc {
+    [_resource readWrite_release];
+    
 #ifdef DEBUG
     printf("%s: <%p>.dealloc;\n", NSStringFromClass(self.class).UTF8String, self);
 #endif

@@ -26,6 +26,8 @@
 @property (nonatomic, copy, nullable) NSString *contentType;
 @property (nonatomic, copy, nullable) NSString *server;
 @property (nonatomic) NSUInteger totalLength;
+
+@property (nonatomic) NSInteger readWriteCount;
 @end
 
 @implementation MCSResource
@@ -218,6 +220,41 @@
     } @finally {
         [self unlock];
     }
+}
+
+#pragma mark -
+
+@synthesize readWriteCount = _readWriteCount;
+- (void)setReadWriteCount:(NSInteger)readWriteCount {
+    [self lock];
+    @try {
+        if ( _readWriteCount != readWriteCount ) {
+            _readWriteCount = readWriteCount;
+        }
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSInteger)readWriteCount {
+    [self lock];
+    @try {
+        return _readWriteCount;;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (void)readWrite_retain {
+    self.readWriteCount += 1;
+}
+
+- (void)readWrite_release {
+    self.readWriteCount -= 1;
 }
 
 #pragma mark -

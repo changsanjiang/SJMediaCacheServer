@@ -13,7 +13,7 @@
     NSRecursiveLock *_lock;
 }
 @property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
-@property NSInteger readWriteCount;
+@property (nonatomic) NSInteger readWriteCount;
 
 - (void)readWrite_retain;
 - (void)readWrite_release;
