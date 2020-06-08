@@ -28,6 +28,7 @@
 @property (nonatomic) NSUInteger totalLength;
 
 @property (nonatomic) NSInteger readWriteCount;
+@property (nonatomic) NSInteger numberOfCumulativeUsage;
 @end
 
 @implementation MCSResource

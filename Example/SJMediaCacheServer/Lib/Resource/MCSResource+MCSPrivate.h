@@ -36,6 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSInteger readWriteCount;
 - (void)readWrite_retain;
 - (void)readWrite_release;
+
+@property (nonatomic) NSInteger numberOfCumulativeUsage; ///< 累计被使用次数
+@property (nonatomic) NSTimeInterval updatedTime;        ///< 最后一次更新时的时间
 @end
 
 @interface MCSResourcePartialContent (MCSPrivate)<MCSReadWrite>
