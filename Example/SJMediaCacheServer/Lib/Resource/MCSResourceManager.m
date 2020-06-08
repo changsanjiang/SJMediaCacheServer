@@ -92,7 +92,6 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
         _count = [_sqlite3 countOfObjectsForClass:MCSResource.class conditions:nil error:NULL];
 
-        [self _removeResourcesForLimit:@(MCSLimitCount)];
         [self _removeResourcesForLimit:@(MCSLimitFreeDiskSpace)];
     }
     return self;
