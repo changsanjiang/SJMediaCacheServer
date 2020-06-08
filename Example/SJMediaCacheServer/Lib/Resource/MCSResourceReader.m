@@ -149,6 +149,17 @@
     }
 }
 
+- (BOOL)isClosed {
+    [self lock];
+    @try {
+        return _isClosed;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
 - (void)close {
     [self lock];
     @try {
