@@ -29,6 +29,7 @@
 
 @property (nonatomic) NSInteger readWriteCount;
 @property (nonatomic) NSInteger numberOfCumulativeUsage;
+@property (nonatomic) NSTimeInterval updatedTime;
 @end
 
 @implementation MCSResource
