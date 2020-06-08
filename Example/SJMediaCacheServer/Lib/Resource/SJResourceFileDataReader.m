@@ -9,10 +9,7 @@
 #import "SJResourceFileDataReader.h"
 #import "SJError.h"
 
-@interface SJResourceFileDataReader()<NSLocking>
-@property (nonatomic, strong) dispatch_queue_t delegateQueue;
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
-@property (nonatomic, weak) id<SJResourceDataReaderDelegate> delegate;
+@interface SJResourceFileDataReader()
 @property (nonatomic) NSRange range;
 @property (nonatomic) NSRange readRange;
 @property (nonatomic, copy) NSString *path;
@@ -26,14 +23,13 @@
 @end
 
 @implementation SJResourceFileDataReader
+@synthesize delegate = _delegate;
 - (instancetype)initWithRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange {
     self = [super init];
     if ( self ) {
         _path = path.copy;
         _range = range;
         _readRange = readRange;
-        _semaphore = dispatch_semaphore_create(1);
-        _delegateQueue = dispatch_get_global_queue(0, 0);
     }
     return self;
 }
@@ -42,60 +38,22 @@
     return [NSString stringWithFormat:@"SJResourceFileDataReader:<%p> { range: %@\n };", self, NSStringFromRange(_range)];
 }
 
-- (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
-    [self lock];
-    _delegate = delegate;
-    _delegateQueue = queue;
-    [self unlock];
-}
-
 - (void)prepare {
-    [self lock];
-    @try {
-        if ( _isClosed || _isCalledPrepare )
-            return;
-        
+    if ( _isClosed || _isCalledPrepare )
+        return;
+    
 #ifdef DEBUG
-        printf("%s: <%p>.prepare { range: %s, file: %s.%s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
+    printf("%s: <%p>.prepare { range: %s, file: %s.%s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
 #endif
-        _isCalledPrepare = YES;
-        _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
-        [_reader seekToFileOffset:_readRange.location];
-        
-        [self callbackWithBlock:^{
-            [self.delegate readerPrepareDidFinish:self];
-        }];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (NSUInteger)offset {
-    [self lock];
-    @try {
-        return _offset;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (BOOL)isDone {
-    [self lock];
-    @try {
-        return _isDone;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    
+    _isCalledPrepare = YES;
+    _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
+    [_reader seekToFileOffset:_readRange.location];
+    
+    [self.delegate readerPrepareDidFinish:self];
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
-    [self lock];
     @try {
         if ( _isClosed || _isDone )
             return nil;
@@ -114,47 +72,20 @@
 #endif
         return data;
     } @catch (NSException *exception) {
-        [self callbackWithBlock:^{
-            [self.delegate reader:self anErrorOccurred:[SJError errorForException:exception]];
-        }];
-    } @finally {
-        [self unlock];
+        [self.delegate reader:self anErrorOccurred:[SJError errorForException:exception]];
     }
 }
 
 - (void)close {
-    [self lock];
-    @try {
-        if ( _isClosed )
-            return;
-        
-        _isClosed = YES;
-        [_reader closeFile];
-        _reader = nil;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    if ( _isClosed )
+        return;
+    
+    _isClosed = YES;
+    [_reader closeFile];
+    _reader = nil;
     
 #ifdef DEBUG
     printf("%s: <%p>.close;\n", NSStringFromClass(self.class).UTF8String, self);
 #endif
-}
-
-#pragma mark -
-
-- (void)lock {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-}
-
-- (void)unlock {
-    dispatch_semaphore_signal(_semaphore);
-}
-
-- (void)callbackWithBlock:(void(^)(void))block {
-    dispatch_async(_delegateQueue, ^{
-        if ( block ) block();
-    });
 }
 @end

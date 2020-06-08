@@ -12,11 +12,7 @@
 #import "SJResourceResponse.h"
 #import "SJResourcePartialContent.h"
 
-@interface SJResourceNetworkDataReader ()<SJDownloadTaskDelegate, NSLocking>
-@property (nonatomic, weak, nullable) id<SJResourceDataReaderDelegate> delegate;
-@property (nonatomic, strong) dispatch_queue_t delegateQueue;
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
-
+@interface SJResourceNetworkDataReader ()<SJDownloadTaskDelegate>
 @property (nonatomic, strong) NSURL *URL;
 @property (nonatomic, copy) NSDictionary *requestHeaders;
 @property (nonatomic) NSRange range;
@@ -37,15 +33,14 @@
 @end
 
 @implementation SJResourceNetworkDataReader
+@synthesize delegate = _delegate;
 
 - (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range {
     self = [super init];
     if ( self ) {
         _URL = URL;
         _requestHeaders = headers.copy;
-        _range = range;
-        _semaphore = dispatch_semaphore_create(1);
-        _delegateQueue = dispatch_get_global_queue(0, 0);
+        _range = range; 
     }
     return self;
 }
@@ -54,92 +49,44 @@
     return [NSString stringWithFormat:@"SJResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@\n};", self, _URL, _requestHeaders, NSStringFromRange(_range)];
 }
 
-- (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
-    [self lock];
-    _delegate = delegate;
-    _delegateQueue = queue;
-    [self unlock];
-}
-
 - (void)prepare {
-    [self lock];
-    @try {
-        if ( _isClosed || _isCalledPrepare )
-            return;
+    if ( _isClosed || _isCalledPrepare )
+        return;
 #ifdef DEBUG
-        printf("%s: <%p>.prepare { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String);
+    printf("%s: <%p>.prepare { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String);
 #endif
-        _isCalledPrepare = YES;
-        NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
-        [request setAllHTTPHeaderFields:_requestHeaders];
-//
-//        https://tools.ietf.org/html/rfc7233#section-4.1
-//
-//        Additional examples, assuming a representation of length 10000:
-//
-//        o  The final 500 bytes (byte offsets 9500-9999, inclusive):
-//
-//             bytes=-500
-//
-//        Or:
-//
-//             bytes=9500-
-//
-//        o  The first and last bytes only (bytes 0 and 9999):
-//
-//             bytes=0-0,-1
-//
-//        o  Other valid (but not canonical) specifications of the second 500
-//           bytes (byte offsets 500-999, inclusive):
-//
-//             bytes=500-600,601-999
-//             bytes=500-700,601-999
-//
-        [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
-        
-        _task = [SJDownload.shared downloadWithRequest:request delegate:self];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (NSHTTPURLResponse *)response {
-    [self lock];
-    @try {
-        return _response;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (NSUInteger)offset {
-    [self lock];
-    @try {
-        return _offset;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (BOOL)isDone {
-    [self lock];
-    @try {
-        return _isDone;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    _isCalledPrepare = YES;
+    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
+    [request setAllHTTPHeaderFields:_requestHeaders];
+    //
+    //        https://tools.ietf.org/html/rfc7233#section-4.1
+    //
+    //        Additional examples, assuming a representation of length 10000:
+    //
+    //        o  The final 500 bytes (byte offsets 9500-9999, inclusive):
+    //
+    //             bytes=-500
+    //
+    //        Or:
+    //
+    //             bytes=9500-
+    //
+    //        o  The first and last bytes only (bytes 0 and 9999):
+    //
+    //             bytes=0-0,-1
+    //
+    //        o  Other valid (but not canonical) specifications of the second 500
+    //           bytes (byte offsets 500-999, inclusive):
+    //
+    //             bytes=500-600,601-999
+    //             bytes=500-700,601-999
+    //
+    [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
+    
+    _task = [SJDownload.shared downloadWithRequest:request delegate:self];
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
-    [self lock];
     @try {
         if ( _isClosed || _isDone )
             return nil;
@@ -165,13 +112,10 @@
         return data;
     } @catch (NSException *exception) {
         [self _onError:[SJError errorForException:exception]];
-    } @finally {
-        [self unlock];
     }
 }
 
 - (void)close {
-    [self lock];
     @try {
         if ( _isClosed )
             return;
@@ -186,8 +130,6 @@
         _reader = nil;
     } @catch (__unused NSException *exception) {
         
-    } @finally {
-        [self unlock];
     }
      
 #ifdef DEBUG
@@ -198,30 +140,20 @@
 #pragma mark -
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    [self lock];
-    @try {
-        if ( _isClosed )
-            return;
-        _response = response;
-
-        id<SJResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
-        _content = [delegate newPartialContentForReader:self];
-        NSString *filePath = [delegate savePathOfPartialContent:_content];
-        _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
-        _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
-        
-        [self callbackWithBlock:^{
-            [self.delegate readerPrepareDidFinish:self];
-        }];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    if ( _isClosed )
+        return;
+    _response = response;
+    
+    id<SJResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
+    _content = [delegate newPartialContentForReader:self];
+    NSString *filePath = [delegate savePathOfPartialContent:_content];
+    _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
+    _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
+    
+    [self.delegate readerPrepareDidFinish:self];
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    [self lock];
     @try {
         if ( _isClosed )
             return;
@@ -234,52 +166,25 @@
         printf("%s: <%p>.downloadProgress: %lu;\n", NSStringFromClass(self.class).UTF8String, self, _downloadedLength);
 #endif
         
-        [self callbackWithBlock:^{
-            [self.delegate readerHasAvailableData:self];
-        }];
+        [self.delegate readerHasAvailableData:self];
     } @catch (NSException *exception) {
         [self _onError:[SJError errorForException:exception]];
-    } @finally {
-        [self unlock];
     }
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    [self lock];
-    @try {
-        if ( _isClosed )
-            return;
-        
-        if ( error != nil && error.code != NSURLErrorCancelled ) {
-            [self _onError:error];
-        }
-        else {
-            // finished download
-        }
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
+    if ( _isClosed )
+        return;
+    
+    if ( error != nil && error.code != NSURLErrorCancelled ) {
+        [self _onError:error];
+    }
+    else {
+        // finished download
     }
 }
 
 - (void)_onError:(NSError *)error {
-    [self callbackWithBlock:^{
-        [self.delegate reader:self anErrorOccurred:error];
-    }];
-}
-
-- (void)lock {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-}
-
-- (void)unlock {
-    dispatch_semaphore_signal(_semaphore);
-}
-
-- (void)callbackWithBlock:(void(^)(void))block {
-    dispatch_async(_delegateQueue, ^{
-        if ( block ) block();
-    });
+    [self.delegate reader:self anErrorOccurred:error];
 }
 @end

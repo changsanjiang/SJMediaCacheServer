@@ -15,9 +15,9 @@
 #import "SJResourceNetworkDataReader.h"
 #import "SJUtils.h"
 
-@interface SJResourceReader ()<NSLocking, SJResourceDataReaderDelegate>
-@property (nonatomic, strong) dispatch_queue_t delegateQueue;
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
+@interface SJResourceReader ()<NSLocking, SJResourceDataReaderDelegate> {
+    NSRecursiveLock *_lock;
+}
 
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isPrepared;
@@ -42,8 +42,7 @@
     self = [super init];
     if ( self ) {
         _referencedContents = NSMutableArray.array;
-        _delegateQueue = dispatch_get_global_queue(0, 0);
-        _semaphore = dispatch_semaphore_create(1);
+        _lock = NSRecursiveLock.alloc.init;
         _currentIndex = NSNotFound;
 
         _resource = resource;
@@ -72,10 +71,10 @@
         
         if ( _resource.totalLength == 0 || _resource.contentType.length == 0 ) {
             _tmpReader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 2)];
+            _tmpReader.delegate = self;
 #ifdef DEBUG
             printf("%s: <%p>.createTmpReader: <%p>;\n", NSStringFromClass(self.class).UTF8String, self, _tmpReader);
 #endif
-            [_tmpReader setDelegate:self delegateQueue:_delegateQueue];
             [_tmpReader prepare];
         }
         else {
@@ -117,6 +116,17 @@
     }
 }
  
+- (NSUInteger)offset {
+    [self lock];
+    @try {
+        return _offset;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
 - (BOOL)isPrepared {
     [self lock];
     @try {
@@ -205,6 +215,7 @@
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
                 SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:leftRange];
+                reader.delegate = self;
                 [readers addObject:reader];
             }
             
@@ -213,6 +224,7 @@
             NSRange fileRange = NSMakeRange(matchedRange.location - content.offset, intersection.length);
             NSString *path = [SJResourceFileManager getContentFilePathWithName:content.name inResource:_resource.name];
             SJResourceFileDataReader *reader = [SJResourceFileDataReader.alloc initWithRange:matchedRange path:path readRange:fileRange];
+            reader.delegate = self;
             [readers addObject:reader];
             
             // retain
@@ -229,6 +241,7 @@
     if ( current.length != 0 ) {
         // undownloaded part
         SJResourceNetworkDataReader *reader = [SJResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:current];
+        reader.delegate = self;
         [readers addObject:reader];
     }
     
@@ -251,7 +264,6 @@
         _currentIndex = 0;
     else
         _currentIndex += 1;
-    [self.currentReader setDelegate:self delegateQueue:_delegateQueue];
     [self.currentReader prepare];
 }
 
@@ -263,17 +275,11 @@
 }
 
 - (void)lock {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    [_lock lock];
 }
 
 - (void)unlock {
-    dispatch_semaphore_signal(_semaphore);
-}
-
-- (void)callbackWithBlock:(void(^)(void))block {
-    dispatch_async(_delegateQueue, ^{
-        if ( block ) block();
-    });
+    [_lock unlock];
 }
 
 - (void)readerPrepareDidFinish:(id<SJResourceDataReader>)reader {
@@ -297,9 +303,7 @@
             [self _prepare];
         }
 
-        [self callbackWithBlock:^{
-            [self.delegate readerPrepareDidFinish:self];
-        }];
+        [self.delegate readerPrepareDidFinish:self];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -308,15 +312,11 @@
 }
 
 - (void)readerHasAvailableData:(id<SJResourceDataReader>)reader {
-    [self callbackWithBlock:^{
-        [self.delegate readerHasAvailableData:self];
-    }];
+    [_delegate readerHasAvailableData:self];
 }
 
 - (void)reader:(id<SJResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    [self callbackWithBlock:^{
-        [self.delegate reader:self anErrorOccurred:error];
-    }];
+    [_delegate reader:self anErrorOccurred:error];
 }
 
 - (SJResourcePartialContent *)newPartialContentForReader:(SJResourceNetworkDataReader *)reader {

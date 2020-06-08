@@ -13,7 +13,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol SJResourceDataReader <NSObject>
-- (void)setDelegate:(id<SJResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
+
+@property (nonatomic, weak, nullable) id<SJResourceDataReaderDelegate> delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) NSUInteger offset; 
