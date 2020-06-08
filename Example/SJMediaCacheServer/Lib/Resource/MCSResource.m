@@ -147,13 +147,13 @@
         if ( _contents.count <= 1 ) return;
         
         // 合并文件
-        NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.array;
+        NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
         for ( MCSResourcePartialContent *content in _contents ) {
             if ( content.readWriteCount == 0 )
                 [list addObject:content];
         }
         
-        NSMutableArray<MCSResourcePartialContent *> *deleteContents = NSMutableArray.array;
+        NSMutableArray<MCSResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
         [list sortUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
             NSRange range1 = NSMakeRange(obj1.offset, obj1.length);
             NSRange range2 = NSMakeRange(obj2.offset, obj2.length);

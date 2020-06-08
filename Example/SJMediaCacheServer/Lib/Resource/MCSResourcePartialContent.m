@@ -36,7 +36,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"MCSResourcePartialContent: <%p> { name: %@, offset: %lu, length: %lu };", self, _name, _offset, self.length];
+    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, _name, _offset, self.length];
 }
 
 @synthesize length = _length;
