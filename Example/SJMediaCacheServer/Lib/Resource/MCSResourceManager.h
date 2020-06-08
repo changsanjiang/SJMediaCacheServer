@@ -32,10 +32,6 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 ///
 @property (nonatomic) NSTimeInterval maxDiskAgeForResource;
 
-/// Removes the eldest resources from the cache.
-///
-- (void)removeEldestResourcesIfNeeded;
-
 /// Empties the cache. This method may blocks the calling thread until file delete finished.
 ///
 - (void)removeAllResources;
