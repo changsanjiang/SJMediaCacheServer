@@ -17,7 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, nullable) id<SJResourceDataReaderDelegate> delegate;
 
 - (void)prepare;
-@property (nonatomic, readonly) NSUInteger offset; 
 @property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;
