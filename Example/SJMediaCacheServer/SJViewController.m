@@ -7,16 +7,16 @@
 //
 
 #import "SJViewController.h"
-#import "SJMediaCacheServerDefines.h"
-#import "SJLocalProxyServer.h"
+#import "MCSDefines.h"
+#import "MCSLocalProxyServer.h"
 #import <SJVideoPlayer/SJVideoPlayer.h>
 #import <Masonry/Masonry.h>
 
-#import "SJDataResponse.h"
-#import "SJURLConvertor.h"
+#import "MCSDataResponse.h"
+#import "MCSURLConvertor.h"
  
-@interface SJViewController ()<SJLocalProxyServerDelegate>
-@property (nonatomic, strong, nullable) SJLocalProxyServer *server;
+@interface SJViewController ()<MCSLocalProxyServerDelegate>
+@property (nonatomic, strong, nullable) MCSLocalProxyServer *server;
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
 @end
 
@@ -29,9 +29,9 @@
     // 播放
     
     [self _startLocalProxyServer];
-    NSURL *proxyURL = [SJURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
+    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
 
-//    NSURL *proxyURL = [SJURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
+//    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
  
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:0];
     
@@ -53,16 +53,16 @@
 //    }] resume];
 }
 
-#pragma mark - SJLocalProxyServerDelegate
+#pragma mark - MCSLocalProxyServerDelegate
 
-- (id<SJDataResponse>)server:(SJLocalProxyServer *)server responseWithRequest:(SJDataRequest *)request delegate:(id<SJDataResponseDelegate>)delegate {
-    return [SJDataResponse.alloc initWithRequest:request delegate:delegate];
+- (id<MCSDataResponse>)server:(MCSLocalProxyServer *)server responseWithRequest:(MCSDataRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate {
+    return [MCSDataResponse.alloc initWithRequest:request delegate:delegate];
 }
 
 #pragma mark -
 
 - (void)_startLocalProxyServer {
-    _server = [SJLocalProxyServer.alloc initWithPort:80];
+    _server = [MCSLocalProxyServer.alloc initWithPort:80];
     _server.delegate = self;
     
     NSError *error = nil;
