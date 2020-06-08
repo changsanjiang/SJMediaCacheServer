@@ -10,8 +10,9 @@
 #import "SJError.h"
 #import "SJUtils.h"
 
-@interface SJDownload () <NSURLSessionDataDelegate, NSLocking>
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
+@interface SJDownload () <NSURLSessionDataDelegate, NSLocking> {
+    NSRecursiveLock *_lock;
+}
 @property (nonatomic, strong) NSURLSession *session;
 @property (nonatomic, strong) NSOperationQueue *sessionDelegateQueue;
 @property (nonatomic, strong) NSURLSessionConfiguration *sessionConfiguration;
@@ -32,7 +33,7 @@
 
 - (instancetype)init {
     if (self = [super init]) {
-        _semaphore = dispatch_semaphore_create(1);
+        _lock = NSRecursiveLock.alloc.init;
         _timeoutInterval = 30.0f;
         _backgroundTask = UIBackgroundTaskInvalid;
         _errorDictionary = [NSMutableDictionary dictionary];
@@ -207,11 +208,11 @@
 #pragma mark -
 
 - (void)lock {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    [_lock lock];
 }
 
 - (void)unlock {
-    dispatch_semaphore_signal(_semaphore);
+    [_lock unlock];
 }
 
 #pragma mark - Background Task

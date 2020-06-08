@@ -35,7 +35,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"SJResourceFileDataReader:<%p> { range: %@\n };", self, NSStringFromRange(_range)];
+    return [NSString stringWithFormat:@"%s:<%p> { range: %@\n };", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range)];
 }
 
 - (void)prepare {
