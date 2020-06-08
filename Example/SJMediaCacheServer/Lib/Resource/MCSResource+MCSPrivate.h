@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) NSInteger numberOfCumulativeUsage; ///< 累计被使用次数
 @property (nonatomic) NSTimeInterval updatedTime;        ///< 最后一次更新时的时间
+@property (nonatomic) NSTimeInterval createdTime;        ///< 创建时间
 @end
 
 @interface MCSResourcePartialContent (MCSPrivate)<MCSReadWrite>

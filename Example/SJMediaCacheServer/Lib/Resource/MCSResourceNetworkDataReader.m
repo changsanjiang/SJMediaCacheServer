@@ -162,10 +162,6 @@
         _downloadedLength += data.length;
         _content.length = _downloadedLength;
         
-#ifdef DEBUG
-        printf("%s: <%p>.downloadProgress: %lu;\n", NSStringFromClass(self.class).UTF8String, self, _downloadedLength);
-#endif
-        
         [self.delegate readerHasAvailableData:self];
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_errorForException:exception]];
