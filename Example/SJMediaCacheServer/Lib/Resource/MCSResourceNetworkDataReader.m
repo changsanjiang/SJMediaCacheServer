@@ -11,6 +11,7 @@
 #import "MCSDownload.h"
 #import "MCSResourceResponse.h"
 #import "MCSResourcePartialContent.h"
+#import "MCSLogger.h"
 
 @interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate>
 @property (nonatomic, strong) NSURL *URL;
@@ -52,9 +53,9 @@
 - (void)prepare {
     if ( _isClosed || _isCalledPrepare )
         return;
-#ifdef DEBUG
-    printf("%s: <%p>.prepare { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String);
-#endif
+    
+    MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
+  
     _isCalledPrepare = YES;
     NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
     [request setAllHTTPHeaderFields:_requestHeaders];
@@ -99,11 +100,10 @@
                 data = [_reader readDataOfLength:length];
                 _offset += data.length;
                 _isDone = _offset == _range.length;
+                MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, _offset, data.length);
 #ifdef DEBUG
-                printf("%s: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class).UTF8String, self, _offset, data.length);
-                
                 if ( _isDone ) {
-                    printf("%s: <%p>.done { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String);
+                    MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
                 }
 #endif
             }
@@ -132,9 +132,7 @@
         
     }
      
-#ifdef DEBUG
-    printf("%s: <%p>.close;\n", NSStringFromClass(self.class).UTF8String, self);
-#endif
+    MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
 
 #pragma mark -

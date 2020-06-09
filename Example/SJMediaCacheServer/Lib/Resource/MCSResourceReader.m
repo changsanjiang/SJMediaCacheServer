@@ -16,6 +16,7 @@
 #import "MCSResourceNetworkDataReader.h"
 #import "MCSUtils.h"
 #import "MCSError.h"
+#import "MCSLogger.h"
 
 @interface MCSResourceReader ()<NSLocking, MCSResourceDataReaderDelegate> {
     NSRecursiveLock *_lock;
@@ -63,9 +64,7 @@
     [_resource readWrite_release];
     [MCSResourceManager.shared reader:self didEndReadResource:_resource];
     
-#ifdef DEBUG
-    printf("%s: <%p>.dealloc;\n", NSStringFromClass(self.class).UTF8String, self);
-#endif
+    MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
 - (void)willRemoveResource:(NSNotification *)note {
@@ -81,19 +80,17 @@
     @try {
         if ( _isClosed || _isCalledPrepare )
             return;
-         
-#ifdef DEBUG
-        printf("%s: <%p>.prepare { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_request.range).UTF8String);
-#endif
+        
+        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range));
         
         _isCalledPrepare = YES;
         
         if ( _resource.totalLength == 0 || _resource.contentType.length == 0 ) {
             _tmpReader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 2)];
             _tmpReader.delegate = self;
-#ifdef DEBUG
-            printf("%s: <%p>.createTmpReader: <%p>;\n", NSStringFromClass(self.class).UTF8String, self, _tmpReader);
-#endif
+            
+            MCSLog(@"%@: <%p>.createTmpReader: <%p>;\n", NSStringFromClass(self.class), self, _tmpReader);
+
             [_tmpReader prepare];
         }
         else {
@@ -202,10 +199,8 @@
     for ( MCSResourcePartialContent *content in _readWriteContents ) {
         [content readWrite_release];
     }
-            
-#ifdef DEBUG
-    printf("%s: <%p>.close { range: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_request.range).UTF8String);
-#endif
+    
+    MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range));
 }
 
 #pragma mark -
@@ -276,10 +271,8 @@
     }
     
     _readers = readers.copy;
-    
-#ifdef DEBUG
-    printf("%s: <%p>.createSubreaders { range: %s, count: %lu };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_request.range).UTF8String, _readers.count);
-#endif
+     
+    MCSLog(@"%@: <%p>.createSubreaders { range: %@, count: %lu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range), _readers.count);
 
     [self _prepareNextReader];
 }

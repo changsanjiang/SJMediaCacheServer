@@ -8,6 +8,7 @@
 
 #import "MCSResourceFileDataReader.h"
 #import "MCSError.h"
+#import "MCSLogger.h"
 
 @interface MCSResourceFileDataReader()
 @property (nonatomic) NSRange range;
@@ -42,10 +43,8 @@
     if ( _isClosed || _isCalledPrepare )
         return;
     
-#ifdef DEBUG
-    printf("%s: <%p>.prepare { range: %s, file: %s.%s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
-#endif
-    
+    MCSLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
+
     _isCalledPrepare = YES;
     _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
     [_reader seekToFileOffset:_readRange.location];
@@ -63,11 +62,11 @@
         _offset += data.length;
         _isDone = _offset == _readRange.length;
         
-#ifdef DEBUG
-        printf("%s: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class).UTF8String, self, _offset, data.length);
+        MCSLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, _offset, data.length);
         
+#ifdef DEBUG
         if ( _isDone ) {
-            printf("%s: <%p>.done { range: %s , file: %s.%s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range).UTF8String, _path.lastPathComponent.UTF8String, NSStringFromRange(_readRange).UTF8String);
+            MCSLog(@"%@: <%p>.done { range: %@ , file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
         }
 #endif
         return data;
@@ -84,8 +83,6 @@
     [_reader closeFile];
     _reader = nil;
     
-#ifdef DEBUG
-    printf("%s: <%p>.close;\n", NSStringFromClass(self.class).UTF8String, self);
-#endif
+    MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
 @end

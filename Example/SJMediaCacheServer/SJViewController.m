@@ -14,6 +14,7 @@
 
 #import "MCSDataResponse.h"
 #import "MCSURLConvertor.h"
+#import "MCSLogger.h"
  
 @interface SJViewController ()<MCSLocalProxyServerDelegate>
 @property (nonatomic, strong, nullable) MCSLocalProxyServer *server;
@@ -25,6 +26,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self _setupViews];
+    
+    MCSLogger.shared.enabledConsoleLog = YES;
 
     // 播放
     

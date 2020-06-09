@@ -1,0 +1,26 @@
+//
+//  MCSLogger.h
+//  SJMediaCacheServer_Example
+//
+//  Created by BlueDancer on 2020/6/8.
+//  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+#ifdef DEBUG
+#define MCSLog(format, arg...)         [MCSLogger.shared addLog:format, ##arg]
+#else
+#define MCSLog(format, arg...)
+#endif
+
+@interface MCSLogger : NSObject
++ (instancetype)shared;
+
+@property (nonatomic, getter=isEnabledConsoleLog) BOOL enabledConsoleLog;
+
+- (void)addLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
+@end
+
+NS_ASSUME_NONNULL_END

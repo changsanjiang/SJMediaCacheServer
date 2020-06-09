@@ -9,6 +9,7 @@
 #import "MCSLocalProxyServer.h"
 #import "MCSDataRequest.h"
 #import "MCSURLConvertor.h"
+#import "MCSLogger.h"
 #import <objc/message.h>
 #import <CocoaHTTPServer/HTTPServer.h>
 #import <CocoaHTTPServer/HTTPConnection.h>
@@ -152,18 +153,16 @@
 - (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig {
     self = [super initWithAsyncSocket:newSocket configuration:aConfig];
     if ( self ) {
-#ifdef DEBUG
-        printf("\%s: <%p>.init;\n", NSStringFromClass(self.class).UTF8String, self);
-#endif
+        MCSLog(@"\n%@: <%p>.init;\n", NSStringFromClass(self.class), self);
     }
     return self;
 }
 
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
     MCSHTTPResponse *response = [MCSHTTPResponse.alloc initWithConnection:self];
-#ifdef DEBUG
-    printf("%s: <%p>.response { Range: %s, URI: %s, method: %s };\n", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(response.request.range).UTF8String, path.UTF8String, method.UTF8String);
-#endif
+    
+    MCSLog(@"%@: <%p>.response { URI: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(response.request.range), path, method);
+    
     [response prepareForReadingData];
     return response;
 }
@@ -178,22 +177,17 @@
 
 - (void)finishResponse {
     [super finishResponse];
-#ifdef DEBUG
-    printf("%s: <%p>.finishResponse;\n\n", NSStringFromClass(self.class).UTF8String, self);
-#endif
+    
+    MCSLog(@"%@: <%p>.finishResponse;\n", NSStringFromClass(self.class), self);
 }
 
 - (void)die {
     [super die];
-#ifdef DEBUG
-    printf("%s: <%p>.die;\n", NSStringFromClass(self.class).UTF8String, self);
-#endif
+    MCSLog(@"%@: <%p>.die;\n", NSStringFromClass(self.class), self);
 }
 
 - (void)dealloc {
-#ifdef DEBUG
-    printf("%s: <%p>.dealloc;\n\n", NSStringFromClass(self.class).UTF8String, self);
-#endif
+    MCSLog(@"%@: <%p>.dealloc;\n\n", NSStringFromClass(self.class), self);
 }
 @end
 

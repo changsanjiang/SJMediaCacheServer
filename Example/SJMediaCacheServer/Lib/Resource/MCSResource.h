@@ -7,7 +7,6 @@
 //
 
 #import "MCSDefines.h"
-@class MCSResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
 
