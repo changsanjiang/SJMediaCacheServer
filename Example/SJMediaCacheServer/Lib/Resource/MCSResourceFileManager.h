@@ -16,7 +16,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)databasePath;
 + (NSString *)getResourcePathWithName:(NSString *)name;
 + (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)resourceName;
-+ (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;
+
+// VOD
++ (nullable NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;
+// HLS
++ (nullable NSString *)createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length;
+
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end
 

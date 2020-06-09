@@ -9,6 +9,9 @@
 #import "MCSResourceFileManager.h"
 #import <sys/xattr.h>
 
+static NSString *VODPrefix = @"vod_";
+static NSString *HLSPrefix = @"hls_";
+
 @implementation MCSResourceFileManager
 + (NSString *)rootDirectoryPath {
     static NSString *rootDirectoryPath;
@@ -16,7 +19,7 @@
     dispatch_once(&onceToken, ^{
         rootDirectoryPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"com.SJMediaCacheServer.cache"];
         if ( ![[NSFileManager defaultManager] fileExistsAtPath:rootDirectoryPath] ) {
-            [[NSFileManager defaultManager] createDirectoryAtPath:rootDirectoryPath withIntermediateDirectories:YES attributes:nil error:nil];
+            [[NSFileManager defaultManager] createDirectoryAtPath:rootDirectoryPath withIntermediateDirectories:YES attributes:nil error:NULL];
             const char *filePath = [rootDirectoryPath fileSystemRepresentation];
             const char *attrName = "com.apple.MobileBackup";
             u_int8_t attrValue = 1;
@@ -38,16 +41,18 @@
     return [[self getResourcePathWithName:resourceName] stringByAppendingPathComponent:name];
 }
 
+// VOD
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset {
     @autoreleasepool {
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
         if ( ![NSFileManager.defaultManager fileExistsAtPath:resourcePath] ) {
-            [NSFileManager.defaultManager createDirectoryAtPath:resourcePath withIntermediateDirectories:YES attributes:nil error:nil];
+            [NSFileManager.defaultManager createDirectoryAtPath:resourcePath withIntermediateDirectories:YES attributes:nil error:NULL];
         }
         
         NSUInteger sequence = 0;
-        while (1) {
-            NSString *filename = [NSString stringWithFormat:@"%@%lu_%lu", [self contentPrefix], (unsigned long)offset, (unsigned long)sequence++];
+        while (true) {
+            // VOD前缀_偏移量_序号
+            NSString *filename = [NSString stringWithFormat:@"%@%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
             NSString *filepath = [self getContentFilePathWithName:filename inResource:resourceName];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
@@ -58,12 +63,26 @@
     return nil;
 }
 
-+ (NSString *)contentPrefix {
-    return @"c_";
-}
-
-+ (NSUInteger)offsetOfContent:(NSString *)name {
-    return [[name substringFromIndex:[self contentPrefix].length] longLongValue];
+// HLS
++ (nullable NSString *)createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length {
+    @autoreleasepool {
+        NSString *resourcePath = [self getResourcePathWithName:resourceName];
+        if ( ![NSFileManager.defaultManager fileExistsAtPath:resourcePath] ) {
+            [NSFileManager.defaultManager createDirectoryAtPath:resourcePath withIntermediateDirectories:YES attributes:nil error:NULL];
+        }
+        
+        NSUInteger sequence = 0;
+        while (true) {
+            // HLS前缀_ts文件名_ts长度_序号
+            NSString *filename = [NSString stringWithFormat:@"%@_%@_%lu_%lu", HLSPrefix, tsFilename, (unsigned long)length, (unsigned long)sequence++];
+            NSString *filepath = [self getContentFilePathWithName:filename inResource:resourceName];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+                return filename;
+            }
+        }
+    }
+    return nil;
 }
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName {
@@ -71,16 +90,45 @@
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
         NSMutableArray *m = NSMutableArray.array;
         [[NSFileManager.defaultManager contentsOfDirectoryAtPath:resourcePath error:NULL] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ( [name hasPrefix:[self contentPrefix]] ) {
+            // VOD
+            if      ( [name hasPrefix:VODPrefix] ) {
                 NSString *path = [resourcePath stringByAppendingPathComponent:name];
                 NSUInteger offset = [self offsetOfContent:name];
                 NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];
                 __auto_type content = [MCSResourcePartialContent.alloc initWithName:name offset:offset length:length];
                 [m addObject:content];
             }
+            // HLS
+            else if ( [name hasPrefix:HLSPrefix] ) {
+                NSString *path = [resourcePath stringByAppendingPathComponent:name];
+                NSString *tsFilename = [self tsFilenameOfContent:name];
+                NSUInteger tsTotalLength = [self tsTotalLengthOfContent:name];
+                NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];;
+                __auto_type content = [MCSResourcePartialContent.alloc initWithName:name tsFilename:tsFilename tsTotalLength:tsTotalLength length:length];
+                [m addObject:content];
+            }
         }];
         return m;
     }
     return nil;
+}
+
+#pragma mark -
+// format: VOD前缀_偏移量_序号
+// VOD
++ (NSUInteger)offsetOfContent:(NSString *)name {
+    return [[name componentsSeparatedByString:name][1] longLongValue];
+}
+
+// format: HLS前缀_ts文件名_ts长度_序号
+// HLS
++ (NSString *)tsFilenameOfContent:(NSString *)name {
+    return [name componentsSeparatedByString:name][1];
+}
+
+// format: HLS前缀_ts文件名_ts长度_序号
+// HLS
++ (NSUInteger)tsTotalLengthOfContent:(NSString *)name {
+    return [[name componentsSeparatedByString:name][2] longLongValue];
 }
 @end

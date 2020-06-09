@@ -7,6 +7,7 @@
 //
 
 #import "MCSHLSResource.h"
+@class MCSResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly, nullable) NSString *server;
 @property (nonatomic, copy, readonly, nullable) NSString *name;
 
+@property (nonatomic, strong, readonly, nullable) NSMutableArray<MCSResourcePartialContent *> *contents;
 @end
 
 NS_ASSUME_NONNULL_END

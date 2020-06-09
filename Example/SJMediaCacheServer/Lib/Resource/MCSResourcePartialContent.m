@@ -15,14 +15,21 @@
 @property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
 @property (nonatomic, readonly) NSUInteger offset;
 @property (nonatomic) NSInteger readWriteCount;
+@property (nonatomic, copy) NSString *tsFilename;
+@property (nonatomic) NSUInteger tsTotalLength;
 
 - (void)readWrite_retain;
 - (void)readWrite_release;
 @end
 
 @implementation MCSResourcePartialContent
-- (instancetype)initWithName:(NSString *)name {
-    return [self initWithName:name offset:0];
+- (instancetype)initWithName:(NSString *)name tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)tsTotalLength length:(NSUInteger)length {
+    self = [self initWithName:name offset:0 length:length];
+    if ( self ) {
+        _tsFilename = tsFilename.copy;
+        _tsTotalLength = tsTotalLength;
+    }
+    return self;
 }
 
 - (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset {

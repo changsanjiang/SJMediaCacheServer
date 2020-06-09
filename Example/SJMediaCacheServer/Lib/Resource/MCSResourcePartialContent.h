@@ -21,6 +21,10 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface MCSResourcePartialContent (HLS)
-- (instancetype)initWithName:(NSString *)name;
+// name: 为partialContent的名字
+// tsFilename: 将用作ts文件的名字
+- (instancetype)initWithName:(NSString *)name tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)tsTotalLength length:(NSUInteger)length;
+@property (nonatomic, copy, readonly) NSString *tsFilename;
+@property (nonatomic, readonly) NSUInteger tsTotalLength;
 @end
 NS_ASSUME_NONNULL_END
