@@ -1,5 +1,5 @@
 //
-//  MCSResourceReader.h
+//  MCSResourceVODReader.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/3.
@@ -13,7 +13,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSResourceReader : NSObject<MCSResourceReader>
+@interface MCSResourceVODReader : NSObject<MCSResourceReader>
 - (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request;
 
 @property (nonatomic, weak, nullable) id<MCSResourceReaderDelegate> delegate;

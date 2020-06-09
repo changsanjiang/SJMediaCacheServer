@@ -1,12 +1,12 @@
 //
-//  MCSResourceReader.m
+//  MCSResourceVODReader.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/3.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSResourceReader.h"
+#import "MCSResourceVODReader.h"
 #import "MCSResource+MCSPrivate.h"
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceResponse.h"
@@ -18,7 +18,7 @@
 #import "MCSError.h"
 #import "MCSLogger.h"
 
-@interface MCSResourceReader ()<NSLocking, MCSResourceDataReaderDelegate> {
+@interface MCSResourceVODReader ()<NSLocking, MCSResourceDataReaderDelegate> {
     NSRecursiveLock *_lock;
 }
 
@@ -39,7 +39,7 @@
 @property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *readWriteContents;
 @end
 
-@implementation MCSResourceReader
+@implementation MCSResourceVODReader
 
 - (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request {
     self = [super init];

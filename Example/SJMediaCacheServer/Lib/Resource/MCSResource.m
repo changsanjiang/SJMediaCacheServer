@@ -9,7 +9,7 @@
 #import "MCSResource.h"
 #import "MCSResourceDefines.h"
 #import "MCSResource+MCSPrivate.h"
-#import "MCSResourceReader.h"
+#import "MCSResourceVODReader.h"
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceManager.h"
 #import "MCSResourceFileManager.h"
@@ -55,7 +55,7 @@
 }
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request {
-    return [MCSResourceReader.alloc initWithResource:self request:request];
+    return [MCSResourceVODReader.alloc initWithResource:self request:request];
 }
 
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
