@@ -23,11 +23,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 // HLS
 //      返回文件名
-+ (nullable NSString *)createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length;
++ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length;
 
 // HLS
 //      返回文件名
-+ (nullable NSString *)createHLSIndexFileInResource:(NSString *)resourceName;
++ (nullable NSString *)hls_createIndexFileInResource:(NSString *)resourceName;
+
+// HLS
+//      返回文件名
++ (nullable NSString *)hls_createAESFileInResource:(NSString *)resourceName AESFilename:(NSString *)filename;
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end

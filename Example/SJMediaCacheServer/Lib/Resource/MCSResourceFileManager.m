@@ -62,7 +62,7 @@ static NSString *HLSPrefix = @"hls";
 }
 
 // HLS
-+ (nullable NSString *)createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length {
++ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length {
     @autoreleasepool {
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
         [self checkoutDirectoryWithPath:resourcePath];
@@ -83,10 +83,23 @@ static NSString *HLSPrefix = @"hls";
 
 // format: HLS前缀_index.m3u8
 // HLS
-+ (nullable NSString *)createHLSIndexFileInResource:(NSString *)resourceName {
++ (nullable NSString *)hls_createIndexFileInResource:(NSString *)resourceName {
     NSString *resourcePath = [self getResourcePathWithName:resourceName];
     [self checkoutDirectoryWithPath:resourcePath];
     NSString *filename = [NSString stringWithFormat:@"%@_index.m3u8", HLSPrefix];
+    NSString *filepath = [resourcePath stringByAppendingPathComponent:filename];
+    if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+        [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+        return filename;
+    }
+    return nil;
+}
+
+// format: filename
+// HLS
++ (nullable NSString *)hls_createAESFileInResource:(NSString *)resourceName AESFilename:(NSString *)filename {
+    NSString *resourcePath = [self getResourcePathWithName:resourceName];
+    [self checkoutDirectoryWithPath:resourcePath];
     NSString *filepath = [resourcePath stringByAppendingPathComponent:filename];
     if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
         [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
