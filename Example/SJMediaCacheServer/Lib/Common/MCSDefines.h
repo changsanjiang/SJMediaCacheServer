@@ -10,7 +10,7 @@
 #define MCSDefines_h
 #import <Foundation/Foundation.h>
 #import "NSURLRequest+MCS.h"
-@protocol MCSDataResponseDelegate, MCSResourcePrefetcherDelegate, MCSResourceReaderDelegate;
+@protocol MCSSessionTaskDelegate, MCSResourcePrefetcherDelegate, MCSResourceReaderDelegate;
 @protocol MCSResource, MCSResourceResponse, MCSResourceReader, MCSResourcePrefetcher;
 
 
@@ -21,8 +21,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSString *)resourceNameWithURL:(NSURL *)URL;
 @end
 
-@protocol MCSDataResponse <NSObject>
-- (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
+
+@protocol MCSSessionTask <NSObject>
+- (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
@@ -34,10 +35,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)close;
 @end
 
-@protocol MCSDataResponseDelegate <NSObject>
-- (void)responsePrepareDidFinish:(id<MCSDataResponse>)response;
-- (void)responseHasAvailableData:(id<MCSDataResponse>)response;
-- (void)response:(id<MCSDataResponse>)response anErrorOccurred:(NSError *)error;
+
+@protocol MCSSessionTaskDelegate <NSObject>
+- (void)taskPrepareDidFinish:(id<MCSSessionTask>)task;
+- (void)taskHasAvailableData:(id<MCSSessionTask>)task;
+- (void)task:(id<MCSSessionTask>)task anErrorOccurred:(NSError *)error;
 @end
  
 #pragma mark -

@@ -8,18 +8,18 @@
 
 #import "SJViewController.h"
 #import "MCSDefines.h"
-#import "MCSLocalProxyServer.h"
+#import "MCSProxyServer.h"
 #import <SJVideoPlayer/SJVideoPlayer.h>
 #import <Masonry/Masonry.h>
 
-#import "MCSDataResponse.h"
+#import "MCSSessionTask.h"
 #import "MCSURLConvertor.h"
 #import "MCSLogger.h"
 #import "MCSResource.h"
 #import "MCSResourceManager.h"
  
-@interface SJViewController ()<MCSLocalProxyServerDelegate>
-@property (nonatomic, strong, nullable) MCSLocalProxyServer *server;
+@interface SJViewController ()<MCSProxyServerDelegate>
+@property (nonatomic, strong, nullable) MCSProxyServer *server;
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
 @property (nonatomic, strong, nullable) id<MCSResourcePrefetcher> prefetcher;
 @end
@@ -64,16 +64,16 @@
 //    }] resume];
 }
 
-#pragma mark - MCSLocalProxyServerDelegate
+#pragma mark - MCSProxyServerDelegate
 
-- (id<MCSDataResponse>)server:(MCSLocalProxyServer *)server responseWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate {
-    return [MCSDataResponse.alloc initWithRequest:request delegate:delegate];
+- (id<MCSSessionTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate {
+    return [MCSSessionTask.alloc initWithRequest:request delegate:delegate];
 }
 
 #pragma mark -
 
 - (void)_startLocalProxyServer {
-    _server = [MCSLocalProxyServer.alloc initWithPort:80];
+    _server = [MCSProxyServer.alloc initWithPort:80];
     _server.delegate = self;
     
     NSError *error = nil;

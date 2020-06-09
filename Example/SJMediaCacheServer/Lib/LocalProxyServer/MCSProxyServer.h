@@ -1,5 +1,5 @@
 //
-//  MCSLocalProxyServer.h
+//  MCSProxyServer.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/5/30.
@@ -7,12 +7,12 @@
 //
 
 #import "MCSDefines.h"
-@protocol MCSLocalProxyServerDelegate;
+@protocol MCSProxyServerDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
-@interface MCSLocalProxyServer : NSObject
+@interface MCSProxyServer : NSObject
 - (instancetype)initWithPort:(UInt16)port;
-@property (nonatomic, weak, nullable) id<MCSLocalProxyServerDelegate> delegate;
+@property (nonatomic, weak, nullable) id<MCSProxyServerDelegate> delegate;
 
 @property (nonatomic, readonly) UInt16 port;
 @property (nonatomic, readonly, getter=isRunning) BOOL running;
@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)stop;
 @end
 
-@protocol MCSLocalProxyServerDelegate <NSObject>
-- (id<MCSDataResponse>)server:(MCSLocalProxyServer *)server responseWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
+@protocol MCSProxyServerDelegate <NSObject>
+- (id<MCSSessionTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate;
 @end
 NS_ASSUME_NONNULL_END

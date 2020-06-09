@@ -1,5 +1,5 @@
 //
-//  MCSDataResponse.h
+//  MCSSessionTask.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
@@ -10,8 +10,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSDataResponse : NSObject<MCSDataResponse>
-- (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
+@interface MCSSessionTask : NSObject<MCSSessionTask>
+- (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;

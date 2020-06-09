@@ -23,10 +23,10 @@
 		6003F5BC195388D20070C39A /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5BB195388D20070C39A /* Tests.m */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
 		770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E1248228A900057D05 /* SJMediaCacheServer.m */; };
-		770194E6248228BD00057D05 /* MCSLocalProxyServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E5248228BD00057D05 /* MCSLocalProxyServer.m */; };
+		770194E6248228BD00057D05 /* MCSProxyServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E5248228BD00057D05 /* MCSProxyServer.m */; };
 		770194FC24826ADE00057D05 /* audio.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 770194FB24826ADE00057D05 /* audio.m4a */; };
 		7729D8382486174C00462899 /* MCSResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D8372486174C00462899 /* MCSResource.m */; };
-		7729D83E2486201300462899 /* MCSDataResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D83D2486201300462899 /* MCSDataResponse.m */; };
+		7729D83E2486201300462899 /* MCSSessionTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D83D2486201300462899 /* MCSSessionTask.m */; };
 		7729D84A248657DE00462899 /* MCSURLConvertor.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D849248657DE00462899 /* MCSURLConvertor.m */; };
 		774AB9312487B44C0049CAC3 /* MCSResourceFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */; };
 		779645C0248E7809003C8248 /* MCSResourcePrefetcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645BF248E7809003C8248 /* MCSResourcePrefetcher.m */; };
@@ -82,14 +82,14 @@
 		71719F9E1E33DC2100824A3D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		770194E0248228A900057D05 /* SJMediaCacheServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJMediaCacheServer.h; sourceTree = "<group>"; };
 		770194E1248228A900057D05 /* SJMediaCacheServer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJMediaCacheServer.m; sourceTree = "<group>"; };
-		770194E4248228BD00057D05 /* MCSLocalProxyServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSLocalProxyServer.h; sourceTree = "<group>"; };
-		770194E5248228BD00057D05 /* MCSLocalProxyServer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSLocalProxyServer.m; sourceTree = "<group>"; };
+		770194E4248228BD00057D05 /* MCSProxyServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSProxyServer.h; sourceTree = "<group>"; };
+		770194E5248228BD00057D05 /* MCSProxyServer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSProxyServer.m; sourceTree = "<group>"; };
 		770194F42482369500057D05 /* MCSDefines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSDefines.h; sourceTree = "<group>"; };
 		770194FB24826ADE00057D05 /* audio.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = audio.m4a; sourceTree = "<group>"; };
 		7729D8362486174C00462899 /* MCSResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResource.h; sourceTree = "<group>"; };
 		7729D8372486174C00462899 /* MCSResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResource.m; sourceTree = "<group>"; };
-		7729D83C2486201300462899 /* MCSDataResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSDataResponse.h; sourceTree = "<group>"; };
-		7729D83D2486201300462899 /* MCSDataResponse.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSDataResponse.m; sourceTree = "<group>"; };
+		7729D83C2486201300462899 /* MCSSessionTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSSessionTask.h; sourceTree = "<group>"; };
+		7729D83D2486201300462899 /* MCSSessionTask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSSessionTask.m; sourceTree = "<group>"; };
 		7729D848248657DE00462899 /* MCSURLConvertor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSURLConvertor.h; sourceTree = "<group>"; };
 		7729D849248657DE00462899 /* MCSURLConvertor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSURLConvertor.m; sourceTree = "<group>"; };
 		774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSResourceFileManager.m; sourceTree = "<group>"; };
@@ -273,10 +273,10 @@
 		770194E3248228B000057D05 /* LocalProxyServer */ = {
 			isa = PBXGroup;
 			children = (
-				7729D83C2486201300462899 /* MCSDataResponse.h */,
-				7729D83D2486201300462899 /* MCSDataResponse.m */,
-				770194E4248228BD00057D05 /* MCSLocalProxyServer.h */,
-				770194E5248228BD00057D05 /* MCSLocalProxyServer.m */,
+				7729D83C2486201300462899 /* MCSSessionTask.h */,
+				7729D83D2486201300462899 /* MCSSessionTask.m */,
+				770194E4248228BD00057D05 /* MCSProxyServer.h */,
+				770194E5248228BD00057D05 /* MCSProxyServer.m */,
 			);
 			path = LocalProxyServer;
 			sourceTree = "<group>";
@@ -512,7 +512,7 @@
 				77CC4401248778CC006C5B45 /* MCSResourcePartialContent.m in Sources */,
 				77CC43FE248774F6006C5B45 /* MCSResourceReader.m in Sources */,
 				779645CB248E93B3003C8248 /* MCSLogger.m in Sources */,
-				770194E6248228BD00057D05 /* MCSLocalProxyServer.m in Sources */,
+				770194E6248228BD00057D05 /* MCSProxyServer.m in Sources */,
 				6003F59E195388D20070C39A /* SJAppDelegate.m in Sources */,
 				779645DC248F532B003C8248 /* NSURLRequest+MCS.m in Sources */,
 				6003F5A7195388D20070C39A /* SJViewController.m in Sources */,
@@ -525,7 +525,7 @@
 				770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */,
 				77D25D902487AB1400BB1B1A /* MCSResourceManager.m in Sources */,
 				77F619B4248DEBF6009D3DD7 /* MCSUtils.m in Sources */,
-				7729D83E2486201300462899 /* MCSDataResponse.m in Sources */,
+				7729D83E2486201300462899 /* MCSSessionTask.m in Sources */,
 				77A4BBEC2488901A0007836D /* MCSResourceResponse.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

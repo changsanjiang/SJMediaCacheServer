@@ -1,12 +1,12 @@
 //
-//  MCSLocalProxyServer.m
+//  MCSProxyServer.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/5/30.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSLocalProxyServer.h"
+#import "MCSProxyServer.h"
 #import "NSURLRequest+MCS.h"
 #import "MCSURLConvertor.h"
 #import "MCSLogger.h"
@@ -17,19 +17,19 @@
 #import <CocoaHTTPServer/HTTPMessage.h>
 
 
-@interface HTTPServer (MCSLocalProxyServerExtended)
-@property (nonatomic, weak, nullable) MCSLocalProxyServer *mcs_server;
+@interface HTTPServer (MCSProxyServerExtended)
+@property (nonatomic, weak, nullable) MCSProxyServer *mcs_server;
 @end
 
 @interface MCSHTTPConnection : HTTPConnection
 - (HTTPMessage *)mcs_request;
-- (MCSLocalProxyServer *)mcs_server;
+- (MCSProxyServer *)mcs_server;
 @end
  
-@interface MCSHTTPResponse : NSObject<HTTPResponse, MCSDataResponseDelegate>
+@interface MCSHTTPResponse : NSObject<HTTPResponse, MCSSessionTaskDelegate>
 - (instancetype)initWithConnection:(MCSHTTPConnection *)connection;
 @property (nonatomic, strong) NSURLRequest * request;
-@property (nonatomic, strong) id<MCSDataResponse> response;
+@property (nonatomic, strong) id<MCSSessionTask> task;
 @property (nonatomic, weak) MCSHTTPConnection *connection;
 - (void)prepareForReadingData;
 @end
@@ -40,16 +40,16 @@
 
 #pragma mark -
 
-@interface MCSLocalProxyServer ()
+@interface MCSProxyServer ()
 @property (nonatomic, strong) HTTPServer *localServer;
 @property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
 @property (nonatomic) BOOL wantsRunning;
 
-- (id<MCSDataResponse>)responseWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
+- (id<MCSSessionTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate;
 
 @end
 
-@implementation MCSLocalProxyServer
+@implementation MCSProxyServer
 - (instancetype)initWithPort:(UInt16)port {
     self = [super init];
     if ( self ) {
@@ -88,8 +88,8 @@
     [self _stop];
 }
 
-- (id<MCSDataResponse>)responseWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate {
-    return [self.delegate server:self responseWithRequest:request delegate:delegate];
+- (id<MCSSessionTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate {
+    return [self.delegate server:self taskWithRequest:request delegate:delegate];
 }
 
 #pragma mark -
@@ -143,12 +143,12 @@
 
 #pragma mark -
 
-@implementation HTTPServer (MCSLocalProxyServerExtended)
-- (void)setMcs_server:(MCSLocalProxyServer *)mcs_server {
+@implementation HTTPServer (MCSProxyServerExtended)
+- (void)setMcs_server:(MCSProxyServer *)mcs_server {
     objc_setAssociatedObject(self, @selector(mcs_server), mcs_server, OBJC_ASSOCIATION_ASSIGN);
 }
 
-- (MCSLocalProxyServer *)mcs_server {
+- (MCSProxyServer *)mcs_server {
     return objc_getAssociatedObject(self, _cmd);
 }
 @end
@@ -175,7 +175,7 @@
     return request;
 }
 
-- (MCSLocalProxyServer *)mcs_server {
+- (MCSProxyServer *)mcs_server {
     return config.server.mcs_server;
 }
 
@@ -208,56 +208,56 @@
     if ( self ) {
         _connection = connection;
         
-        MCSLocalProxyServer *server = [connection mcs_server];
+        MCSProxyServer *server = [connection mcs_server];
         _request = [NSURLRequest mcs_requestWithMessage:connection.mcs_request];
-        _response = [server responseWithRequest:_request delegate:self];
+        _task = [server taskWithRequest:_request delegate:self];
     }
     return self;
 }
 
 - (void)prepareForReadingData {
-    [_response prepare];
+    [_task prepare];
 }
 
 - (UInt64)contentLength {
-    return (UInt64)_response.contentLength;
+    return (UInt64)_task.contentLength;
 }
 
 - (UInt64)offset {
-    return (UInt64)_response.offset;
+    return (UInt64)_task.offset;
 }
 
 - (void)setOffset:(UInt64)offset { }
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
-    return [_response readDataOfLength:length];
+    return [_task readDataOfLength:length];
 }
 
 - (BOOL)isDone {
-    return _response.isDone;
+    return _task.isDone;
 }
 
 - (void)connectionDidClose {
-    [_response close];
+    [_task close];
 }
 
 - (NSDictionary *)httpHeaders {
-    return _response.responseHeaders;
+    return _task.responseHeaders;
 }
 
 - (BOOL)delayResponseHeaders {
-    return _response != nil ? !_response.isPrepared : YES;
+    return _task != nil ? !_task.isPrepared : YES;
 }
 
-- (void)responsePrepareDidFinish:(id<MCSDataResponse>)response {
+- (void)taskPrepareDidFinish:(id<MCSSessionTask>)task {
     [_connection responseHasAvailableData:self];
 }
 
-- (void)responseHasAvailableData:(id<MCSDataResponse>)response {
+- (void)taskHasAvailableData:(id<MCSSessionTask>)task {
     [_connection responseHasAvailableData:self];
 }
 
-- (void)response:(id<MCSDataResponse>)response anErrorOccurred:(NSError *)error {
+- (void)task:(id<MCSSessionTask>)task anErrorOccurred:(NSError *)error {
     [_connection responseDidAbort:self];
 }
 @end

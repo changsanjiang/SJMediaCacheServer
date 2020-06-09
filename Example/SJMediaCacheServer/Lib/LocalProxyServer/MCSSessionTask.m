@@ -1,23 +1,23 @@
 //
-//  MCSDataResponse.m
+//  MCSSessionTask.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSDataResponse.h"
+#import "MCSSessionTask.h"
 #import "MCSResource.h"
 
-@interface MCSDataResponse ()<MCSResourceReaderDelegate>
-@property (nonatomic, weak) id<MCSDataResponseDelegate> delegate;
+@interface MCSSessionTask ()<MCSResourceReaderDelegate>
+@property (nonatomic, weak) id<MCSSessionTaskDelegate> delegate;
 @property (nonatomic, strong) NSURLRequest * request;
 @property (nonatomic, strong) MCSResource *resource;
 @property (nonatomic, strong) id<MCSResourceReader> reader;
 @end
 
-@implementation MCSDataResponse
-- (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate {
+@implementation MCSSessionTask
+- (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _request = request;
@@ -64,15 +64,15 @@
 #pragma mark -
 
 - (void)readerPrepareDidFinish:(id<MCSResourceReader>)reader {
-    if ( !_reader.isClosed ) [_delegate responsePrepareDidFinish:self];
+    if ( !_reader.isClosed ) [_delegate taskPrepareDidFinish:self];
 }
 
 - (void)readerHasAvailableData:(id<MCSResourceReader>)reader {
-    if ( !_reader.isClosed ) [_delegate responseHasAvailableData:self];
+    if ( !_reader.isClosed ) [_delegate taskHasAvailableData:self];
 }
 
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error {
-    if ( !_reader.isClosed ) [_delegate response:self anErrorOccurred:error];
+    if ( !_reader.isClosed ) [_delegate task:self anErrorOccurred:error];
 }
 @end
 
