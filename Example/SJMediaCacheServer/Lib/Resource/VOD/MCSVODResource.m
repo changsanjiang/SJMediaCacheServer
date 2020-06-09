@@ -6,21 +6,21 @@
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSResource.h"
+#import "MCSVODResource.h"
 #import "MCSResourceDefines.h"
-#import "MCSResource+MCSPrivate.h"
+#import "MCSVODResource+MCSPrivate.h"
 #import "MCSVODReader.h"
-#import "MCSResourcePartialContent.h"
+#import "MCSVODResourcePartialContent.h"
 #import "MCSResourceManager.h"
 #import "MCSResourceFileManager.h"
-#import "MCSResourcePrefetcher.h"
+#import "MCSVODResourcePrefetcher.h"
 #import "MCSUtils.h"
 
-@interface MCSResource ()<NSLocking, MCSResourcePartialContentDelegate>
+@interface MCSVODResource ()<NSLocking, MCSVODResourcePartialContentDelegate>
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
-@property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *contents;
+@property (nonatomic, strong) NSMutableArray<MCSVODResourcePartialContent *> *contents;
 
 @property (nonatomic, copy, nullable) NSString *contentType;
 @property (nonatomic, copy, nullable) NSString *server;
@@ -32,7 +32,7 @@
 @property (nonatomic) NSTimeInterval createdTime;
 @end
 
-@implementation MCSResource
+@implementation MCSVODResource
 + (instancetype)resourceWithURL:(NSURL *)URL {
     return [MCSResourceManager.shared resourceWithURL:URL];
 }
@@ -59,12 +59,12 @@
 }
 
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
-    return [MCSResourcePrefetcher.alloc initWithResource:self request:request];
+    return [MCSVODResourcePrefetcher.alloc initWithResource:self request:request];
 }
 
 #pragma mark -
 
-- (void)addContents:(nullable NSMutableArray<MCSResourcePartialContent *> *)contents {
+- (void)addContents:(nullable NSMutableArray<MCSVODResourcePartialContent *> *)contents {
     if ( contents.count != 0 ) {
         [self lock];
         [contents makeObjectsPerformSelector:@selector(setDelegate:) withObject:self];
@@ -73,15 +73,15 @@
     }
 }
 
-- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
+- (NSString *)filePathOfContent:(MCSVODResourcePartialContent *)content {
     return [MCSResourceFileManager getContentFilePathWithName:content.name inResource:self.name];
 }
 
-- (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
+- (MCSVODResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
         NSString *filename = [MCSResourceFileManager createContentFileInResource:_name atOffset:offset];
-        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename offset:offset];
+        MCSVODResourcePartialContent *content = [MCSVODResourcePartialContent.alloc initWithName:filename offset:offset];
         content.delegate = self;
         [_contents addObject:content];
         return content;
@@ -148,21 +148,21 @@
     }
 }
 
-- (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
+- (void)readWriteCountDidChangeForPartialContent:(MCSVODResourcePartialContent *)content {
     if ( content.readWriteCount > 0 ) return;
     [self lock];
     @try {
         if ( _contents.count <= 1 ) return;
         
         // 合并文件
-        NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
-        for ( MCSResourcePartialContent *content in _contents ) {
+        NSMutableArray<MCSVODResourcePartialContent *> *list = NSMutableArray.alloc.init;
+        for ( MCSVODResourcePartialContent *content in _contents ) {
             if ( content.readWriteCount == 0 )
                 [list addObject:content];
         }
         
-        NSMutableArray<MCSResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
-        [list sortUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
+        NSMutableArray<MCSVODResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
+        [list sortUsingComparator:^NSComparisonResult(MCSVODResourcePartialContent *obj1, MCSVODResourcePartialContent *obj2) {
             NSRange range1 = NSMakeRange(obj1.offset, obj1.length);
             NSRange range2 = NSMakeRange(obj2.offset, obj2.length);
             
@@ -181,8 +181,8 @@
         if ( deleteContents.count != 0 ) [list removeObjectsInArray:deleteContents];
 
         for ( NSInteger i = 0 ; i < list.count - 1; i += 2 ) {
-            MCSResourcePartialContent *write = list[i];
-            MCSResourcePartialContent *read  = list[i + 1];
+            MCSVODResourcePartialContent *write = list[i];
+            MCSVODResourcePartialContent *read  = list[i + 1];
             NSRange readRange = NSMakeRange(0, 0);
 
             NSUInteger maxA = write.offset + write.length;
@@ -215,7 +215,7 @@
             }
         }
         
-        for ( MCSResourcePartialContent *content in deleteContents ) {
+        for ( MCSVODResourcePartialContent *content in deleteContents ) {
             NSString *path = [self filePathOfContent:content];
             if ( [NSFileManager.defaultManager removeItemAtPath:path error:NULL] ) {
                 [_contents removeObject:content];
@@ -228,7 +228,7 @@
     }
 }
 
-- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
+- (void)contentLengthDidChangeForPartialContent:(MCSVODResourcePartialContent *)content {
     [MCSResourceManager.shared didWriteDataForResource:self];
 }
 

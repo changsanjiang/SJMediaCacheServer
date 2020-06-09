@@ -1,23 +1,23 @@
 //
-//  MCSResourcePrefetcher.m
+//  MCSVODResourcePrefetcher.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/8.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSResourcePrefetcher.h"
-#import "MCSResource.h"
+#import "MCSVODResourcePrefetcher.h"
+#import "MCSVODResource.h"
+#import "MCSVODResource+MCSPrivate.h"
 #import "MCSVODReader.h"
-#import "MCSResource+MCSPrivate.h"
 #import "MCSLogger.h"
 #import "NSURLRequest+MCS.h"
 
-@interface MCSResourcePrefetcher ()<NSLocking, MCSResourceReaderDelegate> {
+@interface MCSVODResourcePrefetcher ()<NSLocking, MCSResourceReaderDelegate> {
     NSRecursiveLock *_lock;
 }
 
-@property (nonatomic, weak) MCSResource *resource;
+@property (nonatomic, weak) MCSVODResource *resource;
 @property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isPrepared;
@@ -27,7 +27,7 @@
 @property (nonatomic) NSUInteger offset;
 @end
 
-@implementation MCSResourcePrefetcher
+@implementation MCSVODResourcePrefetcher
 - (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {

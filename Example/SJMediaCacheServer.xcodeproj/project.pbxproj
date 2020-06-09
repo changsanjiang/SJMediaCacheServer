@@ -25,19 +25,19 @@
 		770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E1248228A900057D05 /* SJMediaCacheServer.m */; };
 		770194E6248228BD00057D05 /* MCSProxyServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 770194E5248228BD00057D05 /* MCSProxyServer.m */; };
 		770194FC24826ADE00057D05 /* audio.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 770194FB24826ADE00057D05 /* audio.m4a */; };
-		7729D8382486174C00462899 /* MCSResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D8372486174C00462899 /* MCSResource.m */; };
+		7729D8382486174C00462899 /* MCSVODResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D8372486174C00462899 /* MCSVODResource.m */; };
 		7729D83E2486201300462899 /* MCSSessionTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D83D2486201300462899 /* MCSSessionTask.m */; };
 		7729D84A248657DE00462899 /* MCSURLConvertor.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D849248657DE00462899 /* MCSURLConvertor.m */; };
 		774AB9312487B44C0049CAC3 /* MCSResourceFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */; };
-		779645C0248E7809003C8248 /* MCSResourcePrefetcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645BF248E7809003C8248 /* MCSResourcePrefetcher.m */; };
+		779645C0248E7809003C8248 /* MCSVODResourcePrefetcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645BF248E7809003C8248 /* MCSVODResourcePrefetcher.m */; };
 		779645CB248E93B3003C8248 /* MCSLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645CA248E93B3003C8248 /* MCSLogger.m */; };
 		779645D5248F42E8003C8248 /* test.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = 779645D4248F42E8003C8248 /* test.m3u8 */; };
-		779645D9248F5083003C8248 /* MCSHLSM3u8Resource.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645D8248F5083003C8248 /* MCSHLSM3u8Resource.m */; };
+		779645D9248F5083003C8248 /* MCSHLSResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645D8248F5083003C8248 /* MCSHLSResource.m */; };
 		779645DC248F532B003C8248 /* NSURLRequest+MCS.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645DB248F532B003C8248 /* NSURLRequest+MCS.m */; };
 		77A4BBEC2488901A0007836D /* MCSResourceResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 77A4BBEB2488901A0007836D /* MCSResourceResponse.m */; };
 		77CC43E92487487F006C5B45 /* MCSDownload.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43E72487487F006C5B45 /* MCSDownload.m */; };
 		77CC43FE248774F6006C5B45 /* MCSVODReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43FD248774F6006C5B45 /* MCSVODReader.m */; };
-		77CC4401248778CC006C5B45 /* MCSResourcePartialContent.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43FF248778CC006C5B45 /* MCSResourcePartialContent.m */; };
+		77CC4401248778CC006C5B45 /* MCSVODResourcePartialContent.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43FF248778CC006C5B45 /* MCSVODResourcePartialContent.m */; };
 		77D25D7B24877E6000BB1B1A /* MCSResourceFileDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7A24877E6000BB1B1A /* MCSResourceFileDataReader.m */; };
 		77D25D7E24877E6A00BB1B1A /* MCSResourceNetworkDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D7D24877E6A00BB1B1A /* MCSResourceNetworkDataReader.m */; };
 		77D25D902487AB1400BB1B1A /* MCSResourceManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D25D8F2487AB1400BB1B1A /* MCSResourceManager.m */; };
@@ -86,32 +86,32 @@
 		770194E5248228BD00057D05 /* MCSProxyServer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSProxyServer.m; sourceTree = "<group>"; };
 		770194F42482369500057D05 /* MCSDefines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSDefines.h; sourceTree = "<group>"; };
 		770194FB24826ADE00057D05 /* audio.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = audio.m4a; sourceTree = "<group>"; };
-		7729D8362486174C00462899 /* MCSResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResource.h; sourceTree = "<group>"; };
-		7729D8372486174C00462899 /* MCSResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResource.m; sourceTree = "<group>"; };
+		7729D8362486174C00462899 /* MCSVODResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSVODResource.h; sourceTree = "<group>"; };
+		7729D8372486174C00462899 /* MCSVODResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSVODResource.m; sourceTree = "<group>"; };
 		7729D83C2486201300462899 /* MCSSessionTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSSessionTask.h; sourceTree = "<group>"; };
 		7729D83D2486201300462899 /* MCSSessionTask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSSessionTask.m; sourceTree = "<group>"; };
 		7729D848248657DE00462899 /* MCSURLConvertor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSURLConvertor.h; sourceTree = "<group>"; };
 		7729D849248657DE00462899 /* MCSURLConvertor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSURLConvertor.m; sourceTree = "<group>"; };
 		774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSResourceFileManager.m; sourceTree = "<group>"; };
 		774AB9302487B44C0049CAC3 /* MCSResourceFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSResourceFileManager.h; sourceTree = "<group>"; };
-		779645BE248E7809003C8248 /* MCSResourcePrefetcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourcePrefetcher.h; sourceTree = "<group>"; };
-		779645BF248E7809003C8248 /* MCSResourcePrefetcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResourcePrefetcher.m; sourceTree = "<group>"; };
+		779645BE248E7809003C8248 /* MCSVODResourcePrefetcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSVODResourcePrefetcher.h; sourceTree = "<group>"; };
+		779645BF248E7809003C8248 /* MCSVODResourcePrefetcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSVODResourcePrefetcher.m; sourceTree = "<group>"; };
 		779645C9248E93B3003C8248 /* MCSLogger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSLogger.h; sourceTree = "<group>"; };
 		779645CA248E93B3003C8248 /* MCSLogger.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSLogger.m; sourceTree = "<group>"; };
 		779645D4248F42E8003C8248 /* test.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test.m3u8; sourceTree = "<group>"; };
-		779645D7248F5083003C8248 /* MCSHLSM3u8Resource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSM3u8Resource.h; sourceTree = "<group>"; };
-		779645D8248F5083003C8248 /* MCSHLSM3u8Resource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSM3u8Resource.m; sourceTree = "<group>"; };
+		779645D7248F5083003C8248 /* MCSHLSResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSResource.h; sourceTree = "<group>"; };
+		779645D8248F5083003C8248 /* MCSHLSResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSResource.m; sourceTree = "<group>"; };
 		779645DA248F532B003C8248 /* NSURLRequest+MCS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSURLRequest+MCS.h"; sourceTree = "<group>"; };
 		779645DB248F532B003C8248 /* NSURLRequest+MCS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSURLRequest+MCS.m"; sourceTree = "<group>"; };
 		77A4BBEA2488901A0007836D /* MCSResourceResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceResponse.h; sourceTree = "<group>"; };
 		77A4BBEB2488901A0007836D /* MCSResourceResponse.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResourceResponse.m; sourceTree = "<group>"; };
-		77A4BBEF2488BFB80007836D /* MCSResource+MCSPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MCSResource+MCSPrivate.h"; sourceTree = "<group>"; };
+		77A4BBEF2488BFB80007836D /* MCSVODResource+MCSPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MCSVODResource+MCSPrivate.h"; sourceTree = "<group>"; };
 		77CC43E72487487F006C5B45 /* MCSDownload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSDownload.m; sourceTree = "<group>"; };
 		77CC43E82487487F006C5B45 /* MCSDownload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSDownload.h; sourceTree = "<group>"; };
 		77CC43FC248774F6006C5B45 /* MCSVODReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSVODReader.h; sourceTree = "<group>"; };
 		77CC43FD248774F6006C5B45 /* MCSVODReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSVODReader.m; sourceTree = "<group>"; };
-		77CC43FF248778CC006C5B45 /* MCSResourcePartialContent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSResourcePartialContent.m; sourceTree = "<group>"; };
-		77CC4400248778CC006C5B45 /* MCSResourcePartialContent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSResourcePartialContent.h; sourceTree = "<group>"; };
+		77CC43FF248778CC006C5B45 /* MCSVODResourcePartialContent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSVODResourcePartialContent.m; sourceTree = "<group>"; };
+		77CC4400248778CC006C5B45 /* MCSVODResourcePartialContent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSVODResourcePartialContent.h; sourceTree = "<group>"; };
 		77D25D7924877E6000BB1B1A /* MCSResourceFileDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceFileDataReader.h; sourceTree = "<group>"; };
 		77D25D7A24877E6000BB1B1A /* MCSResourceFileDataReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResourceFileDataReader.m; sourceTree = "<group>"; };
 		77D25D7C24877E6A00BB1B1A /* MCSResourceNetworkDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceNetworkDataReader.h; sourceTree = "<group>"; };
@@ -265,8 +265,6 @@
 				77CC43E424874562006C5B45 /* Download */,
 				770194E3248228B000057D05 /* ProxyServer */,
 				77CC43FB248774ED006C5B45 /* Resource */,
-				779645D6248F504A003C8248 /* HLS */,
-				779645DD248F60B8003C8248 /* VOD */,
 			);
 			path = Lib;
 			sourceTree = "<group>";
@@ -294,8 +292,8 @@
 		779645D6248F504A003C8248 /* HLS */ = {
 			isa = PBXGroup;
 			children = (
-				779645D7248F5083003C8248 /* MCSHLSM3u8Resource.h */,
-				779645D8248F5083003C8248 /* MCSHLSM3u8Resource.m */,
+				779645D7248F5083003C8248 /* MCSHLSResource.h */,
+				779645D8248F5083003C8248 /* MCSHLSResource.m */,
 			);
 			path = HLS;
 			sourceTree = "<group>";
@@ -303,8 +301,15 @@
 		779645DD248F60B8003C8248 /* VOD */ = {
 			isa = PBXGroup;
 			children = (
+				779645BE248E7809003C8248 /* MCSVODResourcePrefetcher.h */,
+				779645BF248E7809003C8248 /* MCSVODResourcePrefetcher.m */,
 				77CC43FC248774F6006C5B45 /* MCSVODReader.h */,
 				77CC43FD248774F6006C5B45 /* MCSVODReader.m */,
+				7729D8362486174C00462899 /* MCSVODResource.h */,
+				7729D8372486174C00462899 /* MCSVODResource.m */,
+				77A4BBEF2488BFB80007836D /* MCSVODResource+MCSPrivate.h */,
+				77CC4400248778CC006C5B45 /* MCSVODResourcePartialContent.h */,
+				77CC43FF248778CC006C5B45 /* MCSVODResourcePartialContent.m */,
 			);
 			path = VOD;
 			sourceTree = "<group>";
@@ -339,24 +344,19 @@
 		77CC43FB248774ED006C5B45 /* Resource */ = {
 			isa = PBXGroup;
 			children = (
-				7729D8362486174C00462899 /* MCSResource.h */,
-				7729D8372486174C00462899 /* MCSResource.m */,
-				77A4BBEF2488BFB80007836D /* MCSResource+MCSPrivate.h */,
+				77D25D8E2487AB1400BB1B1A /* MCSResourceManager.h */,
+				77D25D8F2487AB1400BB1B1A /* MCSResourceManager.m */,
 				77D25D7F24877ED600BB1B1A /* MCSResourceDefines.h */,
 				77D25D7924877E6000BB1B1A /* MCSResourceFileDataReader.h */,
 				77D25D7A24877E6000BB1B1A /* MCSResourceFileDataReader.m */,
-				774AB9302487B44C0049CAC3 /* MCSResourceFileManager.h */,
-				774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */,
-				77D25D8E2487AB1400BB1B1A /* MCSResourceManager.h */,
-				77D25D8F2487AB1400BB1B1A /* MCSResourceManager.m */,
 				77D25D7C24877E6A00BB1B1A /* MCSResourceNetworkDataReader.h */,
 				77D25D7D24877E6A00BB1B1A /* MCSResourceNetworkDataReader.m */,
-				77CC4400248778CC006C5B45 /* MCSResourcePartialContent.h */,
-				77CC43FF248778CC006C5B45 /* MCSResourcePartialContent.m */,
 				77A4BBEA2488901A0007836D /* MCSResourceResponse.h */,
 				77A4BBEB2488901A0007836D /* MCSResourceResponse.m */,
-				779645BE248E7809003C8248 /* MCSResourcePrefetcher.h */,
-				779645BF248E7809003C8248 /* MCSResourcePrefetcher.m */,
+				774AB9302487B44C0049CAC3 /* MCSResourceFileManager.h */,
+				774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */,
+				779645DD248F60B8003C8248 /* VOD */,
+				779645D6248F504A003C8248 /* HLS */,
 			);
 			path = Resource;
 			sourceTree = "<group>";
@@ -514,10 +514,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				7729D84A248657DE00462899 /* MCSURLConvertor.m in Sources */,
-				779645D9248F5083003C8248 /* MCSHLSM3u8Resource.m in Sources */,
+				779645D9248F5083003C8248 /* MCSHLSResource.m in Sources */,
 				77CC43E92487487F006C5B45 /* MCSDownload.m in Sources */,
 				77F619B1248DE807009D3DD7 /* MCSError.m in Sources */,
-				77CC4401248778CC006C5B45 /* MCSResourcePartialContent.m in Sources */,
+				77CC4401248778CC006C5B45 /* MCSVODResourcePartialContent.m in Sources */,
 				77CC43FE248774F6006C5B45 /* MCSVODReader.m in Sources */,
 				779645CB248E93B3003C8248 /* MCSLogger.m in Sources */,
 				770194E6248228BD00057D05 /* MCSProxyServer.m in Sources */,
@@ -527,8 +527,8 @@
 				77D25D7B24877E6000BB1B1A /* MCSResourceFileDataReader.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
 				77D25D7E24877E6A00BB1B1A /* MCSResourceNetworkDataReader.m in Sources */,
-				7729D8382486174C00462899 /* MCSResource.m in Sources */,
-				779645C0248E7809003C8248 /* MCSResourcePrefetcher.m in Sources */,
+				7729D8382486174C00462899 /* MCSVODResource.m in Sources */,
+				779645C0248E7809003C8248 /* MCSVODResourcePrefetcher.m in Sources */,
 				774AB9312487B44C0049CAC3 /* MCSResourceFileManager.m in Sources */,
 				770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */,
 				77D25D902487AB1400BB1B1A /* MCSResourceManager.m in Sources */,

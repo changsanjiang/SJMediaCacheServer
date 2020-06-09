@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSResource : NSObject<MCSResource>
+@interface MCSVODResource : NSObject<MCSResource>
 + (instancetype)resourceWithURL:(NSURL *)URL;
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;

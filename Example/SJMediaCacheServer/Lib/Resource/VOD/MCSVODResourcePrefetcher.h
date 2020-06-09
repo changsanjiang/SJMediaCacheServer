@@ -1,5 +1,5 @@
 //
-//  MCSResourcePrefetcher.h
+//  MCSVODResourcePrefetcher.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/8.
@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSResourcePrefetcher : NSObject<MCSResourcePrefetcher>
+@interface MCSVODResourcePrefetcher : NSObject<MCSResourcePrefetcher>
 - (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request;
 
 @property (nonatomic, weak, nullable) id<MCSResourcePrefetcherDelegate> delegate;

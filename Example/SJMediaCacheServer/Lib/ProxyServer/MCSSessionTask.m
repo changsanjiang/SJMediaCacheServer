@@ -7,12 +7,12 @@
 //
 
 #import "MCSSessionTask.h"
-#import "MCSResource.h"
+#import "MCSResourceManager.h"
 
 @interface MCSSessionTask ()<MCSResourceReaderDelegate>
 @property (nonatomic, weak) id<MCSSessionTaskDelegate> delegate;
 @property (nonatomic, strong) NSURLRequest * request;
-@property (nonatomic, strong) MCSResource *resource;
+@property (nonatomic, strong) id<MCSResource> resource;
 @property (nonatomic, strong) id<MCSResourceReader> reader;
 @end
 
@@ -27,7 +27,7 @@
 }
 
 - (void)prepare {
-    _resource = [MCSResource resourceWithURL:_request.URL];
+    _resource = [MCSResourceManager.shared resourceWithURL:_request.URL];
     _reader = [_resource readerWithRequest:_request];
     _reader.delegate = self;
     [_reader prepare];

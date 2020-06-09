@@ -1,5 +1,5 @@
 //
-//  MCSResourcePartialContent.h
+//  MCSVODResourcePartialContent.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
-@interface MCSResourcePartialContent : NSObject
+@interface MCSVODResourcePartialContent : NSObject
 - (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset;
 - (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset length:(NSUInteger)length;
 

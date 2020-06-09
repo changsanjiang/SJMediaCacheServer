@@ -7,10 +7,11 @@
 //
 
 #import "MCSResourceManager.h"
-#import "MCSResource.h"
+#import "MCSVODResource.h"
 #import "MCSVODReader.h"
-#import "MCSResource+MCSPrivate.h"
-#import "MCSResourcePartialContent.h"
+#import "MCSVODResource+MCSPrivate.h"
+
+#import "MCSVODResourcePartialContent.h"
 #import "MCSResourceFileManager.h"
 #import <SJUIKit/SJSQLite3.h>
 #import <SJUIKit/SJSQLite3+QueryExtended.h>
@@ -25,11 +26,11 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     MCSLimitExpires,
 };
 
-@interface MCSResource (MCSResourceManagerExtended)<SJSQLiteTableModelProtocol>
+@interface MCSVODResource (MCSResourceManagerExtended)<SJSQLiteTableModelProtocol>
 
 @end
 
-@implementation MCSResource (MCSResourceManagerExtended)
+@implementation MCSVODResource (MCSResourceManagerExtended)
 + (NSString *)sql_primaryKey {
     return @"id";
 }
@@ -67,7 +68,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 @interface MCSResourceManager ()<NSLocking> {
     NSRecursiveLock *_lock;
 }
-@property (nonatomic, strong) NSMutableDictionary<NSString *, MCSResource *> *resources;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, id<MCSResource>> *resources;
 @property (nonatomic, strong) SJSQLite3 *sqlite3;
 @property (nonatomic) NSUInteger count;
 @end
@@ -90,7 +91,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         _lock = NSRecursiveLock.alloc.init;
         _resources = NSMutableDictionary.dictionary;
 
-        _count = [_sqlite3 countOfObjectsForClass:MCSResource.class conditions:nil error:NULL];
+        _count = [_sqlite3 countOfObjectsForClass:MCSVODResource.class conditions:nil error:NULL];
 
         [self _removeResourcesForLimit:@(MCSLimitFreeDiskSpace)];
     }
@@ -183,19 +184,19 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 #pragma mark -
 
-- (MCSResource *)resourceWithURL:(NSURL *)URL {
+- (id<MCSResource>)resourceWithURL:(NSURL *)URL {
     [self lock];
     @try {
         NSString *name = [MCSURLConvertor.shared resourceNameWithURL:URL];
         if ( _resources[name] == nil ) {
             // query
-            MCSResource *resource = (id)[_sqlite3 objectsForClass:MCSResource.class conditions:@[
+            MCSVODResource *resource = (id)[_sqlite3 objectsForClass:MCSVODResource.class conditions:@[
                 [SJSQLite3Condition conditionWithColumn:@"name" value:name]
             ] orderBy:nil error:NULL].firstObject;
             
             // create
             if ( resource == nil ) {
-                resource = [MCSResource.alloc initWithName:name];
+                resource = [MCSVODResource.alloc initWithName:name];
                 resource.createdTime = NSDate.date.timeIntervalSince1970;
                 [_sqlite3 save:resource error:NULL];
                 _count += 1;
@@ -217,8 +218,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     }
 }
 
-- (void)update:(MCSResource *)resource {
-    resource.updatedTime = NSDate.date.timeIntervalSince1970;
+- (void)update:(id<MCSResource>)resource {
+    
+#warning next ...
+//    resource.updatedTime = NSDate.date.timeIntervalSince1970;
     if ( resource != nil ) [_sqlite3 save:resource error:NULL];
 }
 
@@ -240,7 +243,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     [self lock];
     @try {
         [_resources removeAllObjects];
-        NSArray<MCSResource *> *resources = [_sqlite3 objectsForClass:MCSResource.class conditions:nil orderBy:nil error:NULL];
+        NSArray<MCSResource *> *resources = [_sqlite3 objectsForClass:MCSVODResource.class conditions:nil orderBy:nil error:NULL];
         [self _removeResources:resources];
     } @catch (__unused NSException *exception) {
         
@@ -280,71 +283,71 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             break;
     }
     
-    NSMutableArray<NSNumber *> *usingResources = NSMutableArray.alloc.init;
-    [_resources enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, MCSResource * _Nonnull obj, BOOL * _Nonnull stop) {
-        if ( obj.readWriteCount > 0 )
-            [usingResources addObject:@(obj.id)];
-    }];
-    
-    // 全部处于使用中
-    if ( usingResources.count == _count )
-        return;
-    
-    NSArray<MCSResource *> *results = nil;
-    switch ( limit ) {
-        case MCSLimitNone:
-            break;
-        case MCSLimitCount: {
-            NSInteger length = _count - _cacheCountLimit + 1;
-            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
-                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources]
-            ] orderBy:@[
-                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
-                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
-            ] range:NSMakeRange(0, length) error:NULL];
-        }
-            break;
-        case MCSLimitFreeDiskSpace: {
-            NSInteger length = _count - usingResources.count + 1;
-            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
-                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources]
-            ] orderBy:@[
-                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
-                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
-            ] range:NSMakeRange(0, length) error:NULL];
-        }
-            break;
-        case MCSLimitExpires: {
-            NSTimeInterval time = NSDate.date.timeIntervalSince1970 - _maxDiskAgeForResource;
-            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
-                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources],
-                [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(time)],
-            ] orderBy:@[
-                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
-                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
-            ] error:NULL];
-        }
-            break;
-    }
-    
-    if ( results.count == 0 )
-        return;
-    
-    // 删除
-    [self _removeResources:results];
+//    NSMutableArray<NSNumber *> *usingResources = NSMutableArray.alloc.init;
+//    [_resources enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, MCSResource * _Nonnull obj, BOOL * _Nonnull stop) {
+//        if ( obj.readWriteCount > 0 )
+//            [usingResources addObject:@(obj.id)];
+//    }];
+//
+//    // 全部处于使用中
+//    if ( usingResources.count == _count )
+//        return;
+//
+//    NSArray<MCSResource *> *results = nil;
+//    switch ( limit ) {
+//        case MCSLimitNone:
+//            break;
+//        case MCSLimitCount: {
+//            NSInteger length = _count - _cacheCountLimit + 1;
+//            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
+//                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources]
+//            ] orderBy:@[
+//                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
+//                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
+//            ] range:NSMakeRange(0, length) error:NULL];
+//        }
+//            break;
+//        case MCSLimitFreeDiskSpace: {
+//            NSInteger length = _count - usingResources.count + 1;
+//            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
+//                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources]
+//            ] orderBy:@[
+//                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
+//                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
+//            ] range:NSMakeRange(0, length) error:NULL];
+//        }
+//            break;
+//        case MCSLimitExpires: {
+//            NSTimeInterval time = NSDate.date.timeIntervalSince1970 - _maxDiskAgeForResource;
+//            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
+//                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources],
+//                [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(time)],
+//            ] orderBy:@[
+//                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
+//                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
+//            ] error:NULL];
+//        }
+//            break;
+//    }
+//
+//    if ( results.count == 0 )
+//        return;
+//
+//    // 删除
+//    [self _removeResources:results];
 }
 
 - (void)_removeResources:(NSArray<MCSResource *> *)resources {
-    if ( resources.count == 0 )
-        return;
-    
-    [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerWillRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : obj }];
-        NSString *path = [MCSResourceFileManager getResourcePathWithName:obj.name];
-        [NSFileManager.defaultManager removeItemAtPath:path error:NULL];
-        [self.sqlite3 removeObjectForClass:MCSResource.class primaryKeyValue:@(obj.id) error:NULL];
-        self.count -= 1;
-    }];
+//    if ( resources.count == 0 )
+//        return;
+//    
+//    [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//        [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerWillRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : obj }];
+//        NSString *path = [MCSResourceFileManager getResourcePathWithName:obj.name];
+//        [NSFileManager.defaultManager removeItemAtPath:path error:NULL];
+//        [self.sqlite3 removeObjectForClass:MCSResource.class primaryKeyValue:@(obj.id) error:NULL];
+//        self.count -= 1;
+//    }];
 }
 
 #pragma mark -

@@ -15,7 +15,7 @@
 #import "MCSSessionTask.h"
 #import "MCSURLConvertor.h"
 #import "MCSLogger.h"
-#import "MCSResource.h"
+#import "MCSVODResource.h"
 #import "MCSResourceManager.h"
  
 @interface SJViewController ()<MCSProxyServerDelegate>

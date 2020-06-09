@@ -7,8 +7,8 @@
 //
 
 #import "MCSVODReader.h"
-#import "MCSResource+MCSPrivate.h"
-#import "MCSResourcePartialContent.h"
+#import "MCSVODResource+MCSPrivate.h"
+#import "MCSVODResourcePartialContent.h"
 #import "MCSResourceResponse.h"
 #import "MCSResourceManager.h"
 #import "MCSResourceFileManager.h"
@@ -31,12 +31,12 @@
 @property (nonatomic, strong, nullable) MCSResourceNetworkDataReader *tmpReader; // 用于获取资源contentLength, contentType等信息
 @property (nonatomic) NSUInteger offset;
 
-@property (nonatomic, weak, nullable) MCSResource *resource;
+@property (nonatomic, weak, nullable) MCSVODResource *resource;
 @property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic, copy, nullable) NSArray<id<MCSResourceDataReader>> *readers;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 
-@property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *readWriteContents;
+@property (nonatomic, strong) NSMutableArray<MCSVODResourcePartialContent *> *readWriteContents;
 @end
 
 @implementation MCSVODReader
@@ -72,7 +72,7 @@
 }
 
 - (void)willRemoveResource:(NSNotification *)note {
-    MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
+    MCSVODResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
         [self close];
         [self.delegate reader:self anErrorOccurred:[NSError mcs_errorForRemovedResource:_request.URL]];
@@ -200,7 +200,7 @@
         [reader close];
     }
     
-    for ( MCSResourcePartialContent *content in _readWriteContents ) {
+    for ( MCSVODResourcePartialContent *content in _readWriteContents ) {
         [content readWrite_release];
     }
     
@@ -214,7 +214,7 @@
     NSAssert(totalLength != 0, @"`_resource.totalLength`不能为`0`!");
      
     // `length`经常变动, 暂时这里排序吧
-    __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
+    __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(MCSVODResourcePartialContent *obj1, MCSVODResourcePartialContent *obj2) {
         if ( obj1.offset == obj2.offset )
             return obj1.length >= obj2.length ? NSOrderedAscending : NSOrderedDescending;
         return obj1.offset < obj2.offset ? NSOrderedAscending : NSOrderedDescending;
@@ -236,7 +236,7 @@
     _response = [MCSResourceResponse.alloc initWithServer:_resource.server contentType:_resource.contentType totalLength:totalLength contentRange:current];
 
     NSMutableArray<id<MCSResourceDataReader>> *readers = NSMutableArray.array;
-    for ( MCSResourcePartialContent *content in contents ) {
+    for ( MCSVODResourcePartialContent *content in contents ) {
         NSRange available = NSMakeRange(content.offset, content.length);
         NSRange intersection = NSIntersectionRange(current, available);
         if ( intersection.length != 0 ) {
@@ -346,10 +346,10 @@
     [_delegate reader:self anErrorOccurred:error];
 }
 
-- (MCSResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader {
+- (MCSVODResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader {
     [self lock];
     @try {
-        MCSResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
+        MCSVODResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
         [content readWrite_retain];
         [_readWriteContents addObject:content];
         return content;
@@ -360,7 +360,7 @@
     }
 }
 
-- (NSString *)writePathOfPartialContent:(MCSResourcePartialContent *)content {
+- (NSString *)writePathOfPartialContent:(MCSVODResourcePartialContent *)content {
     return [_resource filePathOfContent:content];
 }
 

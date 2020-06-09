@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "MCSResourcePartialContent.h"
+#import "MCSVODResourcePartialContent.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)getResourcePathWithName:(NSString *)name;
 + (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)resourceName;
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;
-+ (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
++ (nullable NSArray<MCSVODResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end
 
 NS_ASSUME_NONNULL_END

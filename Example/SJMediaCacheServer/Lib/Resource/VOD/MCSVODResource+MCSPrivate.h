@@ -6,9 +6,9 @@
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSResource.h"
-#import "MCSResourcePartialContent.h"
-@protocol MCSResourcePartialContentDelegate;
+#import "MCSVODResource.h"
+#import "MCSVODResourcePartialContent.h"
+@protocol MCSVODResourcePartialContentDelegate;
 
 // 私有方法, 请勿使用
 
@@ -20,15 +20,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)readWrite_release;
 @end
 
-@interface MCSResource (MCSPrivate)<MCSReadWrite>
+@interface MCSVODResource (MCSPrivate)<MCSReadWrite>
 - (instancetype)initWithName:(NSString *)name;
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy, readonly) NSString *name;
-@property (nonatomic, strong, readonly) NSMutableArray<MCSResourcePartialContent *> *contents;
+@property (nonatomic, strong, readonly) NSMutableArray<MCSVODResourcePartialContent *> *contents;
 - (void)setServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength;
-- (void)addContents:(nullable NSArray<MCSResourcePartialContent *> *)contents;
-- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
-- (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset;
+- (void)addContents:(nullable NSArray<MCSVODResourcePartialContent *> *)contents;
+- (NSString *)filePathOfContent:(MCSVODResourcePartialContent *)content;
+- (MCSVODResourcePartialContent *)createContentWithOffset:(NSUInteger)offset;
 @property (nonatomic, copy, readonly, nullable) NSString *contentType;
 @property (nonatomic, copy, readonly, nullable) NSString *server;
 @property (nonatomic, readonly) NSUInteger totalLength;
@@ -42,16 +42,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSTimeInterval createdTime;        ///< 创建时间
 @end
 
-@interface MCSResourcePartialContent (MCSPrivate)<MCSReadWrite>
-@property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
+@interface MCSVODResourcePartialContent (MCSPrivate)<MCSReadWrite>
+@property (nonatomic, weak, nullable) id<MCSVODResourcePartialContentDelegate> delegate;
 
 @property (nonatomic, readonly) NSInteger readWriteCount;
 - (void)readWrite_retain;
 - (void)readWrite_release;
 @end
 
-@protocol MCSResourcePartialContentDelegate <NSObject>
-- (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content;
-- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content;
+@protocol MCSVODResourcePartialContentDelegate <NSObject>
+- (void)readWriteCountDidChangeForPartialContent:(MCSVODResourcePartialContent *)content;
+- (void)contentLengthDidChangeForPartialContent:(MCSVODResourcePartialContent *)content;
 @end
 NS_ASSUME_NONNULL_END

@@ -1,25 +1,25 @@
 //
-//  MCSResourcePartialContent.m
+//  MCSVODResourcePartialContent.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSResourcePartialContent.h"
-#import "MCSResource+MCSPrivate.h"
+#import "MCSVODResourcePartialContent.h"
+#import "MCSVODResource+MCSPrivate.h"
 
-@interface MCSResourcePartialContent ()<NSLocking> {
+@interface MCSVODResourcePartialContent ()<NSLocking> {
     NSRecursiveLock *_lock;
 }
-@property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
+@property (nonatomic, weak, nullable) id<MCSVODResourcePartialContentDelegate> delegate;
 @property (nonatomic) NSInteger readWriteCount;
 
 - (void)readWrite_retain;
 - (void)readWrite_release;
 @end
 
-@implementation MCSResourcePartialContent
+@implementation MCSVODResourcePartialContent
 - (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset {
     return [self initWithName:name offset:offset length:0];
 }
