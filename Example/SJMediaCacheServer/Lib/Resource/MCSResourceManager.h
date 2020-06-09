@@ -46,7 +46,7 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 - (void)removeAllResources;
 
 - (__kindof MCSResource *)resourceWithURL:(NSURL *)URL;
-- (void)update:(MCSResource *)resource;
+- (void)saveMetadata:(MCSResource *)resource;
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource;
 - (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource;
 - (void)didWriteDataForResource:(MCSResource *)resource;

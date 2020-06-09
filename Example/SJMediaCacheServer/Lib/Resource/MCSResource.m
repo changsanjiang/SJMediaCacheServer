@@ -10,13 +10,9 @@
 
 @interface MCSResource ()<NSLocking>
 @property (nonatomic) NSInteger id;
+@property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @property (nonatomic) NSInteger readWriteCount;
-
-@property (nonatomic) NSInteger numberOfCumulativeUsage;
-@property (nonatomic) NSTimeInterval updatedTime;
-@property (nonatomic) NSTimeInterval createdTime;
-@property (nonatomic, copy) NSString *name;
 @end
 
 @implementation MCSResource

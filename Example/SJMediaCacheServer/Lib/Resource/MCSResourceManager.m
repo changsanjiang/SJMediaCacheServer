@@ -9,6 +9,7 @@
 #import "MCSResourceManager.h"
 #import "MCSResource.h"
 #import "MCSResourceSubclass.h"
+#import "MCSResourceUsageLog.h"
 
 #import "MCSVODResourcePartialContent.h"
 #import "MCSVODResource+MCSPrivate.h"
@@ -33,11 +34,43 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     MCSLimitExpires,
 };
 
-@interface MCSVODResource (MCSResourceManagerExtended)<SJSQLiteTableModelProtocol>
-
+@interface MCSResourceUsageLog (MCSPrivate)
+@property (nonatomic) NSInteger id;
+@property (nonatomic) NSInteger resource;
+@property (nonatomic) MCSResourceType resourceType;
+@property (nonatomic) NSUInteger usageCount;
+@property (nonatomic) NSTimeInterval updatedTime;
+@property (nonatomic) NSTimeInterval createdTime;
 @end
 
-@implementation MCSVODResource (MCSResourceManagerExtended)
+@interface MCSResourceUsageLog (MCSResourceManagerExtended)<SJSQLiteTableModelProtocol>
+@end
+
+@implementation MCSResourceUsageLog (MCSResourceManagerExtended)
+- (instancetype)initWithResource:(MCSResource *)resource {
+    self = [super init];
+    if ( self ) {
+        self.resource = resource.id;
+        self.resourceType = resource.type;
+        self.updatedTime = self.createdTime = NSDate.date.timeIntervalSince1970;
+    }
+    return self;
+}
+
++ (NSString *)sql_primaryKey {
+    return @"id";
+}
+
++ (NSArray<NSString *> *)sql_autoincrementlist {
+    return @[@"id"];
+}
+@end
+
+
+@interface MCSResource (MCSResourceManagerExtended)<SJSQLiteTableModelProtocol>
+@end
+
+@implementation MCSResource (MCSResourceManagerExtended)
 + (NSString *)sql_primaryKey {
     return @"id";
 }
@@ -51,24 +84,6 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 @end
 
-
-@interface MCSHLSResource (MCSResourceManagerExtended)<SJSQLiteTableModelProtocol>
-
-@end
-
-@implementation MCSHLSResource (MCSResourceManagerExtended)
-+ (NSString *)sql_primaryKey {
-    return @"id";
-}
-
-+ (NSArray<NSString *> *)sql_autoincrementlist {
-    return @[@"id"];
-}
-
-+ (NSArray<NSString *> *)sql_blacklist {
-    return @[@"readWriteCount"];
-}
-@end
 
 @interface SJSQLite3Condition (MCSResourceManagerExtended)
 + (instancetype)mcs_conditionWithColumn:(NSString *)column notIn:(NSArray *)values;
@@ -113,14 +128,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     self = [super init];
     if ( self ) {
         _sqlite3 = [SJSQLite3.alloc initWithDatabasePath:[MCSResourceFileManager databasePath]];
-
+        _count = [_sqlite3 countOfObjectsForClass:MCSResourceUsageLog.class conditions:nil error:NULL];
         _lock = NSRecursiveLock.alloc.init;
         _resources = NSMutableDictionary.dictionary;
-
-        NSInteger VODCount = [_sqlite3 countOfObjectsForClass:MCSVODResource.class conditions:nil error:NULL];
-        NSInteger HLSCount = [_sqlite3 countOfObjectsForClass:MCSHLSResource.class conditions:nil error:NULL];
-        _count = VODCount + HLSCount;
-        
         [self _removeResourcesForLimit:@(MCSLimitFreeDiskSpace)];
     }
     return self;
@@ -228,14 +238,14 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             if ( resource == nil ) {
                 resource = [cls.alloc init];
                 resource.name = name;
-                resource.createdTime = NSDate.date.timeIntervalSince1970;
-                [_sqlite3 save:resource error:NULL];
+                [self _update:resource];
+                resource.log = [MCSResourceUsageLog.alloc initWithResource:resource];
                 _count += 1;
             }
             
             // update
-            resource.numberOfCumulativeUsage += 1;
-            [self update:resource];
+            resource.log.usageCount += 1;
+            [self _update:resource];
             
             _resources[name] = resource;
         }
@@ -247,9 +257,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     }
 }
 
-- (void)update:(MCSResource *)resource {
-    resource.updatedTime = NSDate.date.timeIntervalSince1970;
-    if ( resource != nil ) [_sqlite3 save:resource error:NULL];
+- (void)saveMetadata:(MCSResource *)resource {
+    [self _update:resource];
 }
 
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSVODResource *)resource {
@@ -379,6 +388,11 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 //        [self.sqlite3 removeObjectForClass:MCSResource.class primaryKeyValue:@(obj.id) error:NULL];
 //        self.count -= 1;
 //    }];
+}
+
+- (void)_update:(MCSResource *)resource {
+    if ( resource.log != nil ) resource.log.updatedTime = NSDate.date.timeIntervalSince1970;
+    if ( resource != nil ) [_sqlite3 save:resource error:NULL];
 }
 
 #pragma mark -

@@ -7,15 +7,14 @@
 //
 
 #import "MCSResource.h"
+#import "MCSResourceUsageLog.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResource (Private)<NSLocking>
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
-@property (nonatomic) NSInteger numberOfCumulativeUsage;
-@property (nonatomic) NSTimeInterval updatedTime;
-@property (nonatomic) NSTimeInterval createdTime;
+@property (nonatomic, strong) MCSResourceUsageLog *log;
 
 @property (nonatomic, readonly) NSInteger readWriteCount;
 - (void)readWrite_retain;

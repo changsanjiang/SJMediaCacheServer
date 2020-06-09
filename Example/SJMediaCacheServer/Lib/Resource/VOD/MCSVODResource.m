@@ -129,7 +129,7 @@
     }
     [self unlock];
     if ( updated ) {
-        [MCSResourceManager.shared update:self];
+        [MCSResourceManager.shared saveMetadata:self];
     }
 }
 

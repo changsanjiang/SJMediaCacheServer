@@ -7,6 +7,7 @@
 //
 
 #import "MCSDefines.h"
+@class MCSResourceUsageLog;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,9 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;
 
-@property (nonatomic, readonly) NSInteger numberOfCumulativeUsage; ///< 累计被使用次数
-@property (nonatomic, readonly) NSTimeInterval updatedTime;        ///< 最后一次更新时的时间
-@property (nonatomic, readonly) NSTimeInterval createdTime;        ///< 创建时间
+@property (nonatomic, strong, readonly) MCSResourceUsageLog *log;
 @end
 
 NS_ASSUME_NONNULL_END
