@@ -36,11 +36,13 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 @interface MCSResourceUsageLog (MCSPrivate)
 @property (nonatomic) NSInteger id;
-@property (nonatomic) NSInteger resource;
-@property (nonatomic) MCSResourceType resourceType;
 @property (nonatomic) NSUInteger usageCount;
+
 @property (nonatomic) NSTimeInterval updatedTime;
 @property (nonatomic) NSTimeInterval createdTime;
+
+@property (nonatomic) NSInteger resource;
+@property (nonatomic) MCSResourceType resourceType;
 @end
 
 @interface MCSResourceUsageLog (MCSResourceManagerExtended)<SJSQLiteTableModelProtocol>
@@ -278,8 +280,6 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (void)removeAllResources {
     [self lock];
     @try {
-        [_resources removeAllObjects];
-        
         NSArray<MCSVODResource *> *VODResources = [_sqlite3 objectsForClass:MCSVODResource.class conditions:nil orderBy:nil error:NULL];
         [self _removeResources:VODResources];
         NSArray<MCSHLSResource *> *HLSResources = [_sqlite3 objectsForClass:MCSHLSResource.class conditions:nil orderBy:nil error:NULL];
@@ -333,61 +333,70 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     if ( usingResources.count == _count )
         return;
 
-    NSArray<MCSResource *> *results = nil;
+    NSArray<MCSResourceUsageLog *> *logs = nil;
     switch ( limit ) {
         case MCSLimitNone:
             break;
         case MCSLimitCount: {
             NSInteger length = _count - _cacheCountLimit + 1;
-            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
-                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources]
+            logs = [_sqlite3 objectsForClass:MCSResourceUsageLog.class conditions:@[
+                [SJSQLite3Condition mcs_conditionWithColumn:@"resource" notIn:usingResources]
             ] orderBy:@[
                 [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
-                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
+                [SJSQLite3ColumnOrder orderWithColumn:@"usageCount" ascending:YES],
             ] range:NSMakeRange(0, length) error:NULL];
         }
             break;
         case MCSLimitFreeDiskSpace: {
             NSInteger length = _count - usingResources.count + 1;
-            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
-                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources]
+            logs = [_sqlite3 objectsForClass:MCSResourceUsageLog.class conditions:@[
+                [SJSQLite3Condition mcs_conditionWithColumn:@"resource" notIn:usingResources]
             ] orderBy:@[
                 [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
-                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
+                [SJSQLite3ColumnOrder orderWithColumn:@"usageCount" ascending:YES],
             ] range:NSMakeRange(0, length) error:NULL];
         }
             break;
         case MCSLimitExpires: {
             NSTimeInterval time = NSDate.date.timeIntervalSince1970 - _maxDiskAgeForResource;
-            results = [_sqlite3 objectsForClass:MCSResource.class conditions:@[
-                [SJSQLite3Condition mcs_conditionWithColumn:@"id" notIn:usingResources],
+            logs = [_sqlite3 objectsForClass:MCSResourceUsageLog.class conditions:@[
+                [SJSQLite3Condition mcs_conditionWithColumn:@"resource" notIn:usingResources],
                 [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(time)],
             ] orderBy:@[
                 [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
-                [SJSQLite3ColumnOrder orderWithColumn:@"numberOfCumulativeUsage" ascending:YES],
+                [SJSQLite3ColumnOrder orderWithColumn:@"usageCount" ascending:YES],
             ] error:NULL];
         }
             break;
     }
 
-    if ( results.count == 0 )
+    if ( logs.count == 0 )
         return;
 
     // 删除
+    NSMutableArray<MCSResource *> *results = NSMutableArray.array;
+    [logs enumerateObjectsUsingBlock:^(MCSResourceUsageLog * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        MCSResource *resource = [self.sqlite3 objectForClass:[self resourceClassForType:obj.resourceType] primaryKeyValue:@(obj.resource) error:NULL];
+        if ( resource != nil ) [results addObject:resource];
+    }];
+    
     [self _removeResources:results];
 }
 
 - (void)_removeResources:(NSArray<MCSResource *> *)resources {
-//    if ( resources.count == 0 )
-//        return;
-//    
-//    [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-//        [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerWillRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : obj }];
-//        NSString *path = [MCSResourceFileManager getResourcePathWithName:obj.name];
-//        [NSFileManager.defaultManager removeItemAtPath:path error:NULL];
-//        [self.sqlite3 removeObjectForClass:MCSResource.class primaryKeyValue:@(obj.id) error:NULL];
-//        self.count -= 1;
-//    }];
+    if ( resources.count == 0 )
+        return;
+
+    [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
+        [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerWillRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : r }];
+        NSString *path = [MCSResourceFileManager getResourcePathWithName:r.name];
+        [NSFileManager.defaultManager removeItemAtPath:path error:NULL];
+        [self.resources removeObjectForKey:r.name];
+        [self.sqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
+        if ( r.log != nil ) [self.sqlite3 removeObjectForClass:r.log.class primaryKeyValue:@(r.log.id) error:NULL];
+    }];
+    
+    self.count -= resources.count;
 }
 
 - (void)_update:(MCSResource *)resource {
