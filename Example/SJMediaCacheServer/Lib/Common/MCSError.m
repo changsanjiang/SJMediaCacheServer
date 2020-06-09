@@ -37,6 +37,6 @@ NSString * const MCSErrorUserInfoResponseKey = @"Response";
 + (NSError *)mcs_errorForResourceRemoved:(NSURL *)URL {
     NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
     userInfo[MCSErrorUserInfoURLKey] = URL;
-    return [NSError errorWithDomain:MCSErrorDomain code:MCSErrorException userInfo:userInfo];
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSErrorRemoved userInfo:userInfo];
 }
 @end

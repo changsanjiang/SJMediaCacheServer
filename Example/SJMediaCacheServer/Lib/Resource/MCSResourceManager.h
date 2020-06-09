@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "MCSURLConvertor.h"
-@class MCSResource, MCSResourceVODReader, MCSResourcePartialContent;
+@class MCSResource, MCSVODReader, MCSResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -46,8 +46,8 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 
 - (MCSResource *)resourceWithURL:(NSURL *)URL;
 - (void)update:(MCSResource *)resource;
-- (void)reader:(MCSResourceVODReader *)reader willReadResource:(MCSResource *)resource;
-- (void)reader:(MCSResourceVODReader *)reader didEndReadResource:(MCSResource *)resource;
+- (void)reader:(MCSVODReader *)reader willReadResource:(MCSResource *)resource;
+- (void)reader:(MCSVODReader *)reader didEndReadResource:(MCSResource *)resource;
 - (void)didWriteDataForResource:(MCSResource *)resource;
 @end
 

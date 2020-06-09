@@ -8,7 +8,7 @@
 
 #import "MCSResourceManager.h"
 #import "MCSResource.h"
-#import "MCSResourceVODReader.h"
+#import "MCSVODReader.h"
 #import "MCSResource+MCSPrivate.h"
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceFileManager.h"
@@ -222,11 +222,11 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     if ( resource != nil ) [_sqlite3 save:resource error:NULL];
 }
 
-- (void)reader:(MCSResourceVODReader *)reader willReadResource:(MCSResource *)resource {
+- (void)reader:(MCSVODReader *)reader willReadResource:(MCSResource *)resource {
     // noting ...
 }
 
-- (void)reader:(MCSResourceVODReader *)reader didEndReadResource:(MCSResource *)resource {
+- (void)reader:(MCSVODReader *)reader didEndReadResource:(MCSResource *)resource {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_removeResourcesForLimit:) object:@(MCSLimitCount)];
     [self performSelector:@selector(_removeResourcesForLimit:) withObject:@(MCSLimitCount) afterDelay:0.5];
 }

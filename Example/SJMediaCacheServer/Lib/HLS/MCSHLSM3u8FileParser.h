@@ -1,5 +1,5 @@
 //
-//  MCSM3U8FileParser.h
+//  MCSHLSM3u8FileParser.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/9.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSM3U8FileParser : NSObject
+@interface MCSHLSM3u8FileParser : NSObject
 //- (instancetype)initWithURL:(NSURL *)URL
 @end
 

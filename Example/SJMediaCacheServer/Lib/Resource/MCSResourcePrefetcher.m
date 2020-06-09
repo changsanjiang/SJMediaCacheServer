@@ -8,7 +8,7 @@
 
 #import "MCSResourcePrefetcher.h"
 #import "MCSResource.h"
-#import "MCSResourceVODReader.h"
+#import "MCSVODReader.h"
 #import "MCSResource+MCSPrivate.h"
 #import "MCSLogger.h"
 #import "NSURLRequest+MCS.h"
@@ -23,7 +23,7 @@
 @property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isFinished;
 @property (nonatomic) BOOL isClosed;
-@property (nonatomic, strong, nullable) MCSResourceVODReader *reader;
+@property (nonatomic, strong, nullable) MCSVODReader *reader;
 @property (nonatomic) NSUInteger offset;
 @end
 
