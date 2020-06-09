@@ -10,7 +10,7 @@
 #include <CommonCrypto/CommonCrypto.h>
 
 static inline NSString *
-SJMD5(NSString *str) {
+MCSMD5(NSString *str) {
     NSData *data = [str dataUsingEncoding:NSUTF8StringEncoding];
     unsigned char result[CC_MD5_DIGEST_LENGTH];
     CC_MD5(data.bytes, (CC_LONG)data.length, result);
@@ -48,6 +48,6 @@ SJMD5(NSString *str) {
 }
 
 - (nullable NSString *)resourceNameWithURL:(NSURL *)URL {
-    return SJMD5(URL.absoluteString);
+    return MCSMD5(URL.absoluteString);
 }
 @end

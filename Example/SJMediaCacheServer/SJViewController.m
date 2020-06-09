@@ -35,26 +35,26 @@
     // 播放
     
     [self _startLocalProxyServer];
-    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
+    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://rec.app.lanwuzhe.com/recordings/z1.lanwuzhe.24086472/1589864400_1589950800.m3u8"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
 
 //    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
  
-//    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:0];
-//
-//    _player.pauseWhenAppDidEnterBackground = NO;
-//
-//    [self.view addSubview:_player.view];
-//    [_player.view mas_makeConstraints:^(MASConstraintMaker *make) {
-//        make.left.right.offset(0);
-//        make.centerY.offset(0);
-//        make.height.offset(210);
-//    }];
-//
+    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:0];
+
+    _player.pauseWhenAppDidEnterBackground = NO;
+
+    [self.view addSubview:_player.view];
+    [_player.view mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.offset(0);
+        make.centerY.offset(0);
+        make.height.offset(210);
+    }];
+
     
     
-    MCSDataRequest *request = [MCSDataRequest.alloc initWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] range:NSMakeRange(0, 5 * 1024 * 1024)];
-    _prefetcher = [[MCSResourceManager.shared resourceWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"]] prefetcherWithRequest:request];
-    [_prefetcher prepare];
+//    MCSDataRequest *request = [MCSDataRequest.alloc initWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] range:NSMakeRange(0, 5 * 1024 * 1024)];
+//    _prefetcher = [[MCSResourceManager.shared resourceWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"]] prefetcherWithRequest:request];
+//    [_prefetcher prepare];
     
 //    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:proxyURL];
 //    [request setValue:[NSString stringWithFormat:@"bytes=0-2"] forHTTPHeaderField:@"Range"];
