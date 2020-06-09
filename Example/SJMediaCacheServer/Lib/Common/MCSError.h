@@ -11,13 +11,15 @@
 NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSUInteger, MCSErrorCode) {
-    MCSErrorResponseUnavailable   = 100000,
-    MCSErrorNonsupportContentType = 100001,
-    MCSErrorException             = 100002,
-    MCSErrorRemoved               = 100003,
+    MCSResponseUnavailableError    = 100000,
+    MCSResourceHasBeenRemovedError = 100001,
+    MCSNonsupportContentTypeError  = 100002,
+    MCSExceptionError              = 100003,
 
     // unused
-//    MCSErrorOutOfDiskSpace        = 100004,
+//    MCSOutOfDiskSpaceError        = 100004,
+    
+    MCSHLSFileParseError           = 100005,
 };
 
 FOUNDATION_EXTERN NSString * const MCSErrorDomain;
@@ -33,6 +35,8 @@ FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResponseKey;
 
 + (NSError *)mcs_errorForException:(NSException *)exception;
 
-+ (NSError *)mcs_errorForResourceRemoved:(NSURL *)URL;
++ (NSError *)mcs_errorForRemovedResource:(NSURL *)URL;
+
++ (NSError *)mcs_errorForHLSFileParseError:(NSURL *)URL;
 @end
 NS_ASSUME_NONNULL_END

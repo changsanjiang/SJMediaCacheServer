@@ -75,7 +75,7 @@
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
         [self close];
-        [self.delegate reader:self anErrorOccurred:[NSError mcs_errorForResourceRemoved:_request.URL]];
+        [self.delegate reader:self anErrorOccurred:[NSError mcs_errorForRemovedResource:_request.URL]];
     }
 }
 

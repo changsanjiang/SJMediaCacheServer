@@ -19,7 +19,7 @@ NSString * const MCSErrorUserInfoResponseKey = @"Response";
     userInfo[MCSErrorUserInfoURLKey] = URL;
     userInfo[MCSErrorUserInfoRequestKey] = request;
     userInfo[MCSErrorUserInfoResponseKey] = response;
-    return [NSError errorWithDomain:MCSErrorDomain code:MCSErrorResponseUnavailable userInfo:userInfo];
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSResponseUnavailableError userInfo:userInfo];
 }
 
 + (NSError *)mcs_errorForNonsupportContentType:(NSURL *)URL request:(NSURLRequest *)request response:(NSURLResponse *)response {
@@ -27,16 +27,22 @@ NSString * const MCSErrorUserInfoResponseKey = @"Response";
     userInfo[MCSErrorUserInfoURLKey] = URL;
     userInfo[MCSErrorUserInfoRequestKey] = request;
     userInfo[MCSErrorUserInfoResponseKey] = response;
-    return [NSError errorWithDomain:MCSErrorDomain code:MCSErrorNonsupportContentType userInfo:userInfo];
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSNonsupportContentTypeError userInfo:userInfo];
 }
 
 + (NSError *)mcs_errorForException:(NSException *)exception {
-    return [NSError errorWithDomain:MCSErrorDomain code:MCSErrorException userInfo:exception.userInfo];
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSExceptionError userInfo:exception.userInfo];
 }
 
-+ (NSError *)mcs_errorForResourceRemoved:(NSURL *)URL {
++ (NSError *)mcs_errorForRemovedResource:(NSURL *)URL {
     NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
     userInfo[MCSErrorUserInfoURLKey] = URL;
-    return [NSError errorWithDomain:MCSErrorDomain code:MCSErrorRemoved userInfo:userInfo];
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSResourceHasBeenRemovedError userInfo:userInfo];
+}
+
++ (NSError *)mcs_errorForHLSFileParseError:(NSURL *)URL {
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+    userInfo[MCSErrorUserInfoURLKey] = URL;
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSHLSFileParseError userInfo:userInfo];
 }
 @end

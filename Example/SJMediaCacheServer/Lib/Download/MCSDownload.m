@@ -77,16 +77,7 @@
 - (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)requestParam delegate:(id<MCSDownloadTaskDelegate>)delegate {
     [self lock];
     @try {
-        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:requestParam.URL cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:_timeoutInterval];
-        __auto_type availableHeaderKeys = self.availableHeaderKeys;
-        [requestParam.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-            if ( [availableHeaderKeys containsObject:key] ) {
-                [request setValue:obj forHTTPHeaderField:key];
-            }
-        }];
-        
-        if ( _requestHandler != nil )
-            request = _requestHandler(request);
+        NSURLRequest *request = [self _requestWithParam:requestParam];
         
         if ( request == nil )
             return nil;
@@ -94,6 +85,25 @@
         NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
         _delegateDictionary[@(task.taskIdentifier)] = delegate;
         task.priority = 1.0;
+        [task resume];
+        return task;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)requestParam completionHandler:(void (^)(NSData * _Nullable, NSURLResponse * _Nullable, NSError * _Nullable))completionHandler {
+    [self lock];
+    @try {
+        NSURLRequest *request = [self _requestWithParam:requestParam];
+        if ( request == nil )
+            return nil;
+        
+        NSURLSessionDataTask *task = [_session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+            if ( completionHandler != nil ) completionHandler(data, response, error);
+        }];
         [task resume];
         return task;
     } @catch (__unused NSException *exception) {
@@ -215,11 +225,31 @@
     [_lock unlock];
 }
 
+#pragma mark -
+
+- (NSURLRequest *)_requestWithParam:(NSURLRequest *)param {
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:param.URL cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:_timeoutInterval];
+    __auto_type availableHeaderKeys = self.availableHeaderKeys;
+    [param.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+        if ( [availableHeaderKeys containsObject:key] ) {
+            [request setValue:obj forHTTPHeaderField:key];
+        }
+    }];
+    
+    if ( _requestHandler != nil )
+        request = _requestHandler(request);
+    
+    return request;
+}
+
 #pragma mark - Background Task
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification {
     [self lock];
     @try {
+        
+#warning next ... 考虑第二种下载方法的情况
+        
         if ( _delegateDictionary.count > 0 )
             [self beginBackgroundTask];
     } @catch (__unused NSException *exception) {
@@ -237,7 +267,7 @@
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self lock];
         @try {
-            if ( _delegateDictionary.count == 0 )
+            if ( self->_delegateDictionary.count == 0 )
                 [self endBackgroundTask];
         } @catch (__unused NSException *exception) {
             

@@ -32,7 +32,7 @@
 		779645C0248E7809003C8248 /* MCSResourcePrefetcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645BF248E7809003C8248 /* MCSResourcePrefetcher.m */; };
 		779645CB248E93B3003C8248 /* MCSLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645CA248E93B3003C8248 /* MCSLogger.m */; };
 		779645D5248F42E8003C8248 /* test.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = 779645D4248F42E8003C8248 /* test.m3u8 */; };
-		779645D9248F5083003C8248 /* MCSHLSM3u8FileParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645D8248F5083003C8248 /* MCSHLSM3u8FileParser.m */; };
+		779645D9248F5083003C8248 /* MCSHLSM3u8Resource.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645D8248F5083003C8248 /* MCSHLSM3u8Resource.m */; };
 		779645DC248F532B003C8248 /* NSURLRequest+MCS.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645DB248F532B003C8248 /* NSURLRequest+MCS.m */; };
 		77A4BBEC2488901A0007836D /* MCSResourceResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 77A4BBEB2488901A0007836D /* MCSResourceResponse.m */; };
 		77CC43E92487487F006C5B45 /* MCSDownload.m in Sources */ = {isa = PBXBuildFile; fileRef = 77CC43E72487487F006C5B45 /* MCSDownload.m */; };
@@ -99,8 +99,8 @@
 		779645C9248E93B3003C8248 /* MCSLogger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSLogger.h; sourceTree = "<group>"; };
 		779645CA248E93B3003C8248 /* MCSLogger.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSLogger.m; sourceTree = "<group>"; };
 		779645D4248F42E8003C8248 /* test.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test.m3u8; sourceTree = "<group>"; };
-		779645D7248F5083003C8248 /* MCSHLSM3u8FileParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSM3u8FileParser.h; sourceTree = "<group>"; };
-		779645D8248F5083003C8248 /* MCSHLSM3u8FileParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSM3u8FileParser.m; sourceTree = "<group>"; };
+		779645D7248F5083003C8248 /* MCSHLSM3u8Resource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSM3u8Resource.h; sourceTree = "<group>"; };
+		779645D8248F5083003C8248 /* MCSHLSM3u8Resource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSM3u8Resource.m; sourceTree = "<group>"; };
 		779645DA248F532B003C8248 /* NSURLRequest+MCS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSURLRequest+MCS.h"; sourceTree = "<group>"; };
 		779645DB248F532B003C8248 /* NSURLRequest+MCS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSURLRequest+MCS.m"; sourceTree = "<group>"; };
 		77A4BBEA2488901A0007836D /* MCSResourceResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceResponse.h; sourceTree = "<group>"; };
@@ -261,17 +261,17 @@
 			children = (
 				770194E0248228A900057D05 /* SJMediaCacheServer.h */,
 				770194E1248228A900057D05 /* SJMediaCacheServer.m */,
-				779645DD248F60B8003C8248 /* VOD */,
-				779645D6248F504A003C8248 /* HLS */,
-				77CC43FB248774ED006C5B45 /* Resource */,
 				77CC43EA2487513F006C5B45 /* Common */,
 				77CC43E424874562006C5B45 /* Download */,
-				770194E3248228B000057D05 /* LocalProxyServer */,
+				770194E3248228B000057D05 /* ProxyServer */,
+				77CC43FB248774ED006C5B45 /* Resource */,
+				779645D6248F504A003C8248 /* HLS */,
+				779645DD248F60B8003C8248 /* VOD */,
 			);
 			path = Lib;
 			sourceTree = "<group>";
 		};
-		770194E3248228B000057D05 /* LocalProxyServer */ = {
+		770194E3248228B000057D05 /* ProxyServer */ = {
 			isa = PBXGroup;
 			children = (
 				7729D83C2486201300462899 /* MCSSessionTask.h */,
@@ -279,7 +279,7 @@
 				770194E4248228BD00057D05 /* MCSProxyServer.h */,
 				770194E5248228BD00057D05 /* MCSProxyServer.m */,
 			);
-			path = LocalProxyServer;
+			path = ProxyServer;
 			sourceTree = "<group>";
 		};
 		770194F5248253C000057D05 /* Test */ = {
@@ -294,8 +294,8 @@
 		779645D6248F504A003C8248 /* HLS */ = {
 			isa = PBXGroup;
 			children = (
-				779645D7248F5083003C8248 /* MCSHLSM3u8FileParser.h */,
-				779645D8248F5083003C8248 /* MCSHLSM3u8FileParser.m */,
+				779645D7248F5083003C8248 /* MCSHLSM3u8Resource.h */,
+				779645D8248F5083003C8248 /* MCSHLSM3u8Resource.m */,
 			);
 			path = HLS;
 			sourceTree = "<group>";
@@ -514,7 +514,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7729D84A248657DE00462899 /* MCSURLConvertor.m in Sources */,
-				779645D9248F5083003C8248 /* MCSHLSM3u8FileParser.m in Sources */,
+				779645D9248F5083003C8248 /* MCSHLSM3u8Resource.m in Sources */,
 				77CC43E92487487F006C5B45 /* MCSDownload.m in Sources */,
 				77F619B1248DE807009D3DD7 /* MCSError.m in Sources */,
 				77CC4401248778CC006C5B45 /* MCSResourcePartialContent.m in Sources */,

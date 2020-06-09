@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)request delegate:(id<MCSDownloadTaskDelegate>)delegate;
 
+- (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)request completionHandler:(void (^)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler;
+
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
 @end
