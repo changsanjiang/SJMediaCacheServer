@@ -32,7 +32,7 @@
 @property (nonatomic) NSUInteger offset;
 
 @property (nonatomic, weak, nullable) MCSResource *resource;
-@property (nonatomic, strong) MCSDataRequest *request;
+@property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic, copy, nullable) NSArray<id<MCSResourceDataReader>> *readers;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 
@@ -41,7 +41,7 @@
 
 @implementation MCSResourceReader
 
-- (instancetype)initWithResource:(__weak MCSResource *)resource request:(MCSDataRequest *)request {
+- (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
         _readWriteContents = NSMutableArray.array;
@@ -60,7 +60,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.range)];
+    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range)];
 }
 
 - (void)dealloc {
@@ -85,12 +85,12 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range));
+        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
         
         _isCalledPrepare = YES;
         
         if ( _resource.totalLength == 0 || _resource.contentType.length == 0 ) {
-            _tmpReader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:NSMakeRange(0, 2)];
+            _tmpReader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:NSMakeRange(0, 2)];
             _tmpReader.delegate = self;
             
             MCSLog(@"%@: <%p>.createTmpReader: <%p>;\n", NSStringFromClass(self.class), self, _tmpReader);
@@ -139,7 +139,7 @@
 - (NSUInteger)offset {
     [self lock];
     @try {
-        return _offset + _request.range.location;
+        return _offset + _request.mcs_range.location;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -204,7 +204,7 @@
         [content readWrite_release];
     }
     
-    MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range));
+    MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
 }
 
 #pragma mark -
@@ -220,7 +220,7 @@
         return obj1.offset < obj2.offset ? NSOrderedAscending : NSOrderedDescending;
     }];
     
-    NSRange current = _request.range;
+    NSRange current = _request.mcs_range;
     // bytes=-500
     if      ( current.location == NSNotFound && current.length != NSNotFound )
         current.location = totalLength - current.length;
@@ -243,7 +243,7 @@
             // undownloaded part
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
-                MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:leftRange];
+                MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:leftRange];
                 reader.delegate = self;
                 [readers addObject:reader];
             }
@@ -261,7 +261,7 @@
             [_readWriteContents addObject:content];
             
             // next part
-            current = NSMakeRange(NSMaxRange(intersection), NSMaxRange(_request.range) - NSMaxRange(intersection));
+            current = NSMakeRange(NSMaxRange(intersection), NSMaxRange(_request.mcs_range) - NSMaxRange(intersection));
         }
         
         if ( current.length == 0 || available.location > NSMaxRange(current) ) break;
@@ -269,14 +269,14 @@
     
     if ( current.length != 0 ) {
         // undownloaded part
-        MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.headers range:current];
+        MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:current];
         reader.delegate = self;
         [readers addObject:reader];
     }
     
     _readers = readers.copy;
      
-    MCSLog(@"%@: <%p>.createSubreaders { range: %@, count: %lu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range), _readers.count);
+    MCSLog(@"%@: <%p>.createSubreaders { range: %@, count: %lu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range), _readers.count);
 
     [self _prepareNextReader];
 }

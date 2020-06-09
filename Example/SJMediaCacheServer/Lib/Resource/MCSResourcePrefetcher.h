@@ -12,7 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResourcePrefetcher : NSObject<MCSResourcePrefetcher>
-- (instancetype)initWithResource:(__weak MCSResource *)resource request:(MCSDataRequest *)request;
+- (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request;
 
 @property (nonatomic, weak, nullable) id<MCSResourcePrefetcherDelegate> delegate;
 

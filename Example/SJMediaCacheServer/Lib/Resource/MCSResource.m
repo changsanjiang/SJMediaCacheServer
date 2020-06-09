@@ -54,11 +54,11 @@
     return self;
 }
 
-- (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request {
+- (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request {
     return [MCSResourceReader.alloc initWithResource:self request:request];
 }
 
-- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(MCSDataRequest *)request {
+- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
     return [MCSResourcePrefetcher.alloc initWithResource:self request:request];
 }
 

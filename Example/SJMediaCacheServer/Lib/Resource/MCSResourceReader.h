@@ -8,14 +8,13 @@
 
 #import "MCSDefines.h"
 #import "MCSResourceDefines.h"
-#import "MCSDataRequest.h"
 #import "MCSResourceResponse.h"
 @class MCSResource;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResourceReader : NSObject<MCSResourceReader>
-- (instancetype)initWithResource:(__weak MCSResource *)resource request:(MCSDataRequest *)request;
+- (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request;
 
 @property (nonatomic, weak, nullable) id<MCSResourceReaderDelegate> delegate;
 

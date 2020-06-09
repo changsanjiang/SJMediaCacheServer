@@ -35,9 +35,9 @@
     // 播放
     
     [self _startLocalProxyServer];
-    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://rec.app.lanwuzhe.com/recordings/z1.lanwuzhe.24086472/1589864400_1589950800.m3u8"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
-
-//    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
+//    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://rec.app.lanwuzhe.com/recordings/z1.lanwuzhe.24086472/1589864400_1589950800.m3u8"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
+ 
+    NSURL *proxyURL = [MCSURLConvertor.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
  
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:0];
 
@@ -52,7 +52,7 @@
 
     
     
-//    MCSDataRequest *request = [MCSDataRequest.alloc initWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] range:NSMakeRange(0, 5 * 1024 * 1024)];
+//    NSURLRequest *request = [NSURLRequest.alloc initWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] range:NSMakeRange(0, 5 * 1024 * 1024)];
 //    _prefetcher = [[MCSResourceManager.shared resourceWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"]] prefetcherWithRequest:request];
 //    [_prefetcher prepare];
     
@@ -66,7 +66,7 @@
 
 #pragma mark - MCSLocalProxyServerDelegate
 
-- (id<MCSDataResponse>)server:(MCSLocalProxyServer *)server responseWithRequest:(MCSDataRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate {
+- (id<MCSDataResponse>)server:(MCSLocalProxyServer *)server responseWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate {
     return [MCSDataResponse.alloc initWithRequest:request delegate:delegate];
 }
 

@@ -7,7 +7,7 @@
 //
 
 #import "MCSLocalProxyServer.h"
-#import "MCSDataRequest.h"
+#import "NSURLRequest+MCS.h"
 #import "MCSURLConvertor.h"
 #import "MCSLogger.h"
 #import <objc/message.h>
@@ -28,10 +28,14 @@
  
 @interface MCSHTTPResponse : NSObject<HTTPResponse, MCSDataResponseDelegate>
 - (instancetype)initWithConnection:(MCSHTTPConnection *)connection;
-@property (nonatomic, strong) MCSDataRequest * request;
+@property (nonatomic, strong) NSURLRequest * request;
 @property (nonatomic, strong) id<MCSDataResponse> response;
 @property (nonatomic, weak) MCSHTTPConnection *connection;
 - (void)prepareForReadingData;
+@end
+
+@interface NSURLRequest (MCSHTTPConnectionExtended)
++ (NSMutableURLRequest *)mcs_requestWithMessage:(HTTPMessage *)message;
 @end
 
 #pragma mark -
@@ -41,7 +45,7 @@
 @property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
 @property (nonatomic) BOOL wantsRunning;
 
-- (id<MCSDataResponse>)responseWithRequest:(MCSDataRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
+- (id<MCSDataResponse>)responseWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
 
 @end
 
@@ -84,7 +88,7 @@
     [self _stop];
 }
 
-- (id<MCSDataResponse>)responseWithRequest:(MCSDataRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate {
+- (id<MCSDataResponse>)responseWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate {
     return [self.delegate server:self responseWithRequest:request delegate:delegate];
 }
 
@@ -161,7 +165,7 @@
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
     MCSHTTPResponse *response = [MCSHTTPResponse.alloc initWithConnection:self];
     
-    MCSLog(@"%@: <%p>.response { URI: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, method, path, NSStringFromRange(response.request.range));
+    MCSLog(@"%@: <%p>.response { URI: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, method, path, NSStringFromRange(response.request.mcs_range));
     
     [response prepareForReadingData];
     return response;
@@ -191,9 +195,10 @@
 }
 @end
 
-@implementation MCSDataRequest (MCSLocalProxyServerExtended)
-- (instancetype)initWithHTTPRequest:(HTTPMessage *)request {
-    return [self initWithURL:[MCSURLConvertor.shared URLWithProxyURL:[request url]] headers:[request allHeaderFields]];
+@implementation NSURLRequest (MCSHTTPConnectionExtended)
++ (NSMutableURLRequest *)mcs_requestWithMessage:(HTTPMessage *)message {
+    NSURL *URL = [MCSURLConvertor.shared URLWithProxyURL:message.url];
+    return [self mcs_requestWithURL:URL headers:message.allHeaderFields];
 }
 @end
 
@@ -204,7 +209,7 @@
         _connection = connection;
         
         MCSLocalProxyServer *server = [connection mcs_server];
-        _request = [MCSDataRequest.alloc initWithHTTPRequest:[connection mcs_request]];
+        _request = [NSURLRequest mcs_requestWithMessage:connection.mcs_request];
         _response = [server responseWithRequest:_request delegate:self];
     }
     return self;

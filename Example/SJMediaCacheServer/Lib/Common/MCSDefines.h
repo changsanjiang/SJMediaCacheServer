@@ -9,7 +9,7 @@
 #ifndef MCSDefines_h
 #define MCSDefines_h
 #import <Foundation/Foundation.h>
-#import "MCSDataRequest.h"
+#import "NSURLRequest+MCS.h"
 @protocol MCSDataResponseDelegate, MCSResourcePrefetcherDelegate, MCSResourceReaderDelegate;
 @protocol MCSResource, MCSResourceResponse, MCSResourceReader, MCSResourcePrefetcher;
 
@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol MCSDataResponse <NSObject>
-- (instancetype)initWithRequest:(MCSDataRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
+- (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
@@ -45,8 +45,8 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MCSResource <NSObject>
 + (instancetype)resourceWithURL:(NSURL *)URL;
  
-- (id<MCSResourceReader>)readerWithRequest:(MCSDataRequest *)request;
-- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(MCSDataRequest *)request;
+- (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
+- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;
 @end
 
 #pragma mark -

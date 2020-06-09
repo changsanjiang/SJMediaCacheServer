@@ -11,13 +11,14 @@
 #import "MCSResourceReader.h"
 #import "MCSResource+MCSPrivate.h"
 #import "MCSLogger.h"
+#import "NSURLRequest+MCS.h"
 
 @interface MCSResourcePrefetcher ()<NSLocking, MCSResourceReaderDelegate> {
     NSRecursiveLock *_lock;
 }
 
 @property (nonatomic, weak) MCSResource *resource;
-@property (nonatomic, strong) MCSDataRequest *request;
+@property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isFinished;
@@ -27,7 +28,7 @@
 @end
 
 @implementation MCSResourcePrefetcher
-- (instancetype)initWithResource:(__weak MCSResource *)resource request:(MCSDataRequest *)request {
+- (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
         _resource = resource;
@@ -38,7 +39,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.range)];
+    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range)];
 }
 
 - (void)dealloc {
@@ -51,7 +52,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range));
+        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
 
         _reader = [_resource readerWithRequest:_request];
         _reader.delegate = self;
@@ -73,7 +74,7 @@
         _isClosed = YES;
         [_reader close];
         
-        MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range));
+        MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -121,7 +122,7 @@
                 
                 _offset += data.length;
                 
-                if ( _offset >= _request.range.length || _offset >= _resource.totalLength ) {
+                if ( _offset >= _request.mcs_range.length || _offset >= _resource.totalLength ) {
                     [self close];
                     [_delegate prefetcherPrefetchDidFinish:self];
                     break;

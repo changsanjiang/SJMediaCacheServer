@@ -21,6 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol MCSLocalProxyServerDelegate <NSObject>
-- (id<MCSDataResponse>)server:(MCSLocalProxyServer *)server responseWithRequest:(MCSDataRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
+- (id<MCSDataResponse>)server:(MCSLocalProxyServer *)server responseWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
 @end
 NS_ASSUME_NONNULL_END

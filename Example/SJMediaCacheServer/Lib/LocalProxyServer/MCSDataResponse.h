@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSDataResponse : NSObject<MCSDataResponse>
-- (instancetype)initWithRequest:(MCSDataRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
+- (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSDataResponseDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
