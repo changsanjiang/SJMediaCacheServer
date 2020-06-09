@@ -10,6 +10,7 @@
 #import "MCSResource.h"
 #import "MCSResourceReader.h"
 #import "MCSResource+MCSPrivate.h"
+#import "MCSLogger.h"
 
 @interface MCSResourcePrefetcher ()<NSLocking, MCSResourceReaderDelegate> {
     NSRecursiveLock *_lock;
@@ -36,11 +37,21 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.range)];
+}
+
+- (void)dealloc {
+    MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
+}
+
 - (void)prepare {
     [self lock];
     @try {
         if ( _isClosed || _isCalledPrepare )
             return;
+        
+        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range));
 
         _reader = [_resource readerWithRequest:_request];
         _reader.delegate = self;
@@ -61,6 +72,8 @@
         
         _isClosed = YES;
         [_reader close];
+        
+        MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.range));
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -93,6 +106,8 @@
     } @finally {
         [self unlock];
     }
+    
+    [self readerHasAvailableData:reader];
 }
 
 - (void)readerHasAvailableData:(id<MCSResourceReader>)reader {
@@ -107,6 +122,7 @@
                 _offset += data.length;
                 
                 if ( _offset >= _request.range.length || _offset >= _resource.totalLength ) {
+                    [self close];
                     [_delegate prefetcherPrefetchDidFinish:self];
                     break;
                 }

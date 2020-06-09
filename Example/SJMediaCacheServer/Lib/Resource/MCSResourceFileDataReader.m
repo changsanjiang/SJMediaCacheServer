@@ -36,7 +36,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%s:<%p> { range: %@\n };", NSStringFromClass(self.class).UTF8String, self, NSStringFromRange(_range)];
+    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_range)];
 }
 
 - (void)prepare {

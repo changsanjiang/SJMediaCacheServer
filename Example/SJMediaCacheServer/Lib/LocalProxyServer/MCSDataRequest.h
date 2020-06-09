@@ -11,6 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSDataRequest : NSObject
+- (instancetype)initWithURL:(NSURL *)URL range:(NSRange)range;
 - (instancetype)initWithURL:(NSURL *)URL headers:(nullable NSDictionary *)headers;
 @property (nonatomic, copy, readonly, nullable) NSURL *URL;
 @property (nonatomic, copy, readonly, nullable) NSDictionary *headers;

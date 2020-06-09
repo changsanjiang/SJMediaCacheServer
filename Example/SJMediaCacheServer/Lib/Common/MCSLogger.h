@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSLogger : NSObject
 + (instancetype)shared;
 
+/// If yes, the log will be output on the console. The default value is NO.
 @property (nonatomic, getter=isEnabledConsoleLog) BOOL enabledConsoleLog;
 
 - (void)addLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);

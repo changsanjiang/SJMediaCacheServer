@@ -20,6 +20,12 @@
     return self;
 }
 
+- (instancetype)initWithURL:(NSURL *)URL range:(NSRange)range {
+    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:URL];
+    [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)range.location, (unsigned long)NSMaxRange(range) - 1] forHTTPHeaderField:@"Range"];
+    return [self initWithURL:URL headers:request.allHTTPHeaderFields];
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"MCSDataRequest:<%p> { URL: %@, headers: %@\n};", self, _URL, _headers];
 }

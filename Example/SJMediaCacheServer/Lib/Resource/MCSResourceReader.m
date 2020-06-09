@@ -59,11 +59,15 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.range)];
+}
+
 - (void)dealloc {
     [NSNotificationCenter.defaultCenter removeObserver:self];
     [_resource readWrite_release];
     [MCSResourceManager.shared reader:self didEndReadResource:_resource];
-    
+    if ( !_isClosed ) [self _close];
     MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
