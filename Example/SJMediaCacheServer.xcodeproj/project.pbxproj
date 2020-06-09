@@ -29,6 +29,7 @@
 		7729D83E2486201300462899 /* MCSSessionTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D83D2486201300462899 /* MCSSessionTask.m */; };
 		7729D84A248657DE00462899 /* MCSURLRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D849248657DE00462899 /* MCSURLRecognizer.m */; };
 		774AB9312487B44C0049CAC3 /* MCSResourceFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */; };
+		775093F8248FC272006B9643 /* MCSHLSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 775093F7248FC272006B9643 /* MCSHLSParser.m */; };
 		776A20FB248FAA6F00A0EFDD /* MCSResourceUsageLog.m in Sources */ = {isa = PBXBuildFile; fileRef = 776A20FA248FAA6F00A0EFDD /* MCSResourceUsageLog.m */; };
 		777BA2DF248F7D4800333C3B /* MCSHLSReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 777BA2DE248F7D4800333C3B /* MCSHLSReader.m */; };
 		777BA2E5248F90D700333C3B /* MCSResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 777BA2E4248F90D700333C3B /* MCSResource.m */; };
@@ -97,6 +98,8 @@
 		7729D849248657DE00462899 /* MCSURLRecognizer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSURLRecognizer.m; sourceTree = "<group>"; };
 		774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSResourceFileManager.m; sourceTree = "<group>"; };
 		774AB9302487B44C0049CAC3 /* MCSResourceFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSResourceFileManager.h; sourceTree = "<group>"; };
+		775093F6248FC272006B9643 /* MCSHLSParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSParser.h; sourceTree = "<group>"; };
+		775093F7248FC272006B9643 /* MCSHLSParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSParser.m; sourceTree = "<group>"; };
 		776A20F9248FAA6F00A0EFDD /* MCSResourceUsageLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceUsageLog.h; sourceTree = "<group>"; };
 		776A20FA248FAA6F00A0EFDD /* MCSResourceUsageLog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResourceUsageLog.m; sourceTree = "<group>"; };
 		777BA2DD248F7D4800333C3B /* MCSHLSReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSReader.h; sourceTree = "<group>"; };
@@ -303,6 +306,8 @@
 		779645D6248F504A003C8248 /* HLS */ = {
 			isa = PBXGroup;
 			children = (
+				775093F6248FC272006B9643 /* MCSHLSParser.h */,
+				775093F7248FC272006B9643 /* MCSHLSParser.m */,
 				777BA2DD248F7D4800333C3B /* MCSHLSReader.h */,
 				777BA2DE248F7D4800333C3B /* MCSHLSReader.m */,
 				779645D7248F5083003C8248 /* MCSHLSResource.h */,
@@ -539,6 +544,7 @@
 				77CC4401248778CC006C5B45 /* MCSResourcePartialContent.m in Sources */,
 				77CC43FE248774F6006C5B45 /* MCSVODReader.m in Sources */,
 				779645CB248E93B3003C8248 /* MCSLogger.m in Sources */,
+				775093F8248FC272006B9643 /* MCSHLSParser.m in Sources */,
 				770194E6248228BD00057D05 /* MCSProxyServer.m in Sources */,
 				6003F59E195388D20070C39A /* SJAppDelegate.m in Sources */,
 				779645DC248F532B003C8248 /* NSURLRequest+MCS.m in Sources */,

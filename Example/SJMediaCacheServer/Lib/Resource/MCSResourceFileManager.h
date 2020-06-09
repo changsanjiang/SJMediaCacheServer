@@ -15,12 +15,19 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)rootDirectoryPath;
 + (NSString *)databasePath;
 + (NSString *)getResourcePathWithName:(NSString *)name;
-+ (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)resourceName;
++ (NSString *)getFilePathWithName:(NSString *)name inResource:(NSString *)resourceName;
 
 // VOD
+//      返回文件名
 + (nullable NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;
+
 // HLS
+//      返回文件名
 + (nullable NSString *)createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length;
+
+// HLS
+//      返回文件名
++ (nullable NSString *)createHLSIndexFileInResource:(NSString *)resourceName;
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end

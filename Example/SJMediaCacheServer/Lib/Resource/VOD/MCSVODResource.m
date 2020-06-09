@@ -59,7 +59,7 @@
 #pragma mark -
 
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-    return [MCSResourceFileManager getContentFilePathWithName:content.name inResource:self.name];
+    return [MCSResourceFileManager getFilePathWithName:content.name inResource:self.name];
 }
 
 - (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {

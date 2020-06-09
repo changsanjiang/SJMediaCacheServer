@@ -9,8 +9,8 @@
 #import "MCSResourceFileManager.h"
 #import <sys/xattr.h>
 
-static NSString *VODPrefix = @"vod_";
-static NSString *HLSPrefix = @"hls_";
+static NSString *VODPrefix = @"vod";
+static NSString *HLSPrefix = @"hls";
 
 @implementation MCSResourceFileManager
 + (NSString *)rootDirectoryPath {
@@ -37,7 +37,7 @@ static NSString *HLSPrefix = @"hls_";
     return [[self rootDirectoryPath] stringByAppendingPathComponent:@"cache.db"];
 }
 
-+ (NSString *)getContentFilePathWithName:(NSString *)name inResource:(NSString *)resourceName {
++ (NSString *)getFilePathWithName:(NSString *)name inResource:(NSString *)resourceName {
     return [[self getResourcePathWithName:resourceName] stringByAppendingPathComponent:name];
 }
 
@@ -45,15 +45,13 @@ static NSString *HLSPrefix = @"hls_";
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset {
     @autoreleasepool {
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:resourcePath] ) {
-            [NSFileManager.defaultManager createDirectoryAtPath:resourcePath withIntermediateDirectories:YES attributes:nil error:NULL];
-        }
+        [self checkoutDirectoryWithPath:resourcePath];
         
         NSUInteger sequence = 0;
         while (true) {
             // VOD前缀_偏移量_序号
-            NSString *filename = [NSString stringWithFormat:@"%@%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
-            NSString *filepath = [self getContentFilePathWithName:filename inResource:resourceName];
+            NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
+            NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
                 return filename;
@@ -67,20 +65,32 @@ static NSString *HLSPrefix = @"hls_";
 + (nullable NSString *)createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length {
     @autoreleasepool {
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:resourcePath] ) {
-            [NSFileManager.defaultManager createDirectoryAtPath:resourcePath withIntermediateDirectories:YES attributes:nil error:NULL];
-        }
+        [self checkoutDirectoryWithPath:resourcePath];
         
         NSUInteger sequence = 0;
         while (true) {
             // HLS前缀_ts文件名_ts长度_序号
             NSString *filename = [NSString stringWithFormat:@"%@_%@_%lu_%lu", HLSPrefix, tsFilename, (unsigned long)length, (unsigned long)sequence++];
-            NSString *filepath = [self getContentFilePathWithName:filename inResource:resourceName];
+            NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
                 return filename;
             }
         }
+    }
+    return nil;
+}
+
+// format: HLS前缀_index.m3u8
+// HLS
++ (nullable NSString *)createHLSIndexFileInResource:(NSString *)resourceName {
+    NSString *resourcePath = [self getResourcePathWithName:resourceName];
+    [self checkoutDirectoryWithPath:resourcePath];
+    NSString *filename = [NSString stringWithFormat:@"%@_index.m3u8", HLSPrefix];
+    NSString *filepath = [resourcePath stringByAppendingPathComponent:filename];
+    if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+        [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+        return filename;
     }
     return nil;
 }
@@ -114,6 +124,12 @@ static NSString *HLSPrefix = @"hls_";
 }
 
 #pragma mark -
++ (void)checkoutDirectoryWithPath:(NSString *)path {
+    if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
+        [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
+    }
+}
+
 // format: VOD前缀_偏移量_序号
 // VOD
 + (NSUInteger)offsetOfContent:(NSString *)name {
