@@ -261,7 +261,7 @@
 			children = (
 				770194E0248228A900057D05 /* SJMediaCacheServer.h */,
 				770194E1248228A900057D05 /* SJMediaCacheServer.m */,
-				779645D6248F504A003C8248 /* m3u8 */,
+				779645D6248F504A003C8248 /* HLS */,
 				77CC43FB248774ED006C5B45 /* Resource */,
 				77CC43EA2487513F006C5B45 /* Common */,
 				77CC43E424874562006C5B45 /* Download */,
@@ -290,13 +290,13 @@
 			path = Test;
 			sourceTree = "<group>";
 		};
-		779645D6248F504A003C8248 /* m3u8 */ = {
+		779645D6248F504A003C8248 /* HLS */ = {
 			isa = PBXGroup;
 			children = (
 				779645D7248F5083003C8248 /* MCSM3U8FileParser.h */,
 				779645D8248F5083003C8248 /* MCSM3U8FileParser.m */,
 			);
-			path = m3u8;
+			path = HLS;
 			sourceTree = "<group>";
 		};
 		77CC43E424874562006C5B45 /* Download */ = {
