@@ -41,7 +41,7 @@
 
 @implementation MCSVODReader
 
-- (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request {
+- (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
         _readWriteContents = NSMutableArray.array;

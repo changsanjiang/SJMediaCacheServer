@@ -8,7 +8,7 @@
 
 #import "MCSDefines.h"
 #import "MCSURLConvertor.h"
-@class MCSResource, MCSVODReader, MCSVODResourcePartialContent;
+@class MCSVODResource, MCSVODReader, MCSVODResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -225,16 +225,16 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     if ( resource != nil ) [_sqlite3 save:resource error:NULL];
 }
 
-- (void)reader:(MCSVODReader *)reader willReadResource:(MCSResource *)resource {
+- (void)reader:(MCSVODReader *)reader willReadResource:(MCSVODResource *)resource {
     // noting ...
 }
 
-- (void)reader:(MCSVODReader *)reader didEndReadResource:(MCSResource *)resource {
+- (void)reader:(MCSVODReader *)reader didEndReadResource:(MCSVODResource *)resource {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_removeResourcesForLimit:) object:@(MCSLimitCount)];
     [self performSelector:@selector(_removeResourcesForLimit:) withObject:@(MCSLimitCount) afterDelay:0.5];
 }
 
-- (void)didWriteDataForResource:(MCSResource *)resource {
+- (void)didWriteDataForResource:(MCSVODResource *)resource {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_removeResourcesForLimit:) object:@(MCSLimitFreeDiskSpace)];
     [self performSelector:@selector(_removeResourcesForLimit:) withObject:@(MCSLimitFreeDiskSpace) afterDelay:0.5];
 }
@@ -243,7 +243,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     [self lock];
     @try {
         [_resources removeAllObjects];
-        NSArray<MCSResource *> *resources = [_sqlite3 objectsForClass:MCSVODResource.class conditions:nil orderBy:nil error:NULL];
+        NSArray<MCSVODResource *> *resources = [_sqlite3 objectsForClass:MCSVODResource.class conditions:nil orderBy:nil error:NULL];
         [self _removeResources:resources];
     } @catch (__unused NSException *exception) {
         
@@ -337,7 +337,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 //    [self _removeResources:results];
 }
 
-- (void)_removeResources:(NSArray<MCSResource *> *)resources {
+- (void)_removeResources:(NSArray<MCSVODResource *> *)resources {
 //    if ( resources.count == 0 )
 //        return;
 //    

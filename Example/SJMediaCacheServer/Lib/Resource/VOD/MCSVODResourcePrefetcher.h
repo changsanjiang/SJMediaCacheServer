@@ -7,12 +7,12 @@
 //
 
 #import "MCSDefines.h"
-@class MCSResource;
+@class MCSVODResource;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSVODResourcePrefetcher : NSObject<MCSResourcePrefetcher>
-- (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request;
+- (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request;
 
 @property (nonatomic, weak, nullable) id<MCSResourcePrefetcherDelegate> delegate;
 

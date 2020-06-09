@@ -9,6 +9,10 @@
 #import "MCSHLSResource.h"
 #import "MCSResourceManager.h"
 
+@interface MCSHLSResource ()
+
+@end
+
 @implementation MCSHLSResource
 + (instancetype)resourceWithURL:(NSURL *)URL {
     return [MCSResourceManager.shared resourceWithURL:URL];
