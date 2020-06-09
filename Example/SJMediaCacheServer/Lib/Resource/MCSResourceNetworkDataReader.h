@@ -8,7 +8,7 @@
 
 #import "MCSResourceDefines.h"
 #import "MCSResourceResponse.h"
-@class MCSVODResourcePartialContent;
+@class MCSResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -26,8 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol MCSResourceNetworkDataReaderDelegate <MCSResourceDataReaderDelegate>
-- (MCSVODResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader;
-- (NSString *)writePathOfPartialContent:(MCSVODResourcePartialContent *)content;
+- (MCSResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader;
+- (NSString *)writePathOfPartialContent:(MCSResourcePartialContent *)content;
 @end
 
 NS_ASSUME_NONNULL_END

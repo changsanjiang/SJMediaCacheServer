@@ -8,7 +8,7 @@
 
 #import "MCSDefines.h"
 #import "MCSURLRecognizer.h"
-@class MCSVODResource, MCSVODReader, MCSVODResourcePartialContent;
+@class MCSVODResource, MCSVODReader, MCSResourcePartialContent;
 @class MCSResource;
 
 NS_ASSUME_NONNULL_BEGIN

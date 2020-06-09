@@ -10,7 +10,7 @@
 #import "MCSError.h"
 #import "MCSDownload.h"
 #import "MCSResourceResponse.h"
-#import "MCSVODResourcePartialContent.h"
+#import "MCSResourcePartialContent.h"
 #import "MCSLogger.h"
 
 @interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate>
@@ -28,7 +28,7 @@
 @property (nonatomic) BOOL isClosed;
 @property (nonatomic) BOOL isDone;
 
-@property (nonatomic, strong, nullable) MCSVODResourcePartialContent *content;
+@property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
 @property (nonatomic) NSUInteger downloadedLength;
 @property (nonatomic) NSUInteger offset;
 @end

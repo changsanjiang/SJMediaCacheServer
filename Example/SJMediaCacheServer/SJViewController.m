@@ -35,9 +35,9 @@
     // 播放
     
     [self _startLocalProxyServer];
-//    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://rec.app.lanwuzhe.com/recordings/z1.lanwuzhe.24086472/1589864400_1589950800.m3u8"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
+    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://rec.app.lanwuzhe.com/recordings/z1.lanwuzhe.24086472/1589864400_1589950800.m3u8"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
  
-    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
+//    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
  
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:0];
 

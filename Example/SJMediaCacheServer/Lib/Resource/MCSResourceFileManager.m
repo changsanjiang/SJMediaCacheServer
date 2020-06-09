@@ -66,7 +66,7 @@
     return [[name substringFromIndex:[self contentPrefix].length] longLongValue];
 }
 
-+ (nullable NSArray<MCSVODResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName {
++ (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName {
     @autoreleasepool {
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
         NSMutableArray *m = NSMutableArray.array;
@@ -75,7 +75,7 @@
                 NSString *path = [resourcePath stringByAppendingPathComponent:name];
                 NSUInteger offset = [self offsetOfContent:name];
                 NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];
-                __auto_type content = [MCSVODResourcePartialContent.alloc initWithName:name offset:offset length:length];
+                __auto_type content = [MCSResourcePartialContent.alloc initWithName:name offset:offset length:length];
                 [m addObject:content];
             }
         }];

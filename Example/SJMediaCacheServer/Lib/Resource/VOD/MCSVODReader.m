@@ -8,7 +8,7 @@
 
 #import "MCSVODReader.h"
 #import "MCSVODResource+MCSPrivate.h"
-#import "MCSVODResourcePartialContent.h"
+#import "MCSResourcePartialContent.h"
 #import "MCSResourceResponse.h"
 #import "MCSResourceManager.h"
 #import "MCSResourceFileManager.h"
@@ -36,7 +36,7 @@
 @property (nonatomic, copy, nullable) NSArray<id<MCSResourceDataReader>> *readers;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 
-@property (nonatomic, strong) NSMutableArray<MCSVODResourcePartialContent *> *readWriteContents;
+@property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *readWriteContents;
 @end
 
 @implementation MCSVODReader
@@ -200,7 +200,7 @@
         [reader close];
     }
     
-    for ( MCSVODResourcePartialContent *content in _readWriteContents ) {
+    for ( MCSResourcePartialContent *content in _readWriteContents ) {
         [content readWrite_release];
     }
     
@@ -214,7 +214,7 @@
     NSAssert(totalLength != 0, @"`_resource.totalLength`不能为`0`!");
      
     // `length`经常变动, 暂时这里排序吧
-    __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(MCSVODResourcePartialContent *obj1, MCSVODResourcePartialContent *obj2) {
+    __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
         if ( obj1.offset == obj2.offset )
             return obj1.length >= obj2.length ? NSOrderedAscending : NSOrderedDescending;
         return obj1.offset < obj2.offset ? NSOrderedAscending : NSOrderedDescending;
@@ -236,7 +236,7 @@
     _response = [MCSResourceResponse.alloc initWithServer:_resource.server contentType:_resource.contentType totalLength:totalLength contentRange:current];
 
     NSMutableArray<id<MCSResourceDataReader>> *readers = NSMutableArray.array;
-    for ( MCSVODResourcePartialContent *content in contents ) {
+    for ( MCSResourcePartialContent *content in contents ) {
         NSRange available = NSMakeRange(content.offset, content.length);
         NSRange intersection = NSIntersectionRange(current, available);
         if ( intersection.length != 0 ) {
@@ -346,10 +346,10 @@
     [_delegate reader:self anErrorOccurred:error];
 }
 
-- (MCSVODResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader {
+- (MCSResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader {
     [self lock];
     @try {
-        MCSVODResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
+        MCSResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
         [content readWrite_retain];
         [_readWriteContents addObject:content];
         return content;
@@ -360,7 +360,7 @@
     }
 }
 
-- (NSString *)writePathOfPartialContent:(MCSVODResourcePartialContent *)content {
+- (NSString *)writePathOfPartialContent:(MCSResourcePartialContent *)content {
     return [_resource filePathOfContent:content];
 }
 

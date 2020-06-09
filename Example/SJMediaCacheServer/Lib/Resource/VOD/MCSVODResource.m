@@ -11,14 +11,14 @@
 #import "MCSResourceSubclass.h"
 #import "MCSVODResource+MCSPrivate.h"
 #import "MCSVODReader.h"
-#import "MCSVODResourcePartialContent.h"
+#import "MCSResourcePartialContent.h"
 #import "MCSResourceManager.h"
 #import "MCSResourceFileManager.h"
 #import "MCSVODResourcePrefetcher.h"
 #import "MCSUtils.h"
 
-@interface MCSVODResource ()<NSLocking, MCSVODResourcePartialContentDelegate>
-@property (nonatomic, strong) NSMutableArray<MCSVODResourcePartialContent *> *contents;
+@interface MCSVODResource ()<NSLocking, MCSResourcePartialContentDelegate>
+@property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *contents;
 
 @property (nonatomic, copy, nullable) NSString *contentType;
 @property (nonatomic, copy, nullable) NSString *server;
@@ -58,15 +58,15 @@
 
 #pragma mark -
 
-- (NSString *)filePathOfContent:(MCSVODResourcePartialContent *)content {
+- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
     return [MCSResourceFileManager getContentFilePathWithName:content.name inResource:self.name];
 }
 
-- (MCSVODResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
+- (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
         NSString *filename = [MCSResourceFileManager createContentFileInResource:self.name atOffset:offset];
-        MCSVODResourcePartialContent *content = [MCSVODResourcePartialContent.alloc initWithName:filename offset:offset];
+        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename offset:offset];
         content.delegate = self;
         [_contents addObject:content];
         return content;
@@ -133,21 +133,21 @@
     }
 }
 
-- (void)readWriteCountDidChangeForPartialContent:(MCSVODResourcePartialContent *)content {
+- (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
     if ( content.readWriteCount > 0 ) return;
     [self lock];
     @try {
         if ( _contents.count <= 1 ) return;
         
         // 合并文件
-        NSMutableArray<MCSVODResourcePartialContent *> *list = NSMutableArray.alloc.init;
-        for ( MCSVODResourcePartialContent *content in _contents ) {
+        NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
+        for ( MCSResourcePartialContent *content in _contents ) {
             if ( content.readWriteCount == 0 )
                 [list addObject:content];
         }
         
-        NSMutableArray<MCSVODResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
-        [list sortUsingComparator:^NSComparisonResult(MCSVODResourcePartialContent *obj1, MCSVODResourcePartialContent *obj2) {
+        NSMutableArray<MCSResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
+        [list sortUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
             NSRange range1 = NSMakeRange(obj1.offset, obj1.length);
             NSRange range2 = NSMakeRange(obj2.offset, obj2.length);
             
@@ -166,8 +166,8 @@
         if ( deleteContents.count != 0 ) [list removeObjectsInArray:deleteContents];
 
         for ( NSInteger i = 0 ; i < list.count - 1; i += 2 ) {
-            MCSVODResourcePartialContent *write = list[i];
-            MCSVODResourcePartialContent *read  = list[i + 1];
+            MCSResourcePartialContent *write = list[i];
+            MCSResourcePartialContent *read  = list[i + 1];
             NSRange readRange = NSMakeRange(0, 0);
 
             NSUInteger maxA = write.offset + write.length;
@@ -200,7 +200,7 @@
             }
         }
         
-        for ( MCSVODResourcePartialContent *content in deleteContents ) {
+        for ( MCSResourcePartialContent *content in deleteContents ) {
             NSString *path = [self filePathOfContent:content];
             if ( [NSFileManager.defaultManager removeItemAtPath:path error:NULL] ) {
                 [_contents removeObject:content];
@@ -213,7 +213,7 @@
     }
 }
 
-- (void)contentLengthDidChangeForPartialContent:(MCSVODResourcePartialContent *)content {
+- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
     [MCSResourceManager.shared didWriteDataForResource:self];
 }
 @end

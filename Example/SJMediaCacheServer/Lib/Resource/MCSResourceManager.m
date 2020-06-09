@@ -11,7 +11,7 @@
 #import "MCSResourceSubclass.h"
 #import "MCSResourceUsageLog.h"
 
-#import "MCSVODResourcePartialContent.h"
+#import "MCSResourcePartialContent.h"
 #import "MCSVODResource+MCSPrivate.h"
 #import "MCSVODReader.h"
 

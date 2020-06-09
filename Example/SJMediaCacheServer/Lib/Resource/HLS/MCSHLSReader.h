@@ -26,7 +26,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
 @property (nonatomic, readonly) BOOL isClosed;
 - (void)close;
-
 @end
 
 NS_ASSUME_NONNULL_END

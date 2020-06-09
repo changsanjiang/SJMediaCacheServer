@@ -7,11 +7,14 @@
 //
 
 #import "MCSResource.h"
+@class MCSResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
 @interface MCSHLSResource : MCSResource
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
 
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;
+
+@property (nonatomic, strong, readonly, nullable) NSArray<MCSResourcePartialContent *> *contents;
 @end
 NS_ASSUME_NONNULL_END
