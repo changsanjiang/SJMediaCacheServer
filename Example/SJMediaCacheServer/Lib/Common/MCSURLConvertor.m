@@ -34,6 +34,7 @@ MCSMD5(NSString *str) {
 
 - (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL {
     NSURLComponents *components = [NSURLComponents componentsWithURL:serverURL resolvingAgainstBaseURL:NO];
+    components.path = URL.path;
     [components setQuery:[NSString stringWithFormat:@"url=%@", URL]];
     return components.URL;
 }
