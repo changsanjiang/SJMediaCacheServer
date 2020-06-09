@@ -15,6 +15,24 @@
     return [self initWithServer:MCSGetResponseServer(response) contentType:MCSGetResponseContentType(response) totalLength:contentRange.totalLength contentRange:MCSGetResponseNSRange(contentRange)];
 }
 
+- (instancetype)initWithServer:(NSString *)server contentType:(NSString *)contentType totalLength:(NSUInteger)totalLength {
+    self = [super init];
+    if ( self ) {
+        _responseHeaders = @{
+            @"Server" : server ?: @"localhost",
+            @"Content-Type" : contentType ?: @"",
+            @"Accept-Ranges" : @"bytes",
+            @"Connection" : @"keep-alive",
+            @"Content-Length" : [NSString stringWithFormat:@"%lu", (unsigned long)totalLength],
+        };
+        
+        _server = server.copy;
+        _contentType = contentType.copy;
+        _totalLength = totalLength;    }
+    return self;
+
+}
+
 - (instancetype)initWithServer:(NSString *)server contentType:(NSString *)contentType totalLength:(NSUInteger)totalLength contentRange:(NSRange)contentRange {
     self = [super init];
     if ( self ) {

@@ -6,13 +6,11 @@
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSDefines.h"
+#import "MCSResource.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSVODResource : NSObject<MCSResource>
-+ (instancetype)resourceWithURL:(NSURL *)URL;
-
+@interface MCSVODResource : MCSResource
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
 
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;

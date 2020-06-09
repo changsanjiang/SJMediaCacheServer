@@ -7,8 +7,9 @@
 //
 
 #import "MCSDefines.h"
-#import "MCSURLConvertor.h"
+#import "MCSURLRecognizer.h"
 @class MCSVODResource, MCSVODReader, MCSVODResourcePartialContent;
+@class MCSResource;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -44,11 +45,11 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 ///
 - (void)removeAllResources;
 
-- (id<MCSResource>)resourceWithURL:(NSURL *)URL;
-- (void)update:(id<MCSResource>)resource;
-- (void)reader:(MCSVODReader *)reader willReadResource:(id<MCSResource>)resource;
-- (void)reader:(MCSVODReader *)reader didEndReadResource:(id<MCSResource>)resource;
-- (void)didWriteDataForResource:(id<MCSResource>)resource;
+- (__kindof MCSResource *)resourceWithURL:(NSURL *)URL;
+- (void)update:(MCSResource *)resource;
+- (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource;
+- (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource;
+- (void)didWriteDataForResource:(MCSResource *)resource;
 @end
 
 NS_ASSUME_NONNULL_END

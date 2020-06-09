@@ -8,6 +8,7 @@
 
 #import "MCSVODResource.h"
 #import "MCSResourceDefines.h"
+#import "MCSResourceSubclass.h"
 #import "MCSVODResource+MCSPrivate.h"
 #import "MCSVODReader.h"
 #import "MCSVODResourcePartialContent.h"
@@ -17,41 +18,34 @@
 #import "MCSUtils.h"
 
 @interface MCSVODResource ()<NSLocking, MCSVODResourcePartialContentDelegate>
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
-@property (nonatomic) NSInteger id;
-@property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) NSMutableArray<MCSVODResourcePartialContent *> *contents;
 
 @property (nonatomic, copy, nullable) NSString *contentType;
 @property (nonatomic, copy, nullable) NSString *server;
 @property (nonatomic) NSUInteger totalLength;
-
-@property (nonatomic) NSInteger readWriteCount;
-@property (nonatomic) NSInteger numberOfCumulativeUsage;
-@property (nonatomic) NSTimeInterval updatedTime;
-@property (nonatomic) NSTimeInterval createdTime;
 @end
 
 @implementation MCSVODResource
-+ (instancetype)resourceWithURL:(NSURL *)URL {
-    return [MCSResourceManager.shared resourceWithURL:URL];
-}
-
-- (instancetype)initWithName:(NSString *)name {
-    self = [self init];
-    if ( self ) {
-        _name = name;
-    }
-    return self;
-}
-
 - (instancetype)init {
     self = [super init];
     if ( self ) {
         _contents = NSMutableArray.array;
-        _semaphore = dispatch_semaphore_create(1);
     }
     return self;
+}
+
+- (void)setName:(NSString *)name {
+    [super setName:name];
+    
+    [self lock];
+    __auto_type contents = [MCSResourceFileManager getContentsInResource:name];
+    [contents makeObjectsPerformSelector:@selector(setDelegate:) withObject:self];
+    [_contents addObjectsFromArray:contents];
+    [self unlock];
+}
+
+- (MCSResourceType)type {
+    return MCSResourceTypeVOD;
 }
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request {
@@ -64,15 +58,6 @@
 
 #pragma mark -
 
-- (void)addContents:(nullable NSMutableArray<MCSVODResourcePartialContent *> *)contents {
-    if ( contents.count != 0 ) {
-        [self lock];
-        [contents makeObjectsPerformSelector:@selector(setDelegate:) withObject:self];
-        [_contents addObjectsFromArray:contents];
-        [self unlock];
-    }
-}
-
 - (NSString *)filePathOfContent:(MCSVODResourcePartialContent *)content {
     return [MCSResourceFileManager getContentFilePathWithName:content.name inResource:self.name];
 }
@@ -80,7 +65,7 @@
 - (MCSVODResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
-        NSString *filename = [MCSResourceFileManager createContentFileInResource:_name atOffset:offset];
+        NSString *filename = [MCSResourceFileManager createContentFileInResource:self.name atOffset:offset];
         MCSVODResourcePartialContent *content = [MCSVODResourcePartialContent.alloc initWithName:filename offset:offset];
         content.delegate = self;
         [_contents addObject:content];
@@ -230,50 +215,5 @@
 
 - (void)contentLengthDidChangeForPartialContent:(MCSVODResourcePartialContent *)content {
     [MCSResourceManager.shared didWriteDataForResource:self];
-}
-
-#pragma mark -
-
-@synthesize readWriteCount = _readWriteCount;
-- (void)setReadWriteCount:(NSInteger)readWriteCount {
-    [self lock];
-    @try {
-        if ( _readWriteCount != readWriteCount ) {
-            _readWriteCount = readWriteCount;
-        }
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (NSInteger)readWriteCount {
-    [self lock];
-    @try {
-        return _readWriteCount;;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (void)readWrite_retain {
-    self.readWriteCount += 1;
-}
-
-- (void)readWrite_release {
-    self.readWriteCount -= 1;
-}
-
-#pragma mark -
-
-- (void)lock {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-}
-
-- (void)unlock {
-    dispatch_semaphore_signal(_semaphore);
 }
 @end

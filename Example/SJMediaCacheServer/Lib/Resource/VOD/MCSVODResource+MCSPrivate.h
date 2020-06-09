@@ -8,22 +8,15 @@
 
 #import "MCSVODResource.h"
 #import "MCSVODResourcePartialContent.h"
+#import "MCSResourceSubclass.h"
+#import "MCSResourceDefines.h"
 @protocol MCSVODResourcePartialContentDelegate;
 
 // 私有方法, 请勿使用
 
 NS_ASSUME_NONNULL_BEGIN
-@protocol MCSReadWrite <NSObject>
-@property (nonatomic, readonly) NSInteger readWriteCount;
-
-- (void)readWrite_retain;
-- (void)readWrite_release;
-@end
-
 @interface MCSVODResource (MCSPrivate)<MCSReadWrite>
-- (instancetype)initWithName:(NSString *)name;
 @property (nonatomic) NSInteger id;
-@property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, strong, readonly) NSMutableArray<MCSVODResourcePartialContent *> *contents;
 - (void)setServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength;
 - (void)addContents:(nullable NSArray<MCSVODResourcePartialContent *> *)contents;

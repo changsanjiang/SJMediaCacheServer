@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSResourceResponse : NSObject<MCSResourceResponse>
 - (instancetype)initWithResponse:(NSHTTPURLResponse *)response;
 - (instancetype)initWithServer:(NSString *)server contentType:(NSString *)contentType totalLength:(NSUInteger)totalLength contentRange:(NSRange)contentRange;
+- (instancetype)initWithServer:(NSString *)server contentType:(NSString *)contentType totalLength:(NSUInteger)totalLength;
 
 @property (nonatomic, copy, readonly, nullable) NSDictionary *responseHeaders;
 @property (nonatomic, copy, readonly, nullable) NSString *contentType;

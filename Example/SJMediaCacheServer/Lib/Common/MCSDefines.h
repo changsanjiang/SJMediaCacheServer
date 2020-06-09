@@ -13,12 +13,18 @@
 @protocol MCSSessionTaskDelegate, MCSResourcePrefetcherDelegate, MCSResourceReaderDelegate;
 @protocol MCSResource, MCSResourceResponse, MCSResourceReader, MCSResourcePrefetcher;
 
+typedef NS_ENUM(NSUInteger, MCSResourceType) {
+    MCSResourceTypeVOD,
+    MCSResourceTypeHLS
+};
 
 NS_ASSUME_NONNULL_BEGIN
-@protocol MCSURLConvertor <NSObject>
+@protocol MCSURLRecognizer <NSObject>
 - (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL;
 - (nullable NSURL *)URLWithProxyURL:(NSURL *)proxyURL;
-- (nullable NSString *)resourceNameWithURL:(NSURL *)URL;
+
+- (nullable NSString *)resourceNameForURL:(NSURL *)URL;
+- (MCSResourceType)resourceTypeForURL:(NSURL *)URL;
 @end
 
 
@@ -43,10 +49,10 @@ NS_ASSUME_NONNULL_BEGIN
 @end
  
 #pragma mark -
-
-@protocol MCSResource <NSObject>
-+ (instancetype)resourceWithURL:(NSURL *)URL;
  
+@protocol MCSResource <NSObject>
+@property (nonatomic, readonly) MCSResourceType type;
+
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;
 @end

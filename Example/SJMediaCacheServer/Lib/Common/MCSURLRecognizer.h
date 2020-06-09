@@ -1,5 +1,5 @@
 //
-//  MCSURLConvertor.h
+//  MCSURLRecognizer.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
@@ -10,11 +10,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSURLConvertor : NSObject<MCSURLConvertor>
+@interface MCSURLRecognizer : NSObject<MCSURLRecognizer>
 + (instancetype)shared;
 - (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL;
 - (nullable NSURL *)URLWithProxyURL:(NSURL *)proxyURL;
-- (nullable NSString *)resourceNameWithURL:(NSURL *)URL;
+
+- (nullable NSString *)resourceNameForURL:(NSURL *)URL;
+- (MCSResourceType)resourceTypeForURL:(NSURL *)URL;
 @end
 
 NS_ASSUME_NONNULL_END

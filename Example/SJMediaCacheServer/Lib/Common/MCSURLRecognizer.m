@@ -1,12 +1,12 @@
 //
-//  MCSURLConvertor.m
+//  MCSURLRecognizer.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSURLConvertor.h"
+#import "MCSURLRecognizer.h"
 #include <CommonCrypto/CommonCrypto.h>
 
 static inline NSString *
@@ -22,7 +22,7 @@ MCSMD5(NSString *str) {
             result[12], result[13], result[14], result[15]];
 }
 
-@implementation MCSURLConvertor
+@implementation MCSURLRecognizer
 + (instancetype)shared {
     static id instance = nil;
     static dispatch_once_t onceToken;
@@ -48,7 +48,11 @@ MCSMD5(NSString *str) {
     return nil;
 }
 
-- (nullable NSString *)resourceNameWithURL:(NSURL *)URL {
+- (nullable NSString *)resourceNameForURL:(NSURL *)URL {
     return MCSMD5(URL.absoluteString);
+}
+
+- (MCSResourceType)resourceTypeForURL:(NSURL *)URL {
+    return [URL.absoluteString containsString:@".m3u8"] ? MCSResourceTypeHLS : MCSResourceTypeVOD;
 }
 @end

@@ -8,7 +8,7 @@
 
 #import "MCSProxyServer.h"
 #import "NSURLRequest+MCS.h"
-#import "MCSURLConvertor.h"
+#import "MCSURLRecognizer.h"
 #import "MCSLogger.h"
 #import <objc/message.h>
 #import <CocoaHTTPServer/HTTPServer.h>
@@ -197,7 +197,7 @@
 
 @implementation NSURLRequest (MCSHTTPConnectionExtended)
 + (NSMutableURLRequest *)mcs_requestWithMessage:(HTTPMessage *)message {
-    NSURL *URL = [MCSURLConvertor.shared URLWithProxyURL:message.url];
+    NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:message.url];
     return [self mcs_requestWithURL:URL headers:message.allHeaderFields];
 }
 @end

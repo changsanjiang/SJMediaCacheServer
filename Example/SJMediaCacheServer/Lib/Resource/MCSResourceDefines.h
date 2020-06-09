@@ -27,5 +27,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)readerHasAvailableData:(id<MCSResourceDataReader>)reader;
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error;
 @end
+
+@protocol MCSReadWrite <NSObject>
+@property (nonatomic, readonly) NSInteger readWriteCount;
+
+- (void)readWrite_retain;
+- (void)readWrite_release;
+@end
 NS_ASSUME_NONNULL_END
 #endif /* MCSResourceDefines_h */
