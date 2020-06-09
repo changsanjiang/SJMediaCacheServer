@@ -13,6 +13,7 @@
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) dispatch_semaphore_t semaphore;
 @property (nonatomic) NSInteger readWriteCount;
+@property (nonatomic, strong) MCSResourceUsageLog *log;
 @end
 
 @implementation MCSResource
