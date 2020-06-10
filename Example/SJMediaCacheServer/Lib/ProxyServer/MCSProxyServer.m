@@ -165,7 +165,7 @@
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
     MCSHTTPResponse *response = [MCSHTTPResponse.alloc initWithConnection:self];
     
-    MCSLog(@"%@: <%p>.response { URI: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, method, path, NSStringFromRange(response.request.mcs_range));
+    MCSLog(@"%@: <%p>.response { URL: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, method, response.request.URL, NSStringFromRange(response.request.mcs_range));
     
     [response prepareForReadingData];
     return response;
