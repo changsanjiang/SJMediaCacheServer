@@ -8,12 +8,13 @@
 
 #import "MCSHLSDataReader.h"
 #import "MCSHLSParser.h"
+@class MCSHLSResource;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSHLSTSDataReader : NSObject<MCSHLSDataReader>
 
-- (instancetype)initWithRequest:(NSURLRequest *)request parser:(MCSHLSParser *)parser;
+- (instancetype)initWithResource:(MCSHLSResource *)resource Request:(NSURLRequest *)request parser:(MCSHLSParser *)parser;
 
 - (void)prepare;
 @property (nonatomic, readonly) BOOL isDone;
