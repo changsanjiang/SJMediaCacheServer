@@ -15,7 +15,6 @@
 #import "MCSDownload.h"
 #import "MCSUtils.h"
 #import "MCSError.h"
-#import "MCSResourceManager.h"
 
 @interface MCSHLSTSDataReader ()<MCSDownloadTaskDelegate, NSLocking> {
     NSRecursiveLock *_lock;
@@ -150,8 +149,7 @@
         
         NSString *contentType = MCSGetResponseContentType(response);
         NSUInteger totalLength = MCSGetResponseContentLength(response);
-        _resource.tsContentType = contentType;
-        [MCSResourceManager.shared saveMetadata:_resource];
+        [_resource updateTsContentType:contentType];
         _content = [_resource createContentWithTsProxyURL:_request.URL tsTotalLength:totalLength];
         [self _prepare];
     } @catch (__unused NSException *exception) {

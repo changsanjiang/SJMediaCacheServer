@@ -11,12 +11,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @interface MCSHLSResource : MCSResource
-@property (nonatomic, copy, nullable) NSString *tsContentType;
+@property (nonatomic, copy, readonly, nullable) NSString *tsContentType;
 @property (nonatomic, strong, nullable) MCSHLSParser *parser;
 
 - (NSString *)tsNameForTsProxyURL:(NSURL *)URL;
 - (nullable MCSResourcePartialContent *)contentForTsProxyURL:(NSURL *)URL;
 - (MCSResourcePartialContent *)createContentWithTsProxyURL:(NSURL *)URL tsTotalLength:(NSUInteger)totalLength;
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
+- (void)updateTsContentType:(NSString * _Nullable)tsContentType;
 @end
 NS_ASSUME_NONNULL_END

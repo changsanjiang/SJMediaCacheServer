@@ -93,12 +93,6 @@
 }
 
 @synthesize tsContentType = _tsContentType;
-- (void)setTsContentType:(NSString *)tsContentType {
-    [self lock];
-    _tsContentType = tsContentType;
-    [self unlock];
-}
-
 - (NSString *)tsContentType {
     [self lock];
     @try {
@@ -108,6 +102,13 @@
     } @finally {
         [self unlock];
     }
+}
+
+- (void)updateTsContentType:(NSString * _Nullable)tsContentType {
+    [self lock];
+    _tsContentType = tsContentType;
+    [self unlock];
+    [MCSResourceManager.shared saveMetadata:self];
 }
 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {

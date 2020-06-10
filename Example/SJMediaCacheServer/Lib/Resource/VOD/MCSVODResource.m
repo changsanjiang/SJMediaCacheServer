@@ -8,15 +8,13 @@
 
 #import "MCSVODResource.h"
 #import "MCSResourceDefines.h"
-#import "MCSResourceSubclass.h" 
 #import "MCSVODReader.h"
-#import "MCSResourcePartialContent.h"
 #import "MCSResourceManager.h"
 #import "MCSFileManager.h"
 #import "MCSVODResourcePrefetcher.h"
 #import "MCSUtils.h"
 
-@interface MCSVODResource ()<NSLocking, MCSResourcePartialContentDelegate>
+@interface MCSVODResource ()
 @property (nonatomic, copy, nullable) NSString *contentType;
 @property (nonatomic, copy, nullable) NSString *server;
 @property (nonatomic) NSUInteger totalLength;
@@ -85,7 +83,7 @@
     }
 }
 
-- (void)setServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength {
+- (void)updateServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength {
     BOOL updated = NO;
     [self lock];
     if ( ![server isEqualToString:_server] ) {
