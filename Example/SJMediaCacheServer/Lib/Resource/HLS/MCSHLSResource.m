@@ -16,19 +16,10 @@
 
 @interface MCSHLSResource ()<MCSResourcePartialContentDelegate>
 @property (nonatomic, strong, nullable) MCSHLSParser *parser;
-@property (nonatomic, strong, nullable) NSMutableArray<MCSResourcePartialContent *> *contents;
 @property (nonatomic, copy, nullable) NSString *tsContentType;
 @end
 
 @implementation MCSHLSResource
-
-- (instancetype)init {
-    self = [super init];
-    if ( self ) {
-        _contents = NSMutableArray.array;
-    }
-    return self;
-}
 
 - (MCSResourceType)type {
     return MCSResourceTypeHLS;
@@ -50,7 +41,7 @@
     [self lock];
     @try {
         NSString *tsName = [MCSFileManager hls_tsNameForTsProxyURL:URL];
-        for ( MCSResourcePartialContent *content in _contents ) {
+        for ( MCSResourcePartialContent *content in self.contents ) {
             if ( [content.tsName isEqualToString:tsName] ) {
                 NSString *contentPath = [MCSFileManager getFilePathWithName:content.name inResource:self.name];
                 NSUInteger length = [NSFileManager.defaultManager attributesOfItemAtPath:contentPath error:NULL].fileSize;
@@ -76,8 +67,7 @@
         NSString *tsName = [MCSFileManager hls_tsNameForTsProxyURL:proxyURL];
         NSString *filename = [MCSFileManager hls_createContentFileInResource:self.name tsName:tsName tsTotalLength:totalLength];
         MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename tsName:tsName tsTotalLength:totalLength length:0];
-        content.delegate = self;
-        [_contents addObject:content];
+        [self addContent:content];
         return content;
     } @catch (__unused NSException *exception) {
         

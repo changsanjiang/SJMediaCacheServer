@@ -156,7 +156,7 @@
         _content = [_resource createContentWithTsProxyURL:_request.URL tsTotalLength:totalLength];
         [self _prepare];
     } @catch (__unused NSException *exception) {
-        NSLog(@"");
+        
     } @finally {
         [self unlock];
     }

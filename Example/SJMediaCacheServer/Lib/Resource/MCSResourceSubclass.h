@@ -13,18 +13,6 @@
 @protocol MCSResourcePartialContentDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
-
-@interface MCSResource (Private)<NSLocking>
-@property (nonatomic) NSInteger id;
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, strong) MCSResourceUsageLog *log;
-
-@property (nonatomic, readonly) NSInteger readWriteCount;
-- (void)readWrite_retain;
-- (void)readWrite_release;
-@end
-
-
 @interface MCSResourcePartialContent (MCSPrivate)<MCSReadWrite>
 @property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
 
@@ -36,5 +24,25 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MCSResourcePartialContentDelegate <NSObject>
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content;
 - (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content;
+@end
+
+@interface MCSResource (Private)<NSLocking, MCSResourcePartialContentDelegate>
+@property (nonatomic) NSInteger id;
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, strong) MCSResourceUsageLog *log;
+
+@property (nonatomic, readonly) NSInteger readWriteCount;
+- (void)readWrite_retain;
+- (void)readWrite_release;
+
+#pragma mark -
+
+@property (nonatomic, copy, readonly, nullable) NSArray<MCSResourcePartialContent *> *contents;
+- (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents;
+- (void)addContent:(MCSResourcePartialContent *)content;
+
+- (void)removeContent:(MCSResourcePartialContent *)content;
+
+- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
 @end
 NS_ASSUME_NONNULL_END

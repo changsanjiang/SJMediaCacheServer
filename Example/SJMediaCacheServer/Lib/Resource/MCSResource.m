@@ -8,13 +8,16 @@
 
 #import "MCSResource.h"
 #import "MCSFileManager.h"
+#import "MCSResourceSubclass.h"
 
-@interface MCSResource ()<NSLocking>
+@interface MCSResource ()<NSLocking, MCSResourcePartialContentDelegate> {
+    NSRecursiveLock *_lock;
+    NSMutableArray<MCSResourcePartialContent *> *_m;
+}
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
-@property (nonatomic) NSInteger readWriteCount;
 @property (nonatomic, strong) MCSResourceUsageLog *log;
+@property (nonatomic) NSInteger readWriteCount;
 @end
 
 @implementation MCSResource
@@ -22,7 +25,8 @@
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        _semaphore = dispatch_semaphore_create(1);
+        _lock = NSRecursiveLock.alloc.init;
+        _m = NSMutableArray.array;
     }
     return self;
 }
@@ -45,17 +49,19 @@
     userInfo:nil];
 }
 
-#pragma mark -
-
-- (void)setName:(NSString *)name {
-    [self lock];
-    _name = name;
-    NSString *path = [MCSFileManager getResourcePathWithName:name];
-    if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
-        [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
-    }
-    [self unlock];
+- (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
+#ifdef DEBUG
+    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
+#endif
 }
+
+- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
+#ifdef DEBUG
+    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
+#endif
+}
+
+#pragma mark -
 
 @synthesize readWriteCount = _readWriteCount;
 - (void)setReadWriteCount:(NSInteger)readWriteCount {
@@ -92,11 +98,50 @@
 
 #pragma mark -
 
+- (NSArray<MCSResourcePartialContent *> *)contents {
+    [self lock];
+    @try {
+        return _m.count >= 0 ? _m : nil;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
+    if ( contents.count != 0 ) {
+        [self lock];
+        [contents makeObjectsPerformSelector:@selector(setDelegate:) withObject:self];
+        [_m addObjectsFromArray:contents];
+        [self unlock];
+    }
+}
+
+- (void)addContent:(MCSResourcePartialContent *)content {
+    [self lock];
+    content.delegate = self;
+    [_m addObject:content];
+    [self unlock];
+}
+
+- (void)removeContent:(MCSResourcePartialContent *)content {
+    [self lock];
+    [_m removeObject:content];
+    [self unlock];
+}
+
+- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
+    return [MCSFileManager getFilePathWithName:content.name inResource:_name];
+}
+
+#pragma mark -
+
 - (void)lock {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    [_lock lock];
 }
 
 - (void)unlock {
-    dispatch_semaphore_signal(_semaphore);
+    [_lock unlock];
 }
 @end

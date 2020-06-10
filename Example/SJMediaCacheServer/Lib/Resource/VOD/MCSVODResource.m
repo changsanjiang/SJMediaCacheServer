@@ -18,31 +18,12 @@
 #import "MCSUtils.h"
 
 @interface MCSVODResource ()<NSLocking, MCSResourcePartialContentDelegate>
-@property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *contents;
-
 @property (nonatomic, copy, nullable) NSString *contentType;
 @property (nonatomic, copy, nullable) NSString *server;
 @property (nonatomic) NSUInteger totalLength;
 @end
 
 @implementation MCSVODResource
-- (instancetype)init {
-    self = [super init];
-    if ( self ) {
-        _contents = NSMutableArray.array;
-    }
-    return self;
-}
-
-- (void)setName:(NSString *)name {
-    [super setName:name];
-    
-    [self lock];
-    __auto_type contents = [MCSFileManager getContentsInResource:name];
-    [contents makeObjectsPerformSelector:@selector(setDelegate:) withObject:self];
-    [_contents addObjectsFromArray:contents];
-    [self unlock];
-}
 
 - (MCSResourceType)type {
     return MCSResourceTypeVOD;
@@ -56,19 +37,14 @@
     return [MCSVODResourcePrefetcher.alloc initWithResource:self request:request];
 }
 
-#pragma mark -
-
-- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-    return [MCSFileManager getFilePathWithName:content.name inResource:self.name];
-}
+#pragma mark - 
 
 - (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
         NSString *filename = [MCSFileManager createContentFileInResource:self.name atOffset:offset];
         MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename offset:offset];
-        content.delegate = self;
-        [_contents addObject:content];
+        [self addContent:content];
         return content;
     } @catch (__unused NSException *exception) {
         
@@ -137,11 +113,11 @@
     if ( content.readWriteCount > 0 ) return;
     [self lock];
     @try {
-        if ( _contents.count <= 1 ) return;
+        if ( self.contents.count <= 1 ) return;
         
         // 合并文件
         NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
-        for ( MCSResourcePartialContent *content in _contents ) {
+        for ( MCSResourcePartialContent *content in self.contents ) {
             if ( content.readWriteCount == 0 )
                 [list addObject:content];
         }
@@ -203,7 +179,7 @@
         for ( MCSResourcePartialContent *content in deleteContents ) {
             NSString *path = [self filePathOfContent:content];
             if ( [NSFileManager.defaultManager removeItemAtPath:path error:NULL] ) {
-                [_contents removeObject:content];
+                [self removeContent:content];
             }
         }
     } @catch (__unused NSException *exception) {
