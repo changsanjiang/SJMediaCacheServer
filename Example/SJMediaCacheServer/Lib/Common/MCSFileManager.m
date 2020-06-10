@@ -169,12 +169,8 @@ static NSString *HLSPrefix = @"hls";
 // HLS
 + (NSString *)tsNameOfContent:(NSString *)name {
     NSArray<NSString *> *components = [name componentsSeparatedByString:@"_"];
-    NSArray<NSString *> *ts = [components subarrayWithRange:NSMakeRange(3, components.count - 3)];
-    NSMutableString *m = NSMutableString.alloc.init;
-    for ( NSString *c in ts ) {
-        [m appendString:c];
-    }
-    return m.copy;
+    NSUInteger length = components[0].length + components[1].length + components[2].length + 3;
+    return [name substringFromIndex:length];
 }
 
 // format: HLS前缀_ts长度_序号_ts文件名
