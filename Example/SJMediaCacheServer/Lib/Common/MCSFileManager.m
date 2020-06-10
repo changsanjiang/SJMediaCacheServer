@@ -1,18 +1,18 @@
 //
-//  MCSResourceFileManager.m
+//  MCSFileManager.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSResourceFileManager.h"
+#import "MCSFileManager.h"
 #import <sys/xattr.h>
 
 static NSString *VODPrefix = @"vod";
 static NSString *HLSPrefix = @"hls";
 
-@implementation MCSResourceFileManager
+@implementation MCSFileManager
 + (NSString *)rootDirectoryPath {
     static NSString *rootDirectoryPath;
     static dispatch_once_t onceToken;
@@ -52,14 +52,30 @@ static NSString *HLSPrefix = @"hls";
     return @"fragments.plist";
 }
 
+// format: resourceName_tsName
 // HLS
-+ (nullable NSString *)hls_tsNameForUrl:(NSString *)url {
++ (nullable NSString *)hls_tsNameForUrl:(NSString *)url inResource:(nonnull NSString *)resource {
     NSString *component = url.lastPathComponent;
     NSRange range = [component rangeOfString:@"?"];
     if ( range.location != NSNotFound ) {
-        return [component substringToIndex:range.location];
+        component = [component substringToIndex:range.location];
+    }
+    return [NSString stringWithFormat:@"%@_%@", resource, component];
+}
+
++ (nullable NSString *)hls_tsNameForTsProxyURL:(NSURL *)URL {
+    NSString *component = URL.absoluteString.lastPathComponent;
+    NSRange range = [component rangeOfString:@"?"];
+    if ( range.location != NSNotFound ) {
+        component = [component substringToIndex:range.location];
     }
     return component;
+}
+
+// format: resourceName_tsName
+// HLS
++ (nullable NSString *)hls_resourceNameForTsProxyURL:(NSURL *)URL {
+    return [[self hls_tsNameForTsProxyURL:URL] componentsSeparatedByString:@"_"].firstObject;
 }
 
 + (NSString *)hls_indexFilePathInResource:(NSString *)resourceName {
@@ -88,15 +104,16 @@ static NSString *HLSPrefix = @"hls";
 }
 
 // HLS
-+ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsContentType:(NSString *)tsContentType tsTotalLength:(NSUInteger)length {
++ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length {
     @autoreleasepool {
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
         [self checkoutDirectoryWithPath:resourcePath];
         
         NSUInteger sequence = 0;
         while (true) {
-            // HLS前缀_ts文件名_tsContentType_ts长度_序号
-            NSString *filename = [NSString stringWithFormat:@"%@_%@_%@_%lu_%lu", HLSPrefix, tsName, tsContentType, (unsigned long)length, (unsigned long)sequence++];
+            // format: HLS前缀_ts长度_序号_ts文件名
+            //
+            NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu_%@", HLSPrefix, (unsigned long)length, (unsigned long)sequence++, tsName];
             NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
@@ -124,10 +141,9 @@ static NSString *HLSPrefix = @"hls";
             else if ( [name hasPrefix:HLSPrefix] ) {
                 NSString *path = [resourcePath stringByAppendingPathComponent:name];
                 NSString *tsName = [self tsNameOfContent:name];
-                NSString *tsContentType = [self tsContentTypeOfContent:name];
                 NSUInteger tsTotalLength = [self tsTotalLengthOfContent:name];
                 NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];;
-                __auto_type content = [MCSResourcePartialContent.alloc initWithName:name tsName:tsName tsContentType:tsContentType tsTotalLength:tsTotalLength length:length];
+                __auto_type content = [MCSResourcePartialContent.alloc initWithName:name tsName:tsName  tsTotalLength:tsTotalLength length:length];
                 [m addObject:content];
             }
         }];
@@ -149,21 +165,21 @@ static NSString *HLSPrefix = @"hls";
     return [[name componentsSeparatedByString:name][1] longLongValue];
 }
 
-// format: HLS前缀_ts文件名_tsContentType_ts长度_序号
+// format: HLS前缀_ts长度_序号_ts文件名
 // HLS
 + (NSString *)tsNameOfContent:(NSString *)name {
-    return [name componentsSeparatedByString:name][1];
+    NSArray<NSString *> *components = [name componentsSeparatedByString:@"_"];
+    NSArray<NSString *> *ts = [components subarrayWithRange:NSMakeRange(3, components.count - 3)];
+    NSMutableString *m = NSMutableString.alloc.init;
+    for ( NSString *c in ts ) {
+        [m appendString:c];
+    }
+    return m.copy;
 }
 
-// format: HLS前缀_ts文件名_tsContentType_ts长度_序号
-// HLS
-+ (NSString *)tsContentTypeOfContent:(NSString *)name {
-    return [name componentsSeparatedByString:name][2];
-}
-
-// format: HLS前缀_ts文件名_tsContentType_ts长度_序号
+// format: HLS前缀_ts长度_序号_ts文件名
 // HLS
 + (NSUInteger)tsTotalLengthOfContent:(NSString *)name {
-    return [[name componentsSeparatedByString:name][3] longLongValue];
+    return [[name componentsSeparatedByString:name][1] longLongValue];
 }
 @end

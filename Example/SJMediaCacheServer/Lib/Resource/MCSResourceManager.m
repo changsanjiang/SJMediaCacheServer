@@ -18,7 +18,7 @@
 #import "MCSHLSResource+MCSPrivate.h"
 #import "MCSHLSReader.h"
 
-#import "MCSResourceFileManager.h"
+#import "MCSFileManager.h"
 
 #import <SJUIKit/SJSQLite3.h>
 #import <SJUIKit/SJSQLite3+Private.h>
@@ -129,7 +129,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        _sqlite3 = [SJSQLite3.alloc initWithDatabasePath:[MCSResourceFileManager databasePath]];
+        _sqlite3 = [SJSQLite3.alloc initWithDatabasePath:[MCSFileManager databasePath]];
         _count = [_sqlite3 countOfObjectsForClass:MCSResourceUsageLog.class conditions:nil error:NULL];
         _lock = NSRecursiveLock.alloc.init;
         _resources = NSMutableDictionary.dictionary;
@@ -389,7 +389,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
     [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
         [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerWillRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : r }];
-        NSString *path = [MCSResourceFileManager getResourcePathWithName:r.name];
+        NSString *path = [MCSFileManager getResourcePathWithName:r.name];
         [NSFileManager.defaultManager removeItemAtPath:path error:NULL];
         [self.resources removeObjectForKey:r.name];
         [self.sqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];

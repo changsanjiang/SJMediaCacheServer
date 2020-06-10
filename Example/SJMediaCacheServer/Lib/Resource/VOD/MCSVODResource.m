@@ -13,7 +13,7 @@
 #import "MCSVODReader.h"
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceManager.h"
-#import "MCSResourceFileManager.h"
+#import "MCSFileManager.h"
 #import "MCSVODResourcePrefetcher.h"
 #import "MCSUtils.h"
 
@@ -38,7 +38,7 @@
     [super setName:name];
     
     [self lock];
-    __auto_type contents = [MCSResourceFileManager getContentsInResource:name];
+    __auto_type contents = [MCSFileManager getContentsInResource:name];
     [contents makeObjectsPerformSelector:@selector(setDelegate:) withObject:self];
     [_contents addObjectsFromArray:contents];
     [self unlock];
@@ -59,13 +59,13 @@
 #pragma mark -
 
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-    return [MCSResourceFileManager getFilePathWithName:content.name inResource:self.name];
+    return [MCSFileManager getFilePathWithName:content.name inResource:self.name];
 }
 
 - (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
-        NSString *filename = [MCSResourceFileManager createContentFileInResource:self.name atOffset:offset];
+        NSString *filename = [MCSFileManager createContentFileInResource:self.name atOffset:offset];
         MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename offset:offset];
         content.delegate = self;
         [_contents addObject:content];

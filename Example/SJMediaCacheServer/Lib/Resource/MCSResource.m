@@ -7,6 +7,7 @@
 //
 
 #import "MCSResource.h"
+#import "MCSFileManager.h"
 
 @interface MCSResource ()<NSLocking>
 @property (nonatomic) NSInteger id;
@@ -45,6 +46,16 @@
 }
 
 #pragma mark -
+
+- (void)setName:(NSString *)name {
+    [self lock];
+    _name = name;
+    NSString *path = [MCSFileManager getResourcePathWithName:name];
+    if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
+        [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
+    }
+    [self unlock];
+}
 
 @synthesize readWriteCount = _readWriteCount;
 - (void)setReadWriteCount:(NSInteger)readWriteCount {

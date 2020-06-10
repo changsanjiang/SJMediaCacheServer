@@ -8,6 +8,7 @@
 
 #import "MCSURLRecognizer.h"
 #include <CommonCrypto/CommonCrypto.h>
+#import "MCSFileManager.h"
 
 static inline NSString *
 MCSMD5(NSString *str) {
@@ -49,6 +50,9 @@ MCSMD5(NSString *str) {
 }
 
 - (nullable NSString *)resourceNameForURL:(NSURL *)URL {
+    if ( [URL.absoluteString containsString:@".ts"] ) {
+        return [MCSFileManager hls_resourceNameForTsProxyURL:URL];
+    }
     return MCSMD5(URL.absoluteString);
 }
 

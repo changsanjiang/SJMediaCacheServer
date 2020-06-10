@@ -11,7 +11,7 @@
 #import "MCSHLSResource+MCSPrivate.h"
 #import "MCSHLSIndexDataReader.h"
 #import "MCSHLSTSDataReader.h"
-#import "MCSResourceFileManager.h"
+#import "MCSFileManager.h"
 #import "MCSLogger.h"
 
 @interface MCSHLSReader ()<NSLocking, MCSHLSIndexDataReaderDelegate> {
@@ -46,8 +46,6 @@
         
         if ( [_request.URL.absoluteString containsString:@".m3u8"] ) {
             _reader = [MCSHLSIndexDataReader.alloc initWithURL:_request.URL parser:_resource.parser];
-            _reader.delegate = self;
-            [_reader prepare];
         }
         else {
             NSAssert(_resource.parser != nil, @"`parser`不能为nil!");
@@ -144,24 +142,24 @@
 #pragma mark -
 // aes key
 - (NSString *)reader:(MCSHLSIndexDataReader *)reader AESKeyFilenameForURI:(NSString *)URI {
-    return [MCSResourceFileManager hls_AESKeyFilenameForURI:URI];
+    return [MCSFileManager hls_AESKeyFilenameForURI:URI];
 }
 // aes key
 - (NSString *)reader:(MCSHLSIndexDataReader *)reader AESKeyWritePathForFilename:(NSString *)AESKeyFilename {
-    return [MCSResourceFileManager getFilePathWithName:AESKeyFilename inResource:_resource.name];
+    return [MCSFileManager getFilePathWithName:AESKeyFilename inResource:_resource.name];
 }
 // ts urls
 - (NSString *)tsFragmentsWritePathForReader:(MCSHLSIndexDataReader *)reader {
-    return [MCSResourceFileManager getFilePathWithName:[MCSResourceFileManager hls_tsFragmentsFilename] inResource:_resource.name];
+    return [MCSFileManager getFilePathWithName:[MCSFileManager hls_tsFragmentsFilename] inResource:_resource.name];
 }
 
 // index.m3u8
 - (NSString *)indexFileWritePathForReader:(MCSHLSIndexDataReader *)reader {
-    return [MCSResourceFileManager hls_indexFilePathInResource:_resource.name];
+    return [MCSFileManager hls_indexFilePathInResource:_resource.name];
 }
 // index.m3u8 contents
 - (NSString *)reader:(MCSHLSIndexDataReader *)reader tsNameForUrl:(NSString *)url {
-    return [MCSResourceFileManager hls_tsNameForUrl:url];
+    return [MCSFileManager hls_tsNameForUrl:url inResource:_resource.name];
 }
 
 #pragma mark -
@@ -169,6 +167,11 @@
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
     [self lock];
     _isPrepared = YES;
+    if ( [reader isKindOfClass:MCSHLSIndexDataReader.class] ) {
+        MCSHLSParser *parser = [(MCSHLSIndexDataReader *)reader parser];
+        if ( parser != nil && _resource.parser != parser )
+            _resource.parser = parser;
+    }
     [self unlock];
     [self.delegate readerPrepareDidFinish:self];
 }

@@ -11,7 +11,7 @@
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceResponse.h"
 #import "MCSResourceManager.h"
-#import "MCSResourceFileManager.h"
+#import "MCSFileManager.h"
 #import "MCSResourceFileDataReader.h"
 #import "MCSResourceNetworkDataReader.h"
 #import "MCSUtils.h"
@@ -251,7 +251,7 @@
             // downloaded part
             NSRange matchedRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
             NSRange fileRange = NSMakeRange(matchedRange.location - content.offset, intersection.length);
-            NSString *path = [MCSResourceFileManager getFilePathWithName:content.name inResource:_resource.name];
+            NSString *path = [MCSFileManager getFilePathWithName:content.name inResource:_resource.name];
             MCSResourceFileDataReader *reader = [MCSResourceFileDataReader.alloc initWithRange:matchedRange path:path readRange:fileRange];
             reader.delegate = self;
             [readers addObject:reader];

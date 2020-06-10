@@ -13,7 +13,9 @@
 #import "MCSResourcePartialContent.h"
 #import "MCSLogger.h"
 
-@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate>
+@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate, NSLocking> {
+    NSRecursiveLock *_lock;
+}
 @property (nonatomic, strong) NSURL *URL;
 @property (nonatomic, copy) NSDictionary *requestHeaders;
 @property (nonatomic) NSRange range;
@@ -51,43 +53,52 @@
 }
 
 - (void)prepare {
-    if ( _isClosed || _isCalledPrepare )
-        return;
-    
-    MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
-  
-    _isCalledPrepare = YES;
-    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
-    [request setAllHTTPHeaderFields:_requestHeaders];
-    //
-    //        https://tools.ietf.org/html/rfc7233#section-4.1
-    //
-    //        Additional examples, assuming a representation of length 10000:
-    //
-    //        o  The final 500 bytes (byte offsets 9500-9999, inclusive):
-    //
-    //             bytes=-500
-    //
-    //        Or:
-    //
-    //             bytes=9500-
-    //
-    //        o  The first and last bytes only (bytes 0 and 9999):
-    //
-    //             bytes=0-0,-1
-    //
-    //        o  Other valid (but not canonical) specifications of the second 500
-    //           bytes (byte offsets 500-999, inclusive):
-    //
-    //             bytes=500-600,601-999
-    //             bytes=500-700,601-999
-    //
-    [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
-    
-    _task = [MCSDownload.shared downloadWithRequest:request delegate:self];
+    [self lock];
+    @try {
+        if ( _isClosed || _isCalledPrepare )
+            return;
+        
+        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
+        
+        _isCalledPrepare = YES;
+        NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
+        [request setAllHTTPHeaderFields:_requestHeaders];
+        //
+        //        https://tools.ietf.org/html/rfc7233#section-4.1
+        //
+        //        Additional examples, assuming a representation of length 10000:
+        //
+        //        o  The final 500 bytes (byte offsets 9500-9999, inclusive):
+        //
+        //             bytes=-500
+        //
+        //        Or:
+        //
+        //             bytes=9500-
+        //
+        //        o  The first and last bytes only (bytes 0 and 9999):
+        //
+        //             bytes=0-0,-1
+        //
+        //        o  Other valid (but not canonical) specifications of the second 500
+        //           bytes (byte offsets 500-999, inclusive):
+        //
+        //             bytes=500-600,601-999
+        //             bytes=500-700,601-999
+        //
+        [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
+        
+        _task = [MCSDownload.shared downloadWithRequest:request delegate:self];
+
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
+    [self lock];
     @try {
         if ( _isClosed || _isDone )
             return nil;
@@ -112,10 +123,13 @@
         return data;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_errorForException:exception]];
+    } @finally {
+        [self unlock];
     }
 }
 
 - (void)close {
+    [self lock];
     @try {
         if ( _isClosed )
             return;
@@ -130,6 +144,8 @@
         _reader = nil;
     } @catch (__unused NSException *exception) {
         
+    } @finally {
+        [self unlock];
     }
      
     MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
@@ -138,20 +154,28 @@
 #pragma mark -
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    if ( _isClosed )
-        return;
-    _response = response;
-    
-    id<MCSResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
-    _content = [delegate newPartialContentForReader:self];
-    NSString *filePath = [delegate writePathOfPartialContent:_content];
-    _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
-    _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
-    
-    [self.delegate readerPrepareDidFinish:self];
+    [self lock];
+    @try {
+        if ( _isClosed )
+            return;
+        _response = response;
+        
+        id<MCSResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
+        _content = [delegate newPartialContentForReader:self];
+        NSString *filePath = [delegate writePathOfPartialContent:_content];
+        _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
+        _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
+        
+        [self.delegate readerPrepareDidFinish:self];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
+    [self lock];
     @try {
         if ( _isClosed )
             return;
@@ -163,22 +187,41 @@
         [self.delegate readerHasAvailableData:self];
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_errorForException:exception]];
+    } @finally {
+        [self unlock];
     }
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    if ( _isClosed )
-        return;
-    
-    if ( error != nil && error.code != NSURLErrorCancelled ) {
-        [self _onError:error];
-    }
-    else {
-        // finished download
+    [self lock];
+    @try {
+        if ( _isClosed )
+            return;
+        
+        if ( error != nil && error.code != NSURLErrorCancelled ) {
+            [self _onError:error];
+        }
+        else {
+            // finished download
+        }
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
     }
 }
 
+#pragma mark -
+
 - (void)_onError:(NSError *)error {
     [self.delegate reader:self anErrorOccurred:error];
+}
+
+- (void)lock {
+    [_lock lock];
+}
+
+- (void)unlock {
+    [_lock unlock];
 }
 @end

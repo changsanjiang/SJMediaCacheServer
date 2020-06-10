@@ -8,22 +8,22 @@
 
 #import "MCSHLSResource.h"
 #import "MCSHLSParser.h"
+#import "MCSResourceSubclass.h"
 @class MCSResourcePartialContent;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSHLSResource (MCSPrivate)
 
-@property (nonatomic) NSInteger id;
-@property (nonatomic, copy, readonly, nullable) NSString *server;
-@property (nonatomic, copy, readonly, nullable) NSString *name;
+@property (nonatomic, copy, nullable) NSString *tsContentType;
 
 @property (nonatomic, strong, nullable) MCSHLSParser *parser;
 
 @property (nonatomic, strong, readonly, nullable) NSMutableArray<MCSResourcePartialContent *> *contents;
 
-- (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL;
-- (MCSResourcePartialContent *)createContentWithTsURL:(NSURL *)URL tsContentType:(NSString *)tsContentType tsTotalLength:(NSUInteger)totalLength;
+- (NSString *)tsNameForTsProxyURL:(NSURL *)URL;
+- (nullable MCSResourcePartialContent *)contentForTsProxyURL:(NSURL *)URL;
+- (MCSResourcePartialContent *)createContentWithTsProxyURL:(NSURL *)URL tsTotalLength:(NSUInteger)totalLength;
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
 @end
 

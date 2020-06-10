@@ -28,7 +28,7 @@
 		7729D8382486174C00462899 /* MCSVODResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D8372486174C00462899 /* MCSVODResource.m */; };
 		7729D83E2486201300462899 /* MCSSessionTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D83D2486201300462899 /* MCSSessionTask.m */; };
 		7729D84A248657DE00462899 /* MCSURLRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 7729D849248657DE00462899 /* MCSURLRecognizer.m */; };
-		774AB9312487B44C0049CAC3 /* MCSResourceFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */; };
+		774AB9312487B44C0049CAC3 /* MCSFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 774AB92F2487B44C0049CAC3 /* MCSFileManager.m */; };
 		775093F8248FC272006B9643 /* MCSHLSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 775093F7248FC272006B9643 /* MCSHLSParser.m */; };
 		776A20FB248FAA6F00A0EFDD /* MCSResourceUsageLog.m in Sources */ = {isa = PBXBuildFile; fileRef = 776A20FA248FAA6F00A0EFDD /* MCSResourceUsageLog.m */; };
 		777BA2DF248F7D4800333C3B /* MCSHLSReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 777BA2DE248F7D4800333C3B /* MCSHLSReader.m */; };
@@ -98,8 +98,8 @@
 		7729D83D2486201300462899 /* MCSSessionTask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSSessionTask.m; sourceTree = "<group>"; };
 		7729D848248657DE00462899 /* MCSURLRecognizer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSURLRecognizer.h; sourceTree = "<group>"; };
 		7729D849248657DE00462899 /* MCSURLRecognizer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSURLRecognizer.m; sourceTree = "<group>"; };
-		774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSResourceFileManager.m; sourceTree = "<group>"; };
-		774AB9302487B44C0049CAC3 /* MCSResourceFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSResourceFileManager.h; sourceTree = "<group>"; };
+		774AB92F2487B44C0049CAC3 /* MCSFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSFileManager.m; sourceTree = "<group>"; };
+		774AB9302487B44C0049CAC3 /* MCSFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSFileManager.h; sourceTree = "<group>"; };
 		775093F6248FC272006B9643 /* MCSHLSParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSParser.h; sourceTree = "<group>"; };
 		775093F7248FC272006B9643 /* MCSHLSParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSParser.m; sourceTree = "<group>"; };
 		776A20F9248FAA6F00A0EFDD /* MCSResourceUsageLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceUsageLog.h; sourceTree = "<group>"; };
@@ -366,6 +366,8 @@
 				779645CA248E93B3003C8248 /* MCSLogger.m */,
 				779645DA248F532B003C8248 /* NSURLRequest+MCS.h */,
 				779645DB248F532B003C8248 /* NSURLRequest+MCS.m */,
+				774AB9302487B44C0049CAC3 /* MCSFileManager.h */,
+				774AB92F2487B44C0049CAC3 /* MCSFileManager.m */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -378,8 +380,6 @@
 				77D25D7F24877ED600BB1B1A /* MCSResourceDefines.h */,
 				77D25D7924877E6000BB1B1A /* MCSResourceFileDataReader.h */,
 				77D25D7A24877E6000BB1B1A /* MCSResourceFileDataReader.m */,
-				774AB9302487B44C0049CAC3 /* MCSResourceFileManager.h */,
-				774AB92F2487B44C0049CAC3 /* MCSResourceFileManager.m */,
 				77D25D8E2487AB1400BB1B1A /* MCSResourceManager.h */,
 				77D25D8F2487AB1400BB1B1A /* MCSResourceManager.m */,
 				77D25D7C24877E6A00BB1B1A /* MCSResourceNetworkDataReader.h */,
@@ -570,7 +570,7 @@
 				77D25D7E24877E6A00BB1B1A /* MCSResourceNetworkDataReader.m in Sources */,
 				7729D8382486174C00462899 /* MCSVODResource.m in Sources */,
 				779645C0248E7809003C8248 /* MCSVODResourcePrefetcher.m in Sources */,
-				774AB9312487B44C0049CAC3 /* MCSResourceFileManager.m in Sources */,
+				774AB9312487B44C0049CAC3 /* MCSFileManager.m in Sources */,
 				770194E2248228A900057D05 /* SJMediaCacheServer.m in Sources */,
 				77D25D902487AB1400BB1B1A /* MCSResourceManager.m in Sources */,
 				77F619B4248DEBF6009D3DD7 /* MCSUtils.m in Sources */,

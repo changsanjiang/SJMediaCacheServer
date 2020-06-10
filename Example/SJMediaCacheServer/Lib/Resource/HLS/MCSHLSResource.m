@@ -12,11 +12,12 @@
 #import "MCSHLSParser.h"
 #import "MCSResourceSubclass.h"
 #import "MCSHLSResource+MCSPrivate.h"
-#import "MCSResourceFileManager.h"
+#import "MCSFileManager.h"
 
 @interface MCSHLSResource ()<MCSResourcePartialContentDelegate>
 @property (nonatomic, strong, nullable) MCSHLSParser *parser;
 @property (nonatomic, strong, nullable) NSMutableArray<MCSResourcePartialContent *> *contents;
+@property (nonatomic, copy, nullable) NSString *tsContentType;
 @end
 
 @implementation MCSHLSResource
@@ -41,13 +42,17 @@
     return nil;
 }
 
-- (MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL {
+- (NSString *)tsNameForTsProxyURL:(NSURL *)URL {
+    return [MCSFileManager hls_tsNameForTsProxyURL:URL];
+}
+
+- (MCSResourcePartialContent *)contentForTsProxyURL:(NSURL *)URL {
     [self lock];
     @try {
-        NSString *tsName = [MCSResourceFileManager hls_tsNameForUrl:URL.absoluteString];
+        NSString *tsName = [MCSFileManager hls_tsNameForTsProxyURL:URL];
         for ( MCSResourcePartialContent *content in _contents ) {
             if ( [content.tsName isEqualToString:tsName] ) {
-                NSString *contentPath = [MCSResourceFileManager getFilePathWithName:content.name inResource:self.name];
+                NSString *contentPath = [MCSFileManager getFilePathWithName:content.name inResource:self.name];
                 NSUInteger length = [NSFileManager.defaultManager attributesOfItemAtPath:contentPath error:NULL].fileSize;
                 if ( length == content.tsTotalLength )
                     return content;
@@ -62,15 +67,15 @@
 }
 
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-    return [MCSResourceFileManager getFilePathWithName:content.name inResource:self.name];
+    return [MCSFileManager getFilePathWithName:content.name inResource:self.name];
 }
 
-- (MCSResourcePartialContent *)createContentWithTsURL:(NSURL *)URL tsContentType:(NSString *)tsContentType tsTotalLength:(NSUInteger)totalLength {
+- (MCSResourcePartialContent *)createContentWithTsProxyURL:(NSURL *)proxyURL tsTotalLength:(NSUInteger)totalLength {
     [self lock];
     @try {
-        NSString *tsName = [MCSResourceFileManager hls_tsNameForUrl:URL.absoluteString];
-        NSString *filename = [MCSResourceFileManager hls_createContentFileInResource:self.name tsName:tsName tsContentType:tsContentType tsTotalLength:totalLength];
-        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename tsName:tsName tsContentType:tsContentType tsTotalLength:totalLength length:0];
+        NSString *tsName = [MCSFileManager hls_tsNameForTsProxyURL:proxyURL];
+        NSString *filename = [MCSFileManager hls_createContentFileInResource:self.name tsName:tsName tsTotalLength:totalLength];
+        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename tsName:tsName tsTotalLength:totalLength length:0];
         content.delegate = self;
         [_contents addObject:content];
         return content;
@@ -92,6 +97,24 @@
     [self lock];
     @try {
         return _parser;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+@synthesize tsContentType = _tsContentType;
+- (void)setTsContentType:(NSString *)tsContentType {
+    [self lock];
+    _tsContentType = tsContentType;
+    [self unlock];
+}
+
+- (NSString *)tsContentType {
+    [self lock];
+    @try {
+        return _tsContentType;
     } @catch (__unused NSException *exception) {
         
     } @finally {

@@ -16,7 +16,6 @@
 @property (nonatomic, readonly) NSUInteger offset;
 @property (nonatomic) NSInteger readWriteCount;
 @property (nonatomic, copy) NSString *tsName;
-@property (nonatomic, copy) NSString *tsContentType;
 @property (nonatomic) NSUInteger tsTotalLength;
 
 - (void)readWrite_retain;
@@ -24,11 +23,10 @@
 @end
 
 @implementation MCSResourcePartialContent
-- (instancetype)initWithName:(NSString *)name tsName:(NSString *)tsName tsContentType:(NSString *)tsContentType tsTotalLength:(NSUInteger)tsTotalLength length:(NSUInteger)length {
+- (instancetype)initWithName:(NSString *)name tsName:(NSString *)tsName tsTotalLength:(NSUInteger)tsTotalLength length:(NSUInteger)length {
     self = [self initWithName:name offset:0 length:length];
     if ( self ) {
         _tsName = tsName.copy;
-        _tsContentType = tsContentType.copy;
         _tsTotalLength = tsTotalLength;
     }
     return self;

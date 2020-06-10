@@ -1,5 +1,5 @@
 //
-//  MCSResourceFileManager.h
+//  MCSFileManager.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/2.
@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSResourceFileManager : NSObject
+@interface MCSFileManager : NSObject
 + (NSString *)rootDirectoryPath;
 + (NSString *)databasePath;
 + (NSString *)getResourcePathWithName:(NSString *)name;
@@ -26,12 +26,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 // HLS
 //
-+ (nullable NSString *)hls_tsNameForUrl:(NSString *)url;
++ (nullable NSString *)hls_tsNameForUrl:(NSString *)url inResource:(NSString *)resource;
+
+// HLS
+//
++ (nullable NSString *)hls_tsNameForTsProxyURL:(NSURL *)URL;
+
+// HLS
+//
++ (nullable NSString *)hls_resourceNameForTsProxyURL:(NSURL *)URL;
 
 // HLS
 //
 + (nullable NSString *)hls_indexFilePathInResource:(NSString *)resourceName;
-
 
 // VOD
 //      注意: 返回文件名
@@ -39,7 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // HLS
 //      注意: 返回文件名
-+ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsContentType:(NSString *)tsContentType tsTotalLength:(NSUInteger)length;
++ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length;
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end
