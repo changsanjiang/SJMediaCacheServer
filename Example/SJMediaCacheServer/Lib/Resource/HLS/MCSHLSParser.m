@@ -136,7 +136,7 @@
         url = [self _urlsWithPattern:@"(?:.*\\.m3u8[^\\s]*)" url:url source:contents].firstObject;
     } while ( url != nil );
 
-    if ( error != nil || contents == nil ) {
+    if ( error != nil || contents == nil || ![contents hasPrefix:@"#"] ) {
         [self _onError:error ?: [NSError mcs_errorForHLSFileParseError:_URL]];
         return;
     }
