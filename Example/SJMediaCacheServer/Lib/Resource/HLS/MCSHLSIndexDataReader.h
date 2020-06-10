@@ -9,11 +9,12 @@
 #import "MCSHLSDataReader.h"
 #import "MCSHLSParser.h"
 @protocol MCSResourceResponse;
+@class MCSHLSResource;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSHLSIndexDataReader : NSObject<MCSHLSDataReader>
-- (instancetype)initWithURL:(NSURL *)URL parser:(nullable MCSHLSParser *)parser;
+- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL;
 
 - (void)prepare;
 @property (nonatomic, strong, readonly, nullable) MCSHLSParser *parser;
@@ -22,19 +23,5 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;
 
-@end
-
-@protocol MCSHLSIndexDataReaderDelegate <MCSResourceDataReaderDelegate>
-// aes key
-- (NSString *)reader:(MCSHLSIndexDataReader *)reader AESKeyFilenameForURI:(NSString *)URI;
-// aes key
-- (NSString *)reader:(MCSHLSIndexDataReader *)reader AESKeyWritePathForFilename:(NSString *)AESKeyFilename;
-// ts urls
-- (NSString *)tsFragmentsWritePathForReader:(MCSHLSIndexDataReader *)reader;
-
-// index.m3u8
-- (NSString *)indexFileWritePathForReader:(MCSHLSIndexDataReader *)reader;
-// index.m3u8 contents
-- (NSString *)reader:(MCSHLSIndexDataReader *)reader tsNameForUrl:(NSString *)url;
 @end
 NS_ASSUME_NONNULL_END

@@ -46,12 +46,6 @@ static NSString *HLSPrefix = @"hls";
     return @"aes.key";
 }
 
-// HLS
-//
-+ (nullable NSString *)hls_tsFragmentsFilename {
-    return @"fragments.plist";
-}
-
 // format: resourceName_tsName
 // HLS
 + (nullable NSString *)hls_tsNameForUrl:(NSString *)url inResource:(nonnull NSString *)resource {
@@ -80,6 +74,13 @@ static NSString *HLSPrefix = @"hls";
 
 + (NSString *)hls_indexFilePathInResource:(NSString *)resourceName {
     NSString *filename = @"index.m3u8";
+    return [self getFilePathWithName:filename inResource:resourceName];
+}
+
+// HLS
+//
++ (nullable NSString *)hls_tsFragmentsFilePathInResource:(NSString *)resourceName {
+    NSString *filename = @"fragments.plist";
     return [self getFilePathWithName:filename inResource:resourceName];
 }
 

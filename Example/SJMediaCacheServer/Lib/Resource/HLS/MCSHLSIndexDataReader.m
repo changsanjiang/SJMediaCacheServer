@@ -10,6 +10,7 @@
 #import "MCSLogger.h"
 #import "MCSResourceFileDataReader.h"
 #import "MCSResourceResponse.h"
+#import "MCSHLSResource.h"
 
 @interface MCSHLSIndexDataReader ()<MCSHLSParserDelegate, MCSResourceDataReaderDelegate>
 @property (nonatomic, strong) NSURL *URL;
@@ -18,16 +19,18 @@
 @property (nonatomic) BOOL isClosed;
 @property (nonatomic) BOOL isDone;
 
+@property (nonatomic, weak, nullable) MCSHLSResource *resource;
 @property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
 @end
 
 @implementation MCSHLSIndexDataReader
 @synthesize delegate = _delegate;
-- (instancetype)initWithURL:(NSURL *)URL parser:(nullable MCSHLSParser *)parser {
+- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL {
     self = [super init];
     if ( self ) {
         _URL = URL;
-        _parser = parser;
+        _resource = resource;
+        _parser = resource.parser;
     }
     return self;
 }
@@ -45,7 +48,7 @@
     _isCalledPrepare = YES;
     
     if ( _parser == nil ) {
-        _parser = [MCSHLSParser.alloc initWithURL:_URL delegate:self];
+        _parser = [MCSHLSParser.alloc initWithURL:_URL inResource:_resource.name delegate:self];
         [_parser prepare];
     }
     else {
@@ -73,6 +76,10 @@
 #pragma mark -
 
 - (void)_parseDidFinish {
+    if ( _resource.parser != _parser ) {
+        _resource.parser = _parser;
+    }
+    
     NSString *indexFilePath = _parser.indexFilePath;
     NSUInteger fileSize = [NSFileManager.defaultManager attributesOfItemAtPath:indexFilePath error:NULL].fileSize;
     NSRange range = NSMakeRange(0, fileSize);
@@ -82,28 +89,6 @@
 }
 
 #pragma mark -
-
-// aes key
-- (NSString *)parser:(MCSHLSParser *)parser AESKeyFilenameForURI:(NSString *)URI {
-    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate reader:self AESKeyFilenameForURI:URI];
-}
-// aes key
-- (NSString *)parser:(MCSHLSParser *)parser AESKeyWritePathForFilename:(NSString *)AESKeyFilename {
-    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate reader:self AESKeyWritePathForFilename:AESKeyFilename];
-}
-// ts urls
-- (NSString *)tsFragmentsWritePathForParser:(MCSHLSParser *)parser {
-    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate tsFragmentsWritePathForReader:self];
-}
-
-// index.m3u8
-- (NSString *)indexFileWritePathForParser:(MCSHLSParser *)parser {
-    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate indexFileWritePathForReader:self];
-}
-// index.m3u8 contents
-- (NSString *)parser:(MCSHLSParser *)parser tsNameForUrl:(NSString *)url {
-    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate reader:self tsNameForUrl:url];
-}
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser {
     [self _parseDidFinish];

@@ -8,6 +8,7 @@
 
 #import "MCSHLSParser.h"
 #import "MCSError.h"
+#import "MCSFileManager.h"
 
 @interface NSString (MCSRegexMatching)
 - (nullable NSArray<NSValue *> *)mcs_rangesByMatchingPattern:(NSString *)pattern;
@@ -23,9 +24,10 @@
 @end
 
 @implementation MCSHLSParser
-- (instancetype)initWithURL:(NSURL *)URL delegate:(id<MCSHLSParserDelegate>)delegate {
+- (instancetype)initWithURL:(NSURL *)URL inResource:(NSString *)resource delegate:(id<MCSHLSParserDelegate>)delegate {
     self = [super init];
     if ( self ) {
+        _resourceName = resource;
         _URL = URL;
         _delegate = delegate;
         _lock = NSRecursiveLock.alloc.init;
@@ -101,7 +103,7 @@
 }
 
 - (NSString *)indexFilePath {
-    return [self.delegate indexFileWritePathForParser:self];
+    return [MCSFileManager hls_indexFilePathInResource:self.resourceName];
 }
 
 #pragma mark -
@@ -110,11 +112,11 @@
     if ( self.isClosed )
         return;
     
-    NSString *indexFilePath = [self.delegate indexFileWritePathForParser:self];
+    NSString *indexFilePath = self.indexFilePath;
     // 已解析过, 将直接读取本地
     if ( [NSFileManager.defaultManager fileExistsAtPath:indexFilePath] ) {
         [self lock];
-        _tsFragments = [NSDictionary dictionaryWithContentsOfFile:[self.delegate tsFragmentsWritePathForParser:self]];
+        _tsFragments = [NSDictionary dictionaryWithContentsOfFile:[MCSFileManager hls_tsFragmentsFilePathInResource:self.resourceName]];
         _isDone = YES;
         [self unlock];
         [self.delegate parserParseDidFinish:self];
@@ -145,7 +147,7 @@
         NSRange rangeValue = range.rangeValue;
         NSString *matched = [contents substringWithRange:rangeValue];
         NSString *url = [self _urlWithMatchedString:matched];
-        NSString *tsName = [self.delegate parser:self tsNameForUrl:url];
+        NSString *tsName = [MCSFileManager hls_tsNameForUrl:url inResource:self.resourceName];
         tsFragments[tsName] = url;
         if ( tsName != nil ) [indexFileContents replaceCharactersInRange:rangeValue withString:tsName];
     }];
@@ -164,8 +166,8 @@
             *stop = YES;
             return ;
         }
-        NSString *filename = [self.delegate parser:self AESKeyFilenameForURI:URI];
-        NSString *filepath = [self.delegate parser:self AESKeyWritePathForFilename:filename];
+        NSString *filename = [MCSFileManager hls_AESKeyFilenameForURI:URI];
+        NSString *filepath = [MCSFileManager getFilePathWithName:filename inResource:self.resourceName];
         [keyData writeToFile:filepath options:0 error:&error];
         if ( error != nil ) {
             *stop = YES;
@@ -180,12 +182,12 @@
         return;
     }
     
-    if ( ![tsFragments writeToFile:[self.delegate tsFragmentsWritePathForParser:self] atomically:YES] ) {
+    if ( ![tsFragments writeToFile:[MCSFileManager hls_tsFragmentsFilePathInResource:self.resourceName] atomically:YES] ) {
         [self _onError:[NSError mcs_errorForHLSFileParseError:_URL]];
         return;
     }
     
-    if ( ![indexFileContents writeToFile:[self.delegate indexFileWritePathForParser:self] atomically:YES encoding:NSUTF8StringEncoding error:&error] ) {
+    if ( ![indexFileContents writeToFile:[MCSFileManager hls_indexFilePathInResource:self.resourceName] atomically:YES encoding:NSUTF8StringEncoding error:&error] ) {
         [self _onError:error];
         return;
     }
