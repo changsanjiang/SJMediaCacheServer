@@ -48,14 +48,14 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { URL: %@\n };", NSStringFromClass(self.class), self, _request.URL];
+    return [NSString stringWithFormat:@"%@:<%p> { proxyURL: %@\n };", NSStringFromClass(self.class), self, _request.URL];
 }
 
 - (void)prepare {
     if ( _isClosed || _isCalledPrepare )
         return;
     
-    MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+    MCSLog(@"%@: <%p>.prepare { proxyURL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
 
     _isCalledPrepare = YES;
     
@@ -66,6 +66,9 @@
     else {
         NSString *tsName = [_resource tsNameForTsProxyURL:_request.URL];
         NSURL *URL = [_resource.parser tsURLWithTsName:tsName];
+        
+        MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, URL);
+
         NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:URL];
         [_request.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
             [request setValue:obj forHTTPHeaderField:key];
@@ -91,7 +94,7 @@
                 MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, _offset, data.length);
 #ifdef DEBUG
                 if ( _isDone ) {
-                    MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+                    MCSLog(@"%@: <%p>.done { proxyURL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
                 }
 #endif
             }
