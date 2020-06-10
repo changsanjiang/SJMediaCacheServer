@@ -17,6 +17,8 @@
 #import "MCSLogger.h"
 #import "MCSVODResource.h"
 #import "MCSResourceManager.h"
+
+#import <SJBaseVideoPlayer/SJAliMediaPlaybackController.h>
  
 @interface SJViewController ()<MCSProxyServerDelegate>
 @property (nonatomic, strong, nullable) MCSProxyServer *server;
@@ -42,6 +44,7 @@
  
 //    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
  
+    _player.playbackController = SJAliMediaPlaybackController.new;
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:0];
 
     _player.pauseWhenAppDidEnterBackground = NO;

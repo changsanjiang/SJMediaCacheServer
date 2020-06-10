@@ -182,6 +182,11 @@
         return;
     }
     
+    if ( tsFragments.count == 0 ) {
+        [self _onError:[NSError mcs_errorForHLSFileParseError:_URL]];
+        return;
+    }
+    
     if ( ![tsFragments writeToFile:[MCSFileManager hls_tsFragmentsFilePathInResource:self.resourceName] atomically:YES] ) {
         [self _onError:[NSError mcs_errorForHLSFileParseError:_URL]];
         return;
