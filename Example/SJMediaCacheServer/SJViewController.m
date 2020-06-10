@@ -36,8 +36,11 @@
     
     [self _startLocalProxyServer];
 //    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/2000/0303000a/3/default/bca293257d954934afadfaa96d865172/2000.m3u8"] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
+    
+    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://cdn.half-room.com/lm2polchkxAAl6J7ZaCJciiO5fN8.m3u8?pm3u8/0&e=1591792296&token=tCieKPlW4J4EZifkbE7fu1kt-NS6PKZ6nNk5eCMA:sohMlpZUQ8MOwO8w1nestE_esgo="] localServerURL:[NSURL URLWithString:@"http://127.0.0.1:80/"]];
+
  
-    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
+//    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithURL:[NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927679510623923"] localServerURL:[NSURL URLWithString:@"http://localhost:80/"]];
  
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:proxyURL startPosition:0];
 

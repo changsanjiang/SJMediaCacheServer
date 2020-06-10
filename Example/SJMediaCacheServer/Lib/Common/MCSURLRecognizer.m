@@ -36,15 +36,18 @@ MCSMD5(NSString *str) {
 - (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL {
     NSURLComponents *components = [NSURLComponents componentsWithURL:serverURL resolvingAgainstBaseURL:NO];
     components.path = URL.path;
-    [components setQuery:[NSString stringWithFormat:@"url=%@", URL]];
+    NSString *url = [[URL.absoluteString dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+    [components setQuery:[NSString stringWithFormat:@"url=%@", url]];
     return components.URL;
 }
 
 - (nullable NSURL *)URLWithProxyURL:(NSURL *)proxyURL {
     NSURLComponents *components = [NSURLComponents componentsWithURL:proxyURL resolvingAgainstBaseURL:NO];
     for ( NSURLQueryItem *query in components.queryItems ) {
-        if ( [query.name isEqualToString:@"url"] )
-            return [NSURL URLWithString:query.value];
+        if ( [query.name isEqualToString:@"url"] ) {
+            NSString *url = [NSString.alloc initWithData:[NSData.alloc initWithBase64EncodedString:query.value options:0] encoding:NSUTF8StringEncoding];
+            return [NSURL URLWithString:url];
+        }
     }
     return proxyURL;
 }
