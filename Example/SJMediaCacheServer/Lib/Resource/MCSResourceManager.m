@@ -239,8 +239,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             if ( resource == nil ) {
                 resource = [cls.alloc init];
                 resource.name = name;
-                [self _update:resource];
+                [self _update:resource]; // save resource
                 resource.log = [MCSResourceUsageLog.alloc initWithResource:resource];
+                [self _update:resource]; // save log
                 _count += 1;
                 
                 NSString *path = [MCSFileManager getResourcePathWithName:name];
@@ -252,11 +253,6 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             
             // contents
             [resource addContents:[MCSFileManager getContentsInResource:name]];
-
-            // update
-            resource.log.usageCount += 1;
-            [self _update:resource];
-            
             _resources[name] = resource;
         }
         return _resources[name];
@@ -271,16 +267,19 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     [self _update:resource];
 }
 
-- (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSVODResource *)resource {
-    // noting ...
+- (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource {
+    // update
+    resource.log.usageCount += 1;
+    resource.log.updatedTime = NSDate.date.timeIntervalSince1970;
+    [_sqlite3 update:resource.log forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
 }
 
-- (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSVODResource *)resource {
+- (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_removeResourcesForLimit:) object:@(MCSLimitCount)];
     [self performSelector:@selector(_removeResourcesForLimit:) withObject:@(MCSLimitCount) afterDelay:0.5];
 }
 
-- (void)didWriteDataForResource:(MCSVODResource *)resource {
+- (void)didWriteDataForResource:(MCSResource *)resource {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_removeResourcesForLimit:) object:@(MCSLimitFreeDiskSpace)];
     [self performSelector:@selector(_removeResourcesForLimit:) withObject:@(MCSLimitFreeDiskSpace) afterDelay:0.5];
 }
