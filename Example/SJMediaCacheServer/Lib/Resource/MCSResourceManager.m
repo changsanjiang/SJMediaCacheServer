@@ -248,10 +248,11 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
                     [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
                 }
 
-                // contents
-                [resource addContents:[MCSFileManager getContentsInResource:name]];
             }
             
+            // contents
+            [resource addContents:[MCSFileManager getContentsInResource:name]];
+
             // update
             resource.log.usageCount += 1;
             [self _update:resource];
