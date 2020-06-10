@@ -9,9 +9,11 @@
 #import "MCSHLSResource.h"
 #import "MCSResourceManager.h"
 #import "MCSHLSReader.h"
+#import "MCSHLSParser.h"
+#import "MCSResourceSubclass.h"
 
 @interface MCSHLSResource ()
-
+@property (nonatomic, strong, nullable) MCSHLSParser *parser;
 @end
 
 @implementation MCSHLSResource
@@ -25,5 +27,23 @@
 
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
     return nil;
+}
+
+@synthesize parser = _parser;
+- (void)setParser:(MCSHLSParser *)parser {
+    [self lock];
+    _parser = parser;
+    [self unlock];
+}
+
+- (MCSHLSParser *)parser {
+    [self lock];
+    @try {
+        return _parser;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 @end

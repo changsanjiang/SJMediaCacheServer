@@ -16,22 +16,30 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)databasePath;
 + (NSString *)getResourcePathWithName:(NSString *)name;
 + (NSString *)getFilePathWithName:(NSString *)name inResource:(NSString *)resourceName;
+// HLS
+//
++ (nullable NSString *)hls_AESKeyFilenameForURI:(NSString *)URI;
+
+// HLS
+//
++ (nullable NSString *)hls_tsFragmentsFilename;
+
+// HLS
+//
++ (nullable NSString *)hls_tsFilenameForUrl:(NSString *)url;
+
+// HLS
+//
++ (nullable NSString *)hls_indexFilePathInResource:(NSString *)resourceName;
+
 
 // VOD
-//      返回文件名
+//      注意: 返回文件名
 + (nullable NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;
 
 // HLS
-//      返回文件名
+//      注意: 返回文件名
 + (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length;
-
-// HLS
-//      返回文件名
-+ (nullable NSString *)hls_createIndexFileInResource:(NSString *)resourceName;
-
-// HLS
-//      返回文件名
-+ (nullable NSString *)hls_createAESFileInResource:(NSString *)resourceName AESFilename:(NSString *)filename;
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end

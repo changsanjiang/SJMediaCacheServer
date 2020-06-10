@@ -52,9 +52,9 @@
         
         _isCalledPrepare = YES;
         
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{ @autoreleasepool {
+        @autoreleasepool {
             [self _parse];
-        }});
+        }
     } @catch (__unused NSException *exception) {
 
     } @finally {

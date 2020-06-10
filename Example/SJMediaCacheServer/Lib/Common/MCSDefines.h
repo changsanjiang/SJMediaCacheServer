@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable NSString *)resourceNameForURL:(NSURL *)URL;
 - (MCSResourceType)resourceTypeForURL:(NSURL *)URL;
+
 @end
 
 

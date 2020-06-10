@@ -33,6 +33,8 @@
 		776A20FB248FAA6F00A0EFDD /* MCSResourceUsageLog.m in Sources */ = {isa = PBXBuildFile; fileRef = 776A20FA248FAA6F00A0EFDD /* MCSResourceUsageLog.m */; };
 		777BA2DF248F7D4800333C3B /* MCSHLSReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 777BA2DE248F7D4800333C3B /* MCSHLSReader.m */; };
 		777BA2E5248F90D700333C3B /* MCSResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 777BA2E4248F90D700333C3B /* MCSResource.m */; };
+		778904C52490864400C2DAC9 /* MCSHLSIndexFileDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 778904C42490864400C2DAC9 /* MCSHLSIndexFileDataReader.m */; };
+		778904C82490866D00C2DAC9 /* MCSHLSTSFileDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 778904C72490866D00C2DAC9 /* MCSHLSTSFileDataReader.m */; };
 		779645C0248E7809003C8248 /* MCSVODResourcePrefetcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645BF248E7809003C8248 /* MCSVODResourcePrefetcher.m */; };
 		779645CB248E93B3003C8248 /* MCSLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 779645CA248E93B3003C8248 /* MCSLogger.m */; };
 		779645D5248F42E8003C8248 /* test.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = 779645D4248F42E8003C8248 /* test.m3u8 */; };
@@ -108,6 +110,11 @@
 		777BA2E3248F90D700333C3B /* MCSResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResource.h; sourceTree = "<group>"; };
 		777BA2E4248F90D700333C3B /* MCSResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResource.m; sourceTree = "<group>"; };
 		777BA2E6248F923300333C3B /* MCSResourceSubclass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceSubclass.h; sourceTree = "<group>"; };
+		778904C32490864400C2DAC9 /* MCSHLSIndexFileDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSIndexFileDataReader.h; sourceTree = "<group>"; };
+		778904C42490864400C2DAC9 /* MCSHLSIndexFileDataReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSIndexFileDataReader.m; sourceTree = "<group>"; };
+		778904C62490866D00C2DAC9 /* MCSHLSTSFileDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSTSFileDataReader.h; sourceTree = "<group>"; };
+		778904C72490866D00C2DAC9 /* MCSHLSTSFileDataReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSTSFileDataReader.m; sourceTree = "<group>"; };
+		778904C924909A1D00C2DAC9 /* MCSHLSDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSDataReader.h; sourceTree = "<group>"; };
 		779645BE248E7809003C8248 /* MCSVODResourcePrefetcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSVODResourcePrefetcher.h; sourceTree = "<group>"; };
 		779645BF248E7809003C8248 /* MCSVODResourcePrefetcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSVODResourcePrefetcher.m; sourceTree = "<group>"; };
 		779645C9248E93B3003C8248 /* MCSLogger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSLogger.h; sourceTree = "<group>"; };
@@ -306,6 +313,8 @@
 		779645D6248F504A003C8248 /* HLS */ = {
 			isa = PBXGroup;
 			children = (
+				778904C32490864400C2DAC9 /* MCSHLSIndexFileDataReader.h */,
+				778904C42490864400C2DAC9 /* MCSHLSIndexFileDataReader.m */,
 				775093F6248FC272006B9643 /* MCSHLSParser.h */,
 				775093F7248FC272006B9643 /* MCSHLSParser.m */,
 				777BA2DD248F7D4800333C3B /* MCSHLSReader.h */,
@@ -313,6 +322,9 @@
 				779645D7248F5083003C8248 /* MCSHLSResource.h */,
 				779645D8248F5083003C8248 /* MCSHLSResource.m */,
 				777BA2E0248F84A200333C3B /* MCSHLSResource+MCSPrivate.h */,
+				778904C62490866D00C2DAC9 /* MCSHLSTSFileDataReader.h */,
+				778904C72490866D00C2DAC9 /* MCSHLSTSFileDataReader.m */,
+				778904C924909A1D00C2DAC9 /* MCSHLSDataReader.h */,
 			);
 			path = HLS;
 			sourceTree = "<group>";
@@ -550,8 +562,10 @@
 				779645DC248F532B003C8248 /* NSURLRequest+MCS.m in Sources */,
 				777BA2E5248F90D700333C3B /* MCSResource.m in Sources */,
 				6003F5A7195388D20070C39A /* SJViewController.m in Sources */,
+				778904C52490864400C2DAC9 /* MCSHLSIndexFileDataReader.m in Sources */,
 				77D25D7B24877E6000BB1B1A /* MCSResourceFileDataReader.m in Sources */,
 				776A20FB248FAA6F00A0EFDD /* MCSResourceUsageLog.m in Sources */,
+				778904C82490866D00C2DAC9 /* MCSHLSTSFileDataReader.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
 				77D25D7E24877E6A00BB1B1A /* MCSResourceNetworkDataReader.m in Sources */,
 				7729D8382486174C00462899 /* MCSVODResource.m in Sources */,

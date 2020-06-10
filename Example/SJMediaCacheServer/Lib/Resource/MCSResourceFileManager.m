@@ -40,6 +40,32 @@ static NSString *HLSPrefix = @"hls";
 + (NSString *)getFilePathWithName:(NSString *)name inResource:(NSString *)resourceName {
     return [[self getResourcePathWithName:resourceName] stringByAppendingPathComponent:name];
 }
+// HLS
+//
++ (nullable NSString *)hls_AESKeyFilenameForURI:(NSString *)URI {
+    return @"aes.key";
+}
+
+// HLS
+//
++ (nullable NSString *)hls_tsFragmentsFilename {
+    return @"fragments.plist";
+}
+
+// HLS
++ (nullable NSString *)hls_tsFilenameForUrl:(NSString *)url {
+    NSString *component = url.lastPathComponent;
+    NSRange range = [component rangeOfString:@"?"];
+    if ( range.location != NSNotFound ) {
+        return [component substringToIndex:range.location];
+    }
+    return component;
+}
+
++ (NSString *)hls_indexFilePathInResource:(NSString *)resourceName {
+    NSString *filename = @"index.m3u8";
+    return [self getFilePathWithName:filename inResource:resourceName];
+}
 
 // VOD
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset {
@@ -77,33 +103,6 @@ static NSString *HLSPrefix = @"hls";
                 return filename;
             }
         }
-    }
-    return nil;
-}
-
-// format: HLS前缀_index.m3u8
-// HLS
-+ (nullable NSString *)hls_createIndexFileInResource:(NSString *)resourceName {
-    NSString *resourcePath = [self getResourcePathWithName:resourceName];
-    [self checkoutDirectoryWithPath:resourcePath];
-    NSString *filename = [NSString stringWithFormat:@"%@_index.m3u8", HLSPrefix];
-    NSString *filepath = [resourcePath stringByAppendingPathComponent:filename];
-    if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-        [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-        return filename;
-    }
-    return nil;
-}
-
-// format: filename
-// HLS
-+ (nullable NSString *)hls_createAESFileInResource:(NSString *)resourceName AESFilename:(NSString *)filename {
-    NSString *resourcePath = [self getResourcePathWithName:resourceName];
-    [self checkoutDirectoryWithPath:resourcePath];
-    NSString *filepath = [resourcePath stringByAppendingPathComponent:filename];
-    if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-        [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-        return filename;
     }
     return nil;
 }

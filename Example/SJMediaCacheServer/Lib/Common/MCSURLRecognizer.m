@@ -53,6 +53,6 @@ MCSMD5(NSString *str) {
 }
 
 - (MCSResourceType)resourceTypeForURL:(NSURL *)URL {
-    return [URL.absoluteString containsString:@".m3u8"] ? MCSResourceTypeHLS : MCSResourceTypeVOD;
+    return [URL.absoluteString containsString:@".m3u8"] || [URL.absoluteString containsString:@".ts"] ? MCSResourceTypeHLS : MCSResourceTypeVOD;
 }
 @end
