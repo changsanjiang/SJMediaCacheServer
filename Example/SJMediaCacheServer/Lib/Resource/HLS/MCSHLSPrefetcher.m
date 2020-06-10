@@ -37,7 +37,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range)];
+    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, _request];
 }
 
 - (void)dealloc {
@@ -50,7 +50,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
+        MCSLog(@"%@: <%p>.prepare { request: %@ };\n", NSStringFromClass(self.class), self, _request);
 
         _reader = [_resource readerWithRequest:_request];
         _reader.delegate = self;
@@ -72,7 +72,7 @@
         _isClosed = YES;
         [_reader close];
         
-        MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
+        MCSLog(@"%@: <%p>.close { request: %@ };\n", NSStringFromClass(self.class), self, _request);
     } @catch (__unused NSException *exception) {
         
     } @finally {
