@@ -10,7 +10,6 @@
 #import "MCSResourceManager.h"
 #import "MCSHLSReader.h"
 #import "MCSHLSParser.h"
-#import "MCSResourceSubclass.h"
 #import "MCSFileManager.h"
 
 @interface MCSHLSResource ()
