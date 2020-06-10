@@ -13,6 +13,8 @@
 #import "MCSFileManager.h"
 #import "MCSLogger.h"
 #import "MCSHLSResource.h"
+#import "MCSResourceManager.h"
+#import "MCSError.h"
 
 @interface MCSHLSReader ()<NSLocking, MCSResourceDataReaderDelegate> {
     NSRecursiveLock *_lock;
@@ -32,8 +34,27 @@
         _resource = resource;
         _request = request;
         _lock = NSRecursiveLock.alloc.init;
+        [_resource readWrite_retain];
+        [MCSResourceManager.shared reader:self willReadResource:resource];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(willRemoveResource:) name:MCSResourceManagerWillRemoveResourceNotification object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [NSNotificationCenter.defaultCenter removeObserver:self];
+    [_resource readWrite_release];
+    [MCSResourceManager.shared reader:self didEndReadResource:_resource];
+    if ( !_isClosed ) [self close];
+    MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
+}
+
+- (void)willRemoveResource:(NSNotification *)note {
+    MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
+    if ( resource == _resource && !self.isClosed )  {
+        [self close];
+        [self.delegate reader:self anErrorOccurred:[NSError mcs_errorForRemovedResource:_request.URL]];
+    }
 }
 
 - (void)prepare {
