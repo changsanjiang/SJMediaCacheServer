@@ -9,7 +9,6 @@
 #import "MCSHLSTSDataReader.h"
 #import "MCSLogger.h"
 #import "MCSHLSResource.h"
-#import "MCSResourceSubclass.h"
 #import "MCSResourceNetworkDataReader.h"
 #import "MCSResourceFileDataReader.h"
 #import "MCSDownload.h"
@@ -27,7 +26,7 @@
 @property (nonatomic) BOOL isDone;
 
 @property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
-@property (nonatomic) NSUInteger downloadedLength;
+@property (nonatomic) NSUInteger availableLength;
 @property (nonatomic) NSUInteger offset;
 
 @property (nonatomic, strong, nullable) NSURLSessionTask *task;
@@ -83,8 +82,8 @@
         
         NSData *data = nil;
         
-        if ( _offset < _downloadedLength ) {
-            NSUInteger length = MIN(lengthParam, _downloadedLength - _offset);
+        if ( _offset < _availableLength ) {
+            NSUInteger length = MIN(lengthParam, _availableLength - _offset);
             if ( length > 0 ) {
                 data = [_reader readDataOfLength:length];
                 _offset += data.length;
@@ -133,6 +132,7 @@
 - (void)_prepare {
     [_content readWrite_retain];
     NSString *filepath = [_resource filePathOfContent:_content];
+    _availableLength = [NSFileManager.defaultManager attributesOfItemAtPath:filepath error:NULL].fileSize;
     _reader = [NSFileHandle fileHandleForReadingAtPath:filepath];
     _writer = [NSFileHandle fileHandleForWritingAtPath:filepath];
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_resource.tsContentType totalLength:_content.tsTotalLength];
@@ -166,8 +166,8 @@
             return;
         
         [_writer writeData:data];
-        _downloadedLength += data.length;
-        _content.length = _downloadedLength;
+        _availableLength += data.length;
+        _content.length = _availableLength;
         
         
     } @catch (NSException *exception) {

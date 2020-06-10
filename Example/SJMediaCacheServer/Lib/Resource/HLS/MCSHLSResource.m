@@ -111,14 +111,14 @@
 }
 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-#ifdef DEBUG
-    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-#endif
+//#ifdef DEBUG
+//    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
+//#endif
 }
 
 - (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-#ifdef DEBUG
-    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-#endif
+//#ifdef DEBUG
+//    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
+//#endif
 }
 @end
