@@ -22,13 +22,22 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isDone;
 
 @property (nonatomic, copy, readonly, nullable) NSArray<NSURL *> *tsArray;
+
+- (nullable NSURL *)tsURLWithTsFilename:(NSString *)filename;
 @end
 
 
 @protocol MCSHLSParserDelegate <NSObject>
-- (NSString *)AESKeyWritePathForParser:(MCSHLSParser *)parser;
-- (NSString *)tsURLArrayWritePathForParser:(MCSHLSParser *)parser;
+// aes key
+- (NSString *)parser:(MCSHLSParser *)parser AESKeyFilenameForURI:(NSString *)URI;
+// aes key
+- (NSString *)parser:(MCSHLSParser *)parser AESKeyWritePathForFilename:(NSString *)AESKeyFilename;
+// ts urls
+- (NSString *)tsFragmentsWritePathForParser:(MCSHLSParser *)parser;
+
+// index.m3u8
 - (NSString *)indexFileWritePathForParser:(MCSHLSParser *)parser;
+// index.m3u8 contents
 - (NSString *)parser:(MCSHLSParser *)parser tsFilenameForUrl:(NSString *)url;
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser;
