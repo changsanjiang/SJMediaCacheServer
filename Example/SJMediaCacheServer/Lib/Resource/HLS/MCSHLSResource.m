@@ -112,14 +112,44 @@
 }
 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-//#ifdef DEBUG
-//    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-//#endif
+    if ( content.readWriteCount > 0 ) return;
+    [self lock];
+    @try {
+        if ( self.contents.count <= 1 ) return;
+        NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
+        for ( MCSResourcePartialContent *content in self.contents ) {
+            if ( content.readWriteCount == 0 )
+                [list addObject:content];
+        }
+        
+        NSMutableArray<MCSResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
+        for ( NSInteger i = 0 ; i < list.count ; ++ i ) {
+            MCSResourcePartialContent *obj1 = list[i];
+            for ( NSInteger j = i + 1 ; j < list.count ; ++ j ) {
+                MCSResourcePartialContent *obj2 = list[j];
+                if ( [obj1.tsName isEqualToString:obj2.tsName] ) {
+                    [deleteContents addObject:obj1.length >= obj2.length ? obj2 : obj1];
+                }
+            }
+        }
+        
+        if ( deleteContents.count == 0 )
+            return;
+         
+        for ( MCSResourcePartialContent *content in deleteContents ) {
+            NSString *path = [self filePathOfContent:content];
+            if ( [NSFileManager.defaultManager removeItemAtPath:path error:NULL] ) {
+                [self removeContent:content];
+            }
+        }
+    } @catch (NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-//#ifdef DEBUG
-//    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-//#endif
+    [MCSResourceManager.shared didWriteDataForResource:self];
 }
 @end
