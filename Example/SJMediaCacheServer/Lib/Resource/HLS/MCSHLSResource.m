@@ -11,12 +11,10 @@
 #import "MCSHLSReader.h"
 #import "MCSHLSParser.h"
 #import "MCSResourceSubclass.h"
-#import "MCSHLSResource+MCSPrivate.h"
 #import "MCSFileManager.h"
 
-@interface MCSHLSResource ()<MCSResourcePartialContentDelegate>
-@property (nonatomic, strong, nullable) MCSHLSParser *parser;
-@property (nonatomic, copy, nullable) NSString *tsContentType;
+@interface MCSHLSResource ()
+
 @end
 
 @implementation MCSHLSResource

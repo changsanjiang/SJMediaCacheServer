@@ -8,8 +8,7 @@
 
 #import "MCSVODResource.h"
 #import "MCSResourceDefines.h"
-#import "MCSResourceSubclass.h"
-#import "MCSVODResource+MCSPrivate.h"
+#import "MCSResourceSubclass.h" 
 #import "MCSVODReader.h"
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceManager.h"

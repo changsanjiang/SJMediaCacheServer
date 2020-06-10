@@ -8,11 +8,11 @@
 
 #import "MCSHLSReader.h"
 #import "MCSHLSResource.h"
-#import "MCSHLSResource+MCSPrivate.h"
 #import "MCSHLSIndexDataReader.h"
 #import "MCSHLSTSDataReader.h"
 #import "MCSFileManager.h"
 #import "MCSLogger.h"
+#import "MCSHLSResource.h"
 
 @interface MCSHLSReader ()<NSLocking, MCSHLSIndexDataReaderDelegate> {
     NSRecursiveLock *_lock;

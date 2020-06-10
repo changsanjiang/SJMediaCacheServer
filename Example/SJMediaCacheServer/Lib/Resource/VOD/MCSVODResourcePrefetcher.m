@@ -8,7 +8,6 @@
 
 #import "MCSVODResourcePrefetcher.h"
 #import "MCSVODResource.h"
-#import "MCSVODResource+MCSPrivate.h"
 #import "MCSVODReader.h"
 #import "MCSLogger.h"
 #import "NSURLRequest+MCS.h"

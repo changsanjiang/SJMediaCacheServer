@@ -106,7 +106,6 @@
 		776A20FA248FAA6F00A0EFDD /* MCSResourceUsageLog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResourceUsageLog.m; sourceTree = "<group>"; };
 		777BA2DD248F7D4800333C3B /* MCSHLSReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSHLSReader.h; sourceTree = "<group>"; };
 		777BA2DE248F7D4800333C3B /* MCSHLSReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSHLSReader.m; sourceTree = "<group>"; };
-		777BA2E0248F84A200333C3B /* MCSHLSResource+MCSPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MCSHLSResource+MCSPrivate.h"; sourceTree = "<group>"; };
 		777BA2E3248F90D700333C3B /* MCSResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResource.h; sourceTree = "<group>"; };
 		777BA2E4248F90D700333C3B /* MCSResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResource.m; sourceTree = "<group>"; };
 		777BA2E6248F923300333C3B /* MCSResourceSubclass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceSubclass.h; sourceTree = "<group>"; };
@@ -126,7 +125,6 @@
 		779645DB248F532B003C8248 /* NSURLRequest+MCS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSURLRequest+MCS.m"; sourceTree = "<group>"; };
 		77A4BBEA2488901A0007836D /* MCSResourceResponse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSResourceResponse.h; sourceTree = "<group>"; };
 		77A4BBEB2488901A0007836D /* MCSResourceResponse.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCSResourceResponse.m; sourceTree = "<group>"; };
-		77A4BBEF2488BFB80007836D /* MCSVODResource+MCSPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MCSVODResource+MCSPrivate.h"; sourceTree = "<group>"; };
 		77CC43E72487487F006C5B45 /* MCSDownload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSDownload.m; sourceTree = "<group>"; };
 		77CC43E82487487F006C5B45 /* MCSDownload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSDownload.h; sourceTree = "<group>"; };
 		77CC43FC248774F6006C5B45 /* MCSVODReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCSVODReader.h; sourceTree = "<group>"; };
@@ -321,7 +319,6 @@
 				777BA2DE248F7D4800333C3B /* MCSHLSReader.m */,
 				779645D7248F5083003C8248 /* MCSHLSResource.h */,
 				779645D8248F5083003C8248 /* MCSHLSResource.m */,
-				777BA2E0248F84A200333C3B /* MCSHLSResource+MCSPrivate.h */,
 				778904C62490866D00C2DAC9 /* MCSHLSTSDataReader.h */,
 				778904C72490866D00C2DAC9 /* MCSHLSTSDataReader.m */,
 				778904C924909A1D00C2DAC9 /* MCSHLSDataReader.h */,
@@ -336,7 +333,6 @@
 				77CC43FD248774F6006C5B45 /* MCSVODReader.m */,
 				7729D8362486174C00462899 /* MCSVODResource.h */,
 				7729D8372486174C00462899 /* MCSVODResource.m */,
-				77A4BBEF2488BFB80007836D /* MCSVODResource+MCSPrivate.h */,
 				779645BE248E7809003C8248 /* MCSVODResourcePrefetcher.h */,
 				779645BF248E7809003C8248 /* MCSVODResourcePrefetcher.m */,
 			);

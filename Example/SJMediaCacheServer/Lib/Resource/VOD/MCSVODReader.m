@@ -7,7 +7,6 @@
 //
 
 #import "MCSVODReader.h"
-#import "MCSVODResource+MCSPrivate.h"
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceResponse.h"
 #import "MCSResourceManager.h"
@@ -17,6 +16,8 @@
 #import "MCSUtils.h"
 #import "MCSError.h"
 #import "MCSLogger.h"
+#import "MCSVODResource.h"
+#import "MCSResourceSubclass.h"
 
 @interface MCSVODReader ()<NSLocking, MCSResourceDataReaderDelegate> {
     NSRecursiveLock *_lock;
@@ -50,7 +51,7 @@
 
         _resource = resource;
         _request = request;
-        
+
         [_resource readWrite_retain];
         [MCSResourceManager.shared reader:self willReadResource:_resource];
         

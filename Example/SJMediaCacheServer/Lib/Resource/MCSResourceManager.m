@@ -12,12 +12,11 @@
 #import "MCSResourceUsageLog.h"
 
 #import "MCSResourcePartialContent.h"
-#import "MCSVODResource+MCSPrivate.h"
 #import "MCSVODReader.h"
-
-#import "MCSHLSResource+MCSPrivate.h"
+#import "MCSVODResource.h"
+ 
 #import "MCSHLSReader.h"
-
+#import "MCSHLSResource.h"
 #import "MCSFileManager.h"
 
 #import <SJUIKit/SJSQLite3.h>

@@ -7,7 +7,6 @@
 //
 
 #import "MCSHLSTSDataReader.h"
-#import "MCSHLSResource+MCSPrivate.h"
 #import "MCSLogger.h"
 #import "MCSHLSResource.h"
 #import "MCSResourceSubclass.h"

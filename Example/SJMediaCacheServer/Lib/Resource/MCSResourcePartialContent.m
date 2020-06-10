@@ -7,7 +7,7 @@
 //
 
 #import "MCSResourcePartialContent.h"
-#import "MCSVODResource+MCSPrivate.h"
+#import "MCSResourceSubclass.h"
 
 @interface MCSResourcePartialContent ()<NSLocking> {
     NSRecursiveLock *_lock;
