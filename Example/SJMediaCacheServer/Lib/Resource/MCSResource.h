@@ -18,6 +18,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;
 
 @property (nonatomic, strong, readonly) MCSResourceUsageLog *log;
+
+#warning next ...
+
+@property (nonatomic, readonly) BOOL isCacheFinished;
 @end
 
 NS_ASSUME_NONNULL_END
