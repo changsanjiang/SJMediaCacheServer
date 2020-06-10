@@ -43,7 +43,6 @@
 @interface MCSProxyServer ()
 @property (nonatomic, strong) HTTPServer *localServer;
 @property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
-@property (nonatomic) BOOL wantsRunning;
 
 - (id<MCSSessionTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate;
 
@@ -65,7 +64,6 @@
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationDidEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(connectionDidDie) name:HTTPConnectionDidDieNotification object:nil];
     }
     return self;
 }
@@ -78,13 +76,20 @@
     return _localServer.isRunning;
 }
 
-- (BOOL)start:(NSError *__autoreleasing  _Nullable *)error {
-    _wantsRunning = YES;
-    return [self _start:error];
+- (void)start {
+    if ( self.isRunning )
+        return;
+    
+    for ( int i = 0 ; i < 10 ; ++ i ) {
+        if ( [self _start:NULL] ) {
+            _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", _port]];
+            break;
+        }
+        [_localServer setPort:_port += 2];
+    }
 }
 
 - (void)stop {
-    _wantsRunning = NO;
     [self _stop];
 }
 
@@ -95,23 +100,14 @@
 #pragma mark -
 
 - (void)applicationDidEnterBackground {
-    self.localServer.numberOfHTTPConnections > 0 ? [self _beginBackgroundTask]: [self _stop];
+    [self _beginBackgroundTask];
 }
 
 - (void)applicationWillEnterForeground {
-    if ( self.backgroundTask == UIBackgroundTaskInvalid && self.wantsRunning ) {
+    if ( self.backgroundTask == UIBackgroundTaskInvalid && !self.isRunning ) {
         [self _start:nil];
     }
     [self _endBackgroundTask];
-}
-
-- (void)connectionDidDie {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if ( UIApplication.sharedApplication.applicationState == UIApplicationStateBackground && self.localServer.numberOfHTTPConnections == 0 ) {
-            [self _endBackgroundTask];
-            [self _stop];
-        }
-    });
 }
 
 #pragma mark -
@@ -127,8 +123,8 @@
 - (void)_beginBackgroundTask {
     if ( self.backgroundTask == UIBackgroundTaskInvalid ) {
         self.backgroundTask = [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler:^{
-            [self _endBackgroundTask];
             [self _stop];
+            [self _endBackgroundTask];
         }];
     }
 }

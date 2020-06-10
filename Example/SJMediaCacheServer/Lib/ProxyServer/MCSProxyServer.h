@@ -16,7 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) UInt16 port;
 @property (nonatomic, readonly, getter=isRunning) BOOL running;
-- (BOOL)start:(NSError **)error;
+@property (nonatomic, strong, readonly) NSURL *serverURL;
+
+- (void)start;
 - (void)stop;
 @end
 
