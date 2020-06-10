@@ -1,33 +1,32 @@
 //
-//  MCSVODResourcePrefetcher.m
+//  MCSHLSPrefetcher.m
 //  SJMediaCacheServer_Example
 //
-//  Created by BlueDancer on 2020/6/8.
+//  Created by BlueDancer on 2020/6/10.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSVODResourcePrefetcher.h"
-#import "MCSVODResource.h"
-#import "MCSVODReader.h"
+#import "MCSHLSPrefetcher.h"
+#import "MCSHLSResource.h"
+#import "MCSHLSReader.h"
 #import "MCSLogger.h"
 #import "NSURLRequest+MCS.h"
 
-@interface MCSVODResourcePrefetcher ()<NSLocking, MCSResourceReaderDelegate> {
+@interface MCSHLSPrefetcher ()<NSLocking, MCSResourceReaderDelegate> {
     NSRecursiveLock *_lock;
 }
-
-@property (nonatomic, weak) MCSVODResource *resource;
+@property (nonatomic, weak) MCSHLSResource *resource;
 @property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isFinished;
 @property (nonatomic) BOOL isClosed;
-@property (nonatomic, strong, nullable) MCSVODReader *reader;
+@property (nonatomic, strong, nullable) MCSHLSReader *reader;
 @property (nonatomic) NSUInteger offset;
 @end
 
-@implementation MCSVODResourcePrefetcher
-- (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request {
+@implementation MCSHLSPrefetcher
+- (instancetype)initWithResource:(__weak MCSHLSResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
         _resource = resource;
@@ -121,7 +120,7 @@
                 
                 _offset += data.length;
                 
-                if ( _offset >= _request.mcs_range.length || _offset >= _resource.totalLength ) {
+                if ( _reader.isReadingEndOfData ) {
                     [self close];
                     [_delegate prefetcherPrefetchDidFinish:self];
                     break;
@@ -138,5 +137,6 @@
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error {
     [_delegate prefetcher:self anErrorOccurred:error];
 }
+
 
 @end

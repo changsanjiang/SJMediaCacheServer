@@ -11,7 +11,7 @@
 #import "MCSVODReader.h"
 #import "MCSResourceManager.h"
 #import "MCSFileManager.h"
-#import "MCSVODResourcePrefetcher.h"
+#import "MCSVODPrefetcher.h"
 #import "MCSUtils.h"
 
 @interface MCSVODResource ()
@@ -31,7 +31,7 @@
 }
 
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
-    return [MCSVODResourcePrefetcher.alloc initWithResource:self request:request];
+    return [MCSVODPrefetcher.alloc initWithResource:self request:request];
 }
 
 #pragma mark - 

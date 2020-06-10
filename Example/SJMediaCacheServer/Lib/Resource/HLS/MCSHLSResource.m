@@ -11,6 +11,7 @@
 #import "MCSHLSReader.h"
 #import "MCSHLSParser.h"
 #import "MCSFileManager.h"
+#import "MCSHLSPrefetcher.h"
 
 @interface MCSHLSResource ()
 
@@ -27,7 +28,7 @@
 }
 
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
-    return nil;
+    return [MCSHLSPrefetcher.alloc initWithResource:self request:request];
 }
 
 - (NSString *)tsNameForTsProxyURL:(NSURL *)URL {
