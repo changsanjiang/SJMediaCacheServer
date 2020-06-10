@@ -30,7 +30,9 @@
     _resource = [MCSResourceManager.shared resourceWithURL:_request.URL];
     _reader = [_resource readerWithRequest:_request];
     _reader.delegate = self;
-    [_reader prepare];
+    @autoreleasepool {
+        [_reader prepare];
+    }
 }
 
 - (NSDictionary *)responseHeaders {

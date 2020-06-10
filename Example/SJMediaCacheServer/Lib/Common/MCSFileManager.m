@@ -86,19 +86,17 @@ static NSString *HLSPrefix = @"hls";
 
 // VOD
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset {
-    @autoreleasepool {
-        NSString *resourcePath = [self getResourcePathWithName:resourceName];
-        [self checkoutDirectoryWithPath:resourcePath];
-        
-        NSUInteger sequence = 0;
-        while (true) {
-            // VOD前缀_偏移量_序号
-            NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
-            NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
-            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-                [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-                return filename;
-            }
+    NSString *resourcePath = [self getResourcePathWithName:resourceName];
+    [self checkoutDirectoryWithPath:resourcePath];
+    
+    NSUInteger sequence = 0;
+    while (true) {
+        // VOD前缀_偏移量_序号
+        NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
+        NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
+        if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+            [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+            return filename;
         }
     }
     return nil;
@@ -106,51 +104,46 @@ static NSString *HLSPrefix = @"hls";
 
 // HLS
 + (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length {
-    @autoreleasepool {
-        NSString *resourcePath = [self getResourcePathWithName:resourceName];
-        [self checkoutDirectoryWithPath:resourcePath];
-        
-        NSUInteger sequence = 0;
-        while (true) {
-            // format: HLS前缀_ts长度_序号_ts文件名
-            //
-            NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu_%@", HLSPrefix, (unsigned long)length, (unsigned long)sequence++, tsName];
-            NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
-            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-                [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-                return filename;
-            }
+    NSString *resourcePath = [self getResourcePathWithName:resourceName];
+    [self checkoutDirectoryWithPath:resourcePath];
+    
+    NSUInteger sequence = 0;
+    while (true) {
+        // format: HLS前缀_ts长度_序号_ts文件名
+        //
+        NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu_%@", HLSPrefix, (unsigned long)length, (unsigned long)sequence++, tsName];
+        NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
+        if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+            [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+            return filename;
         }
     }
     return nil;
 }
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName {
-    @autoreleasepool {
-        NSString *resourcePath = [self getResourcePathWithName:resourceName];
-        NSMutableArray *m = NSMutableArray.array;
-        [[NSFileManager.defaultManager contentsOfDirectoryAtPath:resourcePath error:NULL] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
-            // VOD
-            if      ( [name hasPrefix:VODPrefix] ) {
-                NSString *path = [resourcePath stringByAppendingPathComponent:name];
-                NSUInteger offset = [self offsetOfContent:name];
-                NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];
-                __auto_type content = [MCSResourcePartialContent.alloc initWithName:name offset:offset length:length];
-                [m addObject:content];
-            }
-            // HLS
-            else if ( [name hasPrefix:HLSPrefix] ) {
-                NSString *path = [resourcePath stringByAppendingPathComponent:name];
-                NSString *tsName = [self tsNameOfContent:name];
-                NSUInteger tsTotalLength = [self tsTotalLengthOfContent:name];
-                NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];;
-                __auto_type content = [MCSResourcePartialContent.alloc initWithName:name tsName:tsName  tsTotalLength:tsTotalLength length:length];
-                [m addObject:content];
-            }
-        }];
-        return m;
-    }
-    return nil;
+    NSString *resourcePath = [self getResourcePathWithName:resourceName];
+    NSMutableArray *m = NSMutableArray.array;
+    [[NSFileManager.defaultManager contentsOfDirectoryAtPath:resourcePath error:NULL] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
+        // VOD
+        if      ( [name hasPrefix:VODPrefix] ) {
+            NSString *path = [resourcePath stringByAppendingPathComponent:name];
+            NSUInteger offset = [self offsetOfContent:name];
+            NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];
+            __auto_type content = [MCSResourcePartialContent.alloc initWithName:name offset:offset length:length];
+            [m addObject:content];
+        }
+        // HLS
+        else if ( [name hasPrefix:HLSPrefix] ) {
+            NSString *path = [resourcePath stringByAppendingPathComponent:name];
+            NSString *tsName = [self tsNameOfContent:name];
+            NSUInteger tsTotalLength = [self tsTotalLengthOfContent:name];
+            NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];;
+            __auto_type content = [MCSResourcePartialContent.alloc initWithName:name tsName:tsName  tsTotalLength:tsTotalLength length:length];
+            [m addObject:content];
+        }
+    }];
+    return m;
 }
 
 #pragma mark -
@@ -177,6 +170,6 @@ static NSString *HLSPrefix = @"hls";
 // format: HLS前缀_ts长度_序号_ts文件名
 // HLS
 + (NSUInteger)tsTotalLengthOfContent:(NSString *)name {
-    return [[name componentsSeparatedByString:name][1] longLongValue];
+    return [[name componentsSeparatedByString:@"_"][1] longLongValue];
 }
 @end
