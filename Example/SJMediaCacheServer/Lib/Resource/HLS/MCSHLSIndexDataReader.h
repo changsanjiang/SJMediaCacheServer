@@ -35,6 +35,6 @@ NS_ASSUME_NONNULL_BEGIN
 // index.m3u8
 - (NSString *)indexFileWritePathForReader:(MCSHLSIndexDataReader *)reader;
 // index.m3u8 contents
-- (NSString *)reader:(MCSHLSIndexDataReader *)reader tsFilenameForUrl:(NSString *)url;
+- (NSString *)reader:(MCSHLSIndexDataReader *)reader tsNameForUrl:(NSString *)url;
 @end
 NS_ASSUME_NONNULL_END

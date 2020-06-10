@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSHLSTSDataReader : NSObject<MCSHLSDataReader>
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource Request:(NSURLRequest *)request parser:(MCSHLSParser *)parser;
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request;
 
 - (void)prepare;
 @property (nonatomic, readonly) BOOL isDone;

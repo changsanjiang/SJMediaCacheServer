@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isDone;
 
 @property (nonatomic, copy, readonly) NSString *indexFilePath;
-- (nullable NSURL *)tsURLWithTsFilename:(NSString *)filename;
+- (NSURL *)tsURLWithTsName:(NSString *)tsName;
 @end
 
 
@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 // index.m3u8
 - (NSString *)indexFileWritePathForParser:(MCSHLSParser *)parser;
 // index.m3u8 contents
-- (NSString *)parser:(MCSHLSParser *)parser tsFilenameForUrl:(NSString *)url;
+- (NSString *)parser:(MCSHLSParser *)parser tsNameForUrl:(NSString *)url;
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser;
 - (void)parser:(MCSHLSParser *)parser anErrorOccurred:(NSError *)error;

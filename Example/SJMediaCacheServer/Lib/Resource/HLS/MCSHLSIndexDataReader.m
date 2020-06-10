@@ -101,8 +101,8 @@
     return [(id<MCSHLSIndexDataReaderDelegate>)_delegate indexFileWritePathForReader:self];
 }
 // index.m3u8 contents
-- (NSString *)parser:(MCSHLSParser *)parser tsFilenameForUrl:(NSString *)url {
-    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate reader:self tsFilenameForUrl:url];
+- (NSString *)parser:(MCSHLSParser *)parser tsNameForUrl:(NSString *)url {
+    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate reader:self tsNameForUrl:url];
 }
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser {

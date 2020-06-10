@@ -15,6 +15,5 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;
 
-@property (nonatomic, strong, readonly, nullable) NSArray<MCSResourcePartialContent *> *contents;
 @end
 NS_ASSUME_NONNULL_END

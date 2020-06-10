@@ -21,6 +21,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) MCSHLSParser *parser;
 
 @property (nonatomic, strong, readonly, nullable) NSMutableArray<MCSResourcePartialContent *> *contents;
+
+- (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL;
+- (MCSResourcePartialContent *)createContentWithTsURL:(NSURL *)URL tsContentType:(NSString *)tsContentType tsTotalLength:(NSUInteger)totalLength;
+- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
 @end
 
 NS_ASSUME_NONNULL_END

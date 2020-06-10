@@ -53,7 +53,7 @@ static NSString *HLSPrefix = @"hls";
 }
 
 // HLS
-+ (nullable NSString *)hls_tsFilenameForUrl:(NSString *)url {
++ (nullable NSString *)hls_tsNameForUrl:(NSString *)url {
     NSString *component = url.lastPathComponent;
     NSRange range = [component rangeOfString:@"?"];
     if ( range.location != NSNotFound ) {
@@ -88,15 +88,15 @@ static NSString *HLSPrefix = @"hls";
 }
 
 // HLS
-+ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length {
++ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsContentType:(NSString *)tsContentType tsTotalLength:(NSUInteger)length {
     @autoreleasepool {
         NSString *resourcePath = [self getResourcePathWithName:resourceName];
         [self checkoutDirectoryWithPath:resourcePath];
         
         NSUInteger sequence = 0;
         while (true) {
-            // HLS前缀_ts文件名_ts长度_序号
-            NSString *filename = [NSString stringWithFormat:@"%@_%@_%lu_%lu", HLSPrefix, tsFilename, (unsigned long)length, (unsigned long)sequence++];
+            // HLS前缀_ts文件名_tsContentType_ts长度_序号
+            NSString *filename = [NSString stringWithFormat:@"%@_%@_%@_%lu_%lu", HLSPrefix, tsName, tsContentType, (unsigned long)length, (unsigned long)sequence++];
             NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
@@ -123,10 +123,11 @@ static NSString *HLSPrefix = @"hls";
             // HLS
             else if ( [name hasPrefix:HLSPrefix] ) {
                 NSString *path = [resourcePath stringByAppendingPathComponent:name];
-                NSString *tsFilename = [self tsFilenameOfContent:name];
+                NSString *tsName = [self tsNameOfContent:name];
+                NSString *tsContentType = [self tsContentTypeOfContent:name];
                 NSUInteger tsTotalLength = [self tsTotalLengthOfContent:name];
                 NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];;
-                __auto_type content = [MCSResourcePartialContent.alloc initWithName:name tsFilename:tsFilename tsTotalLength:tsTotalLength length:length];
+                __auto_type content = [MCSResourcePartialContent.alloc initWithName:name tsName:tsName tsContentType:tsContentType tsTotalLength:tsTotalLength length:length];
                 [m addObject:content];
             }
         }];
@@ -148,15 +149,21 @@ static NSString *HLSPrefix = @"hls";
     return [[name componentsSeparatedByString:name][1] longLongValue];
 }
 
-// format: HLS前缀_ts文件名_ts长度_序号
+// format: HLS前缀_ts文件名_tsContentType_ts长度_序号
 // HLS
-+ (NSString *)tsFilenameOfContent:(NSString *)name {
++ (NSString *)tsNameOfContent:(NSString *)name {
     return [name componentsSeparatedByString:name][1];
 }
 
-// format: HLS前缀_ts文件名_ts长度_序号
+// format: HLS前缀_ts文件名_tsContentType_ts长度_序号
+// HLS
++ (NSString *)tsContentTypeOfContent:(NSString *)name {
+    return [name componentsSeparatedByString:name][2];
+}
+
+// format: HLS前缀_ts文件名_tsContentType_ts长度_序号
 // HLS
 + (NSUInteger)tsTotalLengthOfContent:(NSString *)name {
-    return [[name componentsSeparatedByString:name][2] longLongValue];
+    return [[name componentsSeparatedByString:name][3] longLongValue];
 }
 @end

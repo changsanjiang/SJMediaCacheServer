@@ -33,10 +33,10 @@
     return self;
 }
 
-- (NSURL *)tsURLWithTsFilename:(NSString *)filename {
+- (NSURL *)tsURLWithTsName:(NSString *)tsName {
     [self lock];
     @try {
-        return [NSURL URLWithString:_tsFragments[filename]];
+        return [NSURL URLWithString:_tsFragments[tsName]];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -145,9 +145,9 @@
         NSRange rangeValue = range.rangeValue;
         NSString *matched = [contents substringWithRange:rangeValue];
         NSString *url = [self _urlWithMatchedString:matched];
-        NSString *filename = [self.delegate parser:self tsFilenameForUrl:url];
-        tsFragments[filename] = url;
-        if ( filename != nil ) [indexFileContents replaceCharactersInRange:rangeValue withString:filename];
+        NSString *tsName = [self.delegate parser:self tsNameForUrl:url];
+        tsFragments[tsName] = url;
+        if ( tsName != nil ) [indexFileContents replaceCharactersInRange:rangeValue withString:tsName];
     }];
  
     ///

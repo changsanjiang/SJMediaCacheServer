@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // HLS
 //
-+ (nullable NSString *)hls_tsFilenameForUrl:(NSString *)url;
++ (nullable NSString *)hls_tsNameForUrl:(NSString *)url;
 
 // HLS
 //
@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // HLS
 //      注意: 返回文件名
-+ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsFilename:(NSString *)tsFilename tsTotalLength:(NSUInteger)length;
++ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsContentType:(NSString *)tsContentType tsTotalLength:(NSUInteger)length;
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end

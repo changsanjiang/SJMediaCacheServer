@@ -51,7 +51,7 @@
         }
         else {
             NSAssert(_resource.parser != nil, @"`parser`不能为nil!");
-            _reader = [MCSHLSTSDataReader.alloc initWithRequest:_request parser:_resource.parser];
+            _reader = [MCSHLSTSDataReader.alloc initWithResource:_resource request:_request];
         }
         
         _reader.delegate = self;
@@ -160,8 +160,8 @@
     return [MCSResourceFileManager hls_indexFilePathInResource:_resource.name];
 }
 // index.m3u8 contents
-- (NSString *)reader:(MCSHLSIndexDataReader *)reader tsFilenameForUrl:(NSString *)url {
-    return [MCSResourceFileManager hls_tsFilenameForUrl:url];
+- (NSString *)reader:(MCSHLSIndexDataReader *)reader tsNameForUrl:(NSString *)url {
+    return [MCSResourceFileManager hls_tsNameForUrl:url];
 }
 
 #pragma mark -

@@ -7,32 +7,43 @@
 //
 
 #import "MCSHLSTSDataReader.h"
-#import "MCSResourceFileManager.h"
+#import "MCSHLSResource+MCSPrivate.h"
 #import "MCSLogger.h"
 #import "MCSHLSResource.h"
 #import "MCSResourceSubclass.h"
 #import "MCSResourceNetworkDataReader.h"
 #import "MCSResourceFileDataReader.h"
+#import "MCSDownload.h"
+#import "MCSUtils.h"
 
-@interface MCSHLSTSDataReader ()
+@interface MCSHLSTSDataReader ()<MCSDownloadTaskDelegate, NSLocking> {
+    NSRecursiveLock *_lock;
+}
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
 @property (nonatomic, strong) NSURLRequest *request;
-@property (nonatomic, strong) MCSHLSParser *parser;
 
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isClosed;
 @property (nonatomic) BOOL isDone;
+
+@property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
+@property (nonatomic) NSUInteger downloadedLength;
+@property (nonatomic) NSUInteger offset;
+
+@property (nonatomic, strong, nullable) NSURLSessionTask *task;
+@property (nonatomic, strong, nullable) NSFileHandle *reader;
+@property (nonatomic, strong, nullable) NSFileHandle *writer;
 @end
 
 @implementation MCSHLSTSDataReader
 @synthesize delegate = _delegate;
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource Request:(NSURLRequest *)request parser:(MCSHLSParser *)parser {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
         _resource = resource;
         _request = request;
-        _parser = parser;
+        _lock = NSRecursiveLock.alloc.init;
     }
     return self;
 }
@@ -48,24 +59,74 @@
     MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
 
     _isCalledPrepare = YES;
-
-    NSString *filename = [MCSResourceFileManager hls_tsFilenameForUrl:_request.URL.absoluteString];
-    NSString *filepath = [MCSResourceFileManager getFilePathWithName:filename inResource:_resource.name];
-    if ( [NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-
-#warning next .... 下一步 ts 的存储问题
-        
+    
+    _content = [_resource contentForTsURL:_request.URL];
+    if ( _content != nil ) {
+        [self _prepare];
+    }
+    else {
+        _task = [MCSDownload.shared downloadWithRequest:_request delegate:self];
     }
 }
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
-    return nil;
+    [self lock];
+    @try {
+
+#warning next ..... mmm
+        
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
-//@property (nonatomic, readonly) BOOL isDone;
-//@property (nonatomic, strong, readonly, nullable) id<MCSResourceResponse> response;
-//- (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close {
+    [_content readWrite_release];
+}
+
+- (void)_prepare {
+    [_content readWrite_retain];
+    NSString *filepath = [_resource filePathOfContent:_content];
+    _reader = [NSFileHandle fileHandleForReadingAtPath:filepath];
+    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_content.tsContentType totalLength:_content.tsTotalLength];
+    [self.delegate readerPrepareDidFinish:self];
+}
+
+#pragma mark -
+
+- (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
+    [self lock];
+    @try {
+        if ( _isClosed )
+            return;
+        NSString *contentType = MCSGetResponseContentType(response);
+        NSUInteger totalLength = MCSGetResponseContentLength(response);
+        _content = [_resource createContentWithTsURL:_request.URL tsContentType:contentType tsTotalLength:totalLength];
+        [self _prepare];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
     
+}
+
+- (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+    
+}
+
+#pragma mark -
+
+- (void)lock {
+    [_lock lock];
+}
+
+- (void)unlock {
+    [_lock unlock];
 }
 @end
