@@ -21,8 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;
 
-@property (nonatomic, copy, readonly, nullable) NSArray<NSURL *> *tsArray;
-
+@property (nonatomic, copy, readonly) NSString *indexFilePath;
 - (nullable NSURL *)tsURLWithTsFilename:(NSString *)filename;
 @end
 

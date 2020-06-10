@@ -100,11 +100,26 @@
     }
 }
 
+- (NSString *)indexFilePath {
+    return [self.delegate indexFileWritePathForParser:self];
+}
+
 #pragma mark -
 
 - (void)_parse {
     if ( self.isClosed )
         return;
+    
+    NSString *indexFilePath = [self.delegate indexFileWritePathForParser:self];
+    // 已解析过, 将直接读取本地
+    if ( [NSFileManager.defaultManager fileExistsAtPath:indexFilePath] ) {
+        [self lock];
+        _tsFragments = [NSDictionary dictionaryWithContentsOfFile:[self.delegate tsFragmentsWritePathForParser:self]];
+        _isDone = YES;
+        [self unlock];
+        [self.delegate parserParseDidFinish:self];
+        return;
+    }
     
     NSString *url = _URL.absoluteString;
     NSString *_Nullable contents = nil;
