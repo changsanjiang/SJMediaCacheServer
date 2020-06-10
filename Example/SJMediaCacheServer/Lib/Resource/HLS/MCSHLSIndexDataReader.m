@@ -1,17 +1,17 @@
 //
-//  MCSHLSIndexFileDataReader.m
+//  MCSHLSIndexDataReader.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/10.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSHLSIndexFileDataReader.h"
+#import "MCSHLSIndexDataReader.h"
 #import "MCSLogger.h"
 #import "MCSResourceFileDataReader.h"
 #import "MCSResourceResponse.h"
 
-@interface MCSHLSIndexFileDataReader ()<MCSHLSParserDelegate, MCSResourceDataReaderDelegate>
+@interface MCSHLSIndexDataReader ()<MCSHLSParserDelegate, MCSResourceDataReaderDelegate>
 @property (nonatomic, strong) NSURL *URL;
 
 @property (nonatomic) BOOL isCalledPrepare;
@@ -21,7 +21,7 @@
 @property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
 @end
 
-@implementation MCSHLSIndexFileDataReader
+@implementation MCSHLSIndexDataReader
 @synthesize delegate = _delegate;
 - (instancetype)initWithURL:(NSURL *)URL parser:(nullable MCSHLSParser *)parser {
     self = [super init];
@@ -85,24 +85,24 @@
 
 // aes key
 - (NSString *)parser:(MCSHLSParser *)parser AESKeyFilenameForURI:(NSString *)URI {
-    return [(id<MCSHLSIndexFileDataReaderDelegate>)_delegate reader:self AESKeyFilenameForURI:URI];
+    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate reader:self AESKeyFilenameForURI:URI];
 }
 // aes key
 - (NSString *)parser:(MCSHLSParser *)parser AESKeyWritePathForFilename:(NSString *)AESKeyFilename {
-    return [(id<MCSHLSIndexFileDataReaderDelegate>)_delegate reader:self AESKeyWritePathForFilename:AESKeyFilename];
+    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate reader:self AESKeyWritePathForFilename:AESKeyFilename];
 }
 // ts urls
 - (NSString *)tsFragmentsWritePathForParser:(MCSHLSParser *)parser {
-    return [(id<MCSHLSIndexFileDataReaderDelegate>)_delegate tsFragmentsWritePathForReader:self];
+    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate tsFragmentsWritePathForReader:self];
 }
 
 // index.m3u8
 - (NSString *)indexFileWritePathForParser:(MCSHLSParser *)parser {
-    return [(id<MCSHLSIndexFileDataReaderDelegate>)_delegate indexFileWritePathForReader:self];
+    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate indexFileWritePathForReader:self];
 }
 // index.m3u8 contents
 - (NSString *)parser:(MCSHLSParser *)parser tsFilenameForUrl:(NSString *)url {
-    return [(id<MCSHLSIndexFileDataReaderDelegate>)_delegate reader:self tsFilenameForUrl:url];
+    return [(id<MCSHLSIndexDataReaderDelegate>)_delegate reader:self tsFilenameForUrl:url];
 }
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser {
@@ -118,7 +118,7 @@
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
     NSString *indexFilePath = _parser.indexFilePath;
     NSUInteger length = [NSFileManager.defaultManager attributesOfItemAtPath:indexFilePath error:NULL].fileSize;
-    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegURL" totalLength:length];
+    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegurl" totalLength:length];
     [self.delegate readerPrepareDidFinish:self];
 }
 

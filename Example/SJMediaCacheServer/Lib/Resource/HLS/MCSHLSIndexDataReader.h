@@ -1,5 +1,5 @@
 //
-//  MCSHLSIndexFileDataReader.h
+//  MCSHLSIndexDataReader.h
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/10.
@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSHLSIndexFileDataReader : NSObject<MCSHLSDataReader>
+@interface MCSHLSIndexDataReader : NSObject<MCSHLSDataReader>
 - (instancetype)initWithURL:(NSURL *)URL parser:(nullable MCSHLSParser *)parser;
 
 - (void)prepare;
@@ -24,17 +24,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@protocol MCSHLSIndexFileDataReaderDelegate <MCSResourceDataReaderDelegate>
+@protocol MCSHLSIndexDataReaderDelegate <MCSResourceDataReaderDelegate>
 // aes key
-- (NSString *)reader:(MCSHLSIndexFileDataReader *)reader AESKeyFilenameForURI:(NSString *)URI;
+- (NSString *)reader:(MCSHLSIndexDataReader *)reader AESKeyFilenameForURI:(NSString *)URI;
 // aes key
-- (NSString *)reader:(MCSHLSIndexFileDataReader *)reader AESKeyWritePathForFilename:(NSString *)AESKeyFilename;
+- (NSString *)reader:(MCSHLSIndexDataReader *)reader AESKeyWritePathForFilename:(NSString *)AESKeyFilename;
 // ts urls
-- (NSString *)tsFragmentsWritePathForReader:(MCSHLSIndexFileDataReader *)reader;
+- (NSString *)tsFragmentsWritePathForReader:(MCSHLSIndexDataReader *)reader;
 
 // index.m3u8
-- (NSString *)indexFileWritePathForReader:(MCSHLSIndexFileDataReader *)reader;
+- (NSString *)indexFileWritePathForReader:(MCSHLSIndexDataReader *)reader;
 // index.m3u8 contents
-- (NSString *)reader:(MCSHLSIndexFileDataReader *)reader tsFilenameForUrl:(NSString *)url;
+- (NSString *)reader:(MCSHLSIndexDataReader *)reader tsFilenameForUrl:(NSString *)url;
 @end
 NS_ASSUME_NONNULL_END

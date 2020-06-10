@@ -1,18 +1,18 @@
 //
-//  MCSHLSTSFileDataReader.m
+//  MCSHLSTSDataReader.m
 //  SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2020/6/10.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSHLSTSFileDataReader.h"
+#import "MCSHLSTSDataReader.h"
 
-@interface MCSHLSTSFileDataReader ()
+@interface MCSHLSTSDataReader ()
 
 @end
 
-@implementation MCSHLSTSFileDataReader
+@implementation MCSHLSTSDataReader
 @synthesize delegate = _delegate;
 
 @end

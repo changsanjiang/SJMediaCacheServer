@@ -9,11 +9,12 @@
 #import "MCSHLSReader.h"
 #import "MCSHLSResource.h"
 #import "MCSHLSResource+MCSPrivate.h"
-#import "MCSHLSIndexFileDataReader.h"
+#import "MCSHLSIndexDataReader.h"
+#import "MCSHLSTSDataReader.h"
 #import "MCSResourceFileManager.h"
 #import "MCSLogger.h"
 
-@interface MCSHLSReader ()<NSLocking, MCSHLSIndexFileDataReaderDelegate> {
+@interface MCSHLSReader ()<NSLocking, MCSHLSIndexDataReaderDelegate> {
     NSRecursiveLock *_lock;
 }
 @property (nonatomic) BOOL isCalledPrepare;
@@ -21,6 +22,7 @@
 @property (nonatomic, strong, nullable) NSURLRequest *request;
 
 @property (nonatomic, strong, nullable) id<MCSHLSDataReader> reader;
+@property (nonatomic) NSUInteger offset;
 @end
 
 @implementation MCSHLSReader
@@ -43,15 +45,17 @@
         _isCalledPrepare = YES;
         
         if ( [_request.URL.absoluteString containsString:@".m3u8"] ) {
-            _reader = [MCSHLSIndexFileDataReader.alloc initWithURL:_request.URL parser:_resource.parser];
+            _reader = [MCSHLSIndexDataReader.alloc initWithURL:_request.URL parser:_resource.parser];
             _reader.delegate = self;
             [_reader prepare];
         }
         else {
-#ifdef DEBUG
-            NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-#endif
+            NSAssert(_resource.parser != nil, @"`parser`不能为nil!");
+            _reader = [MCSHLSTSDataReader.alloc initWithRequest:_request parser:_resource.parser];
         }
+        
+        _reader.delegate = self;
+        [_reader prepare];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -62,10 +66,12 @@
 - (NSData *)readDataOfLength:(NSUInteger)length {
     [self lock];
     @try {
-        if ( _isClosed || _isReadingEndOfData )
+        if ( _isClosed || _reader.isDone )
             return nil;
         
-        return [_reader readDataOfLength:length];
+        NSData *data = [_reader readDataOfLength:length];
+        _offset += data.length;
+        return data;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -91,11 +97,10 @@
 //    MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
 }
 
-@synthesize isReadingEndOfData = _isReadingEndOfData;
 - (BOOL)isReadingEndOfData {
     [self lock];
     @try {
-        return _isReadingEndOfData;
+        return _reader.isDone;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -138,24 +143,24 @@
 
 #pragma mark -
 // aes key
-- (NSString *)reader:(MCSHLSIndexFileDataReader *)reader AESKeyFilenameForURI:(NSString *)URI {
+- (NSString *)reader:(MCSHLSIndexDataReader *)reader AESKeyFilenameForURI:(NSString *)URI {
     return [MCSResourceFileManager hls_AESKeyFilenameForURI:URI];
 }
 // aes key
-- (NSString *)reader:(MCSHLSIndexFileDataReader *)reader AESKeyWritePathForFilename:(NSString *)AESKeyFilename {
+- (NSString *)reader:(MCSHLSIndexDataReader *)reader AESKeyWritePathForFilename:(NSString *)AESKeyFilename {
     return [MCSResourceFileManager getFilePathWithName:AESKeyFilename inResource:_resource.name];
 }
 // ts urls
-- (NSString *)tsFragmentsWritePathForReader:(MCSHLSIndexFileDataReader *)reader {
+- (NSString *)tsFragmentsWritePathForReader:(MCSHLSIndexDataReader *)reader {
     return [MCSResourceFileManager getFilePathWithName:[MCSResourceFileManager hls_tsFragmentsFilename] inResource:_resource.name];
 }
 
 // index.m3u8
-- (NSString *)indexFileWritePathForReader:(MCSHLSIndexFileDataReader *)reader {
+- (NSString *)indexFileWritePathForReader:(MCSHLSIndexDataReader *)reader {
     return [MCSResourceFileManager hls_indexFilePathInResource:_resource.name];
 }
 // index.m3u8 contents
-- (NSString *)reader:(MCSHLSIndexFileDataReader *)reader tsFilenameForUrl:(NSString *)url {
+- (NSString *)reader:(MCSHLSIndexDataReader *)reader tsFilenameForUrl:(NSString *)url {
     return [MCSResourceFileManager hls_tsFilenameForUrl:url];
 }
 

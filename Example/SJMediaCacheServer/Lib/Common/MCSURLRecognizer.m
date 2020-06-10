@@ -45,7 +45,7 @@ MCSMD5(NSString *str) {
         if ( [query.name isEqualToString:@"url"] )
             return [NSURL URLWithString:query.value];
     }
-    return nil;
+    return proxyURL;
 }
 
 - (nullable NSString *)resourceNameForURL:(NSURL *)URL {
