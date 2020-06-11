@@ -49,7 +49,7 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 
 /// Empties the cache. This method may blocks the calling thread until file delete finished.
 ///
-- (void)removeAllResources;
+- (void)removeAllCaches;
 
 - (__kindof MCSResource *)resourceWithURL:(NSURL *)URL;
 - (void)saveMetadata:(MCSResource *)resource;

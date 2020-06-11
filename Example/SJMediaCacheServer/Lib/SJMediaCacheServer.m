@@ -60,3 +60,39 @@
     return [MCSSessionTask.alloc initWithRequest:request delegate:delegate];
 }
 @end
+
+
+@implementation SJMediaCacheServer (Cache)
+- (void)setCacheCountLimit:(NSUInteger)cacheCountLimit {
+    MCSResourceManager.shared.cacheCountLimit = cacheCountLimit;
+}
+
+- (NSUInteger)cacheCountLimit {
+    return MCSResourceManager.shared.cacheCountLimit;
+}
+
+- (void)setMaxDiskAgeForCache:(NSTimeInterval)maxDiskAgeForCache {
+    MCSResourceManager.shared.maxDiskAgeForCache = maxDiskAgeForCache;
+}
+- (NSTimeInterval)maxDiskAgeForCache {
+    return MCSResourceManager.shared.maxDiskAgeForCache;
+}
+
+- (void)setMaxDiskSizeForCache:(NSUInteger)maxDiskSizeForCache {
+    MCSResourceManager.shared.maxDiskSizeForCache = maxDiskSizeForCache;
+}
+- (NSUInteger)maxDiskSizeForCache {
+    return MCSResourceManager.shared.maxDiskSizeForCache;
+}
+
+- (void)setReservedFreeDiskSpace:(NSUInteger)reservedFreeDiskSpace {
+    MCSResourceManager.shared.reservedFreeDiskSpace = reservedFreeDiskSpace;
+}
+- (NSUInteger)reservedFreeDiskSpace {
+    return MCSResourceManager.shared.reservedFreeDiskSpace;
+}
+
+- (void)removeAllCaches {
+    [MCSResourceManager.shared removeAllCaches];
+}
+@end

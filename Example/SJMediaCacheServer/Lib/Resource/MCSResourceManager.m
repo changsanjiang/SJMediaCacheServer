@@ -339,7 +339,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     [self unlock];
 }
 
-- (void)removeAllResources {
+- (void)removeAllCaches {
     [self lock];
     @try {
         NSArray<MCSVODResource *> *VODResources = [_sqlite3 objectsForClass:MCSVODResource.class conditions:nil orderBy:nil error:NULL];
