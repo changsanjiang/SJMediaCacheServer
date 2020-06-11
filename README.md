@@ -26,7 +26,7 @@ ___
 
 /// Add a request header or something to a request.
 ///
-///     This block will be invoke when the download server creates each new download task.
+///     This block will be invoked when the download server creates new download task.
 ///
 @property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request); // 为下载请求添加请求头或做一些其他事情
 
