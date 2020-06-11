@@ -14,7 +14,7 @@
 #import "MCSHLSPrefetcher.h"
 
 @interface MCSHLSResource ()
-
+@property (nonatomic) NSUInteger tsCount;
 @end
 
 @implementation MCSHLSResource
@@ -87,7 +87,9 @@
 - (void)setParser:(MCSHLSParser *)parser {
     [self lock];
     _parser = parser;
+    _tsCount = parser.tsCount;
     [self unlock];
+    [MCSResourceManager.shared saveMetadata:self];
 }
 
 - (MCSHLSParser *)parser {
@@ -166,7 +168,7 @@
 
 - (void)_contentsDidChange {
     NSArray *contents = self.contents.copy;
-    if ( _parser != nil && contents.count == _parser.tsCount ) {
+    if ( _tsCount != 0 && contents.count == _tsCount ) {
         BOOL isFinished = YES;
         for ( MCSResourcePartialContent *content in contents ) {
             if ( content.length != content.tsTotalLength ) {

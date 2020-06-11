@@ -42,7 +42,7 @@
         return URL;
     MCSResource *resource = [MCSResourceManager.shared resourceWithURL:URL];
     
-    // file URL
+    // playback URL for cache
     if ( resource.isCacheFinished )
         return [resource playbackURLForCacheWithURL:URL];
     

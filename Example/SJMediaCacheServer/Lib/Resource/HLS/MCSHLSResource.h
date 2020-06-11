@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface MCSHLSResource : MCSResource
 @property (nonatomic, copy, readonly, nullable) NSString *tsContentType;
+@property (nonatomic, readonly) NSUInteger tsCount;
 @property (nonatomic, strong, nullable) MCSHLSParser *parser;
 
 - (NSString *)tsNameForTsProxyURL:(NSURL *)URL;

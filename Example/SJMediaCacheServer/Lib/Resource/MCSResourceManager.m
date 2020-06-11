@@ -272,12 +272,12 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
                 resource.log = [MCSResourceUsageLog.alloc initWithResource:resource];
                 [self _update:resource]; // save log
                 _count += 1;
-                
-                NSString *path = [MCSFileManager getResourcePathWithName:name];
-                if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
-                    [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
-                }
-
+            }
+            
+            // directory
+            NSString *path = [MCSFileManager getResourcePathWithName:name];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
+                [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
             }
             
             // contents
