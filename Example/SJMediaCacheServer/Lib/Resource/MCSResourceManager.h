@@ -51,8 +51,16 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 ///
 - (void)removeAllCaches;
 
+///
+///
+///
+@property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+
+
 - (__kindof MCSResource *)resourceWithURL:(NSURL *)URL;
 - (void)saveMetadata:(MCSResource *)resource;
+
+- (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource;
 - (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource;
 - (void)didWriteDataForResource:(MCSResource *)resource length:(NSUInteger)length;

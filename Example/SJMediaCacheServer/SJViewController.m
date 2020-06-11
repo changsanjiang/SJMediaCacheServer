@@ -29,9 +29,9 @@
         
     NSURL *URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/2000/0303000a/3/default/bca293257d954934afadfaa96d865172/2000.m3u8"];
     
-    URL = [NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927701757134e92"];
+//    URL = [NSURL URLWithString:@"http://audio.cdn.lanwuzhe.com/14927701757134e92"];
     
-    URL = [NSURL URLWithString:@"http://cdn.half-room.com/lm2polchkxAAl6J7ZaCJciiO5fN8.m3u8?pm3u8/0&e=1591792296&token=tCieKPlW4J4EZifkbE7fu1kt-NS6PKZ6nNk5eCMA:sohMlpZUQ8MOwO8w1nestE_esgo="];
+//    URL = [NSURL URLWithString:@"http://cdn.half-room.com/lm2polchkxAAl6J7ZaCJciiO5fN8.m3u8?pm3u8/0&e=1591792296&token=tCieKPlW4J4EZifkbE7fu1kt-NS6PKZ6nNk5eCMA:sohMlpZUQ8MOwO8w1nestE_esgo="];
     
     // playback URL
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];

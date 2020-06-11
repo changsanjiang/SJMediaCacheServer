@@ -14,6 +14,7 @@
 #import "MCSSessionTask.h"
 #import "MCSURLRecognizer.h"
 #import "MCSLogger.h"
+#import "MCSDownload.h"
 
 @interface SJMediaCacheServer ()<MCSProxyServerDelegate>
 @property (nonatomic, strong, readonly) MCSProxyServer *server;
@@ -70,6 +71,20 @@
 }
 - (NSString * _Nonnull (^)(NSURL * _Nonnull))resolveResourceIdentifier {
     return MCSURLRecognizer.shared.resolveResourceIdentifier;
+}
+
+- (void)setWriteDataEncoder:(NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))writeDataEncoder {
+    MCSDownload.shared.dataEncoder = writeDataEncoder;
+}
+- (NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))writeDataEncoder {
+    return MCSDownload.shared.dataEncoder;
+}
+
+- (void)setReadDataDecoder:(NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))readDataDecoder {
+    MCSResourceManager.shared.readDataDecoder = readDataDecoder;
+}
+- (NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))readDataDecoder {
+    return MCSResourceManager.shared.readDataDecoder;
 }
 @end
 

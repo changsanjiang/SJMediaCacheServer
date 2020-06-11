@@ -303,6 +303,13 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     [self _update:resource];
 }
 
+- (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request {
+    MCSResource *resource = [self resourceWithURL:request.URL];
+    id<MCSResourceReader> reader = [resource readerWithRequest:request];
+    reader.readDataDecoder = _readDataDecoder;
+    return reader;
+}
+
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource {
     // update
     resource.log.usageCount += 1;

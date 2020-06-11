@@ -34,6 +34,18 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic, copy, nullable) NSString *(^resolveResourceIdentifier)(NSURL *URL); // URL参数不固定时, 请设置该block返回一个唯一标识符
 
+/// Encode the received data.
+///
+///     This block will be invoked when the download server receives the data, where you can perform some encoding operations on the data.
+///
+@property (nonatomic, copy, nullable) NSData *(^writeDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+
+/// Decode the read data.
+///
+///     This block will be invoked when the reader reads the data, where you can perform some decoding operations on the data.
+///
+@property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+
 @end
 
 

@@ -41,6 +41,7 @@
 @end
 
 @implementation MCSVODReader
+@synthesize readDataDecoder = _readDataDecoder;
 
 - (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request {
     self = [super init];
@@ -115,6 +116,7 @@
             return nil;
         
         NSData *data = [self.currentReader readDataOfLength:length];
+        if ( _readDataDecoder != nil ) data = _readDataDecoder(_request, _offset, data);
         _offset += data.length;
         return data;
     } @catch (__unused NSException *exception) {

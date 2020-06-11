@@ -185,6 +185,7 @@
     @try {
         NSNumber *key = @(dataTask.taskIdentifier);
         __auto_type delegate = _delegateDictionary[key];
+        if ( _dataEncoder != nil ) data = _dataEncoder(dataTask.currentRequest, dataTask.countOfBytesReceived - data.length, data);
         [delegate downloadTask:dataTask didReceiveData:data];
     } @catch (__unused NSException *exception) {
             

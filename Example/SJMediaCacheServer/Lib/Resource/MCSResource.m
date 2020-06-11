@@ -57,10 +57,8 @@
 //#endif
 }
 
-- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-//#ifdef DEBUG
-//    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-//#endif
+- (void)partialContent:(MCSResourcePartialContent *)content didWriteDataWithLength:(NSUInteger)length {
+    
 }
 
 #pragma mark -

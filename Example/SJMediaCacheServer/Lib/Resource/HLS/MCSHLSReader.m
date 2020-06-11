@@ -28,6 +28,8 @@
 @end
 
 @implementation MCSHLSReader
+@synthesize readDataDecoder = _readDataDecoder;
+
 - (instancetype)initWithResource:(__weak MCSHLSResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
@@ -89,6 +91,7 @@
             return nil;
         
         NSData *data = [_reader readDataOfLength:length];
+        if ( _readDataDecoder != nil ) data = _readDataDecoder(_request, _offset, data);
         _offset += data.length;
         return data;
     } @catch (__unused NSException *exception) {

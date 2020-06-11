@@ -27,8 +27,7 @@
 }
 
 - (void)prepare {
-    _resource = [MCSResourceManager.shared resourceWithURL:_request.URL];
-    _reader = [_resource readerWithRequest:_request];
+    _reader = [MCSResourceManager.shared readerWithRequest:_request];
     _reader.delegate = self;
     @autoreleasepool {
         [_reader prepare];
