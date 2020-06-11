@@ -25,21 +25,27 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 ///
 ///     This is not a strict limit—if the cache goes over the limit, a resource in the cache could be evicted instantly, later, or possibly never, depending on the usage details of the resource.
 ///
-@property (nonatomic) NSUInteger cacheCountLimit;
+@property (nonatomic) NSUInteger cacheCountLimit; // 个数限制
 
 /// The maximum length of time to keep a resource in the cache, in seconds.
 ///
 ///     If 0, there is no expiring limit.  The default value is 0.
 ///
-@property (nonatomic) NSTimeInterval maxDiskAgeForResource;
+@property (nonatomic) NSTimeInterval maxDiskAgeForCache; // 保存时长限制
+
+/// The maximum size of the disk cache, in bytes.
+///
+///     If 0, there is no cache size limit. The default value is 0.
+///
+@property (nonatomic) NSUInteger maxDiskSizeForCache; // 缓存占用的磁盘空间限制
 
 /// The maximum length of free disk space the device should reserved, in bytes.
 ///
-///     When the free disk space of device is less than or equal to this value, unread resources will be removed.
+///     When the free disk space of device is less than or equal to this value, some resources will be removed.
 ///
 ///     If 0, there is no disk space limit. The default value is 0.
 ///
-@property (nonatomic) NSUInteger reservedFreeDiskSpace;
+@property (nonatomic) NSUInteger reservedFreeDiskSpace; // 剩余磁盘空间限制
 
 /// Empties the cache. This method may blocks the calling thread until file delete finished.
 ///
@@ -49,7 +55,12 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 - (void)saveMetadata:(MCSResource *)resource;
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource;
 - (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource;
-- (void)didWriteDataForResource:(MCSResource *)resource;
+- (void)didWriteDataForResource:(MCSResource *)resource length:(NSUInteger)length;
 @end
 
 NS_ASSUME_NONNULL_END
+
+// 缓存的资源个数超出限制时, 可能会移除某些资源
+// 保存的资源过期时, 可能会移除某些资源
+// 缓存占用的磁盘空间超出限制时, 可能会移除某些资源
+// 剩余磁盘空间小于限制时, 可能会移除某些资源

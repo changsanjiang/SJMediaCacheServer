@@ -190,7 +190,7 @@
                     [reader closeFile];
                     [writer synchronizeFile];
                     [writer closeFile];
-                    write.length += readRange.length;
+                    [write didWriteDataWithLength:readRange.length];
                     [deleteContents addObject:read];
                 } @catch (NSException *exception) {
                     break;
@@ -213,8 +213,8 @@
     }
 }
 
-- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-    [MCSResourceManager.shared didWriteDataForResource:self];
+- (void)partialContent:(MCSResourcePartialContent *)content didWriteDataWithLength:(NSUInteger)length {
+    [MCSResourceManager.shared didWriteDataForResource:self length:length];
 }
 
 - (void)_contentsDidChange {

@@ -52,14 +52,14 @@
 }
 
 @synthesize length = _length;
-- (void)setLength:(NSUInteger)length {
+- (void)didWriteDataWithLength:(NSUInteger)length {
+    if ( length == 0 )
+        return;
+    
     [self lock];
     @try {
-        if ( length != _length ) {
-            _length = length;
-            
-            [_delegate contentLengthDidChangeForPartialContent:self];
-        }
+        _length += length;
+        [_delegate partialContent:self didWriteDataWithLength:length];
     } @catch (__unused NSException *exception) {
         
     } @finally {

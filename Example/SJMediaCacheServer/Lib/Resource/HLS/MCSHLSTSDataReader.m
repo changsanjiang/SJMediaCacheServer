@@ -169,9 +169,9 @@
             return;
         
         [_writer writeData:data];
-        _availableLength += data.length;
-        _content.length = _availableLength;
-        
+        NSUInteger length = data.length;
+        _availableLength += length;
+        [_content didWriteDataWithLength:length];
         
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_errorForException:exception]];

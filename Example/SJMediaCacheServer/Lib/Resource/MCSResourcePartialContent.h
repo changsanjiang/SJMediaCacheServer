@@ -11,7 +11,8 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface MCSResourcePartialContent : NSObject
 @property (nonatomic, copy, readonly) NSString *name;
-@property (nonatomic) NSUInteger length;
+@property (nonatomic, readonly) NSUInteger length;
+- (void)didWriteDataWithLength:(NSUInteger)length;
 @end
 
 @interface MCSResourcePartialContent (VOD)

@@ -160,8 +160,8 @@
     }
 }
 
-- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-    [MCSResourceManager.shared didWriteDataForResource:self];
+- (void)partialContent:(MCSResourcePartialContent *)content didWriteDataWithLength:(NSUInteger)length {
+    [MCSResourceManager.shared didWriteDataForResource:self length:length];
 }
 
 - (void)_contentsDidChange {

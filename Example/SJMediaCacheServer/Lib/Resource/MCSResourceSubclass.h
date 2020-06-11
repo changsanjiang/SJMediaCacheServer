@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MCSResourcePartialContentDelegate <NSObject>
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content;
-- (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content;
+- (void)partialContent:(MCSResourcePartialContent *)content didWriteDataWithLength:(NSUInteger)length;
 @end
 
 @interface MCSResource (Private)<NSLocking, MCSResourcePartialContentDelegate>

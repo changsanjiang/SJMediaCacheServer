@@ -181,9 +181,9 @@
             return;
 
         [_writer writeData:data];
-        _downloadedLength += data.length;
-        _content.length = _downloadedLength;
-        
+        NSUInteger length = data.length;
+        _downloadedLength += length;
+        [_content didWriteDataWithLength:length];
         [self.delegate readerHasAvailableData:self];
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_errorForException:exception]];
