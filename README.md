@@ -2,6 +2,7 @@
 # SJMediaCacheServer
 
 ```ruby
+pod 'SJUIKit/SQLite3', :podspec => 'https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec'
 pod 'SJMediaCacheServer'
 ```
 
