@@ -19,9 +19,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly) MCSResourceUsageLog *log;
 
-#warning next ...
-
 @property (nonatomic, readonly) BOOL isCacheFinished;
+
+- (nullable NSURL *)playbackURLForCacheWithURL:(NSURL *)URL;
 @end
 
 NS_ASSUME_NONNULL_END

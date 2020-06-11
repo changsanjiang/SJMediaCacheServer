@@ -19,16 +19,6 @@ typedef NS_ENUM(NSUInteger, MCSResourceType) {
 };
 
 NS_ASSUME_NONNULL_BEGIN
-@protocol MCSURLRecognizer <NSObject>
-- (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL;
-- (nullable NSURL *)URLWithProxyURL:(NSURL *)proxyURL;
-
-- (nullable NSString *)resourceNameForURL:(NSURL *)URL;
-- (MCSResourceType)resourceTypeForURL:(NSURL *)URL;
-
-@end
-
-
 @protocol MCSSessionTask <NSObject>
 - (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate;
 

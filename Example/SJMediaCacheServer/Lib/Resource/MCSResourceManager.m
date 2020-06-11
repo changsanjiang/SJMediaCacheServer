@@ -81,7 +81,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 + (NSArray<NSString *> *)sql_blacklist {
-    return @[@"readWriteCount"];
+    return @[@"readWriteCount", @"isCacheFinished", @"playbackURLForCache"];
 }
 @end
 

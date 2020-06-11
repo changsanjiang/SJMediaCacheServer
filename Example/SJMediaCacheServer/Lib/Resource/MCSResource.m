@@ -18,6 +18,8 @@
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) MCSResourceUsageLog *log;
 @property (nonatomic) NSInteger readWriteCount;
+@property (nonatomic) BOOL isCacheFinished;
+@property (nonatomic, strong) NSURL *playbackURLForCache;
 @end
 
 @implementation MCSResource
@@ -62,6 +64,30 @@
 }
 
 #pragma mark -
+
+@synthesize isCacheFinished = _isCacheFinished;
+- (void)setIsCacheFinished:(BOOL)isCacheFinished {
+    [self lock];
+    _isCacheFinished = isCacheFinished;
+    [self unlock];
+}
+
+- (BOOL)isCacheFinished {
+    [self lock];
+    @try {
+        return _isCacheFinished;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (nullable NSURL *)playbackURLForCacheWithURL:(NSURL *)URL {
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+      reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
+    userInfo:nil];
+}
 
 @synthesize readWriteCount = _readWriteCount;
 - (void)setReadWriteCount:(NSInteger)readWriteCount {

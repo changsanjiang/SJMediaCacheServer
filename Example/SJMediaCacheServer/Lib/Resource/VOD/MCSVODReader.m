@@ -321,7 +321,7 @@
         }
         else if ( reader == _tmpReader ) {
             // update contentType & totalLength & server for `resource`
-            [_resource updateServer:MCSGetResponseServer(_tmpReader.response) contentType:MCSGetResponseContentType(_tmpReader.response) totalLength:MCSGetResponseContentRange(_tmpReader.response).totalLength];
+            [_resource updateServer:MCSGetResponseServer(_tmpReader.response) contentType:MCSGetResponseContentType(_tmpReader.response) totalLength:MCSGetResponseContentRange(_tmpReader.response).totalLength pathExtension:_tmpReader.response.suggestedFilename.pathExtension];
 
             // clean
             [_tmpReader close];

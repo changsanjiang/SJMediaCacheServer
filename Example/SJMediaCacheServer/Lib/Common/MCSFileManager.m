@@ -85,14 +85,15 @@ static NSString *HLSPrefix = @"hls";
 }
 
 // VOD
-+ (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset {
++ (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(NSString *)pathExtension {
     NSString *resourcePath = [self getResourcePathWithName:resourceName];
     [self checkoutDirectoryWithPath:resourcePath];
     
     NSUInteger sequence = 0;
     while (true) {
-        // VOD前缀_偏移量_序号
+        // VOD前缀_偏移量_序号_扩展名
         NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
+        if ( pathExtension.length != 0 ) filename = [filename stringByAppendingPathExtension:pathExtension];
         NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
         if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
             [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
@@ -153,7 +154,7 @@ static NSString *HLSPrefix = @"hls";
     }
 }
 
-// format: VOD前缀_偏移量_序号
+// format: // VOD前缀_偏移量_序号_扩展名
 // VOD
 + (NSUInteger)offsetOfContent:(NSString *)name {
     return [[name componentsSeparatedByString:name][1] longLongValue];

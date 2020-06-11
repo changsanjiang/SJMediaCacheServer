@@ -33,7 +33,9 @@ MCSMD5(NSString *str) {
     return instance;
 }
 
-- (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL {
+- (NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL {
+    if ( [URL.host isEqualToString:serverURL.host] )
+        return URL;
     NSURLComponents *components = [NSURLComponents componentsWithURL:serverURL resolvingAgainstBaseURL:NO];
     components.path = URL.path;
     NSString *url = [[URL.absoluteString dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
@@ -41,7 +43,7 @@ MCSMD5(NSString *str) {
     return components.URL;
 }
 
-- (nullable NSURL *)URLWithProxyURL:(NSURL *)proxyURL {
+- (NSURL *)URLWithProxyURL:(NSURL *)proxyURL {
     NSURLComponents *components = [NSURLComponents componentsWithURL:proxyURL resolvingAgainstBaseURL:NO];
     for ( NSURLQueryItem *query in components.queryItems ) {
         if ( [query.name isEqualToString:@"url"] ) {
@@ -52,7 +54,7 @@ MCSMD5(NSString *str) {
     return proxyURL;
 }
 
-- (nullable NSString *)resourceNameForURL:(NSURL *)URL {
+- (NSString *)resourceNameForURL:(NSURL *)URL {
     if ( [URL.absoluteString containsString:@".ts"] ) {
         return [MCSFileManager hls_resourceNameForTsProxyURL:URL];
     }

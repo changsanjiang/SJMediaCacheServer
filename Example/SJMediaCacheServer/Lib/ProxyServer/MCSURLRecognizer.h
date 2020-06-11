@@ -7,15 +7,19 @@
 //
 
 #import "MCSDefines.h"
+#import "MCSProxyServer.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSURLRecognizer : NSObject<MCSURLRecognizer>
+@interface MCSURLRecognizer : NSObject
 + (instancetype)shared;
-- (nullable NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL;
-- (nullable NSURL *)URLWithProxyURL:(NSURL *)proxyURL;
 
-- (nullable NSString *)resourceNameForURL:(NSURL *)URL;
+@property (nonatomic, weak, nullable) MCSProxyServer *server;
+
+- (NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL;
+- (NSURL *)URLWithProxyURL:(NSURL *)proxyURL;
+
+- (NSString *)resourceNameForURL:(NSURL *)URL;
 - (MCSResourceType)resourceTypeForURL:(NSURL *)URL;
 @end
 

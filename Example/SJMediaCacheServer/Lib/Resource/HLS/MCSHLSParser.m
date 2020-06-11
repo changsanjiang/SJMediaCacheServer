@@ -102,6 +102,17 @@
     }
 }
 
+- (NSUInteger)tsCount {
+    [self lock];
+    @try {
+        return _tsFragments.count;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
 - (NSString *)indexFilePath {
     return [MCSFileManager hls_indexFilePathInResource:self.resourceName];
 }

@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)close;
 
 @property (nonatomic, copy, readonly) NSString *resourceName;
+@property (nonatomic, readonly) NSUInteger tsCount;
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;
 

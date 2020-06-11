@@ -13,11 +13,15 @@
 #import "MCSFileManager.h"
 #import "MCSVODPrefetcher.h"
 #import "MCSUtils.h"
+#import "MCSResourceSubclass.h"
 
-@interface MCSVODResource ()
+@interface MCSVODResource () {
+    NSURL *_playbackURLForCache;
+}
 @property (nonatomic, copy, nullable) NSString *contentType;
 @property (nonatomic, copy, nullable) NSString *server;
 @property (nonatomic) NSUInteger totalLength;
+@property (nonatomic, copy, nullable) NSString *pathExtension;
 @end
 
 @implementation MCSVODResource
@@ -34,12 +38,28 @@
     return [MCSVODPrefetcher.alloc initWithResource:self request:request];
 }
 
-#pragma mark - 
+- (NSURL *)playbackURLForCacheWithURL:(NSURL *)URL {
+    [self lock];
+    @try {
+        return _playbackURLForCache;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+#pragma mark -
+
+- (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
+    [super addContents:contents];
+    [self _contentsDidChange];
+}
 
 - (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
-        NSString *filename = [MCSFileManager createContentFileInResource:self.name atOffset:offset];
+        NSString *filename = [MCSFileManager createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
         MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename offset:offset];
         [self addContent:content];
         return content;
@@ -83,7 +103,7 @@
     }
 }
 
-- (void)updateServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength {
+- (void)updateServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength pathExtension:(nullable NSString *)pathExtension {
     BOOL updated = NO;
     [self lock];
     if ( ![server isEqualToString:_server] ) {
@@ -92,12 +112,17 @@
     }
     
     if ( ![contentType isEqualToString:_contentType] ) {
-        _contentType = contentType;
+        _contentType = contentType.copy;
         updated = YES;
     }
     
     if ( _totalLength != totalLength ) {
         _totalLength = totalLength;
+        updated = YES;
+    }
+    
+    if ( ![pathExtension isEqualToString:_pathExtension] ) {
+        _pathExtension = pathExtension.copy;
         updated = YES;
     }
     [self unlock];
@@ -108,10 +133,10 @@
 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
     if ( content.readWriteCount > 0 ) return;
+    if ( self.contents.count <= 1 ) return;
+
     [self lock];
     @try {
-        if ( self.contents.count <= 1 ) return;
-        
         // 合并文件
         NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
         for ( MCSResourcePartialContent *content in self.contents ) {
@@ -179,6 +204,8 @@
                 [self removeContent:content];
             }
         }
+        
+        [self _contentsDidChange];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -188,5 +215,21 @@
 
 - (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
     [MCSResourceManager.shared didWriteDataForResource:self];
+}
+
+- (void)_contentsDidChange {
+    NSArray *contents = self.contents.copy;
+    if ( contents.count == 1 ) {
+        MCSResourcePartialContent *content = contents.lastObject;
+        if ( content.length != 0 ) {
+            self.isCacheFinished = content.length == self.totalLength;
+            if ( self.isCacheFinished ) {
+                NSString *path = [self filePathOfContent:content];
+                [self lock];
+                _playbackURLForCache = [NSURL fileURLWithPath:path];
+                [self unlock];
+            }
+        }
+    }
 }
 @end

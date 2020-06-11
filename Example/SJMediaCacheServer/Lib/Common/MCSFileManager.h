@@ -43,7 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // VOD
 //      注意: 返回文件名
-+ (nullable NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset;
++ (nullable NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension;
 
 // HLS
 //      注意: 返回文件名

@@ -31,6 +31,15 @@
     return [MCSHLSPrefetcher.alloc initWithResource:self request:request];
 }
 
+- (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
+    [super addContents:contents];
+    [self _contentsDidChange];
+}
+
+- (NSURL *)playbackURLForCacheWithURL:(NSURL *)URL {
+    return URL;
+}
+
 - (NSString *)tsNameForTsProxyURL:(NSURL *)URL {
     return [MCSFileManager hls_tsNameForTsProxyURL:URL];
 }
@@ -142,6 +151,8 @@
                 [self removeContent:content];
             }
         }
+        
+        [self _contentsDidChange];
     } @catch (NSException *exception) {
         
     } @finally {
@@ -151,5 +162,19 @@
 
 - (void)contentLengthDidChangeForPartialContent:(MCSResourcePartialContent *)content {
     [MCSResourceManager.shared didWriteDataForResource:self];
+}
+
+- (void)_contentsDidChange {
+    NSArray *contents = self.contents.copy;
+    if ( _parser != nil && contents.count == _parser.tsCount ) {
+        BOOL isFinished = YES;
+        for ( MCSResourcePartialContent *content in contents ) {
+            if ( content.length != content.tsTotalLength ) {
+                isFinished = NO;
+                break;
+            }
+        }
+        self.isCacheFinished = isFinished;
+    }
 }
 @end
