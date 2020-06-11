@@ -2,7 +2,7 @@
 //  MCSResourceManager.h
 //  SJMediaCacheServer_Example
 //
-//  Created by BlueDancer on 2020/6/3.
+//  Created by 畅三江 on 2020/6/3.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 

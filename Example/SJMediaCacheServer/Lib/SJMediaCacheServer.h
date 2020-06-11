@@ -2,8 +2,12 @@
 //  SJMediaCacheServer.h
 //  SJMediaCacheServer_Example
 //
-//  Created by BlueDancer on 2020/5/30.
+//  Created by 畅三江 on 2020/5/30.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
+//
+//  Github: https://github.com/changsanjiang/SJMediaCacheServer.git
+//
+//  QQGroup: 930508201
 //
 
 #import <Foundation/Foundation.h>
@@ -30,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 ///     This block will be invoke when the download server creates each new download task.
 ///
-@property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request);
+@property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request); // 为下载请求添加请求头或做一些其他事情
 
 @end
 

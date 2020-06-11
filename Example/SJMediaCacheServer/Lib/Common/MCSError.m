@@ -2,7 +2,7 @@
 //  MCSError.m
 //  SJMediaCacheServer_Example
 //
-//  Created by BlueDancer on 2020/6/8.
+//  Created by 畅三江 on 2020/6/8.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 

@@ -2,7 +2,7 @@
 //  MCSProxyServer.h
 //  SJMediaCacheServer_Example
 //
-//  Created by BlueDancer on 2020/5/30.
+//  Created by 畅三江 on 2020/5/30.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
