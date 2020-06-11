@@ -94,25 +94,6 @@
     }
 }
 
-- (NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)requestParam completionHandler:(void (^)(NSData * _Nullable, NSURLResponse * _Nullable, NSError * _Nullable))completionHandler {
-    [self lock];
-    @try {
-        NSURLRequest *request = [self _requestWithParam:requestParam];
-        if ( request == nil )
-            return nil;
-        
-        NSURLSessionDataTask *task = [_session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-            if ( completionHandler != nil ) completionHandler(data, response, error);
-        }];
-        [task resume];
-        return task;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
     [self lock];
     completionHandler(request);
@@ -144,24 +125,6 @@
                 }
             }
         }
-        
-#warning next ... storage
-        //    if (!error) {
-        //        long long (^getDeletionLength)(long long) = ^(long long desireLength){
-        //            return desireLength + [SJDataStorage storage].totalCacheLength - [SJDataStorage storage].maxCacheLength;
-        //        };
-        //        long long length = getDeletionLength(dataResponse.contentLength);
-        //        if (length > 0) {
-        //            [[SJDataUnitPool pool] deleteUnitsWithLength:length];
-        //            length = getDeletionLength(dataResponse.contentLength);
-        //            if (length > 0) {
-        //                error = [SJError errorForNotEnoughDiskSpace:dataResponse.totalLength
-        //                                                       request:dataResponse.contentLength
-        //                                              totalCacheLength:[SJDataStorage storage].totalCacheLength
-        //                                                maxCacheLength:[SJDataStorage storage].maxCacheLength];
-        //            }
-        //        }
-        //    }
         
         NSNumber *key = @(task.taskIdentifier);
         if ( error == nil ) {
@@ -248,9 +211,6 @@
 - (void)applicationDidEnterBackground:(NSNotification *)notification {
     [self lock];
     @try {
-        
-#warning next ... 考虑第二种下载方法的情况
-        
         if ( _delegateDictionary.count > 0 )
             [self beginBackgroundTask];
     } @catch (__unused NSException *exception) {
