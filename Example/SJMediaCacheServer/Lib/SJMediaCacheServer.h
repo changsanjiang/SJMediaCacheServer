@@ -24,6 +24,17 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
+@interface SJMediaCacheServer (Request)
+
+/// Add a request header or something to a request.
+///
+///     This block will be invoke when the download server creates each new download task.
+///
+@property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request);
+
+@end
+
+
 @interface SJMediaCacheServer (Convert)
 
 /// Resolve the identifier of the resource referenced by the URL.
@@ -38,13 +49,13 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 ///     This block will be invoked when the download server receives the data, where you can perform some encoding operations on the data.
 ///
-@property (nonatomic, copy, nullable) NSData *(^writeDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+@property (nonatomic, copy, nullable) NSData *(^writeDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对下载的数据进行编码
 
 /// Decode the read data.
 ///
 ///     This block will be invoked when the reader reads the data, where you can perform some decoding operations on the data.
 ///
-@property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+@property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对读取的数据进行解码
 
 @end
 

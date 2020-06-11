@@ -65,6 +65,19 @@
 @end
 
 
+@implementation SJMediaCacheServer (Request)
+
+- (void)setRequestHandler:(NSMutableURLRequest * _Nullable (^)(NSMutableURLRequest * _Nonnull))requestHandler {
+    MCSDownload.shared.requestHandler = requestHandler;
+}
+- (NSMutableURLRequest * _Nullable (^)(NSMutableURLRequest * _Nonnull))requestHandler {
+    return MCSDownload.shared.requestHandler;
+}
+
+@end
+
+
+
 @implementation SJMediaCacheServer (Convert)
 - (void)setResolveResourceIdentifier:(NSString * _Nonnull (^)(NSURL * _Nonnull))resolveResourceIdentifier {
     MCSURLRecognizer.shared.resolveResourceIdentifier = resolveResourceIdentifier;
