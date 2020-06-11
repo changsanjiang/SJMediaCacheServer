@@ -55,10 +55,14 @@ MCSMD5(NSString *str) {
 }
 
 - (NSString *)resourceNameForURL:(NSURL *)URL {
+    // 包含ts的URL一般为内部代理发送的请求, 此处返回ts对应的root资源的名字
     if ( [URL.absoluteString containsString:@".ts"] ) {
         return [MCSFileManager hls_resourceNameForTsProxyURL:URL];
     }
-    return MCSMD5(URL.absoluteString);
+    
+    NSString *str = self.resolveResourceIdentifier != nil ? self.resolveResourceIdentifier(URL) : URL.absoluteString;
+    NSParameterAssert(str);
+    return MCSMD5(str);
 }
 
 - (MCSResourceType)resourceTypeForURL:(NSURL *)URL {

@@ -12,6 +12,8 @@
 #import "MCSResource.h"
 #import "MCSURLRecognizer.h"
 #import "MCSSessionTask.h"
+#import "MCSURLRecognizer.h"
+#import "MCSLogger.h"
 
 @interface SJMediaCacheServer ()<MCSProxyServerDelegate>
 @property (nonatomic, strong, readonly) MCSProxyServer *server;
@@ -61,6 +63,27 @@
 }
 @end
 
+
+@implementation SJMediaCacheServer (Convert)
+- (void)setResolveResourceIdentifier:(NSString * _Nonnull (^)(NSURL * _Nonnull))resolveResourceIdentifier {
+    MCSURLRecognizer.shared.resolveResourceIdentifier = resolveResourceIdentifier;
+}
+- (NSString * _Nonnull (^)(NSURL * _Nonnull))resolveResourceIdentifier {
+    return MCSURLRecognizer.shared.resolveResourceIdentifier;
+}
+@end
+
+
+@implementation SJMediaCacheServer (Log)
+
+- (void)setEnabledConsoleLog:(BOOL)enabledConsoleLog {
+    MCSLogger.shared.enabledConsoleLog = enabledConsoleLog;
+}
+
+- (BOOL)isEnabledConsoleLog {
+    return MCSLogger.shared.enabledConsoleLog;
+}
+@end
 
 @implementation SJMediaCacheServer (Cache)
 - (void)setCacheCountLimit:(NSUInteger)cacheCountLimit {

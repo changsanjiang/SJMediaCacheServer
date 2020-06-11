@@ -24,6 +24,30 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
+@interface SJMediaCacheServer (Convert)
+
+/// Resolve the identifier of the resource referenced by the URL.
+///
+///     The resource identifier represents a unique resource. When different URLs references the same resource, you can set the block to resolve the identifier.
+///
+///     This identifier will be used to identify the local cache. The same identifier will references the same cache.
+///
+@property (nonatomic, copy, nullable) NSString *(^resolveResourceIdentifier)(NSURL *URL); // URL参数不固定时, 请设置该block返回一个唯一标识符
+
+@end
+
+
+@interface SJMediaCacheServer (Log)
+
+/// Whether to open the console log, only in debug mode. release mode will not generate any logs.
+///
+///     If yes, the log will be output on the console. The default value is NO.
+///
+@property (nonatomic, getter=isEnabledConsoleLog) BOOL enabledConsoleLog; // 是否开启控制日志
+
+@end
+
+
 @interface SJMediaCacheServer (Cache)
 
 /// The maximum number of resources the cache should hold.
