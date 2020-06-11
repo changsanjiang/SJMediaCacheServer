@@ -50,6 +50,14 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length;
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
+
 @end
 
+@interface MCSFileManager (FileSize)
++ (NSUInteger)rootDirectorySize;
++ (NSUInteger)systemFreeSize;
+
++ (NSUInteger)fileSizeAtPath:(NSString *)path;
++ (NSUInteger)directorySizeAtPath:(NSString *)path;
+@end
 NS_ASSUME_NONNULL_END

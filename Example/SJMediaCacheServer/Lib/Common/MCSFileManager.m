@@ -174,3 +174,24 @@ static NSString *HLSPrefix = @"hls";
     return [[name componentsSeparatedByString:@"_"][1] longLongValue];
 }
 @end
+
+@implementation MCSFileManager (FileSize)
++ (NSUInteger)rootDirectorySize {
+    return [self directorySizeAtPath:[self rootDirectoryPath]];
+}
+
++ (NSUInteger)systemFreeSize {
+    return [[NSFileManager.defaultManager attributesOfFileSystemForPath:NSHomeDirectory() error:NULL][NSFileSystemFreeSize] unsignedLongValue];
+}
+ 
++ (NSUInteger)directorySizeAtPath:(NSString *)path {
+    NSUInteger size = 0;
+    for ( NSString *subpath in [NSFileManager.defaultManager subpathsAtPath:path] )
+        size += [self fileSizeAtPath:[path stringByAppendingPathComponent:subpath]];
+    return size;
+}
+
++ (NSUInteger)fileSizeAtPath:(NSString *)path {
+    return [NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL].fileSize;
+}
+@end
