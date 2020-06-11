@@ -62,7 +62,7 @@
         _offset += data.length;
         _isDone = _offset == _readRange.length;
         
-        MCSLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
+        MCSLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, _offset, data.length);
         
 #ifdef DEBUG
         if ( _isDone ) {

@@ -44,7 +44,7 @@ MCSGetResponseContentType(NSHTTPURLResponse *response) {
 NSUInteger
 MCSGetResponseContentLength(NSHTTPURLResponse *response) {
     NSDictionary *responseHeaders = response.allHeaderFields;
-    return (NSUInteger)[responseHeaders[@"Content-Length"] longLongValue];
+    return [responseHeaders[@"Content-Length"] longLongValue];
 }
 
 MCSRequestContentRange

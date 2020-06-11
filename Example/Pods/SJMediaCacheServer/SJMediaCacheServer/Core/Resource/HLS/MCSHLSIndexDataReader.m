@@ -81,7 +81,7 @@
     }
     
     NSString *indexFilePath = _parser.indexFilePath;
-    NSUInteger fileSize = (NSUInteger)[NSFileManager.defaultManager attributesOfItemAtPath:indexFilePath error:NULL].fileSize;
+    NSUInteger fileSize = [NSFileManager.defaultManager attributesOfItemAtPath:indexFilePath error:NULL].fileSize;
     NSRange range = NSMakeRange(0, fileSize);
     _reader = [MCSResourceFileDataReader.alloc initWithRange:range path:indexFilePath readRange:range];
     _reader.delegate = self;
@@ -102,7 +102,7 @@
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
     NSString *indexFilePath = _parser.indexFilePath;
-    NSUInteger length = (NSUInteger)[NSFileManager.defaultManager attributesOfItemAtPath:indexFilePath error:NULL].fileSize;
+    NSUInteger length = [NSFileManager.defaultManager attributesOfItemAtPath:indexFilePath error:NULL].fileSize;
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegurl" totalLength:length];
     [self.delegate readerPrepareDidFinish:self];
 }

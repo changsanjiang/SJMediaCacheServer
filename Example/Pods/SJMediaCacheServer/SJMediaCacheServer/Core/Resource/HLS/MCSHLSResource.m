@@ -51,7 +51,7 @@
         for ( MCSResourcePartialContent *content in self.contents ) {
             if ( [content.tsName isEqualToString:tsName] ) {
                 NSString *contentPath = [MCSFileManager getFilePathWithName:content.name inResource:self.name];
-                NSUInteger length = (NSUInteger)[NSFileManager.defaultManager attributesOfItemAtPath:contentPath error:NULL].fileSize;
+                NSUInteger length = [NSFileManager.defaultManager attributesOfItemAtPath:contentPath error:NULL].fileSize;
                 if ( length == content.tsTotalLength )
                     return content;
             }

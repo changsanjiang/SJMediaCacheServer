@@ -130,7 +130,7 @@ static NSString *HLSPrefix = @"hls";
         if      ( [name hasPrefix:VODPrefix] ) {
             NSString *path = [resourcePath stringByAppendingPathComponent:name];
             NSUInteger offset = [self offsetOfContent:name];
-            NSUInteger length = (NSUInteger)[[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];
+            NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];
             __auto_type content = [MCSResourcePartialContent.alloc initWithName:name offset:offset length:length];
             [m addObject:content];
         }
@@ -139,7 +139,7 @@ static NSString *HLSPrefix = @"hls";
             NSString *path = [resourcePath stringByAppendingPathComponent:name];
             NSString *tsName = [self tsNameOfContent:name];
             NSUInteger tsTotalLength = [self tsTotalLengthOfContent:name];
-            NSUInteger length = (NSUInteger)[[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];;
+            NSUInteger length = [[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];;
             __auto_type content = [MCSResourcePartialContent.alloc initWithName:name tsName:tsName  tsTotalLength:tsTotalLength length:length];
             [m addObject:content];
         }
@@ -157,7 +157,7 @@ static NSString *HLSPrefix = @"hls";
 // format: // VOD前缀_偏移量_序号_扩展名
 // VOD
 + (NSUInteger)offsetOfContent:(NSString *)name {
-    return (NSUInteger)[[name componentsSeparatedByString:name][1] longLongValue];
+    return [[name componentsSeparatedByString:name][1] longLongValue];
 }
 
 // format: HLS前缀_ts长度_序号_ts文件名
@@ -171,7 +171,7 @@ static NSString *HLSPrefix = @"hls";
 // format: HLS前缀_ts长度_序号_ts文件名
 // HLS
 + (NSUInteger)tsTotalLengthOfContent:(NSString *)name {
-    return (NSUInteger)[[name componentsSeparatedByString:@"_"][1] longLongValue];
+    return [[name componentsSeparatedByString:@"_"][1] longLongValue];
 }
 @end
 
@@ -192,6 +192,6 @@ static NSString *HLSPrefix = @"hls";
 }
 
 + (NSUInteger)fileSizeAtPath:(NSString *)path {
-    return (NSUInteger)[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL].fileSize;
+    return [NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL].fileSize;
 }
 @end

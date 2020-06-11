@@ -19,6 +19,10 @@
 
 @implementation SJViewController
 
+- (BOOL)shouldAutorotate {
+    return NO;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self _setupViews];

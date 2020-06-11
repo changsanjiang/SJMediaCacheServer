@@ -48,7 +48,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, _name, (unsigned long)_offset, (unsigned long)self.length];
+    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, _name, _offset, self.length];
 }
 
 @synthesize length = _length;

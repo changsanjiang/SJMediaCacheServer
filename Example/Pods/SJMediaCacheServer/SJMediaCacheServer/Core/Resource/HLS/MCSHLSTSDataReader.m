@@ -91,7 +91,7 @@
                 data = [_reader readDataOfLength:length];
                 _offset += data.length;
                 _isDone = _offset == _response.totalLength;
-                MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
+                MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, data.length);
 #ifdef DEBUG
                 if ( _isDone ) {
                     MCSLog(@"%@: <%p>.done { proxyURL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
@@ -135,7 +135,7 @@
 - (void)_prepare {
     [_content readWrite_retain];
     NSString *filepath = [_resource filePathOfContent:_content];
-    _availableLength = (NSUInteger)[NSFileManager.defaultManager attributesOfItemAtPath:filepath error:NULL].fileSize;
+    _availableLength = [NSFileManager.defaultManager attributesOfItemAtPath:filepath error:NULL].fileSize;
     _reader = [NSFileHandle fileHandleForReadingAtPath:filepath];
     _writer = [NSFileHandle fileHandleForWritingAtPath:filepath];
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_resource.tsContentType totalLength:_content.tsTotalLength];
