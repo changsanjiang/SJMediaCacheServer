@@ -19,8 +19,6 @@
 #import "MCSVODResource.h"
 #import "MCSResourceSubclass.h"
 
-// 确保readers线程安全
-
 @interface MCSVODReader ()<NSLocking, MCSResourceDataReaderDelegate> {
     dispatch_semaphore_t _semaphore;
 }

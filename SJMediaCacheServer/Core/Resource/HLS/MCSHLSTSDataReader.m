@@ -15,9 +15,7 @@
 #import "MCSUtils.h"
 #import "MCSError.h"
 
-@interface MCSHLSTSDataReader ()<MCSDownloadTaskDelegate, NSLocking> {
-    NSRecursiveLock *_lock;
-}
+@interface MCSHLSTSDataReader ()<MCSDownloadTaskDelegate>
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
 @property (nonatomic, strong) NSURLRequest *request;
 
@@ -42,7 +40,6 @@
     if ( self ) {
         _resource = resource;
         _request = request;
-        _lock = NSRecursiveLock.alloc.init;
     }
     return self;
 }
@@ -78,7 +75,6 @@
 }
 
 - (NSData *)readDataOfLength:(NSUInteger)lengthParam {
-    [self lock];
     @try {
         if ( _isClosed || _isDone )
             return nil;
@@ -103,13 +99,10 @@
         return data;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_errorForException:exception]];
-    } @finally {
-        [self unlock];
     }
 }
 
 - (void)close {
-    [self lock];
     @try {
         if ( _isClosed )
             return;
@@ -125,10 +118,7 @@
         [_content readWrite_release];
     } @catch (__unused NSException *exception) {
         
-    } @finally {
-        [self unlock];
     }
-    
     MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
 
@@ -139,31 +129,26 @@
     _reader = [NSFileHandle fileHandleForReadingAtPath:filepath];
     _writer = [NSFileHandle fileHandleForWritingAtPath:filepath];
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_resource.tsContentType totalLength:_content.tsTotalLength];
-    [self.delegate readerPrepareDidFinish:self];
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        [self.delegate readerPrepareDidFinish:self];
+    });
 }
 
 #pragma mark -
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    [self lock];
-    @try {
-        if ( _isClosed )
-            return;
-        
-        NSString *contentType = MCSGetResponseContentType(response);
-        NSUInteger totalLength = MCSGetResponseContentLength(response);
-        [_resource updateTsContentType:contentType];
-        _content = [_resource createContentWithTsProxyURL:_request.URL tsTotalLength:totalLength];
-        [self _prepare];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    if ( _isClosed )
+        return;
+    
+    NSString *contentType = MCSGetResponseContentType(response);
+    NSUInteger totalLength = MCSGetResponseContentLength(response);
+    [_resource updateTsContentType:contentType];
+    _content = [_resource createContentWithTsProxyURL:_request.URL tsTotalLength:totalLength];
+    [self _prepare];
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    [self lock];
     @try {
         if ( _isClosed )
             return;
@@ -176,43 +161,26 @@
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_errorForException:exception]];
         
-    } @finally {
-        [self unlock];
     }
     
-    [self.delegate readerHasAvailableData:self];
+    [_delegate readerHasAvailableData:self];
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    [self lock];
-    @try {
-        if ( _isClosed )
-            return;
-        
-        if ( error != nil && error.code != NSURLErrorCancelled ) {
-            [self _onError:error];
-        }
-        else {
-            // finished download
-        }
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
+    if ( _isClosed )
+        return;
+    
+    if ( error != nil && error.code != NSURLErrorCancelled ) {
+        [self _onError:error];
+    }
+    else {
+        // finished download
     }
 }
 
 #pragma mark -
 
-- (void)lock {
-    [_lock lock];
-}
-
-- (void)unlock {
-    [_lock unlock];
-}
-
 - (void)_onError:(NSError *)error {
-    [self.delegate reader:self anErrorOccurred:error];
+    [_delegate reader:self anErrorOccurred:error];
 }
 @end

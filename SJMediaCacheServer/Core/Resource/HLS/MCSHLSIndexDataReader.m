@@ -95,7 +95,7 @@
 }
 
 - (void)parser:(MCSHLSParser *)parser anErrorOccurred:(NSError *)error {
-    [self.delegate reader:self anErrorOccurred:error];
+    [_delegate reader:self anErrorOccurred:error];
 }
 
 #pragma mark -
@@ -104,15 +104,15 @@
     NSString *indexFilePath = _parser.indexFilePath;
     NSUInteger length = (NSUInteger)[NSFileManager.defaultManager attributesOfItemAtPath:indexFilePath error:NULL].fileSize;
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegurl" totalLength:length];
-    [self.delegate readerPrepareDidFinish:self];
+    [_delegate readerPrepareDidFinish:self];
 }
 
 - (void)readerHasAvailableData:(id<MCSResourceDataReader>)reader {
-    [self.delegate readerHasAvailableData:self];
+    [_delegate readerHasAvailableData:self];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    [self.delegate reader:self anErrorOccurred:error];
+    [_delegate reader:self anErrorOccurred:error];
 }
 
 @end

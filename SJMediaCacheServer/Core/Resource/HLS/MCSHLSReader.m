@@ -17,7 +17,7 @@
 #import "MCSError.h"
 
 @interface MCSHLSReader ()<NSLocking, MCSResourceDataReaderDelegate> {
-    NSRecursiveLock *_lock;
+    dispatch_semaphore_t _semaphore;
 }
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
@@ -35,7 +35,7 @@
     if ( self ) {
         _resource = resource;
         _request = request;
-        _lock = NSRecursiveLock.alloc.init;
+        _semaphore = dispatch_semaphore_create(1);
         [_resource readWrite_retain];
         [MCSResourceManager.shared reader:self willReadResource:resource];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(willRemoveResource:) name:MCSResourceManagerWillRemoveResourceNotification object:nil];
@@ -54,8 +54,10 @@
 - (void)willRemoveResource:(NSNotification *)note {
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
-        [self close];
-        [self.delegate reader:self anErrorOccurred:[NSError mcs_errorForRemovedResource:_request.URL]];
+        [self lock];
+        [self _close];
+        [self unlock];
+        [_delegate reader:self anErrorOccurred:[NSError mcs_errorForRemovedResource:_request.URL]];
     }
 }
 
@@ -64,6 +66,9 @@
     @try {
         if ( _isClosed || _isCalledPrepare )
             return;
+        
+        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+
         
         _isCalledPrepare = YES;
         
@@ -97,7 +102,10 @@
     } @catch (__unused NSException *exception) {
         
     } @finally {
-        if ( self.reader.isDone ) [self close];
+        if ( self.reader.isDone ) {
+            MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+            [self _close];
+        }
         [self unlock];
     }
 }
@@ -105,11 +113,7 @@
 - (void)close {
     [self lock];
     @try {
-        if ( _isClosed )
-            return;
-        
-        _isClosed = YES;
-        [_reader close];
+        [self _close];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -155,12 +159,24 @@
 
 #pragma mark -
 
+- (void)_close {
+    if ( _isClosed )
+        return;
+    
+    _isClosed = YES;
+    [_reader close];
+    
+    MCSLog(@"%@: <%p>.close { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+}
+
+#pragma mark -
+
 - (void)lock {
-    [_lock lock];
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
 }
 
 - (void)unlock {
-    [_lock unlock];
+    dispatch_semaphore_signal(_semaphore);
 }
 
 #pragma mark -
