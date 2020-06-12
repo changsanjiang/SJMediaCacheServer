@@ -82,7 +82,7 @@
 - (float)progress {
     [self lock];
     @try {
-        return _reader.isPrepared ? _offset / _reader.response.contentRange.length : 0;
+        return _reader.isPrepared ? _offset * 1.0 / _reader.response.contentRange.length : 0;
     } @catch (__unused NSException *exception) {
             
     } @finally {
@@ -130,7 +130,7 @@
                 
                 _offset += data.length;
                 
-                float progress = _offset / reader.response.contentRange.length;
+                float progress = _offset * 1.0 / reader.response.contentRange.length;
                 [self.delegate prefetcher:self progressDidChange:progress];
                 
                 MCSLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)self.preloadSize, progress);

@@ -128,16 +128,14 @@
 }
 
 - (void)_prepareNextFragment {
-    NSInteger index = (_fragmentIndex == NSNotFound) ? 0 : (++_fragmentIndex);
+    _fragmentIndex = (_fragmentIndex == NSNotFound) ? 0 : (_fragmentIndex + 1);
     
-    NSString *name = [_resource.parser tsNameAtIndex:index];
+    NSString *name = [_resource.parser tsNameAtIndex:_fragmentIndex];
     NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithTsName:name];
     NSURLRequest *request = [NSURLRequest requestWithURL:proxyURL];
     _reader = [MCSResourceManager.shared readerWithRequest:request];
     _reader.delegate = self;
     [_reader prepare];
-    
-#warning next ... 前一个reader被释放的问题
 }
 
 #pragma mark -
@@ -157,7 +155,7 @@
                 
                 _offset += data.length;
                 
-                _progress = _offset / self.preloadSize;
+                _progress = _offset * 1.0 / self.preloadSize;
                 [self.delegate prefetcher:self progressDidChange:_progress];
                 
                 MCSLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)self.preloadSize, _progress);
@@ -169,7 +167,7 @@
                 }
                 
                 if ( !isEnd ) {
-                    [self _prepareNextFragment];
+                    if ( reader.isReadingEndOfData ) [self _prepareNextFragment];
                 }
                 else {
                     MCSLog(@"%@: <%p>.done { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)self.preloadSize);
