@@ -13,8 +13,12 @@
 #import "SJMediaCacheServer.h"
 #import "MCSLogger.h"
 
+#import "SJMCSHLSPrefetcher.h"
+
 @interface SJViewController ()
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
+
+@property (nonatomic, strong, nullable) SJMCSPrefetcher *prefetcher;
 @end
 
 @implementation SJViewController
@@ -31,11 +35,19 @@
     
     NSURL *URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/2000/0303000a/3/default/bca293257d954934afadfaa96d865172/2000.m3u8"];
     
+    URL = [NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"];
+    
     // playback URL
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
     
     // play
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+    
+    
+//    _prefetcher = [SJMCSPrefetcher prefetcherWithURL:URL preloadSize:20 * 1024 * 1024];
+//    [_prefetcher prepare];
+//    _prefetcher.delegate = self;
+    
 }
 
 - (void)_setupViews {

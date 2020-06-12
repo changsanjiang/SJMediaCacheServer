@@ -19,7 +19,6 @@
 @property (nonatomic, strong) MCSResourceUsageLog *log;
 @property (nonatomic) NSInteger readWriteCount;
 @property (nonatomic) BOOL isCacheFinished;
-@property (nonatomic, strong) NSURL *playbackURLForCache;
 @end
 
 @implementation MCSResource

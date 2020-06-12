@@ -11,6 +11,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SJMCSPrefetcher.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -25,6 +26,10 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 - (NSURL *)playbackURLWithURL:(NSURL *)URL; // 获取播放地址
 
+#warning next 是否需要下载类空闲时加载
+/// 当下载服务空闲时, 前往下载
+///
+- (id)prefetcherWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes;
 @end
 
 

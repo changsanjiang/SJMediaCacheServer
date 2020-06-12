@@ -21,6 +21,7 @@
 @property (nonatomic, strong, nullable) NSURL *URL;
 @property (nonatomic, weak, nullable) id<MCSHLSParserDelegate> delegate;
 @property (nonatomic, strong, nullable) NSDictionary<NSString *, NSString *> *tsFragments;
+@property (nonatomic, strong, nullable) NSArray<NSString *> *tsNames;
 @end
 
 @implementation MCSHLSParser
@@ -39,6 +40,17 @@
     [self lock];
     @try {
         return [NSURL URLWithString:_tsFragments[tsName]];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSString *)tsNameAtIndex:(NSUInteger)index {
+    [self lock];
+    @try {
+        return index < _tsNames.count ? _tsNames[index] : nil;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -105,7 +117,7 @@
 - (NSUInteger)tsCount {
     [self lock];
     @try {
-        return _tsFragments.count;
+        return _tsNames.count;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -124,10 +136,15 @@
         return;
     
     NSString *indexFilePath = self.indexFilePath;
+    NSString *tsNameFilePath = [MCSFileManager hls_tsNamesFilePathInResource:_resourceName];
+    NSString *tsFragmentsFilePath = [MCSFileManager hls_tsFragmentsFilePathInResource:_resourceName];
     // 已解析过, 将直接读取本地
-    if ( [NSFileManager.defaultManager fileExistsAtPath:indexFilePath] ) {
+    if ( [NSFileManager.defaultManager fileExistsAtPath:indexFilePath] &&
+         [NSFileManager.defaultManager fileExistsAtPath:tsNameFilePath] &&
+         [NSFileManager.defaultManager fileExistsAtPath:tsFragmentsFilePath] ) {
         [self lock];
-        _tsFragments = [NSDictionary dictionaryWithContentsOfFile:[MCSFileManager hls_tsFragmentsFilePathInResource:self.resourceName]];
+        _tsFragments = [NSDictionary dictionaryWithContentsOfFile:tsFragmentsFilePath];
+        _tsNames = [NSArray arrayWithContentsOfFile:tsNameFilePath];
         _isDone = YES;
         [self unlock];
         [self.delegate parserParseDidFinish:self];
@@ -154,12 +171,14 @@
  
     NSMutableString *indexFileContents = contents.mutableCopy;
     NSMutableDictionary<NSString *, NSString *> *tsFragments = NSMutableDictionary.dictionary;
+    NSMutableArray<NSString *> *reversedTsNames = NSMutableArray.array;
     [[contents mcs_rangesByMatchingPattern:@"(?:.*\\.ts[^\\s]*)"] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSValue * _Nonnull range, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange rangeValue = range.rangeValue;
         NSString *matched = [contents substringWithRange:rangeValue];
         NSString *url = [self _urlWithMatchedString:matched];
         NSString *tsName = [MCSFileManager hls_tsNameForUrl:url inResource:self.resourceName];
         tsFragments[tsName] = url;
+        [reversedTsNames addObject:tsName];
         if ( tsName != nil ) [indexFileContents replaceCharactersInRange:rangeValue withString:tsName];
     }];
  
@@ -198,18 +217,24 @@
         return;
     }
     
-    if ( ![tsFragments writeToFile:[MCSFileManager hls_tsFragmentsFilePathInResource:self.resourceName] atomically:YES] ) {
+    if ( ![tsFragments writeToFile:tsFragmentsFilePath atomically:YES] ) {
+        [self _onError:[NSError mcs_errorForHLSFileParseError:_URL]];
+        return;
+    }
+    NSArray<NSString *> *tsNames = [[reversedTsNames reverseObjectEnumerator] allObjects];
+    if ( ![tsNames writeToFile:tsNameFilePath atomically:YES] ) {
         [self _onError:[NSError mcs_errorForHLSFileParseError:_URL]];
         return;
     }
     
-    if ( ![indexFileContents writeToFile:[MCSFileManager hls_indexFilePathInResource:self.resourceName] atomically:YES encoding:NSUTF8StringEncoding error:&error] ) {
+    if ( ![indexFileContents writeToFile:indexFilePath atomically:YES encoding:NSUTF8StringEncoding error:&error] ) {
         [self _onError:error];
         return;
     }
     
     [self lock];
-    _tsFragments = tsFragments.copy;
+    _tsNames = tsNames;
+    _tsFragments = tsFragments;
     _isDone = YES;
     [self unlock];
     [self.delegate parserParseDidFinish:self];

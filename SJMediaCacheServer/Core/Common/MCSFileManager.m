@@ -84,6 +84,13 @@ static NSString *HLSPrefix = @"hls";
     return [self getFilePathWithName:filename inResource:resourceName];
 }
 
+// HLS
+//
++ (nullable NSString *)hls_tsNamesFilePathInResource:(NSString *)resourceName {
+    NSString *filename = @"names.plist";
+    return [self getFilePathWithName:filename inResource:resourceName];
+}
+
 // VOD
 + (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(NSString *)pathExtension {
     NSString *resourcePath = [self getResourcePathWithName:resourceName];

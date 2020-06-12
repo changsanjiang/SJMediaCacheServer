@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, readonly) NSString *indexFilePath;
 - (NSURL *)tsURLWithTsName:(NSString *)tsName;
+- (nullable NSString *)tsNameAtIndex:(NSUInteger)index;
 @end
 
 

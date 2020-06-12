@@ -45,4 +45,10 @@ NSString * const MCSErrorUserInfoResponseKey = @"Response";
     userInfo[MCSErrorUserInfoURLKey] = URL;
     return [NSError errorWithDomain:MCSErrorDomain code:MCSHLSFileParseError userInfo:userInfo];
 }
+
++ (NSError *)mcs_errorForFileHandleError:(NSURL *)URL {
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+    userInfo[MCSErrorUserInfoURLKey] = URL;
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSFileHandleError userInfo:userInfo];
+}
 @end

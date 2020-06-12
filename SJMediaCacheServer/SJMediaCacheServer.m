@@ -12,7 +12,6 @@
 #import "MCSResource.h"
 #import "MCSURLRecognizer.h"
 #import "MCSSessionTask.h"
-#import "MCSURLRecognizer.h"
 #import "MCSLogger.h"
 #import "MCSDownload.h"
 
@@ -36,6 +35,8 @@
         _server = [MCSProxyServer.alloc initWithPort:2000];
         _server.delegate = self;
         [_server start];
+        
+        MCSURLRecognizer.shared.server = _server;
     }
     return self;
 }
@@ -51,7 +52,7 @@
     
     // proxy URL
     if ( _server.isRunning )
-        return [MCSURLRecognizer.shared proxyURLWithURL:URL localServerURL:_server.serverURL];
+        return [MCSURLRecognizer.shared proxyURLWithURL:URL];
 
     // param URL
     return URL;

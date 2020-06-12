@@ -49,7 +49,9 @@
     _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
     [_reader seekToFileOffset:_readRange.location];
     
-    [self.delegate readerPrepareDidFinish:self];
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        [self.delegate readerPrepareDidFinish:self];
+    });
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
@@ -71,7 +73,7 @@
 #endif
         return data;
     } @catch (NSException *exception) {
-        [self.delegate reader:self anErrorOccurred:[NSError mcs_errorForException:exception]];
+        [_delegate reader:self anErrorOccurred:[NSError mcs_errorForException:exception]];
     }
 }
 
@@ -85,4 +87,5 @@
     
     MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
+ 
 @end

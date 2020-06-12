@@ -20,6 +20,8 @@ typedef NS_ENUM(NSUInteger, MCSErrorCode) {
 //    MCSOutOfDiskSpaceError        = 100004,
     
     MCSHLSFileParseError           = 100005,
+    
+    MCSFileHandleError             = 100006,
 };
 
 FOUNDATION_EXTERN NSString * const MCSErrorDomain;
@@ -38,5 +40,7 @@ FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResponseKey;
 + (NSError *)mcs_errorForRemovedResource:(NSURL *)URL;
 
 + (NSError *)mcs_errorForHLSFileParseError:(NSURL *)URL;
+
++ (NSError *)mcs_errorForFileHandleError:(NSURL *)URL;
 @end
 NS_ASSUME_NONNULL_END

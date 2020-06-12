@@ -19,8 +19,10 @@
 #import "MCSVODResource.h"
 #import "MCSResourceSubclass.h"
 
+// 确保readers线程安全
+
 @interface MCSVODReader ()<NSLocking, MCSResourceDataReaderDelegate> {
-    NSRecursiveLock *_lock;
+    dispatch_semaphore_t _semaphore;
 }
 
 @property (nonatomic) BOOL isCalledPrepare;
@@ -28,7 +30,7 @@
 @property (nonatomic) BOOL isClosed;
 
 @property (nonatomic) NSInteger currentIndex;
-@property (nonatomic, strong, nullable) id<MCSResourceDataReader> currentReader;
+@property (nonatomic, strong, readonly, nullable) id<MCSResourceDataReader> currentReader;
 @property (nonatomic, strong, nullable) MCSResourceNetworkDataReader *tmpReader; // 用于获取资源contentLength, contentType等信息
 @property (nonatomic) NSUInteger offset;
 
@@ -47,7 +49,7 @@
     self = [super init];
     if ( self ) {
         _readWriteContents = NSMutableArray.array;
-        _lock = NSRecursiveLock.alloc.init;
+        _semaphore = dispatch_semaphore_create(1);
         _currentIndex = NSNotFound;
 
         _resource = resource;
@@ -61,10 +63,6 @@
     return self;
 }
 
-- (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range)];
-}
-
 - (void)dealloc {
     [NSNotificationCenter.defaultCenter removeObserver:self];
     [_resource readWrite_release];
@@ -73,11 +71,18 @@
     MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range)];
+}
+
 - (void)willRemoveResource:(NSNotification *)note {
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
-        [self close];
-        [self.delegate reader:self anErrorOccurred:[NSError mcs_errorForRemovedResource:_request.URL]];
+        [self lock];
+        [self _close];
+        [self unlock];
+        
+        [_delegate reader:self anErrorOccurred:[NSError mcs_errorForRemovedResource:self.request.URL]];
     }
 }
 
@@ -122,8 +127,15 @@
     } @catch (__unused NSException *exception) {
         
     } @finally {
-        if ( self.currentReader.isDone )
-            self.currentReader != self.readers.lastObject ? [self _prepareNextReader] : [self _close];
+        if ( self.currentReader.isDone ) {
+            if ( self.currentReader != _readers.lastObject ) {
+                [self _prepareNextReader];
+            }
+            else {
+                MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
+                [self _close];
+            }
+        }
         [self unlock];
     }
 }
@@ -192,22 +204,6 @@
     } @finally {
         [self unlock];
     }
-}
-
-- (void)_close {
-    if ( _isClosed )
-        return;
-    
-    _isClosed = YES;
-    for ( id<MCSResourceDataReader> reader in _readers ) {
-        [reader close];
-    }
-    
-    for ( MCSResourcePartialContent *content in _readWriteContents ) {
-        [content readWrite_release];
-    }
-    
-    MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
 }
 
 #pragma mark -
@@ -294,6 +290,7 @@
         _currentIndex = 0;
     else
         _currentIndex += 1;
+    
     [self.currentReader prepare];
 }
 
@@ -304,13 +301,49 @@
     return nil;
 }
 
+- (void)_close {
+    if ( _isClosed )
+        return;
+    
+    _isClosed = YES;
+    for ( id<MCSResourceDataReader> reader in _readers ) {
+        [reader close];
+    }
+    
+    for ( MCSResourcePartialContent *content in _readWriteContents ) {
+        [content readWrite_release];
+    }
+    
+    MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
+}
+
+#pragma mark -
+
 - (void)lock {
-    [_lock lock];
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
 }
 
 - (void)unlock {
-    [_lock unlock];
+    dispatch_semaphore_signal(_semaphore);
 }
+
+#pragma mark - MCSResourceNetworkDataReaderDelegate
+
+- (MCSResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader {
+    MCSResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
+    [content readWrite_retain];
+    
+    [self lock];
+    [_readWriteContents addObject:content];
+    [self unlock];
+    return content;
+}
+
+- (NSString *)writePathOfPartialContent:(MCSResourcePartialContent *)content {
+    return [_resource filePathOfContent:content];
+}
+
+#pragma mark - MCSResourceDataReaderDelegate
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
     if ( self.isPrepared )
@@ -332,13 +365,13 @@
             // prepare
             [self _prepare];
         }
-
-        [self.delegate readerPrepareDidFinish:self];
     } @catch (__unused NSException *exception) {
         
     } @finally {
         [self unlock];
     }
+    
+    [_delegate readerPrepareDidFinish:self];
 }
 
 - (void)readerHasAvailableData:(id<MCSResourceDataReader>)reader {
@@ -348,23 +381,4 @@
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
     [_delegate reader:self anErrorOccurred:error];
 }
-
-- (MCSResourcePartialContent *)newPartialContentForReader:(MCSResourceNetworkDataReader *)reader {
-    [self lock];
-    @try {
-        MCSResourcePartialContent *content = [_resource createContentWithOffset:reader.range.location];
-        [content readWrite_retain];
-        [_readWriteContents addObject:content];
-        return content;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (NSString *)writePathOfPartialContent:(MCSResourcePartialContent *)content {
-    return [_resource filePathOfContent:content];
-}
-
 @end

@@ -40,6 +40,9 @@ NS_ASSUME_NONNULL_BEGIN
 //
 + (nullable NSString *)hls_tsFragmentsFilePathInResource:(NSString *)resourceName;
 
+// HLS
+//
++ (nullable NSString *)hls_tsNamesFilePathInResource:(NSString *)resourceName;
 
 // VOD
 //      注意: 返回文件名

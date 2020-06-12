@@ -33,9 +33,13 @@ MCSMD5(NSString *str) {
     return instance;
 }
 
-- (NSURL *)proxyURLWithURL:(NSURL *)URL localServerURL:(NSURL *)serverURL {
+- (NSURL *)proxyURLWithURL:(NSURL *)URL {
+    NSParameterAssert(_server);
+    
+    NSURL *serverURL = _server.serverURL;
     if ( [URL.host isEqualToString:serverURL.host] )
         return URL;
+    
     NSURLComponents *components = [NSURLComponents componentsWithURL:serverURL resolvingAgainstBaseURL:NO];
     components.path = URL.path;
     NSString *url = [[URL.absoluteString dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
@@ -67,5 +71,10 @@ MCSMD5(NSString *str) {
 
 - (MCSResourceType)resourceTypeForURL:(NSURL *)URL {
     return [URL.absoluteString containsString:@".m3u8"] || [URL.absoluteString containsString:@".ts"] ? MCSResourceTypeHLS : MCSResourceTypeVOD;
+}
+
+- (NSURL *)proxyURLWithTsName:(NSString *)tsName {
+    NSParameterAssert(_server);
+    return [NSURL URLWithString:[_server.serverURL.absoluteString stringByAppendingPathComponent:tsName]];
 }
 @end
