@@ -1,17 +1,17 @@
 //
-//  SJMCSVODPrefetcher.m
+//  MCSVODPrefetcher.m
 //  CocoaAsyncSocket
 //
 //  Created by BlueDancer on 2020/6/11.
 //
 
-#import "SJMCSVODPrefetcher.h"
+#import "MCSVODPrefetcher.h"
 #import "MCSLogger.h"
 #import "MCSResourceManager.h"
 #import "NSURLRequest+MCS.h"
-#import "SJMCSPrefetcherSubclass.h"
+#import "MCSPrefetcherSubclass.h"
 
-@interface SJMCSVODPrefetcher () <NSLocking, MCSResourceReaderDelegate> {
+@interface MCSVODPrefetcher () <NSLocking, MCSResourceReaderDelegate> {
     NSRecursiveLock *_lock;
 }
 @property (nonatomic) BOOL isCalledPrepare;
@@ -22,7 +22,7 @@
 @property (nonatomic) NSUInteger offset;
 @end
 
-@implementation SJMCSVODPrefetcher
+@implementation MCSVODPrefetcher
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes {
     self = [super init];
     if ( self ) {

@@ -1,20 +1,20 @@
 //
-//  SJMCSHLSPrefetcher.m
+//  MCSHLSPrefetcher.m
 //  CocoaAsyncSocket
 //
 //  Created by BlueDancer on 2020/6/11.
 //
 
-#import "SJMCSHLSPrefetcher.h"
+#import "MCSHLSPrefetcher.h"
 #import "MCSLogger.h"
 #import "MCSResourceManager.h"
 #import "NSURLRequest+MCS.h"
-#import "SJMCSPrefetcherSubclass.h"
+#import "MCSPrefetcherSubclass.h"
 #import "MCSHLSResource.h"
 #import "MCSHLSTSDataReader.h"
 #import "MCSHLSIndexDataReader.h"
 
-@interface SJMCSHLSPrefetcher ()<NSLocking, MCSResourceReaderDelegate> {
+@interface MCSHLSPrefetcher ()<NSLocking, MCSResourceReaderDelegate> {
     NSRecursiveLock *_lock;
 }
 @property (nonatomic) BOOL isCalledPrepare;
@@ -29,7 +29,7 @@
 @property (nonatomic) NSUInteger fragmentIndex;
 @end
 
-@implementation SJMCSHLSPrefetcher
+@implementation MCSHLSPrefetcher
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes {
     self = [super init];
     if ( self ) {

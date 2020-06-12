@@ -11,7 +11,6 @@
 #import "MCSVODReader.h"
 #import "MCSResourceManager.h"
 #import "MCSFileManager.h"
-#import "MCSVODPrefetcher.h"
 #import "MCSUtils.h"
 #import "MCSResourceSubclass.h"
 
@@ -32,10 +31,6 @@
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request {
     return [MCSVODReader.alloc initWithResource:self request:request];
-}
-
-- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
-    return [MCSVODPrefetcher.alloc initWithResource:self request:request];
 }
 
 - (NSURL *)playbackURLForCacheWithURL:(NSURL *)URL {

@@ -1,17 +1,17 @@
 //
-//  SJMCSPrefetcher.h
+//  MCSPrefetcher.h
 //  CocoaAsyncSocket
 //
 //  Created by BlueDancer on 2020/6/11.
 //
 
-#import "SJMCSPrefetcherDefines.h"
+#import "MCSPrefetcherDefines.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJMCSPrefetcher : NSObject<SJMCSPrefetcher>
+@interface MCSPrefetcher : NSObject<MCSPrefetcher>
 + (instancetype)prefetcherWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes;
-@property (nonatomic, weak, nullable) id<SJMCSPrefetcherDelegate> delegate;
+@property (nonatomic, weak, nullable) id<MCSPrefetcherDelegate> delegate;
 
 @property (nonatomic, strong, readonly) NSURL *URL;
 @property (nonatomic, readonly) NSUInteger preloadSize;

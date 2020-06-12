@@ -1,23 +1,23 @@
 //
-//  SJMCSPrefetcher.m
+//  MCSPrefetcher.m
 //  CocoaAsyncSocket
 //
 //  Created by BlueDancer on 2020/6/11.
 //
 
-#import "SJMCSPrefetcher.h"
-#import "SJMCSHLSPrefetcher.h"
-#import "SJMCSVODPrefetcher.h"
+#import "MCSPrefetcher.h"
+#import "MCSHLSPrefetcher.h"
+#import "MCSVODPrefetcher.h"
 #import "MCSURLRecognizer.h"
 
-@interface SJMCSPrefetcher ()
+@interface MCSPrefetcher ()
 @property (nonatomic, strong) NSURL *URL;
 @property (nonatomic) NSUInteger preloadSize;
 @end
 
-@implementation SJMCSPrefetcher
+@implementation MCSPrefetcher
 //- (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes;
-//@property (nonatomic, weak, nullable) id<SJMCSPrefetcherDelegate> delegate;
+//@property (nonatomic, weak, nullable) id<MCSPrefetcherDelegate> delegate;
 //
 //- (void)prepare;
 //@property (nonatomic, readonly) float progress;
@@ -28,9 +28,9 @@
     MCSResourceType type = [MCSURLRecognizer.shared resourceTypeForURL:URL];
     switch ( type ) {
         case MCSResourceTypeVOD:
-            return [SJMCSVODPrefetcher.alloc initWithURL:URL preloadSize:bytes];
+            return [MCSVODPrefetcher.alloc initWithURL:URL preloadSize:bytes];
         case MCSResourceTypeHLS:
-            return [SJMCSHLSPrefetcher.alloc initWithURL:URL preloadSize:bytes];
+            return [MCSHLSPrefetcher.alloc initWithURL:URL preloadSize:bytes];
     }
     return nil;
 }

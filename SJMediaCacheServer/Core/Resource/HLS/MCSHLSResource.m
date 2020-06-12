@@ -10,8 +10,7 @@
 #import "MCSResourceManager.h"
 #import "MCSHLSReader.h"
 #import "MCSHLSParser.h"
-#import "MCSFileManager.h"
-#import "MCSHLSPrefetcher.h"
+#import "MCSFileManager.h" 
 
 @interface MCSHLSResource ()
 @property (nonatomic) NSUInteger tsCount;
@@ -26,11 +25,7 @@
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request {
     return [MCSHLSReader.alloc initWithResource:self request:request];
 }
-
-- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
-    return [MCSHLSPrefetcher.alloc initWithResource:self request:request];
-}
-
+ 
 - (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
     [super addContents:contents];
     [self _contentsDidChange];

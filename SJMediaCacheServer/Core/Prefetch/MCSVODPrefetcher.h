@@ -1,15 +1,15 @@
 //
-//  SJMCSHLSPrefetcher.h
+//  MCSVODPrefetcher.h
 //  CocoaAsyncSocket
 //
 //  Created by BlueDancer on 2020/6/11.
 //
 
-#import "SJMCSPrefetcher.h"
+#import "MCSPrefetcher.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SJMCSHLSPrefetcher : SJMCSPrefetcher
+@interface MCSVODPrefetcher : MCSPrefetcher
 
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes;
 

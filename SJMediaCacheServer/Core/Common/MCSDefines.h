@@ -10,7 +10,7 @@
 #define MCSDefines_h
 #import <Foundation/Foundation.h>
 #import "NSURLRequest+MCS.h"
-@protocol MCSSessionTaskDelegate, MCSResourcePrefetcherDelegate, MCSResourceReaderDelegate;
+@protocol MCSSessionTaskDelegate, MCSResourceReaderDelegate;
 @protocol MCSResource, MCSResourceResponse, MCSResourceReader, MCSResourcePrefetcher;
 
 typedef NS_ENUM(NSUInteger, MCSResourceType) {
@@ -45,7 +45,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) MCSResourceType type;
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
-- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;
 @end
 
 #pragma mark -
@@ -79,24 +78,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)readerPrepareDidFinish:(id<MCSResourceReader>)reader;
 - (void)readerHasAvailableData:(id<MCSResourceReader>)reader;
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error;
-@end
-
-#pragma mark -
-
-@protocol MCSResourcePrefetcher <NSObject>
-@property (nonatomic, weak, nullable) id<MCSResourcePrefetcherDelegate> delegate;
-@property (nonatomic, readonly) BOOL isPrepared;
-@property (nonatomic, readonly) BOOL isFinished;
-@property (nonatomic, readonly) BOOL isClosed;
-- (void)prepare;
-- (void)close;
-@end
-
-
-@protocol MCSResourcePrefetcherDelegate <NSObject>
-- (void)prefetcherPrepareDidFinish:(id<MCSResourcePrefetcher>)prefetcher;
-- (void)prefetcherPrefetchDidFinish:(id<MCSResourcePrefetcher>)prefetcher;
-- (void)prefetcher:(id<MCSResourcePrefetcher>)prefetcher anErrorOccurred:(NSError *)error;
 @end
 NS_ASSUME_NONNULL_END
 

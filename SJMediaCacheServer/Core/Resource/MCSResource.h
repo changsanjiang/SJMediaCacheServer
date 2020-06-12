@@ -15,7 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) MCSResourceType type;
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
-- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request;
 
 @property (nonatomic, strong, readonly) MCSResourceUsageLog *log;
 

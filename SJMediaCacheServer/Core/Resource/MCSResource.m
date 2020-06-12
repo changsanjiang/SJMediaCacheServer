@@ -43,13 +43,7 @@
       reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
     userInfo:nil];
 }
-
-- (id<MCSResourcePrefetcher>)prefetcherWithRequest:(NSURLRequest *)request {
-    @throw [NSException exceptionWithName:NSInternalInconsistencyException
-      reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
-    userInfo:nil];
-}
-
+ 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
 //#ifdef DEBUG
 //    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));

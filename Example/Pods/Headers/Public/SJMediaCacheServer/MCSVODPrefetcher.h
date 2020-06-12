@@ -1,1 +1,1 @@
-../../../../../SJMediaCacheServer/Core/Resource/VOD/MCSVODPrefetcher.h
+../../../../../SJMediaCacheServer/Core/Prefetch/MCSVODPrefetcher.h
