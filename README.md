@@ -1,6 +1,8 @@
 
 # SJMediaCacheServer
 
+SJMediaCacheServer is a HTTP Media Caching Framework. It can cache VOD or HLS media.
+
 ## Features
 - Support cache VOD and HLS media.
 - Support prefetch media. 
