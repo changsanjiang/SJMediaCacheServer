@@ -18,9 +18,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)prepare;
 - (void)close;
 
-- (float)progress;
-- (BOOL)isClosed;
-- (BOOL)isDone;
+@property (nonatomic, readonly) float progress;
+@property (nonatomic, readonly) BOOL isClosed;
+@property (nonatomic, readonly) BOOL isDone;
 @end
 
 @protocol MCSPrefetcherDelegate <NSObject>

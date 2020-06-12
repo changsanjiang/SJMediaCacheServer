@@ -31,17 +31,20 @@
 @property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
 @property (nonatomic) NSUInteger downloadedLength;
 @property (nonatomic) NSUInteger offset;
+
+@property (nonatomic) float networkTaskPriority;
 @end
 
 @implementation MCSResourceNetworkDataReader
 @synthesize delegate = _delegate;
 
-- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range {
+- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range  networkTaskPriority:(float)networkTaskPriority {
     self = [super init];
     if ( self ) {
         _URL = URL;
         _requestHeaders = headers.copy;
         _range = range;
+        _networkTaskPriority = networkTaskPriority;
     }
     return self;
 }
@@ -84,7 +87,7 @@
     //
     [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
     
-    _task = [MCSDownload.shared downloadWithRequest:request delegate:self];
+    _task = [MCSDownload.shared downloadWithRequest:request priority:_networkTaskPriority delegate:self];
 
 }
 

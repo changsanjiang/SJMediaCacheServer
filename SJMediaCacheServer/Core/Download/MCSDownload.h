@@ -16,7 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request);
 
-- (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)request delegate:(id<MCSDownloadTaskDelegate>)delegate;
+- (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)request priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate;
+
 
 @property (nonatomic, copy, nullable) NSData *(^dataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
 

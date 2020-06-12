@@ -8,8 +8,7 @@
 #import "MCSHLSPrefetcher.h"
 #import "MCSLogger.h"
 #import "MCSResourceManager.h"
-#import "NSURLRequest+MCS.h"
-#import "MCSPrefetcherSubclass.h"
+#import "NSURLRequest+MCS.h"  
 #import "MCSHLSResource.h"
 #import "MCSHLSTSDataReader.h"
 #import "MCSHLSIndexDataReader.h"
@@ -27,14 +26,18 @@
 
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
 @property (nonatomic) NSUInteger fragmentIndex;
+
+@property (nonatomic, strong) NSURL *URL;
+@property (nonatomic) NSUInteger preloadSize;
 @end
 
 @implementation MCSHLSPrefetcher
+@synthesize delegate = _delegate;
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes {
     self = [super init];
     if ( self ) {
-        self.URL = URL;
-        self.preloadSize = bytes;
+        _URL = URL;
+        _preloadSize = bytes;
         _fragmentIndex = NSNotFound;
         _lock = NSRecursiveLock.alloc.init;
     }
@@ -134,6 +137,7 @@
     NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithTsName:name];
     NSURLRequest *request = [NSURLRequest requestWithURL:proxyURL];
     _reader = [MCSResourceManager.shared readerWithRequest:request];
+    _reader.networkTaskPriority = 0;
     _reader.delegate = self;
     [_reader prepare];
 }

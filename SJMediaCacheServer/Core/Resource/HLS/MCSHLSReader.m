@@ -33,6 +33,7 @@
 - (instancetype)initWithResource:(__weak MCSHLSResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
+        _networkTaskPriority = 1.0;
         _resource = resource;
         _request = request;
         _semaphore = dispatch_semaphore_create(1);
@@ -77,7 +78,7 @@
         }
         else {
             NSAssert(_resource.parser != nil, @"`parser`不能为nil!");
-            _reader = [MCSHLSTSDataReader.alloc initWithResource:_resource request:_request];
+            _reader = [MCSHLSTSDataReader.alloc initWithResource:_resource request:_request networkTaskPriority:_networkTaskPriority];
         }
         
         _reader.delegate = self;

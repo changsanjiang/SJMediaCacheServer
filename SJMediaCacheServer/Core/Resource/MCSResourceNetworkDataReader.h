@@ -13,7 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResourceNetworkDataReader : NSObject<MCSResourceDataReader>
-- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range;
+- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range networkTaskPriority:(float)networkTaskPriority;
 
 @property (nonatomic, readonly) NSRange range;
 
@@ -22,7 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;
-
 @end
 
 @protocol MCSResourceNetworkDataReaderDelegate <MCSResourceDataReaderDelegate>

@@ -12,13 +12,10 @@
 
 #import "SJMediaCacheServer.h"
 #import "MCSLogger.h"
-
-#import "MCSHLSPrefetcher.h"
+ 
 
 @interface SJViewController ()
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
-
-@property (nonatomic, strong, nullable) MCSHLSPrefetcher *prefetcher;
 @end
 
 @implementation SJViewController
@@ -41,12 +38,15 @@
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
     
     // play
-//    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
     
     
-    _prefetcher = [MCSHLSPrefetcher prefetcherWithURL:URL preloadSize:20 * 1024 * 1024];
-    [_prefetcher prepare];
-    
+//    // 预加载
+//    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
+//        NSLog(@"%lf", progress);
+//    } completed:^(NSError * _Nullable error) {
+//        NSLog(@"%@", error);
+//    }];
 }
 
 - (void)_setupViews {

@@ -11,6 +11,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "MCSPrefetcherManager.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -25,6 +26,25 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 - (NSURL *)playbackURLWithURL:(NSURL *)URL; // 获取播放地址
 
+/// Prefetch some resources in the cache for future use. resources are downloaded in low priority.
+///
+/// @param bytes    Preload size in bytes.
+///
+/// @return The task to cancel the current prefetching.
+///
+- (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes; // 预加载
+
+/// Prefetch some resources in the cache for future use. resources are downloaded in low priority.
+///
+/// @param bytes    Preload size in bytes.
+///
+/// @param progressBlock   This block will be invoked when progress updates.
+///
+/// @param completionBlock This block will be invoked when the current prefetching is completed. If an error occurred, an error object indicating how the prefetch failed, otherwise nil.
+///
+/// @return The task to cancel the current prefetching.
+///
+- (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock; // 预加载
 @end
 
 

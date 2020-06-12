@@ -26,6 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
 @property (nonatomic, readonly) BOOL isClosed;
 - (void)close;
+
+@property (nonatomic) float networkTaskPriority;
 @end
 
 NS_ASSUME_NONNULL_END

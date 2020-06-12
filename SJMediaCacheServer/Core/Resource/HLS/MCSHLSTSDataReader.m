@@ -30,14 +30,17 @@
 @property (nonatomic, strong, nullable) NSURLSessionTask *task;
 @property (nonatomic, strong, nullable) NSFileHandle *reader;
 @property (nonatomic, strong, nullable) NSFileHandle *writer;
+
+@property (nonatomic) float networkTaskPriority;
 @end
 
 @implementation MCSHLSTSDataReader
 @synthesize delegate = _delegate;
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority {
     self = [super init];
     if ( self ) {
+        _networkTaskPriority = networkTaskPriority;
         _resource = resource;
         _request = request;
     }
@@ -70,7 +73,7 @@
         [_request.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
             [request setValue:obj forHTTPHeaderField:key];
         }];
-        _task = [MCSDownload.shared downloadWithRequest:request delegate:self];
+        _task = [MCSDownload.shared downloadWithRequest:request priority:_networkTaskPriority delegate:self];
     }
 }
 

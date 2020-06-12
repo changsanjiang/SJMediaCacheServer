@@ -46,6 +46,8 @@
 - (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
+        _networkTaskPriority = 1.0;
+        
         _readWriteContents = NSMutableArray.array;
         _semaphore = dispatch_semaphore_create(1);
         _currentIndex = NSNotFound;
@@ -95,7 +97,7 @@
         _isCalledPrepare = YES;
         
         if ( _resource.totalLength == 0 || _resource.contentType.length == 0 ) {
-            _tmpReader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:NSMakeRange(0, 2)];
+            _tmpReader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:NSMakeRange(0, 2)  networkTaskPriority:_networkTaskPriority];
             _tmpReader.delegate = self;
             
             MCSLog(@"%@: <%p>.createTmpReader: <%p>;\n", NSStringFromClass(self.class), self, _tmpReader);
@@ -240,7 +242,7 @@
             // undownloaded part
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
-                MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:leftRange];
+                MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:leftRange networkTaskPriority:_networkTaskPriority];
                 reader.delegate = self;
                 [readers addObject:reader];
             }
@@ -266,7 +268,7 @@
     
     if ( current.length != 0 ) {
         // undownloaded part
-        MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:current];
+        MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:current  networkTaskPriority:_networkTaskPriority];
         reader.delegate = self;
         [readers addObject:reader];
     }

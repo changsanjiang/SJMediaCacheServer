@@ -11,7 +11,7 @@
 #import <Foundation/Foundation.h>
 #import "NSURLRequest+MCS.h"
 @protocol MCSSessionTaskDelegate, MCSResourceReaderDelegate;
-@protocol MCSResource, MCSResourceResponse, MCSResourceReader, MCSResourcePrefetcher;
+@protocol MCSResource, MCSResourceResponse, MCSResourceReader;
 
 typedef NS_ENUM(NSUInteger, MCSResourceType) {
     MCSResourceTypeVOD,
@@ -72,6 +72,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)close;
 
 @property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+
+@property (nonatomic) float networkTaskPriority;
 @end
 
 @protocol MCSResourceReaderDelegate <NSObject>

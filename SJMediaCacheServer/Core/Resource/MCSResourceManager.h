@@ -51,8 +51,9 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 ///
 - (void)removeAllCaches;
 
+/// Decode the read data.
 ///
-///
+///     This block will be invoked when the reader reads the data, where you can perform some decoding operations on the data.
 ///
 @property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
 

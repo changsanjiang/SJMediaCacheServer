@@ -74,7 +74,7 @@
     return obj;
 }
  
-- (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)requestParam delegate:(id<MCSDownloadTaskDelegate>)delegate {
+- (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)requestParam priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate {
     [self lock];
     @try {
         NSURLRequest *request = [self _requestWithParam:requestParam];
@@ -84,7 +84,7 @@
         
         NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
         _delegateDictionary[@(task.taskIdentifier)] = delegate;
-        task.priority = 1.0;
+        task.priority = priority;
         [task resume];
         return task;
     } @catch (__unused NSException *exception) {

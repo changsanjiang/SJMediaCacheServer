@@ -9,7 +9,6 @@
 #import "MCSLogger.h"
 #import "MCSResourceManager.h"
 #import "NSURLRequest+MCS.h"
-#import "MCSPrefetcherSubclass.h"
 
 @interface MCSVODPrefetcher () <NSLocking, MCSResourceReaderDelegate> {
     NSRecursiveLock *_lock;
@@ -20,14 +19,18 @@
  
 @property (nonatomic, strong, nullable) id<MCSResourceReader> reader;
 @property (nonatomic) NSUInteger offset;
+
+@property (nonatomic, strong) NSURL *URL;
+@property (nonatomic) NSUInteger preloadSize;
 @end
 
 @implementation MCSVODPrefetcher
+@synthesize delegate = _delegate;
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes {
     self = [super init];
     if ( self ) {
-        self.URL = URL;
-        self.preloadSize = bytes;
+        _URL = URL;
+        _preloadSize = bytes;
         _lock = NSRecursiveLock.alloc.init;
     }
     return self;
@@ -53,6 +56,7 @@
         
         NSURLRequest *request = [NSURLRequest mcs_requestWithURL:self.URL range:NSMakeRange(0, self.preloadSize)];
         _reader = [MCSResourceManager.shared readerWithRequest:request];
+        _reader.networkTaskPriority = 0;
         _reader.delegate = self;
         [_reader prepare];
     } @catch (__unused NSException *exception) {
