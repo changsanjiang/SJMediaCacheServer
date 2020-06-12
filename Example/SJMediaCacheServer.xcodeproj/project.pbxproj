@@ -498,6 +498,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = U5A7L7SMNP;
+				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SJMediaCacheServer/SJMediaCacheServer-Prefix.pch";
 				INFOPLIST_FILE = "SJMediaCacheServer/SJMediaCacheServer-Info.plist";
@@ -515,6 +516,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = U5A7L7SMNP;
+				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SJMediaCacheServer/SJMediaCacheServer-Prefix.pch";
 				INFOPLIST_FILE = "SJMediaCacheServer/SJMediaCacheServer-Info.plist";
