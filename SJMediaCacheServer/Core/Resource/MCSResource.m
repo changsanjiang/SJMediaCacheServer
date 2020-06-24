@@ -9,6 +9,7 @@
 #import "MCSResource.h"
 #import "MCSFileManager.h"
 #import "MCSResourceSubclass.h"
+#import "MCSResourceManager.h"
 
 @interface MCSResource ()<NSLocking, MCSResourcePartialContentDelegate> {
     NSRecursiveLock *_lock;
@@ -147,6 +148,7 @@
     [self lock];
     [_m removeObject:content];
     [MCSFileManager removeContentWithName:content.name inResource:_name error:NULL];
+    [MCSResourceManager.shared didRemoveDataForResource:self length:content.length];
     [self unlock];
 }
 

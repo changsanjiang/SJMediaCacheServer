@@ -71,7 +71,7 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource;
 - (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource;
 - (void)didWriteDataForResource:(MCSResource *)resource length:(NSUInteger)length;
-- (void)didDeleteDataForResource:(MCSResource *)resource length:(NSUInteger)length;
+- (void)didRemoveDataForResource:(MCSResource *)resource length:(NSUInteger)length;
 @end
 
 NS_ASSUME_NONNULL_END

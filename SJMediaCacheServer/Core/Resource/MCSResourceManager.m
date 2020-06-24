@@ -354,7 +354,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     }
 }
 
-- (void)didDeleteDataForResource:(MCSResource *)resource length:(NSUInteger)length {
+- (void)didRemoveDataForResource:(MCSResource *)resource length:(NSUInteger)length {
     [self lock];
     _cacheDiskSpace -= length;
     _freeDiskSpace += length;
