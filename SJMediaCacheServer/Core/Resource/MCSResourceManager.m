@@ -485,6 +485,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         return;
 
     [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSUInteger length = [MCSFileManager fileSizeAtPath:[MCSFileManager getResourcePathWithName:r.name]];
+        self->_cacheDiskSpace -= length;
+        self->_freeDiskSpace += length;
+
         [MCSFileManager removeResourceWithName:r.name error:NULL];
         [self.resources removeObjectForKey:r.name];
         [self.sqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
