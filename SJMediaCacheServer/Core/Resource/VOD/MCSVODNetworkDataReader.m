@@ -152,12 +152,6 @@
         if ( _isClosed )
             return;
         _response = response;
-        
-        if ( _resource.totalLength == 0 || _resource.pathExtension.length == 0 ) {
-            // update contentType & totalLength & server for `resource`
-            [_resource updateServer:MCSGetResponseServer(response) contentType:MCSGetResponseContentType(response) totalLength:MCSGetResponseContentRange(response).totalLength pathExtension:response.suggestedFilename.pathExtension];
-        }
-        
         _content = [_resource createContentWithOffset:_range.location];
         NSString *filePath = [_resource filePathOfContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
