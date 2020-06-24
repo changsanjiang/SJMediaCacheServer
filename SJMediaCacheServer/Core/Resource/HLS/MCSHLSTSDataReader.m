@@ -9,12 +9,12 @@
 #import "MCSHLSTSDataReader.h"
 #import "MCSLogger.h"
 #import "MCSHLSResource.h"
-#import "MCSResourceNetworkDataReader.h"
 #import "MCSResourceFileDataReader.h"
 #import "MCSDownload.h"
 #import "MCSUtils.h"
 #import "MCSError.h"
 #import "MCSFileManager.h"
+#import "MCSResourceResponse.h"
 
 @interface MCSHLSTSDataReader ()<MCSDownloadTaskDelegate, NSLocking> {
     dispatch_semaphore_t _semaphore;

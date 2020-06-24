@@ -1,21 +1,24 @@
 //
-//  MCSResourceNetworkDataReader.m
+//  MCSVODNetworkDataReader.m
 //  SJMediaCacheServer_Example
 //
 //  Created by 畅三江 on 2020/6/3.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSResourceNetworkDataReader.h"
+#import "MCSVODNetworkDataReader.h"
 #import "MCSError.h"
 #import "MCSDownload.h"
 #import "MCSResourceResponse.h"
 #import "MCSResourcePartialContent.h"
 #import "MCSLogger.h"
+#import "MCSVODResource.h"
+#import "MCSUtils.h"
 
-@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate> {
+@interface MCSVODNetworkDataReader ()<MCSDownloadTaskDelegate> {
     dispatch_semaphore_t _semaphore;
 }
+@property (nonatomic, weak, nullable) MCSVODResource *resource;
 @property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic) NSRange range;
 
@@ -37,14 +40,15 @@
 @property (nonatomic) float networkTaskPriority;
 @end
 
-@implementation MCSResourceNetworkDataReader
+@implementation MCSVODNetworkDataReader
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
 @synthesize isPrepared = _isPrepared;
 
-- (instancetype)initWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
+        _resource = resource;
         _request = request;
         _range = request.mcs_range;
         _networkTaskPriority = networkTaskPriority;
@@ -56,7 +60,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"MCSResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@\n};", self, _request.URL, _request.mcs_headers, NSStringFromRange(_range)];
+    return [NSString stringWithFormat:@"MCSVODNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@\n};", self, _request.URL, _request.mcs_headers, NSStringFromRange(_range)];
 }
 
 - (void)prepare {
@@ -149,9 +153,13 @@
             return;
         _response = response;
         
-        id<MCSResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
-        _content = [delegate newPartialContentForReader:self];
-        NSString *filePath = [delegate writePathOfPartialContent:_content];
+        if ( _resource.totalLength == 0 || _resource.pathExtension.length == 0 ) {
+            // update contentType & totalLength & server for `resource`
+            [_resource updateServer:MCSGetResponseServer(response) contentType:MCSGetResponseContentType(response) totalLength:MCSGetResponseContentRange(response).totalLength pathExtension:response.suggestedFilename.pathExtension];
+        }
+        
+        _content = [_resource createContentWithOffset:_range.location];
+        NSString *filePath = [_resource filePathOfContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
 
