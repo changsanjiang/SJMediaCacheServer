@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSResourceFileDataReader : NSObject<MCSResourceDataReader>
+@interface MCSResourceFileDataReader : NSObject<MCSResourceDataReader, NSLocking>
 - (instancetype)initWithRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;
 
+- (void)onError:(NSError *)error;
 @end
 
 NS_ASSUME_NONNULL_END

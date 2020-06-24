@@ -12,7 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSHLSAESKeyDataReader : MCSResourceFileDataReader<MCSHLSDataReader>
-- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL;
+- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 @property (nonatomic, strong, readonly, nullable) id<MCSResourceResponse> response;
 @end

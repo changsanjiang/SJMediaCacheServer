@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)prepare;
 @property (nonatomic, strong, readonly, nullable) NSHTTPURLResponse *response;
+@property (nonatomic, readonly) BOOL isPrepared;
 @property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;

@@ -10,7 +10,10 @@
 #import "MCSError.h"
 #import "MCSLogger.h"
 
-@interface MCSResourceFileDataReader()
+@interface MCSResourceFileDataReader() {
+    dispatch_semaphore_t _semaphore;
+}
+
 @property (nonatomic) NSRange range;
 @property (nonatomic) NSRange readRange;
 @property (nonatomic, copy) NSString *path;
@@ -19,6 +22,7 @@
 @property (nonatomic) NSUInteger offset;
 
 @property (nonatomic) BOOL isCalledPrepare;
+@property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isClosed;
 @property (nonatomic) BOOL isDone;
 @end
@@ -35,6 +39,7 @@
         _readRange = readRange;
         _delegate = delegate;
         _delegateQueue = queue;
+        _semaphore = dispatch_semaphore_create(1);
     }
     return self;
 }
@@ -44,15 +49,16 @@
 }
 
 - (void)prepare {
-    if ( _isClosed || _isCalledPrepare )
-        return;
-    
-    _isCalledPrepare = YES;
-    MCSLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
-
-    _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
-    
+    [self lock];
     @try {
+        if ( _isClosed || _isCalledPrepare )
+            return;
+        
+        _isCalledPrepare = YES;
+        MCSLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
+
+        _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
+
         [_reader seekToFileOffset:_readRange.location];
         _isPrepared = YES;
         
@@ -61,10 +67,13 @@
         });
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
+    } @finally {
+        [self unlock];
     }
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
+    [self lock];
     @try {
         if ( _isClosed || _isDone || !_isPrepared )
             return nil;
@@ -85,30 +94,78 @@
         return data;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
+    } @finally {
+           [self unlock];
     }
 }
 
 - (void)close {
-    if ( _isClosed )
-        return;
-    
-    _isClosed = YES;
-    [_reader closeFile];
-    _reader = nil;
-    
-    MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
+    [self lock];
+    [self _close];
+    [self unlock];
+}
+
+- (void)onError:(NSError *)error {
+    [self lock];
+    [self _onError:error];
+    [self unlock];
+}
+
+#pragma mark -
+
+- (BOOL)isPrepared {
+    [self lock];
+    @try {
+        return _isPrepared;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (BOOL)isDone {
+    [self lock];
+    @try {
+        return _isDone;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 #pragma mark -
 
 - (void)_onError:(NSError *)error {
-    [self close];
+    [self _close];
     dispatch_async(_delegateQueue, ^{
         [self.delegate reader:self anErrorOccurred:error];
     });
 }
 
-- (void)setReader:(NSFileHandle *)reader {
-    _reader = reader;
+- (void)_close {
+    if ( _isClosed )
+        return;
+    
+    @try {
+        _isClosed = YES;
+        [_reader closeFile];
+        _reader = nil;
+        
+        MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
+    } @catch (__unused NSException *exception) {
+        
+    }
+}
+
+#pragma mark -
+
+- (void)lock {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+}
+
+- (void)unlock {
+    dispatch_semaphore_signal(_semaphore);
 }
 @end

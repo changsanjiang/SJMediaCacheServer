@@ -65,15 +65,17 @@
 @property (nonatomic, weak, nullable) id<MCSHLSParserDelegate> delegate;
 @property (nonatomic, strong, nullable) NSDictionary<NSString *, NSString *> *tsFragments;
 @property (nonatomic, strong, nullable) NSArray<NSString *> *tsNames;
+@property (nonatomic) dispatch_queue_t delegateQueue;
 @end
 
 @implementation MCSHLSParser
-- (instancetype)initWithURL:(NSURL *)URL inResource:(NSString *)resource delegate:(id<MCSHLSParserDelegate>)delegate {
+- (instancetype)initWithURL:(NSURL *)URL inResource:(NSString *)resource delegate:(id<MCSHLSParserDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
         _resourceName = resource;
         _URL = URL;
         _delegate = delegate;
+        _delegateQueue = queue;
         _semaphore = dispatch_semaphore_create(1);
     }
     return self;
@@ -186,7 +188,7 @@
         _tsNames = [NSArray arrayWithContentsOfFile:tsNameFilePath];
         _isDone = YES;
         
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        dispatch_async(_delegateQueue, ^{
             [self.delegate parserParseDidFinish:self];
         });
         return;
@@ -279,7 +281,7 @@
     _tsFragments = tsFragments;
     _isDone = YES;
 
-    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+    dispatch_async(_delegateQueue, ^{
         [self.delegate parserParseDidFinish:self];
     });
 }
@@ -317,7 +319,7 @@
         error = [NSError mcs_HLSFileParseError:_URL];
     }
     
-    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+    dispatch_async(_delegateQueue, ^{
         [self.delegate parser:self anErrorOccurred:error];
     });
 }

@@ -86,17 +86,15 @@
         _isCalledPrepare = YES;
         
         if      ( [_request.URL.absoluteString containsString:MCSHLSIndexFileExtension] ) {
-            _reader = [MCSHLSIndexDataReader.alloc initWithResource:_resource URL:_request.URL];
+            _reader = [MCSHLSIndexDataReader.alloc initWithResource:_resource URL:_request.URL delegate:self delegateQueue:_resource.readerOperationQueue];
         }
         else if ( [_request.URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ) {
-            _reader = [MCSHLSAESKeyDataReader.alloc initWithResource:_resource URL:_request.URL];
+            _reader = [MCSHLSAESKeyDataReader.alloc initWithResource:_resource URL:_request.URL delegate:self delegateQueue:_resource.readerOperationQueue];
         }
         else {
             NSAssert(_resource.parser != nil, @"`parser`不能为nil!");
-            _reader = [MCSHLSTSDataReader.alloc initWithResource:_resource request:_request networkTaskPriority:_networkTaskPriority];
+            _reader = [MCSHLSTSDataReader.alloc initWithResource:_resource request:_request networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
         }
-        
-        _reader.delegate = self;
         
         dispatch_async(_resource.readerOperationQueue, ^{
             [self.reader prepare];

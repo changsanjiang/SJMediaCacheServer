@@ -13,7 +13,9 @@
 #import "MCSResourcePartialContent.h"
 #import "MCSLogger.h"
 
-@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate>
+@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate> {
+    dispatch_semaphore_t _semaphore;
+}
 @property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic) NSRange range;
 
@@ -24,6 +26,7 @@
 @property (nonatomic, strong, nullable) NSFileHandle *writer;
 
 @property (nonatomic) BOOL isCalledPrepare;
+@property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isClosed;
 @property (nonatomic) BOOL isDone;
 
@@ -46,6 +49,7 @@
         _networkTaskPriority = networkTaskPriority;
         _delegate = delegate;
         _delegateQueue = queue;
+        _semaphore = dispatch_semaphore_create(1);
     }
     return self;
 }
@@ -55,17 +59,25 @@
 }
 
 - (void)prepare {
-    if ( _isClosed || _isCalledPrepare )
-        return;
-    
-    MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
-    
-    _isCalledPrepare = YES;
-    
-    _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
+    [self lock];
+    @try {
+        if ( _isClosed || _isCalledPrepare )
+            return;
+        
+        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
+        
+        _isCalledPrepare = YES;
+        
+        _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
+    } @catch (__unused NSException *exception) {
+
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
+    [self lock];
     @try {
         if ( _isClosed || _isDone || !_isPrepared )
             return nil;
@@ -81,72 +93,86 @@
 
                 _offset += data.length;
                 _isDone = _offset == _range.length;
-                
             }
         }
         return data;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
     }
-#ifdef DEBUG
     @finally {
+#ifdef DEBUG
         if ( _isDone ) {
             MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
         }
-    }
 #endif
+        [self unlock];
+    }
 }
 
 - (void)close {
-    @try {
-        if ( _isClosed )
-            return;
-        
-        _isClosed = YES;
-        if ( _task.state == NSURLSessionTaskStateRunning ) [_task cancel];
-        _task = nil;
-        [_writer synchronizeFile];
-        [_writer closeFile];
-        _writer = nil;
-        [_reader closeFile];
-        _reader = nil;
-    } @catch (__unused NSException *exception) {
-        
-    }
-#ifdef DEBUG
-    @finally {
-        MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
-    }
-#endif
+    [self lock];
+    [self _close];
+    [self unlock];
 }
 
 #pragma mark -
 
-- (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    if ( _isClosed )
-        return;
-    _response = response;
-    
-    id<MCSResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
-    _content = [delegate newPartialContentForReader:self];
-    NSString *filePath = [delegate writePathOfPartialContent:_content];
-    _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
-    _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
-
-    if ( _reader == nil || _writer == nil ) {
-        [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
-        return;
+- (BOOL)isPrepared {
+    [self lock];
+    @try {
+        return _isPrepared;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
     }
-    
-    _isPrepared = YES;
-    
-    dispatch_async(_delegateQueue, ^{
-        [self.delegate readerPrepareDidFinish:self];
-    });
+}
 
+- (BOOL)isDone {
+    [self lock];
+    @try {
+        return _isDone;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+#pragma mark - MCSDownloadTaskDelegate
+
+- (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
+    [self lock];
+    @try {
+        if ( _isClosed )
+            return;
+        _response = response;
+        
+        id<MCSResourceNetworkDataReaderDelegate> delegate = (id)self.delegate;
+        _content = [delegate newPartialContentForReader:self];
+        NSString *filePath = [delegate writePathOfPartialContent:_content];
+        _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
+        _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
+
+        if ( _reader == nil || _writer == nil ) {
+            [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
+            return;
+        }
+        
+        _isPrepared = YES;
+        
+        dispatch_async(_delegateQueue, ^{
+            [self.delegate readerPrepareDidFinish:self];
+        });
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
+    [self lock];
     @try {
         if ( _isClosed )
             return;
@@ -161,28 +187,67 @@
         });
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
+    } @finally {
+           [self unlock];
     }
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    if ( _isClosed )
-        return;
-    
-    if ( error != nil && error.code != NSURLErrorCancelled ) {
-        [self _onError:error];
+    [self lock];
+    @try {
+        if ( _isClosed )
+            return;
+        
+        if ( error != nil && error.code != NSURLErrorCancelled ) {
+            [self _onError:error];
+        }
+        //    else {
+        //        // finished download
+        //    }
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
     }
-//    else {
-//        // finished download
-//    }
 }
 
 #pragma mark -
 
 - (void)_onError:(NSError *)error {
-    [self close];
+    [self _close];
     
     dispatch_async(_delegateQueue, ^{
         [self.delegate reader:self anErrorOccurred:error];
     });
+}
+
+- (void)_close {
+    if ( _isClosed )
+        return;
+    
+    @try {
+        _isClosed = YES;
+        if ( _task.state == NSURLSessionTaskStateRunning ) [_task cancel];
+        _task = nil;
+        [_writer synchronizeFile];
+        [_writer closeFile];
+        _writer = nil;
+        [_reader closeFile];
+        _reader = nil;
+        
+        MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
+    } @catch (__unused NSException *exception) {
+        
+    }
+}
+
+#pragma mark -
+
+- (void)lock {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+}
+
+- (void)unlock {
+    dispatch_semaphore_signal(_semaphore);
 }
 @end
