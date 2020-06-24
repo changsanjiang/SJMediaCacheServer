@@ -189,6 +189,11 @@
 - (void)dealloc {
     MCSLog(@"%@: <%p>.dealloc;\n\n", NSStringFromClass(self.class), self);
 }
+
+- (void)responseDidAbort:(NSObject<HTTPResponse> *)sender {
+    [super responseDidAbort:sender];
+    MCSLog(@"%@: <%p>.abort;\n", NSStringFromClass(self.class), self);
+}
 @end
 
 @implementation NSURLRequest (MCSHTTPConnectionExtended)
