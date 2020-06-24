@@ -58,8 +58,8 @@
     if ( resource == _resource && !self.isClosed )  {
         [self lock];
         [self _close];
+        [self _onError:[NSError mcs_errorForRemovedResource:_request.URL]];
         [self unlock];
-        [_delegate reader:self anErrorOccurred:[NSError mcs_errorForRemovedResource:_request.URL]];
     }
 }
 
@@ -87,7 +87,7 @@
         
         _reader.delegate = self;
         
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        dispatch_async(_resource.readerOperationQueue, ^{
             [self.reader prepare];
         });
     } @catch (__unused NSException *exception) {
@@ -197,13 +197,23 @@
         if ( parser != nil && _resource.parser != parser )
             _resource.parser = parser;
     }
+    dispatch_async(_resource.readerOperationQueue, ^{
+        [self.delegate readerPrepareDidFinish:self];
+    });
     [self unlock];
-    [self.delegate readerPrepareDidFinish:self];
 }
 - (void)readerHasAvailableData:(id<MCSResourceDataReader>)reader {
-    [self.delegate readerHasAvailableData:self];
+    dispatch_async(_resource.readerOperationQueue, ^{
+        [self.delegate readerHasAvailableData:self];
+    });
 }
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    [self.delegate reader:self anErrorOccurred:error];
+    [self _onError:error];
+}
+
+- (void)_onError:(NSError *)error {
+    dispatch_async(_resource.readerOperationQueue, ^{
+        [self.delegate reader:self anErrorOccurred:error];
+    });
 }
 @end

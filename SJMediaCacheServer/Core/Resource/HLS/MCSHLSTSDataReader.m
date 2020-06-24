@@ -137,9 +137,7 @@
     _writer = [NSFileHandle fileHandleForWritingAtPath:filepath];
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_resource.tsContentType totalLength:_content.tsTotalLength];
     
-    dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        [self.delegate readerPrepareDidFinish:self];
-    });
+    [_delegate readerPrepareDidFinish:self];
 }
 
 #pragma mark -

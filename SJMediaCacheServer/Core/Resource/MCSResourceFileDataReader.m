@@ -49,9 +49,7 @@
     _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
     [_reader seekToFileOffset:_readRange.location];
     
-    dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        [self.delegate readerPrepareDidFinish:self];
-    });
+    [_delegate readerPrepareDidFinish:self];
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {

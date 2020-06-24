@@ -135,7 +135,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         _count = [_sqlite3 countOfObjectsForClass:MCSResourceUsageLog.class conditions:nil error:NULL];
         _lock = NSRecursiveLock.alloc.init;
         _resources = NSMutableDictionary.dictionary;
-        [self _removeResourcesForLimit:@(MCSLimitFreeDiskSpace)];
+        [self _removeResourcesForLimit:MCSLimitFreeDiskSpace];
         
         // 获取磁盘剩余空间, 以及所有资源已占空间大小
         _freeDiskSpace = [MCSFileManager systemFreeSize];
@@ -153,7 +153,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         if ( _cacheCountLimit != cacheCountLimit ) {
             _cacheCountLimit = cacheCountLimit;
             if ( cacheCountLimit != 0 ) {
-                [self _removeResourcesForLimit:@(MCSLimitCount)];
+                [self _removeResourcesForLimit:MCSLimitCount];
             }
         }
     } @catch (__unused NSException *exception) {
@@ -181,7 +181,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         if ( maxDiskAgeForCache != _maxDiskAgeForCache ) {
             _maxDiskAgeForCache = maxDiskAgeForCache;
             if ( maxDiskAgeForCache != 0 ) {
-                [self _removeResourcesForLimit:@(MCSLimitExpires)];
+                [self _removeResourcesForLimit:MCSLimitExpires];
             }
         }
     } @catch (__unused NSException *exception) {
@@ -209,7 +209,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         if ( _maxDiskSizeForCache != maxDiskSizeForCache ) {
             _maxDiskSizeForCache = maxDiskSizeForCache;
             if ( maxDiskSizeForCache != 0 ) {
-                [self _removeResourcesForLimit:@(MCSLimitCacheDiskSpace)];
+                [self _removeResourcesForLimit:MCSLimitCacheDiskSpace];
             }
         }
     } @catch (__unused NSException *exception) {
@@ -236,7 +236,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         if ( reservedFreeDiskSpace != _reservedFreeDiskSpace ) {
             _reservedFreeDiskSpace = reservedFreeDiskSpace;
             if ( reservedFreeDiskSpace != 0 ) {
-                [self _removeResourcesForLimit:@(MCSLimitFreeDiskSpace)];
+                [self _removeResourcesForLimit:MCSLimitFreeDiskSpace];
             }
         }
     } @catch (__unused NSException *exception) {
@@ -323,7 +323,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     @try {
         if ( _count < _cacheCountLimit )
             return;
-        [self _removeResourcesForLimit:@(MCSLimitCount)];
+        [self _removeResourcesForLimit:MCSLimitCount];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -338,8 +338,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     [self lock];
     _cacheDiskSpace += length;
     _freeDiskSpace -= length;
-    [self _removeResourcesForLimit:@(MCSLimitFreeDiskSpace)];
-    [self _removeResourcesForLimit:@(MCSLimitCacheDiskSpace)];
+    [self _removeResourcesForLimit:MCSLimitFreeDiskSpace];
+    [self _removeResourcesForLimit:MCSLimitCacheDiskSpace];
     [self unlock];
 }
 
@@ -376,9 +376,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     return [MCSFileManager rootDirectorySize];
 }
 
-- (void)_removeResourcesForLimit:(NSNumber *)limitValue {
-    MCSLimit limit = [limitValue integerValue];
-    
+- (void)_removeResourcesForLimit:(MCSLimit)limit {
     switch ( limit ) {
         case MCSLimitNone:
             break;
