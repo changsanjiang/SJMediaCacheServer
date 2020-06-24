@@ -401,7 +401,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
                 return;
             
             // 资源数量少于限制的个数
-            if ( _count < _cacheCountLimit )
+            if ( _cacheCountLimit > _count )
                 return;
         }
             break;
@@ -423,7 +423,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
                 return;
             
             // 获取已缓存的数据大小
-            if ( _cacheDiskSpace < _maxDiskSizeForCache )
+            if ( _maxDiskSizeForCache > _cacheDiskSpace )
                 return;
         }
             break;
@@ -496,7 +496,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         [self.resources removeObjectForKey:r.name];
         [self.sqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
         [self.sqlite3 removeAllObjectsForClass:MCSResourceUsageLog.class conditions:@[
-            [SJSQLite3Condition conditionWithColumn:@"resource" value:@(r.id)]
+            [SJSQLite3Condition conditionWithColumn:@"resource" value:@(r.id)],
+            [SJSQLite3Condition conditionWithColumn:@"resourceType" value:@(r.type)],
         ] error:NULL];
         dispatch_async(r.readerOperationQueue, ^{
             [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerDidRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : r }];
