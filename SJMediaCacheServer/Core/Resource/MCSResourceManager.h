@@ -13,7 +13,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-FOUNDATION_EXTERN NSNotificationName const MCSResourceManagerWillRemoveResourceNotification;
+FOUNDATION_EXTERN NSNotificationName const MCSResourceManagerDidRemoveResourceNotification;
 FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 
 @interface MCSResourceManager : NSObject

@@ -23,7 +23,7 @@
 #import <SJUIKit/SJSQLite3+Private.h>
 #import <SJUIKit/SJSQLite3+QueryExtended.h>
 
-NSNotificationName const MCSResourceManagerWillRemoveResourceNotification = @"MCSResourceManagerWillRemoveResourceNotification";
+NSNotificationName const MCSResourceManagerDidRemoveResourceNotification = @"MCSResourceManagerDidRemoveResourceNotification";
 NSString *MCSResourceManagerUserInfoResourceKey = @"resource";
 
 typedef NS_ENUM(NSUInteger, MCSLimit) {
@@ -318,12 +318,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 // 读取结束, 清理剩余的超出个数限制的资源
 - (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource {
-    if ( self.cacheCountLimit == 0 )
-        return;
-    
     [self lock];
     @try {
-        if ( _count < _cacheCountLimit )
+        if ( _cacheCountLimit == 0 || _count < _cacheCountLimit )
             return;
         [self _removeResourcesForLimit:MCSLimitCount];
     } @catch (__unused NSException *exception) {
@@ -481,11 +478,13 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         return;
 
     [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
-        [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerWillRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : r }];
         [MCSFileManager removeResourceWithName:r.name error:NULL];
         [self.resources removeObjectForKey:r.name];
         [self.sqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
         if ( r.log != nil ) [self.sqlite3 removeObjectForClass:r.log.class primaryKeyValue:@(r.log.id) error:NULL];
+        dispatch_async(r.readerOperationQueue, ^{
+            [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerDidRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : r }];
+        });
     }];
     
     _count -= resources.count;

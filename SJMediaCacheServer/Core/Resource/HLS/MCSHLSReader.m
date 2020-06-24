@@ -40,7 +40,7 @@
         _semaphore = dispatch_semaphore_create(1);
         [_resource readWrite_retain];
         [MCSResourceManager.shared reader:self willReadResource:resource];
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(willRemoveResource:) name:MCSResourceManagerWillRemoveResourceNotification object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(didRemoveResource:) name:MCSResourceManagerDidRemoveResourceNotification object:nil];
     }
     return self;
 }
@@ -53,7 +53,7 @@
     MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
-- (void)willRemoveResource:(NSNotification *)note {
+- (void)didRemoveResource:(NSNotification *)note {
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
         [self lock];

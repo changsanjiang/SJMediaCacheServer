@@ -58,7 +58,7 @@
         [_resource readWrite_retain];
         [MCSResourceManager.shared reader:self willReadResource:_resource];
         
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(willRemoveResource:) name:MCSResourceManagerWillRemoveResourceNotification object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(didRemoveResource:) name:MCSResourceManagerDidRemoveResourceNotification object:nil];
     }
     return self;
 }
@@ -75,7 +75,7 @@
     return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range)];
 }
 
-- (void)willRemoveResource:(NSNotification *)note {
+- (void)didRemoveResource:(NSNotification *)note {
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
         [self lock];
