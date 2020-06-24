@@ -122,8 +122,8 @@
             return nil;
         
         NSData *data = [self.currentReader readDataOfLength:length];
-        if ( _readDataDecoder != nil ) data = _readDataDecoder(_request, _offset, data);
         _offset += data.length;
+        if ( _readDataDecoder != nil ) data = _readDataDecoder(_request, _offset, data);
         return data;
     } @catch (__unused NSException *exception) {
         
