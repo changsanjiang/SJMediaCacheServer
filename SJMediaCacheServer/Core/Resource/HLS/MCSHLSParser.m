@@ -9,6 +9,49 @@
 #import "MCSHLSParser.h"
 #import "MCSError.h"
 #import "MCSFileManager.h"
+#import "MCSDownload.h"
+
+@interface MCSData : NSObject<MCSDownloadTaskDelegate>
++ (NSData *)dataWithContentsOfURL:(NSURL *)url error:(NSError **)error;
+@end
+
+@implementation MCSData {
+    dispatch_semaphore_t _semaphore;
+    NSMutableData *_m;
+    NSError *_error;
+}
+
++ (nullable NSData *)dataWithContentsOfURL:(NSURL *)url error:(NSError **)error {
+    MCSData *data = [MCSData.alloc initWithContentsOfURL:url error:error];
+    return data != nil ? data->_m : nil;
+}
+
+- (instancetype)initWithContentsOfURL:(NSURL *)url error:(NSError **)error {
+    self = [super init];
+    if ( self ) {
+        _m = NSMutableData.data;
+        _semaphore = dispatch_semaphore_create(0);
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            NSURLRequest *request = [NSURLRequest requestWithURL:url];
+            [MCSDownload.shared downloadWithRequest:request priority:1 delegate:self];
+        });
+        dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+        if ( _error != nil && error != NULL ) *error = _error;
+    }
+    return self;
+}
+
+- (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSURLResponse *)response { }
+
+- (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
+    [_m appendData:data];
+}
+
+- (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+    _error = error;
+    dispatch_semaphore_signal(_semaphore);
+}
+@end
 
 @interface NSString (MCSRegexMatching)
 - (nullable NSArray<NSValue *> *)mcs_rangesByMatchingPattern:(NSString *)pattern;
@@ -156,7 +199,8 @@
     __block NSError *_Nullable error = nil;
     do {
         NSURL *URL = [NSURL URLWithString:url];
-        contents = [NSString stringWithContentsOfURL:URL encoding:0 error:&error];
+        NSData *data = [MCSData dataWithContentsOfURL:URL error:&error];
+        contents = [NSString.alloc initWithData:data encoding:0];
         if ( contents == nil )
             break;
 
@@ -191,7 +235,8 @@
         NSInteger URILocation = [matched rangeOfString:@"\""].location + 1;
         NSRange URIRange = NSMakeRange(URILocation, matched.length-URILocation-1);
         NSString *URI = [matched substringWithRange:URIRange];
-        NSData *keyData = [NSData dataWithContentsOfURL:[NSURL URLWithString:URI] options:0 error:&error];
+        NSString *url = [self _urlWithMatchedString:URI];
+        NSData *keyData = [MCSData dataWithContentsOfURL:[NSURL URLWithString:url] error:&error];
         if ( error != nil ) {
             *stop = YES;
             return ;

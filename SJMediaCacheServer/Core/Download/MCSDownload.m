@@ -108,14 +108,14 @@
             error = [NSError mcs_errorForResponseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
         }
         
-        if ( error == nil ) {
+        if ( error == nil && response.statusCode == 206 ) {
             NSUInteger contentLength = MCSGetResponseContentLength(response);
             if ( contentLength == 0 ) {
                 error = [NSError mcs_errorForResponseUnavailable:task.currentRequest.URL request:task.currentRequest response:response];
             }
         }
         
-        if ( error == nil ) {
+        if ( error == nil && response.statusCode == 206 ) {
             NSRange requestRange = MCSGetRequestNSRange(MCSGetRequestContentRange(task.currentRequest.allHTTPHeaderFields));
             NSRange responseRange = MCSGetResponseNSRange(MCSGetResponseContentRange(response));
             
