@@ -11,10 +11,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResourceFileDataReader : NSObject<MCSResourceDataReader>
-- (instancetype)initWithRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange;
+- (instancetype)initWithRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
 @property (nonatomic, copy, readonly) NSString *path;
+@property (nonatomic, readonly) BOOL isPrepared;
 @property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;

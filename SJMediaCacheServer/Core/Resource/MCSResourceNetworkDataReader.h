@@ -13,7 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResourceNetworkDataReader : NSObject<MCSResourceDataReader>
-- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range networkTaskPriority:(float)networkTaskPriority;
+- (instancetype)initWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 @property (nonatomic, readonly) NSRange range;
 

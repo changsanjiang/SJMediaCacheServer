@@ -29,7 +29,7 @@
 
 @property (nonatomic) NSInteger currentIndex;
 @property (nonatomic, strong, readonly, nullable) id<MCSResourceDataReader> currentReader;
-@property (nonatomic, strong, nullable) MCSResourceNetworkDataReader *tmpReader; // 用于获取资源contentLength, contentType等信息
+@property (nonatomic, strong, nullable) MCSResourceNetworkDataReader *tmpReader; // 用于获取资源contentLength, contentType等必要信息
 @property (nonatomic) NSUInteger offset;
 
 @property (nonatomic, weak, nullable) MCSVODResource *resource;
@@ -102,19 +102,16 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
+        MCSLog(@"%@: <%p>.prepare { name: %@, range: %@ };\n", NSStringFromClass(self.class), self, _resource.name, NSStringFromRange(_request.mcs_range));
         
         _isCalledPrepare = YES;
         
         if ( _resource.totalLength == 0 || _resource.contentType.length == 0 ) {
-            _tmpReader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:NSMakeRange(0, 2)  networkTaskPriority:_networkTaskPriority];
-            _tmpReader.delegate = self;
+            _tmpReader = [MCSResourceNetworkDataReader.alloc initWithRequest:[_request mcs_requestWithRange:NSMakeRange(0, 2)] networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
             
             MCSLog(@"%@: <%p>.createTmpReader: <%p>;\n", NSStringFromClass(self.class), self, _tmpReader);
 
-            dispatch_async(_resource.readerOperationQueue, ^{
-                [self.tmpReader prepare];
-            });
+            [self.tmpReader prepare];
         }
         else {
             [self _prepare];
@@ -129,7 +126,7 @@
 - (NSData *)readDataOfLength:(NSUInteger)length {
     [self lock];
     @try {
-        if ( _isClosed || _currentIndex == NSNotFound )
+        if ( _isClosed || _currentIndex == NSNotFound || !self.currentReader.isPrepared )
             return nil;
         
         NSData *data = [self.currentReader readDataOfLength:length];
@@ -254,8 +251,7 @@
             // undownloaded part
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
-                MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:leftRange networkTaskPriority:_networkTaskPriority];
-                reader.delegate = self;
+                MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithRequest:[_request mcs_requestWithRange:leftRange] networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
                 [readers addObject:reader];
             }
             
@@ -263,8 +259,7 @@
             NSRange matchedRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
             NSRange fileRange = NSMakeRange(matchedRange.location - content.offset, intersection.length);
             NSString *path = [MCSFileManager getFilePathWithName:content.name inResource:_resource.name];
-            MCSResourceFileDataReader *reader = [MCSResourceFileDataReader.alloc initWithRange:matchedRange path:path readRange:fileRange];
-            reader.delegate = self;
+            MCSResourceFileDataReader *reader = [MCSResourceFileDataReader.alloc initWithRange:matchedRange path:path readRange:fileRange delegate:self delegateQueue:_resource.readerOperationQueue];
             [readers addObject:reader];
             
             // retain
@@ -280,8 +275,7 @@
     
     if ( current.length != 0 ) {
         // undownloaded part
-        MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithURL:_request.URL requestHeaders:_request.mcs_headers range:current  networkTaskPriority:_networkTaskPriority];
-        reader.delegate = self;
+        MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithRequest:[_request mcs_requestWithRange:current] networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
         [readers addObject:reader];
     }
     
@@ -303,9 +297,7 @@
     else
         _currentIndex += 1;
     
-    dispatch_async(_resource.readerOperationQueue, ^{
-        [self.currentReader prepare];
-    });
+    [self.currentReader prepare];
 }
 
 - (nullable id<MCSResourceDataReader>)currentReader {
@@ -367,6 +359,10 @@
     @try {
         if      ( _response != nil ) {
             _isPrepared = YES;
+            
+            dispatch_async(_resource.readerOperationQueue, ^{
+                [self.delegate readerPrepareDidFinish:self];
+            });
         }
         else if ( reader == _tmpReader ) {
             // update contentType & totalLength & server for `resource`
@@ -379,10 +375,6 @@
             // prepare
             [self _prepare];
         }
-        
-        dispatch_async(_resource.readerOperationQueue, ^{
-            [self.delegate readerPrepareDidFinish:self];
-        });
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -391,9 +383,7 @@
 }
 
 - (void)readerHasAvailableData:(id<MCSResourceDataReader>)reader {
-    dispatch_async(_resource.readerOperationQueue, ^{
-        [self.delegate readerHasAvailableData:self];
-    });
+    [self.delegate readerHasAvailableData:self];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {

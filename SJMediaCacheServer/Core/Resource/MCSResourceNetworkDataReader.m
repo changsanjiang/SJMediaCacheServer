@@ -14,8 +14,7 @@
 #import "MCSLogger.h"
 
 @interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate>
-@property (nonatomic, strong) NSURL *URL;
-@property (nonatomic, copy) NSDictionary *requestHeaders;
+@property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic) NSRange range;
 
 @property (nonatomic, strong, nullable) NSURLSessionTask *task;
@@ -37,20 +36,22 @@
 
 @implementation MCSResourceNetworkDataReader
 @synthesize delegate = _delegate;
+@synthesize delegateQueue = _delegateQueue;
+@synthesize isPrepared = _isPrepared;
 
-- (instancetype)initWithURL:(NSURL *)URL requestHeaders:(NSDictionary *)headers range:(NSRange)range  networkTaskPriority:(float)networkTaskPriority {
+- (instancetype)initWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
-        _URL = URL;
-        _requestHeaders = headers.copy;
-        _range = range;
+        _request = request;
         _networkTaskPriority = networkTaskPriority;
+        _delegate = delegate;
+        _delegateQueue = queue;
     }
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"MCSResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@\n};", self, _URL, _requestHeaders, NSStringFromRange(_range)];
+    return [NSString stringWithFormat:@"MCSResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@\n};", self, _request.URL, _request.mcs_headers, NSStringFromRange(_request.mcs_range)];
 }
 
 - (void)prepare {
@@ -60,40 +61,13 @@
     MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
     
     _isCalledPrepare = YES;
-    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:_URL];
-    [request setAllHTTPHeaderFields:_requestHeaders];
-    //
-    //        https://tools.ietf.org/html/rfc7233#section-4.1
-    //
-    //        Additional examples, assuming a representation of length 10000:
-    //
-    //        o  The final 500 bytes (byte offsets 9500-9999, inclusive):
-    //
-    //             bytes=-500
-    //
-    //        Or:
-    //
-    //             bytes=9500-
-    //
-    //        o  The first and last bytes only (bytes 0 and 9999):
-    //
-    //             bytes=0-0,-1
-    //
-    //        o  Other valid (but not canonical) specifications of the second 500
-    //           bytes (byte offsets 500-999, inclusive):
-    //
-    //             bytes=500-600,601-999
-    //             bytes=500-700,601-999
-    //
-    [request setValue:[NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)_range.location, (unsigned long)NSMaxRange(_range) - 1] forHTTPHeaderField:@"Range"];
     
-    _task = [MCSDownload.shared downloadWithRequest:request priority:_networkTaskPriority delegate:self];
-
+    _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     @try {
-        if ( _isClosed || _isDone )
+        if ( _isClosed || _isDone || !_isPrepared )
             return nil;
         
         NSData *data = nil;
@@ -160,11 +134,16 @@
     _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
 
     if ( _reader == nil || _writer == nil ) {
-        [self _onError:[NSError mcs_fileNotExistError:_URL]];
+        [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
         return;
     }
     
-    [_delegate readerPrepareDidFinish:self];
+    _isPrepared = YES;
+    
+    dispatch_async(_delegateQueue, ^{
+        [self.delegate readerPrepareDidFinish:self];
+    });
+
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
@@ -176,11 +155,13 @@
         NSUInteger length = data.length;
         _downloadedLength += length;
         [_content didWriteDataWithLength:length];
+     
+        dispatch_async(_delegateQueue, ^{
+            [self.delegate readerHasAvailableData:self];
+        });
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
     }
-    
-    [_delegate readerHasAvailableData:self];
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
@@ -199,6 +180,9 @@
 
 - (void)_onError:(NSError *)error {
     [self close];
-    [_delegate reader:self anErrorOccurred:error];
+    
+    dispatch_async(_delegateQueue, ^{
+        [self.delegate reader:self anErrorOccurred:error];
+    });
 }
 @end

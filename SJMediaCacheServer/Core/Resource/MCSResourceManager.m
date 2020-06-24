@@ -22,6 +22,7 @@
 #import <SJUIKit/SJSQLite3.h>
 #import <SJUIKit/SJSQLite3+Private.h>
 #import <SJUIKit/SJSQLite3+QueryExtended.h>
+#import <SJUIKit/SJSQLite3+RemoveExtended.h>
 
 NSNotificationName const MCSResourceManagerDidRemoveResourceNotification = @"MCSResourceManagerDidRemoveResourceNotification";
 NSNotificationName const MCSResourceManagerUserCancelledReadingNotification = @"MCSResourceManagerUserCancelledReadingNotification";
@@ -492,7 +493,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         [MCSFileManager removeResourceWithName:r.name error:NULL];
         [self.resources removeObjectForKey:r.name];
         [self.sqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
-        if ( r.log != nil ) [self.sqlite3 removeObjectForClass:r.log.class primaryKeyValue:@(r.log.id) error:NULL];
+        [self.sqlite3 removeAllObjectsForClass:MCSResourceUsageLog.class conditions:@[
+            [SJSQLite3Condition conditionWithColumn:@"resource" value:@(r.id)]
+        ] error:NULL];
         dispatch_async(r.readerOperationQueue, ^{
             [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerDidRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : r }];
         });
