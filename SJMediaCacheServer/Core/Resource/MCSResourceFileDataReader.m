@@ -59,11 +59,12 @@
         
         NSUInteger length = MIN(lengthParam, _readRange.length - _offset);
         NSData *data = [_reader readDataOfLength:length];
-        _offset += data.length;
-        _isDone = _offset == _readRange.length;
-        
+
         MCSLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
         
+        _offset += data.length;
+        _isDone = _offset == _readRange.length;
+                
 #ifdef DEBUG
         if ( _isDone ) {
             MCSLog(@"%@: <%p>.done { range: %@ , file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
