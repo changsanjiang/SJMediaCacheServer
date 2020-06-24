@@ -400,6 +400,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             if ( _cacheCountLimit == 0 )
                 return;
             
+            if ( _count == 1 )
+                return;
+            
             // 资源数量少于限制的个数
             if ( _cacheCountLimit > _count )
                 return;
@@ -440,18 +443,22 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         return;
 
     NSArray<MCSResourceUsageLog *> *logs = nil;
-    NSTimeInterval before = NSDate.date.timeIntervalSince1970 - 3 * 60;
+    // 清理60s之前的
+    NSTimeInterval before = NSDate.date.timeIntervalSince1970 - 60;
     switch ( limit ) {
         case MCSLimitNone:
             break;
         case MCSLimitCount:
         case MCSLimitCacheDiskSpace:
         case MCSLimitFreeDiskSpace: {
-            NSInteger length = _count - usingResources.count + 1;
+            // 清理一半
+            NSInteger length = (NSInteger)ceil((_count - usingResources.count) * 0.5);
             logs = [_sqlite3 objectsForClass:MCSResourceUsageLog.class conditions:@[
+                // 检索60s之前未被使用的资源
                 [SJSQLite3Condition mcs_conditionWithColumn:@"resource" notIn:usingResources],
                 [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(before)],
             ] orderBy:@[
+                // 按照更新的时间与使用次数进行排序
                 [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
                 [SJSQLite3ColumnOrder orderWithColumn:@"usageCount" ascending:YES],
             ] range:NSMakeRange(0, length) error:NULL];
@@ -462,10 +469,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             logs = [_sqlite3 objectsForClass:MCSResourceUsageLog.class conditions:@[
                 [SJSQLite3Condition mcs_conditionWithColumn:@"resource" notIn:usingResources],
                 [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(time)],
-            ] orderBy:@[
-                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
-                [SJSQLite3ColumnOrder orderWithColumn:@"usageCount" ascending:YES],
-            ] error:NULL];
+            ] orderBy:nil error:NULL];
         }
             break;
     }
