@@ -14,9 +14,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange;
 
 - (void)prepare;
+@property (nonatomic, copy, readonly) NSString *path;
 @property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 - (void)close;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -9,6 +9,7 @@
 #import "MCSHLSReader.h"
 #import "MCSHLSResource.h"
 #import "MCSHLSIndexDataReader.h"
+#import "MCSHLSAESKeyDataReader.h"
 #import "MCSHLSTSDataReader.h"
 #import "MCSFileManager.h"
 #import "MCSLogger.h"
@@ -73,8 +74,11 @@
         
         _isCalledPrepare = YES;
         
-        if ( [_request.URL.absoluteString containsString:@".m3u8"] ) {
+        if      ( [_request.URL.absoluteString containsString:MCSHLSIndexFileExtension] ) {
             _reader = [MCSHLSIndexDataReader.alloc initWithResource:_resource URL:_request.URL];
+        }
+        else if ( [_request.URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ) {
+            _reader = [MCSHLSAESKeyDataReader.alloc initWithResource:_resource URL:_request.URL];
         }
         else {
             NSAssert(_resource.parser != nil, @"`parser`不能为nil!");
@@ -82,7 +86,10 @@
         }
         
         _reader.delegate = self;
-        [_reader prepare];
+        
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            [self.reader prepare];
+        });
     } @catch (__unused NSException *exception) {
         
     } @finally {

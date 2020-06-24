@@ -196,7 +196,7 @@
             *stop = YES;
             return ;
         }
-        NSString *filename = [MCSFileManager hls_AESKeyFilenameForURI:URI];
+        NSString *filename = [MCSFileManager hls_AESKeyFilenameInResource:self.resourceName];
         NSString *filepath = [MCSFileManager getFilePathWithName:filename inResource:self.resourceName];
         [keyData writeToFile:filepath options:0 error:&error];
         if ( error != nil ) {
