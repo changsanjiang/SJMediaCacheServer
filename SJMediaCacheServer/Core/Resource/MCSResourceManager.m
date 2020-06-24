@@ -440,6 +440,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         return;
 
     NSArray<MCSResourceUsageLog *> *logs = nil;
+    NSTimeInterval before = NSDate.date.timeIntervalSince1970 - 3 * 60;
     switch ( limit ) {
         case MCSLimitNone:
             break;
@@ -448,7 +449,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         case MCSLimitFreeDiskSpace: {
             NSInteger length = _count - usingResources.count + 1;
             logs = [_sqlite3 objectsForClass:MCSResourceUsageLog.class conditions:@[
-                [SJSQLite3Condition mcs_conditionWithColumn:@"resource" notIn:usingResources]
+                [SJSQLite3Condition mcs_conditionWithColumn:@"resource" notIn:usingResources],
+                [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(before)],
             ] orderBy:@[
                 [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
                 [SJSQLite3ColumnOrder orderWithColumn:@"usageCount" ascending:YES],
