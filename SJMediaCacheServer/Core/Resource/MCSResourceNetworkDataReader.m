@@ -112,7 +112,7 @@
         }
         return data;
     } @catch (NSException *exception) {
-        [self _onError:[NSError mcs_errorForException:exception]];
+        [self _onError:[NSError mcs_exception:exception]];
     }
 #ifdef DEBUG
     @finally {
@@ -160,7 +160,7 @@
     _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
 
     if ( _reader == nil || _writer == nil ) {
-        [self _onError:[NSError mcs_errorForFileHandleError:_URL]];
+        [self _onError:[NSError mcs_fileNotExistError:_URL]];
         return;
     }
     
@@ -177,7 +177,7 @@
         _downloadedLength += length;
         [_content didWriteDataWithLength:length];
     } @catch (NSException *exception) {
-        [self _onError:[NSError mcs_errorForException:exception]];
+        [self _onError:[NSError mcs_exception:exception]];
     }
     
     [_delegate readerHasAvailableData:self];

@@ -73,9 +73,7 @@
 }
 
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error {
-    if ( !reader.isClosed ) {
-        [reader close];
-        [_delegate task:self anErrorOccurred:error];
-    }
+    [reader close];
+    [_delegate task:self anErrorOccurred:error];
 }
 @end

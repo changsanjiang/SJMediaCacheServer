@@ -207,7 +207,7 @@
     } while ( url != nil );
 
     if ( error != nil || contents == nil || ![contents hasPrefix:@"#"] ) {
-        [self _onError:error ?: [NSError mcs_errorForHLSFileParseError:_URL]];
+        [self _onError:error ?: [NSError mcs_HLSFileParseError:_URL]];
         return;
     }
  
@@ -256,17 +256,17 @@
     }
     
     if ( tsFragments.count == 0 ) {
-        [self _onError:[NSError mcs_errorForHLSFileParseError:_URL]];
+        [self _onError:[NSError mcs_HLSFileParseError:_URL]];
         return;
     }
     
     if ( ![tsFragments writeToFile:tsFragmentsFilePath atomically:YES] ) {
-        [self _onError:[NSError mcs_errorForHLSFileParseError:_URL]];
+        [self _onError:[NSError mcs_HLSFileParseError:_URL]];
         return;
     }
     NSArray<NSString *> *tsNames = [[reversedTsNames reverseObjectEnumerator] allObjects];
     if ( ![tsNames writeToFile:tsNameFilePath atomically:YES] ) {
-        [self _onError:[NSError mcs_errorForHLSFileParseError:_URL]];
+        [self _onError:[NSError mcs_HLSFileParseError:_URL]];
         return;
     }
     
@@ -314,7 +314,7 @@
 #ifdef DEBUG
         NSLog(@"%@", error);
 #endif
-        error = [NSError mcs_errorForHLSFileParseError:_URL];
+        error = [NSError mcs_HLSFileParseError:_URL];
     }
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{

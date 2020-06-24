@@ -28,7 +28,7 @@
     if ( self ) {
         _lock = NSRecursiveLock.alloc.init;
         _m = NSMutableArray.array;
-        _readerOperationQueue = dispatch_queue_create("mcs.SJMediaCacheServer.readerOperationQueue", DISPATCH_QUEUE_SERIAL);
+        _readerOperationQueue = dispatch_queue_create("lib.changsanjiang.SJMediaCacheServer.readerOperationQueue", DISPATCH_QUEUE_SERIAL);
     }
     return self;
 }

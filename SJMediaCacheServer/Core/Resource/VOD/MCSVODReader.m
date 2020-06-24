@@ -59,6 +59,7 @@
         [MCSResourceManager.shared reader:self willReadResource:_resource];
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(didRemoveResource:) name:MCSResourceManagerDidRemoveResourceNotification object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(userCancelledReading:) name:MCSResourceManagerUserCancelledReadingNotification object:nil];
     }
     return self;
 }
@@ -80,7 +81,17 @@
     if ( resource == _resource && !self.isClosed )  {
         [self lock];
         [self _close];
-        [self _onError:[NSError mcs_errorForRemovedResource:self.request.URL]];
+        [self _onError:[NSError mcs_removedResource:self.request.URL]];
+        [self unlock];
+    }
+}
+
+- (void)userCancelledReading:(NSNotification *)note {
+    MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
+    if ( resource == _resource && !self.isClosed )  {
+        [self lock];
+        [self _close];
+        [self _onError:[NSError mcs_userCancelledError:_request.URL]];
         [self unlock];
     }
 }
@@ -391,6 +402,9 @@
 
 - (void)_onError:(NSError *)error {
     dispatch_async(_resource.readerOperationQueue, ^{
+        
+        MCSLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
+
         [self.delegate reader:self anErrorOccurred:error];
     });
 }

@@ -72,7 +72,7 @@
 #endif
         return data;
     } @catch (NSException *exception) {
-        [self _onError:[NSError mcs_errorForException:exception]];
+        [self _onError:[NSError mcs_exception:exception]];
     }
 }
 

@@ -29,7 +29,7 @@
 
 - (void)prepare {
     if ( ![MCSFileManager fileExistsAtPath:self.path] ) {
-        [self.delegate reader:self anErrorOccurred:[NSError mcs_errorForFileHandleError:_URL]];
+        [self.delegate reader:self anErrorOccurred:[NSError mcs_fileNotExistError:_URL]];
         return;
     }
     

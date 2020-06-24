@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXTERN NSNotificationName const MCSResourceManagerDidRemoveResourceNotification;
+FOUNDATION_EXPORT NSNotificationName const MCSResourceManagerUserCancelledReadingNotification;
 FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 
 @interface MCSResourceManager : NSObject
@@ -64,6 +65,7 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 
 - (__kindof MCSResource *)resourceWithURL:(NSURL *)URL;
 - (void)saveMetadata:(MCSResource *)resource;
+- (void)cancelCurrentReadsForResource:(MCSResource *)resource;
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource;

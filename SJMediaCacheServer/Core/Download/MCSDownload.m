@@ -105,13 +105,13 @@
     @try {
         NSError *error = nil;
         if ( response.statusCode > 400 ) {
-            error = [NSError mcs_errorForResponseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
+            error = [NSError mcs_responseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
         }
         
         if ( error == nil && response.statusCode == 206 ) {
             NSUInteger contentLength = MCSGetResponseContentLength(response);
             if ( contentLength == 0 ) {
-                error = [NSError mcs_errorForResponseUnavailable:task.currentRequest.URL request:task.currentRequest response:response];
+                error = [NSError mcs_responseUnavailable:task.currentRequest.URL request:task.currentRequest response:response];
             }
         }
         
@@ -121,7 +121,7 @@
             
             if ( !MCSNSRangeIsUndefined(requestRange) ) {
                 if ( MCSNSRangeIsUndefined(responseRange) || !NSEqualRanges(requestRange, responseRange) ) {
-                    error = [NSError mcs_errorForNonsupportContentType:task.currentRequest.URL request:task.currentRequest response:task.response];
+                    error = [NSError mcs_nonsupportContentType:task.currentRequest.URL request:task.currentRequest response:task.response];
                 }
             }
         }

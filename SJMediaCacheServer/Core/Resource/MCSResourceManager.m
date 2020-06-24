@@ -24,6 +24,7 @@
 #import <SJUIKit/SJSQLite3+QueryExtended.h>
 
 NSNotificationName const MCSResourceManagerDidRemoveResourceNotification = @"MCSResourceManagerDidRemoveResourceNotification";
+NSNotificationName const MCSResourceManagerUserCancelledReadingNotification = @"MCSResourceManagerUserCancelledReadingNotification";
 NSString *MCSResourceManagerUserInfoResourceKey = @"resource";
 
 typedef NS_ENUM(NSUInteger, MCSLimit) {
@@ -298,6 +299,12 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     [self lock];
     [self _update:resource];
     [self unlock];
+}
+
+- (void)cancelCurrentReadsForResource:(MCSResource *)resource {
+    if ( resource.readWriteCount != 0 ) {
+        [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerUserCancelledReadingNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : resource }];
+    }
 }
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request {
