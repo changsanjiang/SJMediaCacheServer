@@ -101,7 +101,9 @@
             
             MCSLog(@"%@: <%p>.createTmpReader: <%p>;\n", NSStringFromClass(self.class), self, _tmpReader);
 
-            [_tmpReader prepare];
+            dispatch_async(_resource.readerOperationQueue, ^{
+                [self.tmpReader prepare];
+            });
         }
         else {
             [self _prepare];

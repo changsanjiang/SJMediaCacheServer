@@ -196,6 +196,7 @@
 #pragma mark -
 
 - (void)_onError:(NSError *)error {
+    [self close];
     [_delegate reader:self anErrorOccurred:error];
 }
 @end

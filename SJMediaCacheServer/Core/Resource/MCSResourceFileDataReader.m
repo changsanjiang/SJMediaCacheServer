@@ -71,7 +71,7 @@
 #endif
         return data;
     } @catch (NSException *exception) {
-        [_delegate reader:self anErrorOccurred:[NSError mcs_errorForException:exception]];
+        [self _onError:[NSError mcs_errorForException:exception]];
     }
 }
 
@@ -85,5 +85,11 @@
     
     MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
- 
+
+#pragma mark -
+
+- (void)_onError:(NSError *)error {
+    [self close];
+    [_delegate reader:self anErrorOccurred:error];
+}
 @end

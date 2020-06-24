@@ -96,7 +96,7 @@
 }
 
 - (void)parser:(MCSHLSParser *)parser anErrorOccurred:(NSError *)error {
-    [_delegate reader:self anErrorOccurred:error];
+    [self _onError:error];
 }
 
 #pragma mark -
@@ -113,7 +113,13 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    [_delegate reader:self anErrorOccurred:error];
+    [self _onError:error];
 }
 
+#pragma mark -
+
+- (void)_onError:(NSError *)error {
+    [self close];
+    [_delegate reader:self anErrorOccurred:error];
+}
 @end

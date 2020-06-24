@@ -30,7 +30,7 @@
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
     
-    NSURL *URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/2000/0303000a/3/default/bca293257d954934afadfaa96d865172/2000.m3u8"];
+    NSURL *URL = [NSURL URLWithString:@"http://m3u8.soyoung.com/b4e47ebb6140c140ee504f27e35127db_02c3f06a.m3u8?sign=2d7bf820de50b502efb099abf7cbb6c0&t=5ef2e5e0"];
     
 //    URL = [NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"];
     
