@@ -80,7 +80,6 @@
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
         [self lock];
-        [self _close];
         [self _onError:[NSError mcs_removedResource:self.request.URL]];
         [self unlock];
     }
@@ -90,7 +89,6 @@
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
         [self lock];
-        [self _close];
         [self _onError:[NSError mcs_userCancelledError:_request.URL]];
         [self unlock];
     }
@@ -391,6 +389,8 @@
 }
 
 - (void)_onError:(NSError *)error {
+    [self _close];
+    
     dispatch_async(_resource.readerOperationQueue, ^{
         
         MCSLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);

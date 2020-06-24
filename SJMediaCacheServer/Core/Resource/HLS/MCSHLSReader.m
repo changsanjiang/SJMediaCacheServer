@@ -58,7 +58,6 @@
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
         [self lock];
-        [self _close];
         [self _onError:[NSError mcs_removedResource:_request.URL]];
         [self unlock];
     }
@@ -68,7 +67,6 @@
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
         [self lock];
-        [self _close];
         [self _onError:[NSError mcs_userCancelledError:_request.URL]];
         [self unlock];
     }
@@ -96,9 +94,7 @@
             _reader = [MCSHLSTSDataReader.alloc initWithResource:_resource request:_request networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
         }
         
-        dispatch_async(_resource.readerOperationQueue, ^{
-            [self.reader prepare];
-        });
+        [_reader prepare];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -119,7 +115,7 @@
     } @catch (__unused NSException *exception) {
         
     } @finally {
-        if ( self.reader.isDone ) {
+        if ( _reader.isDone ) {
             MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
             [self _close];
         }
@@ -217,10 +213,13 @@
     });
 }
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
+    [self lock];
     [self _onError:error];
+    [self unlock];
 }
 
 - (void)_onError:(NSError *)error {
+    [self _close];
     dispatch_async(_resource.readerOperationQueue, ^{
         
         MCSLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
