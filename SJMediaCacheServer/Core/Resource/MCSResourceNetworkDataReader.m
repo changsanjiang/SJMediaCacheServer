@@ -46,6 +46,7 @@
     self = [super init];
     if ( self ) {
         _request = request;
+        _range = request.mcs_range;
         _networkTaskPriority = networkTaskPriority;
         _delegate = delegate;
         _delegateQueue = queue;
@@ -55,7 +56,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"MCSResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@\n};", self, _request.URL, _request.mcs_headers, NSStringFromRange(_request.mcs_range)];
+    return [NSString stringWithFormat:@"MCSResourceNetworkDataReader:<%p> { URL: %@, headers: %@, range: %@\n};", self, _request.URL, _request.mcs_headers, NSStringFromRange(_range)];
 }
 
 - (void)prepare {

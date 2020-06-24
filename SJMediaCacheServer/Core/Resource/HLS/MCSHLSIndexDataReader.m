@@ -39,6 +39,7 @@
         _parser = resource.parser;
         _delegate = delegate;
         _delegateQueue = queue;
+        _semaphore = dispatch_semaphore_create(1);
     }
     return self;
 }
