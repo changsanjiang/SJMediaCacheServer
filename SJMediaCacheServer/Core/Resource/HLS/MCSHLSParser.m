@@ -58,7 +58,7 @@
 @end
 
 @interface MCSHLSParser ()<NSLocking> {
-    NSRecursiveLock *_lock;
+    dispatch_semaphore_t _semaphore;
 }
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic, strong, nullable) NSURL *URL;
@@ -74,7 +74,7 @@
         _resourceName = resource;
         _URL = URL;
         _delegate = delegate;
-        _lock = NSRecursiveLock.alloc.init;
+        _semaphore = dispatch_semaphore_create(1);
     }
     return self;
 }
@@ -169,28 +169,26 @@
 }
 
 - (NSString *)indexFilePath {
-    return [MCSFileManager hls_indexFilePathInResource:self.resourceName];
+    return [MCSFileManager hls_indexFilePathInResource:_resourceName];
 }
 
 #pragma mark -
 
 - (void)_parse {
-    if ( self.isClosed )
-        return;
-    
-    NSString *indexFilePath = self.indexFilePath;
+    NSString *indexFilePath = [MCSFileManager hls_indexFilePathInResource:_resourceName];
     NSString *tsNameFilePath = [MCSFileManager hls_tsNamesFilePathInResource:_resourceName];
     NSString *tsFragmentsFilePath = [MCSFileManager hls_tsFragmentsFilePathInResource:_resourceName];
     // 已解析过, 将直接读取本地
     if ( [MCSFileManager fileExistsAtPath:indexFilePath] &&
          [MCSFileManager fileExistsAtPath:tsNameFilePath] &&
          [MCSFileManager fileExistsAtPath:tsFragmentsFilePath] ) {
-        [self lock];
         _tsFragments = [NSDictionary dictionaryWithContentsOfFile:tsFragmentsFilePath];
         _tsNames = [NSArray arrayWithContentsOfFile:tsNameFilePath];
         _isDone = YES;
-        [self unlock];
-        [self.delegate parserParseDidFinish:self];
+        
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            [self.delegate parserParseDidFinish:self];
+        });
         return;
     }
     
@@ -277,12 +275,13 @@
         return;
     }
     
-    [self lock];
     _tsNames = tsNames;
     _tsFragments = tsFragments;
     _isDone = YES;
-    [self unlock];
-    [self.delegate parserParseDidFinish:self];
+
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        [self.delegate parserParseDidFinish:self];
+    });
 }
 
 - (nullable NSArray<NSString *> *)_urlsWithPattern:(NSString *)pattern url:(NSString *)url source:(NSString *)source {
@@ -317,15 +316,18 @@
 #endif
         error = [NSError mcs_errorForHLSFileParseError:_URL];
     }
-    [self.delegate parser:self anErrorOccurred:error];
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        [self.delegate parser:self anErrorOccurred:error];
+    });
 }
 
 - (void)lock {
-    [_lock lock];
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
 }
 
 - (void)unlock {
-    [_lock unlock];
+    dispatch_semaphore_signal(_semaphore);
 }
 @end
 
