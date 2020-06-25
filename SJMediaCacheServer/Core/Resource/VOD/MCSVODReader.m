@@ -55,7 +55,8 @@
 
         _resource = resource;
         _request = request;
-
+        _offset = _request.mcs_range.location;
+        
         [_resource readWrite_retain];
         [MCSResourceManager.shared reader:self willReadResource:_resource];
         
@@ -158,7 +159,7 @@
 - (NSUInteger)offset {
     [self lock];
     @try {
-        return _offset + _request.mcs_range.location;
+        return _offset;
     } @catch (__unused NSException *exception) {
         
     } @finally {
