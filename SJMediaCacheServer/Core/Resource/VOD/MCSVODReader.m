@@ -332,16 +332,21 @@
 #pragma mark - MCSVODMetaDataReaderDelegate
 
 - (void)metaDataReader:(MCSVODMetaDataReader *)reader didCompleteWithError:(NSError *_Nullable)error {
-    if ( error ) {
-        [self lock];
-        [self _onError:error];
+    [self lock];
+    @try {
+        if ( error ) {
+            [self _onError:error];
+            return;
+        }
+        
+        [_resource updateServer:reader.server contentType:reader.contentType totalLength:reader.totalLength pathExtension:reader.pathExtension];
+        
+        [self _prepare];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
         [self unlock];
-        return;
     }
-    
-    [_resource updateServer:reader.server contentType:reader.contentType totalLength:reader.totalLength pathExtension:reader.pathExtension];
-    
-    [self _prepare];
 }
 
 #pragma mark - MCSResourceDataReaderDelegate
