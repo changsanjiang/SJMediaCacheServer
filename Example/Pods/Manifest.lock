@@ -8,16 +8,16 @@ PODS:
   - CocoaLumberjack/Core (3.6.1)
   - Masonry (1.1.0)
   - Reachability (3.2)
-  - SJBaseVideoPlayer (3.3.2):
+  - SJBaseVideoPlayer (3.3.3):
     - Masonry
     - Reachability
-    - SJBaseVideoPlayer/AVPlayer (= 3.3.2)
-    - SJBaseVideoPlayer/Common (= 3.3.2)
+    - SJBaseVideoPlayer/AVPlayer (= 3.3.3)
+    - SJBaseVideoPlayer/Common (= 3.3.3)
     - SJUIKit/AttributesFactory (>= 0.0.0.38)
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJBaseVideoPlayer/AVPlayer (3.3.2):
+  - SJBaseVideoPlayer/AVPlayer (3.3.3):
     - Masonry
     - Reachability
     - SJBaseVideoPlayer/Common
@@ -25,7 +25,7 @@ PODS:
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJBaseVideoPlayer/Common (3.3.2):
+  - SJBaseVideoPlayer/Common (3.3.3):
     - Masonry
     - Reachability
     - SJBaseVideoPlayer/ResourceLoader
@@ -33,51 +33,51 @@ PODS:
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJBaseVideoPlayer/ResourceLoader (3.3.2):
+  - SJBaseVideoPlayer/ResourceLoader (3.3.3):
     - Masonry
     - Reachability
     - SJUIKit/AttributesFactory (>= 0.0.0.38)
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJMediaCacheServer (1.0.2):
+  - SJMediaCacheServer (1.0.5):
     - CocoaHTTPServer
-    - SJMediaCacheServer/Core (= 1.0.2)
+    - SJMediaCacheServer/Core (= 1.0.5)
     - SJUIKit/SQLite3
-  - SJMediaCacheServer/Core (1.0.2):
+  - SJMediaCacheServer/Core (1.0.5):
     - CocoaHTTPServer
     - SJUIKit/SQLite3
-  - SJUIKit/AttributesFactory (0.0.0.46):
-    - SJUIKit/AttributesFactory/Deprecated (= 0.0.0.46)
-    - SJUIKit/AttributesFactory/UIKitText (= 0.0.0.46)
-  - SJUIKit/AttributesFactory/Deprecated (0.0.0.46)
-  - SJUIKit/AttributesFactory/UIKitText (0.0.0.46)
-  - SJUIKit/ObserverHelper (0.0.0.46)
-  - SJUIKit/Queues (0.0.0.46)
-  - SJUIKit/SQLite3 (0.0.0.46):
-    - SJUIKit/SQLite3/Core (= 0.0.0.46)
-    - SJUIKit/SQLite3/Protocol (= 0.0.0.46)
+  - SJUIKit/AttributesFactory (0.0.0.48):
+    - SJUIKit/AttributesFactory/Deprecated (= 0.0.0.48)
+    - SJUIKit/AttributesFactory/UIKitText (= 0.0.0.48)
+  - SJUIKit/AttributesFactory/Deprecated (0.0.0.48)
+  - SJUIKit/AttributesFactory/UIKitText (0.0.0.48)
+  - SJUIKit/ObserverHelper (0.0.0.48)
+  - SJUIKit/Queues (0.0.0.48)
+  - SJUIKit/SQLite3 (0.0.0.48):
+    - SJUIKit/SQLite3/Core (= 0.0.0.48)
+    - SJUIKit/SQLite3/Protocol (= 0.0.0.48)
     - YYModel
-  - SJUIKit/SQLite3/Core (0.0.0.46):
+  - SJUIKit/SQLite3/Core (0.0.0.48):
     - SJUIKit/SQLite3/Protocol
     - YYModel
-  - SJUIKit/SQLite3/Protocol (0.0.0.46):
+  - SJUIKit/SQLite3/Protocol (0.0.0.48):
     - YYModel
-  - SJVideoPlayer (3.2.4):
-    - SJBaseVideoPlayer (>= 3.2.5)
-    - SJVideoPlayer/Common (= 3.2.4)
-    - SJVideoPlayer/ControlLayers (= 3.2.4)
-    - SJVideoPlayer/ResourceLoader (= 3.2.4)
-  - SJVideoPlayer/Common (3.2.4):
+  - SJVideoPlayer (3.2.5):
+    - SJBaseVideoPlayer (>= 3.3.3)
+    - SJVideoPlayer/Common (= 3.2.5)
+    - SJVideoPlayer/ControlLayers (= 3.2.5)
+    - SJVideoPlayer/ResourceLoader (= 3.2.5)
+  - SJVideoPlayer/Common (3.2.5):
     - Masonry
-    - SJBaseVideoPlayer (>= 3.2.5)
+    - SJBaseVideoPlayer (>= 3.3.3)
     - SJUIKit/AttributesFactory
     - SJVideoPlayer/ResourceLoader
-  - SJVideoPlayer/ControlLayers (3.2.4):
-    - SJBaseVideoPlayer (>= 3.2.5)
+  - SJVideoPlayer/ControlLayers (3.2.5):
+    - SJBaseVideoPlayer (>= 3.3.3)
     - SJVideoPlayer/Common
-  - SJVideoPlayer/ResourceLoader (3.2.4):
-    - SJBaseVideoPlayer (>= 3.2.5)
+  - SJVideoPlayer/ResourceLoader (3.2.5):
+    - SJBaseVideoPlayer (>= 3.3.3)
   - YYModel (1.0.4)
 
 DEPENDENCIES:
@@ -108,10 +108,10 @@ SPEC CHECKSUMS:
   CocoaLumberjack: b17ae15142558d08bbacf69775fa10c4abbebcc9
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
-  SJBaseVideoPlayer: 14e0ff71b3b2944e17f9475c7b42d26daeed3755
-  SJMediaCacheServer: a7409fefa02087de9d020ca5d482133e857a7239
-  SJUIKit: dfb3d4085215b33d18250fb2f49fbefe22dd5079
-  SJVideoPlayer: acee9fab2b384fc87ed7636c05977d8dd3cdb4ee
+  SJBaseVideoPlayer: 259d13f93937c7f92e888ba7107c3d47308ee37f
+  SJMediaCacheServer: 50d5777adf64ae83254a4c1cedb19ec4a625eb15
+  SJUIKit: dd52a4c3879610d9382e5a26b01cb56bcf25e205
+  SJVideoPlayer: f66212d29c987c929dd5f89e0660711027e14372
   YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30
 
 PODFILE CHECKSUM: 95dee248f06d3812045ce8588db03683d14e11c8
