@@ -205,9 +205,9 @@ typedef struct _SJPlayerControlInfo {
         [self.deviceVolumeAndBrightnessManager prepare];
     });
 
+    [self reachability];
+    [self gestureControl];
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        [self reachability];
-        [self gestureControl];
         [self _configAVAudioSession];
     });
     return self;
