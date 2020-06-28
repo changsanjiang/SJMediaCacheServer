@@ -202,13 +202,8 @@
 
 - (void)close {
     [self lock];
-    @try {
-        [self _close];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    [self _close];
+    [self unlock];
 }
 
 #pragma mark -
@@ -308,7 +303,6 @@
     if ( _isClosed )
         return;
     
-    _isClosed = YES;
     for ( id<MCSResourceDataReader> reader in _readers ) {
         [reader close];
     }
@@ -317,6 +311,7 @@
         [content readWrite_release];
     }
     
+    _isClosed = YES;
     MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
 }
 
