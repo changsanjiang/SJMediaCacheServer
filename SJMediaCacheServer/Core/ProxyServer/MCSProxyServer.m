@@ -85,7 +85,7 @@
             _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", _port]];
             break;
         }
-        [_localServer setPort:_port += 2];
+        [_localServer setPort:_port += (UInt16)(arc4random() % 1000 + 1)];
     }
 }
 
