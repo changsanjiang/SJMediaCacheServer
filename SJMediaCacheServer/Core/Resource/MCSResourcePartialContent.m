@@ -10,9 +10,10 @@
 #import "MCSResourceSubclass.h"
 
 @interface MCSResourcePartialContent ()<NSLocking> {
-    NSRecursiveLock *_lock;
+    dispatch_semaphore_t _semaphore;
 }
 @property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
+@property (nonatomic, strong, nullable) dispatch_queue_t delegateQueue;
 @property (nonatomic, readonly) NSUInteger offset;
 @property (nonatomic) NSInteger readWriteCount;
 @property (nonatomic, copy) NSString *tsName;
@@ -39,7 +40,7 @@
 - (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset length:(NSUInteger)length {
     self = [super init];
     if ( self ) {
-        _lock = NSRecursiveLock.alloc.init;
+        _semaphore = dispatch_semaphore_create(1);
         _name = name;
         _offset = offset;
         _length = length;
@@ -51,20 +52,22 @@
     return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, _name, (unsigned long)_offset, (unsigned long)self.length];
 }
 
+- (void)setDelegate:(id<MCSResourcePartialContentDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)delegateQueue {
+    _delegate = delegate;
+    _delegateQueue = delegateQueue;
+}
+
 @synthesize length = _length;
 - (void)didWriteDataWithLength:(NSUInteger)length {
     if ( length == 0 )
         return;
     
     [self lock];
-    @try {
-        _length += length;
-        [_delegate partialContent:self didWriteDataWithLength:length];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    _length += length;
+    dispatch_async(_delegateQueue, ^{
+        [self.delegate partialContent:self didWriteDataWithLength:length];
+    });
+    [self unlock];
 }
 
 - (NSUInteger)length {
@@ -84,8 +87,9 @@
     @try {
         if ( _readWriteCount != readWriteCount ) {
             _readWriteCount = readWriteCount;;
-            
-            [_delegate readWriteCountDidChangeForPartialContent:self];
+            dispatch_async(_delegateQueue, ^{
+                [self.delegate readWriteCountDidChangeForPartialContent:self];
+            });
         }
     } @catch (__unused NSException *exception) {
         
@@ -114,10 +118,10 @@
 }
 
 - (void)lock {
-    [_lock lock];
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
 }
 
 - (void)unlock {
-    [_lock unlock];
+    dispatch_semaphore_signal(_semaphore);
 }
 @end

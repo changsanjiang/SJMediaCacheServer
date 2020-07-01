@@ -29,25 +29,35 @@
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.cacheCountLimit = 1;
+    
+    
+#pragma mark -
     
     NSURL *URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/2000/0303000a/3/default/bca293257d954934afadfaa96d865172/2000.m3u8"];
     
-    URL = [NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"];
     
     // playback URL
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
-    
+
     // play
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
     
     
-//    // 预加载
-//    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
-//        NSLog(@"%lf", progress);
-//    } completed:^(NSError * _Nullable error) {
-//        NSLog(@"%@", error);
-//    }];
+#pragma mark -
+    
+    // 预加载
+    [SJMediaCacheServer.shared prefetchWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] preloadSize:20 * 1024 * 1024 progress:^(float progress) {
+        
+        // progress ...
+        
+    } completed:^(NSError * _Nullable error) {
+        
+        // complete ...
+        
+        if ( error != nil ) {
+            NSLog(@"error: %@", error);
+        }
+    }];
 }
 
 - (void)_setupViews {

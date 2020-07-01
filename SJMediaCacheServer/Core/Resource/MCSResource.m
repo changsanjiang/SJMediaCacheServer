@@ -131,17 +131,17 @@
 - (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
     if ( contents.count != 0 ) {
         [self lock];
-        [contents makeObjectsPerformSelector:@selector(setDelegate:) withObject:self];
+        dispatch_queue_t globalQueue = dispatch_get_global_queue(0, 0);
+        for ( MCSResourcePartialContent *content in contents ) {
+            [content setDelegate:self delegateQueue:globalQueue];
+        }
         [_m addObjectsFromArray:contents];
         [self unlock];
     }
 }
 
 - (void)addContent:(MCSResourcePartialContent *)content {
-    [self lock];
-    content.delegate = self;
-    [_m addObject:content];
-    [self unlock];
+    if ( content != nil ) [self addContents:@[content]];
 }
 
 - (void)removeContent:(MCSResourcePartialContent *)content {
