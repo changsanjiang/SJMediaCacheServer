@@ -48,7 +48,9 @@
 
 - (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
     [super addContents:contents];
+    [self lock];
     [self _contentsDidChange];
+    [self unlock];
 }
 
 - (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
@@ -210,16 +212,14 @@
 }
 
 - (void)_contentsDidChange {
-    NSArray *contents = self.contents.copy;
+    NSArray *contents = self.contents;
     if ( contents.count == 1 ) {
         MCSResourcePartialContent *content = contents.lastObject;
         if ( content.length != 0 ) {
             self.isCacheFinished = content.length == self.totalLength;
             if ( self.isCacheFinished ) {
                 NSString *path = [self filePathOfContent:content];
-                [self lock];
                 _playbackURLForCache = [NSURL fileURLWithPath:path];
-                [self unlock];
             }
         }
     }
