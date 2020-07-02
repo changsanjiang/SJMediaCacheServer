@@ -117,8 +117,7 @@
 
 - (void)_parse {
     NSURLRequest *request = [NSURLRequest.alloc initWithURL:_URL];
-#warning next ... proxy
-    _reader = [MCSResourceManager.shared readerWithProxyRequest:request];
+    _reader = [MCSResourceManager.shared readerWithRequest:request];
     _reader.delegate = self;
     [_reader prepare];
 }
@@ -126,11 +125,10 @@
 - (void)_prepareNextFragment {
     _fragmentIndex = (_fragmentIndex == NSNotFound) ? 0 : (_fragmentIndex + 1);
     
-    NSString *name = [_resource.parser tsNameAtIndex:_fragmentIndex];
-    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithTsName:name];
+    NSString *TsURI = [_resource.parser TsURIAtIndex:_fragmentIndex];
+    NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithTsURI:TsURI];
     NSURLRequest *request = [NSURLRequest requestWithURL:proxyURL];
-#warning next ... proxy
-    _reader = [MCSResourceManager.shared readerWithProxyRequest:request];
+    _reader = [MCSResourceManager.shared readerWithRequest:request];
     _reader.networkTaskPriority = 0;
     _reader.delegate = self;
     [_reader prepare];

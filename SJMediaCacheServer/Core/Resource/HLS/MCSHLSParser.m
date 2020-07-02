@@ -66,7 +66,7 @@
 @property (nonatomic, strong, nullable) NSURL *URL;
 @property (nonatomic, weak, nullable) id<MCSHLSParserDelegate> delegate;
 @property (nonatomic) dispatch_queue_t delegateQueue;
-@property (nonatomic) NSUInteger TsCount;
+@property (nonatomic, strong) NSArray<NSString *> *TsURIArray;
 @end
 
 @implementation MCSHLSParser
@@ -82,31 +82,15 @@
     return self;
 }
 
-- (NSURL *)tsURLWithTsName:(NSString *)tsName {
-#warning next ...
-    return nil;
-//    [self lock];
-//    @try {
-//        return [NSURL URLWithString:_tsFragments[tsName]];
-//    } @catch (__unused NSException *exception) {
-//
-//    } @finally {
-//        [self unlock];
-//    }
-}
-
-- (NSString *)tsNameAtIndex:(NSUInteger)index {
-    #warning next ...
-    return nil;
-
-//    [self lock];
-//    @try {
-//        return index < _tsNames.count ? _tsNames[index] : nil;
-//    } @catch (__unused NSException *exception) {
-//
-//    } @finally {
-//        [self unlock];
-//    }
+- (nullable NSString *)TsURIAtIndex:(NSUInteger)index {
+    [self lock];
+    @try {
+        return index < _TsURIArray.count ? _TsURIArray[index] : nil;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 - (void)prepare {
@@ -168,7 +152,7 @@
 - (NSUInteger)TsCount {
     [self lock];
     @try {
-        return _TsCount;
+        return _TsURIArray.count;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -196,7 +180,11 @@
             return;
         }
         
-        _TsCount = [content mcs_rangesByMatchingPattern:MCSURIMatchingPattern_Ts].count;
+        NSMutableArray<NSString *> *TsURIArray = NSMutableArray.array;
+        [[content mcs_textCheckingResultsByMatchPattern:MCSURIMatchingPattern_Ts] enumerateObjectsUsingBlock:^(NSTextCheckingResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            [TsURIArray addObject:[content substringWithRange:obj.range]];
+        }];
+        _TsURIArray = TsURIArray.copy;
         _isDone = YES;
         
         dispatch_async(_delegateQueue, ^{
@@ -229,17 +217,18 @@
     ///
     /// 000000.ts
     ///
-    NSArray<NSValue *> *tsURIs = [contents mcs_rangesByMatchingPattern:MCSURIMatchingPattern_Ts];
-    if ( tsURIs.count == 0 ) {
+    NSArray<NSValue *> *TsURIRanges = [contents mcs_rangesByMatchingPattern:MCSURIMatchingPattern_Ts];
+    if ( TsURIRanges.count == 0 ) {
         [self _onError:[NSError mcs_HLSFileParseError:_URL]];
         return;
     }
-    
-    [tsURIs enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSValue * _Nonnull range, NSUInteger idx, BOOL * _Nonnull stop) {
+    NSMutableArray<NSString *> *reversedTsURIArray = [NSMutableArray arrayWithCapacity:TsURIRanges.count];
+    [TsURIRanges enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSValue * _Nonnull range, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange rangeValue = range.rangeValue;
         NSString *matched = [contents substringWithRange:rangeValue];
         NSString *url = [self _urlWithMatchedString:matched];
         NSString *proxy = [MCSURLRecognizer.shared proxyTsURIWithUrl:url inResource:self.resourceName];
+        [reversedTsURIArray addObject:proxy];
         [indexFileContents replaceCharactersInRange:rangeValue withString:proxy];
     }];
  
@@ -264,7 +253,7 @@
     }
     [MCSFileManager unlock];
     
-    _TsCount = tsURIs.count;
+    _TsURIArray = [reversedTsURIArray reverseObjectEnumerator].allObjects;
     _isDone = YES;
 
     dispatch_async(_delegateQueue, ^{

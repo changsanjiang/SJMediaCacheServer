@@ -24,8 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;
 
-- (NSURL *)tsURLWithTsName:(NSString *)tsName __deprecated;
-- (nullable NSString *)tsNameAtIndex:(NSUInteger)index __deprecated;
+- (nullable NSString *)TsURIAtIndex:(NSUInteger)index;
 @end
 
 

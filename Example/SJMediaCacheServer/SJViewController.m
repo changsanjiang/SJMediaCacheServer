@@ -36,7 +36,7 @@
     NSURL *URL = [NSURL URLWithString:@"http://m3u8.soyoung.com/9c9dbbf1d7712d4560f0b555a8091ab8.m3u8?sign=60357fc2d1303823237b205058e2fe4f&t=5efea3b5"];
     
     
-//    URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8"];
+    URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8"];
     
     // playback URL
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];

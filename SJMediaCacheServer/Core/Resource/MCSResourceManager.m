@@ -308,7 +308,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     }
 }
 
-- (id<MCSResourceReader>)readerWithProxyRequest:(NSURLRequest *)request {
+- (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request {
     MCSResource *resource = [self resourceWithURL:request.URL];
     id<MCSResourceReader> reader = [resource readerWithRequest:request];
     reader.readDataDecoder = _readDataDecoder;

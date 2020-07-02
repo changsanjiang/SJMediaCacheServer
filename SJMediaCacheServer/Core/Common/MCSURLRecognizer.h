@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)resourceNameForURL:(NSURL *)URL;
 - (MCSResourceType)resourceTypeForURL:(NSURL *)URL;
 
-- (NSURL *)proxyURLWithTsName:(NSString *)tsName;
+- (NSURL *)proxyURLWithTsURI:(NSString *)TsURI;
 
 - (NSString *)fnameWithUrl:(NSString *)url extension:(NSString *)extension;
 @end

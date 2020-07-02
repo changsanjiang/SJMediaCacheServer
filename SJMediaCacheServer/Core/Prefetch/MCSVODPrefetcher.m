@@ -59,8 +59,7 @@
         _isCalledPrepare = YES;
         
         NSURLRequest *request = [NSURLRequest mcs_requestWithURL:_URL range:NSMakeRange(0, _preloadSize)];
-#warning next ... proxy
-        _reader = [MCSResourceManager.shared readerWithProxyRequest:request];
+        _reader = [MCSResourceManager.shared readerWithRequest:request];
         _reader.networkTaskPriority = 0;
         _reader.delegate = self;
         [_reader prepare];

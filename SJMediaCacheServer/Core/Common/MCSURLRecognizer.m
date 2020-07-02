@@ -101,9 +101,8 @@ MCSMD5(NSString *str) {
            [URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ? MCSResourceTypeHLS : MCSResourceTypeVOD;
 }
 
-- (NSURL *)proxyURLWithTsName:(NSString *)tsName {
-    NSParameterAssert(_server);
-    return [NSURL URLWithString:[_server.serverURL.absoluteString stringByAppendingPathComponent:tsName]];
+- (NSURL *)proxyURLWithTsURI:(NSString *)TsURI {
+    return [NSURL URLWithString:[_server.serverURL.absoluteString stringByAppendingPathComponent:TsURI]];
 }
 
 // format: mcsproxy/resource/name.extension?url=base64EncodedUrl
