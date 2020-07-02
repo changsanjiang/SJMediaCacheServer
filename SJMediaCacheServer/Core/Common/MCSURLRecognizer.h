@@ -26,18 +26,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)resourceNameForURL:(NSURL *)URL;
 - (MCSResourceType)resourceTypeForURL:(NSURL *)URL;
 
-- (NSURL *)proxyURLWithTsURI:(NSString *)TsURI;
 
 - (NSString *)fnameWithUrl:(NSString *)url extension:(NSString *)extension;
 @end
 
 
 @interface MCSURLRecognizer (HLS)
+- (NSURL *)proxyURLWithTsURI:(NSString *)TsURI;
 - (NSString *)proxyTsURIWithUrl:(NSString *)url inResource:(NSString *)resource;
 - (NSString *)proxyAESKeyURIWithUrl:(NSString *)url inResource:(NSString *)resource;
-@end
-
-@interface NSString (MCSURLRecognizerExtended)
-- (NSString *)stringByAppendingEncodedURLQueryItem:(NSURLQueryItem *)item;
 @end
 NS_ASSUME_NONNULL_END

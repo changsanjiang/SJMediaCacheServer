@@ -49,12 +49,12 @@ static NSString *HLSPrefix = @"hls";
     return rootDirectoryPath;
 }
 
-+ (NSString *)getResourcePathWithName:(NSString *)name {
-    return [[self rootDirectoryPath] stringByAppendingPathComponent:name];
-}
-
 + (NSString *)databasePath {
     return [[self rootDirectoryPath] stringByAppendingPathComponent:@"cache.db"];
+}
+
++ (NSString *)getResourcePathWithName:(NSString *)name {
+    return [[self rootDirectoryPath] stringByAppendingPathComponent:name];
 }
 
 + (NSString *)getFilePathWithName:(NSString *)name inResource:(NSString *)resourceName {
@@ -68,19 +68,19 @@ static NSString *HLSPrefix = @"hls";
         // VOD
         if      ( [filename hasPrefix:VODPrefix] ) {
             NSString *path = [resourcePath stringByAppendingPathComponent:filename];
-            NSUInteger offset = [self offsetOfContent:filename];
-            NSUInteger length = (NSUInteger)[[NSFileManager.defaultManager attributesOfItemAtPath:path error:NULL] fileSize];
+            NSUInteger offset = [self vod_offsetOfContent:filename];
+            NSUInteger length = [self fileSizeAtPath:path];
             __auto_type content = [MCSResourcePartialContent.alloc initWithFilename:filename offset:offset length:length];
             [m addObject:content];
         }
         // HLS
         else if ( [filename hasPrefix:HLSPrefix] ) {
             NSString *path = [resourcePath stringByAppendingPathComponent:filename];
-            if ( [filename containsString:MCSHLSTsFileExtension] ) {
-                NSString *tsName = [self hls_TsNameOfContent:filename];
+            if      ( [filename containsString:MCSHLSTsFileExtension] ) {
+                NSString *TsName = [self hls_TsNameOfContent:filename];
                 NSUInteger totalLength = [self hls_TsTotalLengthOfContent:filename];
                 NSUInteger length = [self fileSizeAtPath:path];
-                __auto_type content = [MCSResourcePartialContent.alloc initWithFilename:filename tsName:tsName  tsTotalLength:totalLength length:length];
+                __auto_type content = [MCSResourcePartialContent.alloc initWithFilename:filename tsName:TsName  tsTotalLength:totalLength length:length];
                 [m addObject:content];
             }
             else if ( [filename containsString:MCSHLSAESKeyFileExtension] ) {
@@ -95,29 +95,6 @@ static NSString *HLSPrefix = @"hls";
     return m;
 }
 
-#pragma mark -
-+ (void)checkoutDirectoryWithPath:(NSString *)path {
-    if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
-        [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
-    }
-}
-
-// format: // VOD前缀_偏移量_序号.扩展名
-// VOD
-+ (NSUInteger)offsetOfContent:(NSString *)name {
-    return (NSUInteger)[[name componentsSeparatedByString:@"_"][1] longLongValue];
-}
-
-#pragma mark -
-
-+ (NSString *)filenameForUrl:(NSString *)url {
-    NSString *name = url.lastPathComponent;
-    NSRange range = [name rangeOfString:@"?"];
-    if ( range.location != NSNotFound ) {
-        name = [name substringToIndex:range.location];
-    }
-    return name;
-}
 @end
 
 
@@ -148,6 +125,11 @@ static NSString *HLSPrefix = @"hls";
     } @finally {
         [self unlock];
     }
+}
+
+// format: VOD前缀_偏移量_序号.扩展名
++ (NSUInteger)vod_offsetOfContent:(NSString *)contentFilename {
+    return (NSUInteger)[[contentFilename componentsSeparatedByString:@"_"][1] longLongValue];
 }
 @end
 
@@ -193,6 +175,7 @@ static NSString *HLSPrefix = @"hls";
     return [contentFilename componentsSeparatedByString:@"_"].lastObject;
 }
 
+// HLS前缀_长度_序号_AESKeyName
 + (NSUInteger)hls_AESKeyTotalLengthOfContent:(NSString *)contentFilename {
     return (NSUInteger)[[contentFilename componentsSeparatedByString:@"_"][1] longLongValue];
 }
@@ -284,23 +267,5 @@ static NSString *HLSPrefix = @"hls";
 + (BOOL)removeContentWithName:(NSString *)name inResource:(NSString *)resourceName error:(NSError **)error {
     NSString *path = [MCSFileManager getFilePathWithName:name inResource:resourceName];
     return [self removeItemAtPath:path error:error];
-}
-@end
-
-
-@implementation NSString (MCSFileManagerExtended)
-- (NSString *)mcs_fname {
-    NSString *name = self.lastPathComponent;
-    NSRange range = [name rangeOfString:@"?"];
-    if ( range.location != NSNotFound ) {
-        name = [name substringToIndex:range.location];
-    }
-    return name;
-}
-@end
-
-@implementation NSURL (MCSFileManagerExtended)
-- (NSString *)mcs_fname {
-    return self.absoluteString.mcs_fname;
 }
 @end

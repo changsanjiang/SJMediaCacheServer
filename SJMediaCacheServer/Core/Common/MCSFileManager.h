@@ -28,10 +28,10 @@ UIKIT_EXTERN MCSFileExtension const MCSHLSAESKeyFileExtension;
 
 
 @interface MCSFileManager (VOD)
-
-// VOD
 //      注意: 返回文件名
 + (nullable NSString *)vod_createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension;
+
++ (NSUInteger)vod_offsetOfContent:(NSString *)contentFilename;
 @end
 
 
@@ -76,14 +76,5 @@ UIKIT_EXTERN MCSFileExtension const MCSHLSAESKeyFileExtension;
 + (BOOL)checkoutResourceWithName:(NSString *)name error:(NSError **)error;
 + (BOOL)removeResourceWithName:(NSString *)name error:(NSError **)error;
 + (BOOL)removeContentWithName:(NSString *)name inResource:(NSString *)resourceName error:(NSError **)error;
-@end
-
-
-@interface NSString (MCSFileManagerExtended)
-- (NSString *)mcs_fname;
-@end
-
-@interface NSURL (MCSFileManagerExtended)
-- (NSString *)mcs_fname;
 @end
 NS_ASSUME_NONNULL_END

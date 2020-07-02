@@ -25,6 +25,31 @@ MCSMD5(NSString *str) {
             result[12], result[13], result[14], result[15]];
 }
 
+
+@interface NSString (MCSFileManagerExtended)
+- (NSString *)mcs_fname;
+@end
+@implementation NSString (MCSFileManagerExtended)
+- (NSString *)mcs_fname {
+    NSString *name = self.lastPathComponent;
+    NSRange range = [name rangeOfString:@"?"];
+    if ( range.location != NSNotFound ) {
+        name = [name substringToIndex:range.location];
+    }
+    return name;
+}
+@end
+
+@interface NSURL (MCSFileManagerExtended)
+- (NSString *)mcs_fname;
+@end
+@implementation NSURL (MCSFileManagerExtended)
+- (NSString *)mcs_fname {
+    return self.absoluteString.mcs_fname;
+}
+@end
+
+
 @implementation MCSURLRecognizer
 + (instancetype)shared {
     static id instance = nil;
@@ -72,6 +97,7 @@ MCSMD5(NSString *str) {
     return proxyURL;
 }
 
+// 此处的URL参数可能为代理URL也可能为原始URL
 - (NSString *)resourceNameForURL:(NSURL *)URL {
     NSString *url = URL.absoluteString;
     
@@ -101,8 +127,12 @@ MCSMD5(NSString *str) {
            [URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ? MCSResourceTypeHLS : MCSResourceTypeVOD;
 }
 
-- (NSURL *)proxyURLWithTsURI:(NSString *)TsURI {
-    return [NSURL URLWithString:[_server.serverURL.absoluteString stringByAppendingPathComponent:TsURI]];
+- (NSString *)fnameWithUrl:(NSString *)url extension:(NSString *)extension {
+    NSString *filename = url.mcs_fname;
+    // 添加扩展名
+    if ( ![filename hasSuffix:extension] )
+        filename = [filename stringByAppendingString:extension];
+    return filename;
 }
 
 // format: mcsproxy/resource/name.extension?url=base64EncodedUrl
@@ -112,17 +142,13 @@ MCSMD5(NSString *str) {
     NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?%@=%@", mcsproxy, resource, fname, query.name, query.value];
     return URI;
 }
-
-- (NSString *)fnameWithUrl:(NSString *)url extension:(NSString *)extension {
-    NSString *filename = url.mcs_fname;
-    // 添加扩展名
-    if ( ![filename hasSuffix:extension] )
-        filename = [filename stringByAppendingString:extension];
-    return filename;
-}
 @end
 
-@implementation MCSURLRecognizer (HLS_AESKey)
+@implementation MCSURLRecognizer (HLS)
+- (NSURL *)proxyURLWithTsURI:(NSString *)TsURI {
+    return [NSURL URLWithString:[_server.serverURL.absoluteString stringByAppendingPathComponent:TsURI]];
+}
+
 - (NSString *)proxyTsURIWithUrl:(NSString *)url inResource:(NSString *)resource {
     // format: mcsproxy/resource/tsName.ts?url=base64EncodedUrl
     return [self _proxyURIWithUrl:url inResource:resource extension:MCSHLSTsFileExtension];
@@ -131,11 +157,5 @@ MCSMD5(NSString *str) {
 - (NSString *)proxyAESKeyURIWithUrl:(NSString *)url inResource:(NSString *)resource {
     // format: mcsproxy/resource/AESName.key?url=base64EncodedUrl
     return [self _proxyURIWithUrl:url inResource:resource extension:MCSHLSAESKeyFileExtension];
-}
-@end
-
-@implementation NSString (MCSURLRecognizerExtended)
-- (NSString *)stringByAppendingEncodedURLQueryItem:(NSURLQueryItem *)item {
-    return [self stringByAppendingFormat:@"%@%@=%@", [self containsString:@"?"] ? @"&" : @"?", item.name, item.value];
 }
 @end
