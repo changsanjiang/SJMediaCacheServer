@@ -130,6 +130,10 @@
     if ( content.readWriteCount > 0 ) return;
     [self lock];
     @try {
+        
+#warning next ...
+        return;
+        
         if ( self.contents.count <= 1 ) return;
         NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
         for ( MCSResourcePartialContent *content in self.contents ) {

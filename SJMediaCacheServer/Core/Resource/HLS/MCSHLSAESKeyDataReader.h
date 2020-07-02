@@ -13,7 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSHLSAESKeyDataReader : NSObject<MCSHLSDataReader>
-- (instancetype)initWithResource:(MCSHLSResource *)resource proxyURL:(NSURL *)proxyURL networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
+- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue;
 
 - (void)prepare;
 @property (nonatomic, readonly) BOOL isPrepared;

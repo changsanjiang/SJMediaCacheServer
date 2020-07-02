@@ -44,13 +44,13 @@
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource proxyRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
-        _URL = [MCSURLRecognizer.shared URLWithProxyURL:proxyRequest.URL];
+        _URL = request.URL;
         _networkTaskPriority = networkTaskPriority;
         _resource = resource;
-        _request = proxyRequest;
+        _request = request;
         _delegate = delegate;
         _delegateQueue = queue;
         _semaphore = dispatch_semaphore_create(1);
@@ -82,12 +82,8 @@
         
         MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
         
-        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:_URL];
-        [_request.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-            [request setValue:obj forHTTPHeaderField:key];
-        }];
         // download the content
-        _task = [MCSDownload.shared downloadWithRequest:request priority:_networkTaskPriority delegate:self];
+        _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
     } @catch (__unused NSException *exception) {
         
     } @finally {

@@ -73,12 +73,19 @@ MCSMD5(NSString *str) {
 }
 
 - (NSString *)resourceNameForURL:(NSURL *)URL {
-    // 包含 mcsproxy 为内部代理发送的请求, 此处返回对应的资源的名字
     NSString *url = URL.absoluteString;
-    NSRange range = [url rangeOfString:mcsproxy];
-    if ( range.location != NSNotFound ) {
-        // format: mcsproxy/resource/name.extension?url=base64EncodedUrl
-        return [[url substringFromIndex:NSMaxRange(range) + 1] componentsSeparatedByString:@"/"].firstObject;
+    
+    if ( [URL.host isEqualToString:_server.serverURL.host] ) {
+        // 包含 mcsproxy 为 HLS 内部资源的请求, 此处path后面资源的名字
+        NSRange range = [url rangeOfString:mcsproxy];
+        if ( range.location != NSNotFound ) {
+            // format: mcsproxy/resource/name.extension?url=base64EncodedUrl
+            return [[url substringFromIndex:NSMaxRange(range) + 1] componentsSeparatedByString:@"/"].firstObject;
+        }
+        else {
+            // 将代理URL转换为原始的url
+            url = [self URLWithProxyURL:URL].absoluteString;
+        }
     }
 
     NSString *str = self.resolveResourceIdentifier != nil ? self.resolveResourceIdentifier(URL) : url;
@@ -96,6 +103,16 @@ MCSMD5(NSString *str) {
     NSParameterAssert(_server);
     return [NSURL URLWithString:[_server.serverURL.absoluteString stringByAppendingPathComponent:tsName]];
 }
+
+// format: mcsproxy/resource/name.extension?url=base64EncodedUrl
+- (NSString *)_proxyURIWithUrl:(NSString *)url inResource:(NSString *)resource extension:(NSString *)extension {
+    NSString *name = url.mcs_fname;
+    if ( ![name hasSuffix:extension] )
+        name = [name stringByAppendingString:extension];
+    NSURLQueryItem *query = [self encodedURLQueryItemWithUrl:url];
+    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?%@=%@", mcsproxy, resource, name, query.name, query.value];
+    return URI;
+}
 @end
 
 @implementation MCSURLRecognizer (HLS_AESKey)
@@ -107,16 +124,6 @@ MCSMD5(NSString *str) {
 - (NSString *)proxyAESKeyURIWithUrl:(NSString *)url inResource:(NSString *)resource {
     // format: mcsproxy/resource/AESName.key?url=base64EncodedUrl
     return [self _proxyURIWithUrl:url inResource:resource extension:MCSHLSAESKeyFileExtension];
-}
-
-// format: mcsproxy/resource/name.extension?url=base64EncodedUrl
-- (NSString *)_proxyURIWithUrl:(NSString *)url inResource:(NSString *)resource extension:(NSString *)extension {
-    NSString *name = url.mcs_fname;
-    if ( ![name hasSuffix:extension] )
-        name = [name stringByAppendingString:extension];
-    NSURLQueryItem *query = [self encodedURLQueryItemWithUrl:url];
-    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?%@=%@", mcsproxy, resource, name, query.name, query.value];
-    return URI;
 }
 @end
 

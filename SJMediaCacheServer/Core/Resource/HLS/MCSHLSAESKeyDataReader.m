@@ -10,7 +10,6 @@
 #import "MCSFileManager.h"
 #import "MCSError.h"
 #import "MCSResourceResponse.h"
-#import "MCSURLRecognizer.h"
 #import "MCSLogger.h"
 #import "MCSDownload.h"
 #import "MCSUtils.h"
@@ -40,11 +39,11 @@
 @synthesize response = _response;
 @synthesize isPrepared = _isPrepared;
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource proxyURL:(NSURL *)proxyURL networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
         _resource = resource;
-        _URL = [MCSURLRecognizer.shared URLWithProxyURL:proxyURL];
+        _URL = URL;
         _networkTaskPriority = networkTaskPriority;
         _delegate = delegate;
         _delegateQueue = queue;
@@ -88,28 +87,6 @@
     }
 }
 
-- (BOOL)isDone {
-    [self lock];
-    @try {
-        return _isDone;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (id<MCSResourceResponse>)response {
-    [self lock];
-    @try {
-        return _response;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     [self lock];
     @try {
@@ -142,7 +119,44 @@
 }
 
 - (void)close {
-    
+    [self lock];
+    [self _close];
+    [self unlock];
+}
+
+#pragma mark -
+
+- (BOOL)isPrepared {
+    [self lock];
+    @try {
+        return _isPrepared;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (BOOL)isDone {
+    [self lock];
+    @try {
+        return _isDone;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (id<MCSResourceResponse>)response {
+    [self lock];
+    @try {
+        return _response;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
 }
 
 #pragma mark - MCSDownloadTaskDelegate
@@ -153,7 +167,7 @@
         if ( _isClosed )
             return;
         
-        _content = [_resource createContentWithAESKeyURL:_URL totalLength:MCSGetResponseContentLength(response)];
+        _content = [_resource createContentWithAESKeyURL:_URL totalLength:response.expectedContentLength];
         
         [self _prepare];
     } @catch (__unused NSException *exception) {
