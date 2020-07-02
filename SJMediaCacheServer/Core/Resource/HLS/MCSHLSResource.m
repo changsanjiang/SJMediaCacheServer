@@ -72,6 +72,7 @@
 }
 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
+    if ( self.isCacheFinished ) return;
     if ( content.readWriteCount > 0 ) return;
     [self lock];
     @try {
@@ -122,16 +123,20 @@
 
 - (void)_contentsDidChange {
     NSArray *contents = self.contents.copy;
-    if ( _TsCount != 0 && contents.count == _TsCount ) {
-        BOOL isFinished = YES;
-        for ( MCSResourcePartialContent *content in contents ) {
+    
+    BOOL isContentsFinished = YES;
+    NSUInteger count = 0;
+    for ( MCSResourcePartialContent *content in contents ) {
+        if ( content.tsName != nil ) {
             if ( content.length != content.tsTotalLength ) {
-                isFinished = NO;
+                isContentsFinished = NO;
                 break;
             }
+            count += 1;
         }
-        self.isCacheFinished = isFinished;
     }
+    
+    self.isCacheFinished = isContentsFinished && count == _TsCount;
 }
 
  
