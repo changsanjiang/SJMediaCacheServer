@@ -152,7 +152,7 @@
 - (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL {
     [self lock];
     @try {
-        NSString *TsName = [MCSURLRecognizer.shared fnameWithUrl:URL.absoluteString extension:MCSHLSTsFileExtension];
+        NSString *TsName = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString extension:MCSHLSTsFileExtension];
         for ( MCSResourcePartialContent *content in self.contents ) {
             if ( [content.tsName isEqualToString:TsName] ) {
                 NSString *contentPath = [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
@@ -171,7 +171,7 @@
 - (MCSResourcePartialContent *)createContentWithTsURL:(NSURL *)URL totalLength:(NSUInteger)totalLength {
     [self lock];
     @try {
-        NSString *TsName = [MCSURLRecognizer.shared fnameWithUrl:URL.absoluteString extension:MCSHLSTsFileExtension];
+        NSString *TsName = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString extension:MCSHLSTsFileExtension];
         NSString *filename = [MCSFileManager hls_createContentFileInResource:self.name tsName:TsName tsTotalLength:totalLength];
         MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename tsName:TsName tsTotalLength:totalLength length:0];
         [self addContent:content];
@@ -186,7 +186,7 @@
 - (nullable MCSResourcePartialContent *)contentForAESKeyURL:(NSURL *)URL {
     [self lock];
     @try {
-        NSString *AESKeyName = [MCSURLRecognizer.shared fnameWithUrl:URL.absoluteString extension:MCSHLSAESKeyFileExtension];
+        NSString *AESKeyName = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString extension:MCSHLSAESKeyFileExtension];
         for ( MCSResourcePartialContent *content in self.contents ) {
             if ( [content.AESKeyName isEqualToString:AESKeyName] ) {
                 NSString *contentPath = [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
@@ -205,7 +205,7 @@
 - (MCSResourcePartialContent *)createContentWithAESKeyURL:(NSURL *)URL totalLength:(NSUInteger)totalLength {
     [self lock];
     @try {
-        NSString *AESKeyName = [MCSURLRecognizer.shared fnameWithUrl:URL.absoluteString extension:MCSHLSAESKeyFileExtension];
+        NSString *AESKeyName = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString extension:MCSHLSAESKeyFileExtension];
         NSString *filename = [MCSFileManager hls_createContentFileInResource:self.name AESKeyName:AESKeyName totalLength:totalLength];
         MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename AESKeyName:AESKeyName AESKeyTotalLength:totalLength length:0];
         [self addContent:content];

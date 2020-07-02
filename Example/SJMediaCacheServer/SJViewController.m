@@ -36,10 +36,10 @@
     NSURL *URL = [NSURL URLWithString:@"http://m3u8.soyoung.com/9c9dbbf1d7712d4560f0b555a8091ab8.m3u8?sign=60357fc2d1303823237b205058e2fe4f&t=5efea3b5"];
     
     
-    URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8"];
-    
-    
-    URL = [NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"];
+//    URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8"];
+
+
+//    URL = [NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"];
     
     // playback URL
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
@@ -49,20 +49,23 @@
     
     
 #pragma mark -
-//
-//    // 预加载
-//    [SJMediaCacheServer.shared prefetchWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] preloadSize:20 * 1024 * 1024 progress:^(float progress) {
-//
-//        // progress ...
-//
-//    } completed:^(NSError * _Nullable error) {
-//
-//        // complete ...
-//
-//        if ( error != nil ) {
-//            NSLog(@"error: %@", error);
-//        }
-//    }];
+
+    // 预加载
+    [SJMediaCacheServer.shared prefetchWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] preloadSize:20 * 1024 * 1024 progress:^(float progress) {
+
+        // progress ...
+
+    } completed:^(NSError * _Nullable error) {
+
+        // complete ...
+
+        if ( error != nil ) {
+            NSLog(@"error: %@", error);
+        }
+        else {
+            NSLog(@"done");
+        }
+    }];
 }
 
 - (void)_setupViews {

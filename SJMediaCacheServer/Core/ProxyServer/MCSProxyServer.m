@@ -8,7 +8,6 @@
 
 #import "MCSProxyServer.h"
 #import "NSURLRequest+MCS.h"
-#import "MCSURLRecognizer.h"
 #import "MCSLogger.h"
 #import <objc/message.h>
 #import <CocoaHTTPServer/HTTPServer.h>

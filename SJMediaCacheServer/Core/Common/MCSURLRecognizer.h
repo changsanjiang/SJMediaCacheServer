@@ -18,8 +18,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, nullable) NSString *(^resolveResourceIdentifier)(NSURL *URL);
 
-- (NSURLQueryItem *)encodedURLQueryItemWithUrl:(NSString *)url;
-
 - (NSURL *)proxyURLWithURL:(NSURL *)URL;
 - (NSURL *)URLWithProxyURL:(NSURL *)proxyURL;
 
@@ -27,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (MCSResourceType)resourceTypeForURL:(NSURL *)URL;
 
 
-- (NSString *)fnameWithUrl:(NSString *)url extension:(NSString *)extension;
+- (NSString *)nameWithUrl:(NSString *)url extension:(NSString *)extension;
 @end
 
 

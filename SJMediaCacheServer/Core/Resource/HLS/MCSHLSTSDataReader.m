@@ -15,7 +15,6 @@
 #import "MCSError.h"
 #import "MCSFileManager.h"
 #import "MCSResourceResponse.h"
-#import "MCSURLRecognizer.h"
 
 @interface MCSHLSTSDataReader ()<MCSDownloadTaskDelegate, NSLocking> {
     dispatch_semaphore_t _semaphore;
