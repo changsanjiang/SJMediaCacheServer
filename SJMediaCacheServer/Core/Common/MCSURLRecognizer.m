@@ -75,6 +75,7 @@ MCSMD5(NSString *str) {
 - (NSString *)resourceNameForURL:(NSURL *)URL {
     NSString *url = URL.absoluteString;
     
+    // 是否为代理URL
     if ( [URL.host isEqualToString:_server.serverURL.host] ) {
         // 包含 mcsproxy 为 HLS 内部资源的请求, 此处path后面资源的名字
         NSRange range = [url rangeOfString:mcsproxy];
@@ -83,8 +84,9 @@ MCSMD5(NSString *str) {
             return [[url substringFromIndex:NSMaxRange(range) + 1] componentsSeparatedByString:@"/"].firstObject;
         }
         else {
-            // 将代理URL转换为原始的url
-            url = [self URLWithProxyURL:URL].absoluteString;
+            // 将代理URL转换为原始的URL
+            URL = [self URLWithProxyURL:URL];
+            url = URL.absoluteString;
         }
     }
 
@@ -106,12 +108,18 @@ MCSMD5(NSString *str) {
 
 // format: mcsproxy/resource/name.extension?url=base64EncodedUrl
 - (NSString *)_proxyURIWithUrl:(NSString *)url inResource:(NSString *)resource extension:(NSString *)extension {
-    NSString *name = url.mcs_fname;
-    if ( ![name hasSuffix:extension] )
-        name = [name stringByAppendingString:extension];
+    NSString *fname = [self fnameWithUrl:url extension:extension];
     NSURLQueryItem *query = [self encodedURLQueryItemWithUrl:url];
-    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?%@=%@", mcsproxy, resource, name, query.name, query.value];
+    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?%@=%@", mcsproxy, resource, fname, query.name, query.value];
     return URI;
+}
+
+- (NSString *)fnameWithUrl:(NSString *)url extension:(NSString *)extension {
+    NSString *filename = url.mcs_fname;
+    // 添加扩展名
+    if ( ![filename hasSuffix:extension] )
+        filename = [filename stringByAppendingString:extension];
+    return filename;
 }
 @end
 

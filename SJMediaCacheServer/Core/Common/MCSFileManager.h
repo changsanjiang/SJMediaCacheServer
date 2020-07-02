@@ -26,45 +26,39 @@ UIKIT_EXTERN MCSFileExtension const MCSHLSAESKeyFileExtension;
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName;
 @end
 
+
+@interface MCSFileManager (VOD)
+
+// VOD
+//      注意: 返回文件名
++ (nullable NSString *)vod_createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension;
+@end
+
+
 @interface MCSFileManager (HLS_Index)
 + (nullable NSString *)hls_indexFilePathInResource:(NSString *)resourceName;
 @end
 
 
 @interface MCSFileManager (HLS_AESKey)
-// HLS
 //      注意: 返回文件名
 + (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName totalLength:(NSUInteger)totalLength;
 
++ (nullable NSString *)hls_AESKeyNameOfContent:(NSString *)contentFilename;
 
++ (NSUInteger)hls_AESKeyTotalLengthOfContent:(NSString *)contentFilename;
 
-+ (nullable NSString *)hls_AESKeyNameForUrl:(NSString *)url inResource:(NSString *)resource;
-+ (nullable NSString *)hls_AESKeyFilenameAtIndex:(NSInteger)index inResource:(NSString *)resource;
-+ (nullable NSString *)hls_AESKeyFilePathForAESKeyProxyURL:(NSURL *)URL inResource:(NSString *)resource;
-+ (nullable NSString *)hls_resourceNameForAESKeyProxyURL:(NSURL *)URL;
 @end
 
 
 @interface MCSFileManager (HLS_TS)
-+ (nullable NSString *)hls_tsNameForURL:(NSURL *)URL;
-
-
-+ (nullable NSString *)hls_tsNameForUrl:(NSString *)url inResource:(NSString *)resource;
-+ (nullable NSString *)hls_tsNameForTsProxyURL:(NSURL *)URL;
-+ (nullable NSString *)hls_tsFragmentsFilePathInResource:(NSString *)resourceName;
-+ (nullable NSString *)hls_tsNamesFilePathInResource:(NSString *)resourceName;
-+ (nullable NSString *)hls_resourceNameForTsProxyURL:(NSURL *)URL;
-@end
-
-@interface MCSFileManager (Create)
-
-// VOD
-//      注意: 返回文件名
-+ (nullable NSString *)vod_createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension;
-
-// HLS
 //      注意: 返回文件名
 + (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length;
+
++ (nullable NSString *)hls_TsNameOfContent:(NSString *)contentFilename;
+
++ (NSUInteger)hls_TsTotalLengthOfContent:(NSString *)contentFilename;
+
 @end
 
 @interface MCSFileManager (FileSize)

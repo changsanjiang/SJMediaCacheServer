@@ -172,9 +172,8 @@
             return;
         
         NSString *contentType = MCSGetResponseContentType(response);
-        NSUInteger totalLength = MCSGetResponseContentLength(response);
         [_resource updateTsContentType:contentType];
-        _content = [_resource createContentWithTsProxyURL:_request.URL tsTotalLength:totalLength];
+        _content = [_resource createContentWithTsURL:_request.URL totalLength:response.expectedContentLength];
         [self _prepare];
     } @catch (__unused NSException *exception) {
         

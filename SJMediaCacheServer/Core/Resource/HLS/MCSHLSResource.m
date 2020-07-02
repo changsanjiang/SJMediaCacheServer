@@ -35,54 +35,6 @@
     return [MCSURLRecognizer.shared proxyURLWithURL:URL];
 }
 
-- (NSString *)AESKeyFilePathForAESKeyProxyURL:(NSURL *)URL {
-    return [MCSFileManager hls_AESKeyFilePathForAESKeyProxyURL:URL inResource:self.name];
-}
-
-- (NSString *)tsNameForTsProxyURL:(NSURL *)URL {
-    return [MCSFileManager hls_tsNameForTsProxyURL:URL];
-}
-
-- (MCSResourcePartialContent *)contentForTsProxyURL:(NSURL *)URL {
-#warning next .. 过期
-    [self lock];
-    @try {
-        NSString *tsName = [MCSFileManager hls_tsNameForTsProxyURL:URL];
-        for ( MCSResourcePartialContent *content in self.contents ) {
-            if ( [content.tsName isEqualToString:tsName] ) {
-                NSString *contentPath = [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
-                NSUInteger length = [MCSFileManager fileSizeAtPath:contentPath];
-                if ( length == content.tsTotalLength )
-                    return content;
-            }
-        }
-        return nil;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-    return [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
-}
-
-- (MCSResourcePartialContent *)createContentWithTsProxyURL:(NSURL *)proxyURL tsTotalLength:(NSUInteger)totalLength {
-    [self lock];
-    @try {
-        NSString *tsName = [MCSFileManager hls_tsNameForTsProxyURL:proxyURL];
-        NSString *filename = [MCSFileManager hls_createContentFileInResource:self.name tsName:tsName tsTotalLength:totalLength];
-        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename tsName:tsName tsTotalLength:totalLength length:0];
-        [self addContent:content];
-        return content;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
 @synthesize parser = _parser;
 - (void)setParser:(MCSHLSParser *)parser {
     BOOL updated = NO;
@@ -119,27 +71,21 @@
     }
 }
 
-- (void)updateTsContentType:(NSString * _Nullable)tsContentType {
-    [self lock];
-    _tsContentType = tsContentType;
-    [self unlock];
-    [MCSResourceManager.shared saveMetadata:self];
-}
-
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
     if ( content.readWriteCount > 0 ) return;
     [self lock];
     @try {
+        if ( self.contents.count <= 1 )
+            return;
         
-#warning next ...
-        return;
-        
-        if ( self.contents.count <= 1 ) return;
         NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
         for ( MCSResourcePartialContent *content in self.contents ) {
             if ( content.readWriteCount == 0 )
                 [list addObject:content];
         }
+        
+        if ( list.count <= 1 )
+            return;
         
         NSMutableArray<MCSResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
         for ( NSInteger i = 0 ; i < list.count ; ++ i ) {
@@ -147,6 +93,9 @@
             for ( NSInteger j = i + 1 ; j < list.count ; ++ j ) {
                 MCSResourcePartialContent *obj2 = list[j];
                 if ( [obj1.tsName isEqualToString:obj2.tsName] ) {
+                    [deleteContents addObject:obj1.length >= obj2.length ? obj2 : obj1];
+                }
+                else if ( [obj1.AESKeyName isEqualToString:obj2.AESKeyName] ) {
                     [deleteContents addObject:obj1.length >= obj2.length ? obj2 : obj1];
                 }
             }
@@ -185,15 +134,27 @@
     }
 }
 
-
+ 
 #pragma mark -
+
+
+- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
+    return [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
+}
+
+- (void)updateTsContentType:(NSString * _Nullable)tsContentType {
+    [self lock];
+    _tsContentType = tsContentType;
+    [self unlock];
+    [MCSResourceManager.shared saveMetadata:self];
+}
 
 - (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL {
     [self lock];
     @try {
-        NSString *tsName = URL.mcs_fname;
+        NSString *TsName = [MCSURLRecognizer.shared fnameWithUrl:URL.absoluteString extension:MCSHLSTsFileExtension];
         for ( MCSResourcePartialContent *content in self.contents ) {
-            if ( [content.tsName isEqualToString:tsName] ) {
+            if ( [content.tsName isEqualToString:TsName] ) {
                 NSString *contentPath = [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
                 NSUInteger length = [MCSFileManager fileSizeAtPath:contentPath];
                 if ( length == content.tsTotalLength )
@@ -207,13 +168,27 @@
         [self unlock];
     }
 }
+- (MCSResourcePartialContent *)createContentWithTsURL:(NSURL *)URL totalLength:(NSUInteger)totalLength {
+    [self lock];
+    @try {
+        NSString *TsName = [MCSURLRecognizer.shared fnameWithUrl:URL.absoluteString extension:MCSHLSTsFileExtension];
+        NSString *filename = [MCSFileManager hls_createContentFileInResource:self.name tsName:TsName tsTotalLength:totalLength];
+        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename tsName:TsName tsTotalLength:totalLength length:0];
+        [self addContent:content];
+        return content;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
 
 - (nullable MCSResourcePartialContent *)contentForAESKeyURL:(NSURL *)URL {
     [self lock];
     @try {
-        NSString *name = URL.mcs_fname;
+        NSString *AESKeyName = [MCSURLRecognizer.shared fnameWithUrl:URL.absoluteString extension:MCSHLSAESKeyFileExtension];
         for ( MCSResourcePartialContent *content in self.contents ) {
-            if ( [content.AESKeyName isEqualToString:name] ) {
+            if ( [content.AESKeyName isEqualToString:AESKeyName] ) {
                 NSString *contentPath = [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
                 NSUInteger length = [MCSFileManager fileSizeAtPath:contentPath];
                 if ( length == content.AESKeyTotalLength )
@@ -227,13 +202,12 @@
         [self unlock];
     }
 }
-
 - (MCSResourcePartialContent *)createContentWithAESKeyURL:(NSURL *)URL totalLength:(NSUInteger)totalLength {
     [self lock];
     @try {
-        NSString *name = URL.mcs_fname;
-        NSString *filename = [MCSFileManager hls_createContentFileInResource:self.name AESKeyName:name totalLength:totalLength];
-        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename tsName:name tsTotalLength:totalLength length:0];
+        NSString *AESKeyName = [MCSURLRecognizer.shared fnameWithUrl:URL.absoluteString extension:MCSHLSAESKeyFileExtension];
+        NSString *filename = [MCSFileManager hls_createContentFileInResource:self.name AESKeyName:AESKeyName totalLength:totalLength];
+        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename AESKeyName:AESKeyName AESKeyTotalLength:totalLength length:0];
         [self addContent:content];
         return content;
     } @catch (__unused NSException *exception) {
@@ -242,4 +216,5 @@
         [self unlock];
     }
 }
+
 @end
