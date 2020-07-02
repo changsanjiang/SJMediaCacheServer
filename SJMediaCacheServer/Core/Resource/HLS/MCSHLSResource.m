@@ -13,7 +13,7 @@
 #import "MCSFileManager.h" 
 
 @interface MCSHLSResource ()
-@property (nonatomic) NSUInteger tsCount;
+@property (nonatomic) NSUInteger TsCount;
 @end
 
 @implementation MCSHLSResource
@@ -41,7 +41,7 @@
     [self lock];
     if ( parser != _parser ) {
         _parser = parser;
-        _tsCount = parser.tsCount;
+        _TsCount = parser.TsCount;
         updated = YES;
     }
     [self unlock];
@@ -59,11 +59,11 @@
     }
 }
 
-@synthesize tsContentType = _tsContentType;
-- (NSString *)tsContentType {
+@synthesize TsContentType = _TsContentType;
+- (NSString *)TsContentType {
     [self lock];
     @try {
-        return _tsContentType;
+        return _TsContentType;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -122,7 +122,7 @@
 
 - (void)_contentsDidChange {
     NSArray *contents = self.contents.copy;
-    if ( _tsCount != 0 && contents.count == _tsCount ) {
+    if ( _TsCount != 0 && contents.count == _TsCount ) {
         BOOL isFinished = YES;
         for ( MCSResourcePartialContent *content in contents ) {
             if ( content.length != content.tsTotalLength ) {
@@ -142,9 +142,9 @@
     return [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
 }
 
-- (void)updateTsContentType:(NSString * _Nullable)tsContentType {
+- (void)updateTsContentType:(NSString * _Nullable)TsContentType {
     [self lock];
-    _tsContentType = tsContentType;
+    _TsContentType = TsContentType;
     [self unlock];
     [MCSResourceManager.shared saveMetadata:self];
 }

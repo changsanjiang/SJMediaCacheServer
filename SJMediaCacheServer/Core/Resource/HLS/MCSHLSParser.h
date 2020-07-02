@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, readonly) NSString *resourceName;
 @property (nonatomic, copy, readonly) NSString *indexFilePath;
-@property (nonatomic, readonly) NSUInteger tsCount;
+@property (nonatomic, readonly) NSUInteger TsCount;
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;
 

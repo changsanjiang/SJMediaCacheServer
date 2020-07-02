@@ -66,7 +66,7 @@
 @property (nonatomic, strong, nullable) NSURL *URL;
 @property (nonatomic, weak, nullable) id<MCSHLSParserDelegate> delegate;
 @property (nonatomic) dispatch_queue_t delegateQueue;
-@property (nonatomic) NSUInteger tsCount;
+@property (nonatomic) NSUInteger TsCount;
 @end
 
 @implementation MCSHLSParser
@@ -165,10 +165,10 @@
     }
 }
 
-- (NSUInteger)tsCount {
+- (NSUInteger)TsCount {
     [self lock];
     @try {
-        return _tsCount;
+        return _TsCount;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -196,7 +196,7 @@
             return;
         }
         
-        _tsCount = [content mcs_rangesByMatchingPattern:MCSURIMatchingPattern_Ts].count;
+        _TsCount = [content mcs_rangesByMatchingPattern:MCSURIMatchingPattern_Ts].count;
         _isDone = YES;
         
         dispatch_async(_delegateQueue, ^{
@@ -264,7 +264,7 @@
     }
     [MCSFileManager unlock];
     
-    _tsCount = tsURIs.count;
+    _TsCount = tsURIs.count;
     _isDone = YES;
 
     dispatch_async(_delegateQueue, ^{

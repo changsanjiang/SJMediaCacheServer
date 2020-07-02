@@ -240,7 +240,7 @@
     _availableLength = [MCSFileManager fileSizeAtPath:filepath];
     _reader = [NSFileHandle fileHandleForReadingAtPath:filepath];
     _writer = [NSFileHandle fileHandleForWritingAtPath:filepath];
-    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_resource.tsContentType totalLength:_content.tsTotalLength];
+    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_resource.TsContentType totalLength:_content.tsTotalLength];
         
     if ( _reader == nil || _writer == nil ) {
         [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
