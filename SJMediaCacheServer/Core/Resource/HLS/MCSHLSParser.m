@@ -10,6 +10,7 @@
 #import "MCSError.h"
 #import "MCSFileManager.h"
 #import "MCSDownload.h"
+#import "MCSURLRecognizer.h"
 
 @interface MCSData : NSObject<MCSDownloadTaskDelegate>
 + (NSData *)dataWithContentsOfURL:(NSURL *)url error:(NSError **)error;
@@ -234,19 +235,10 @@
         NSRange URIRange = [result rangeAtIndex:1];
         NSString *URI = [indexFileContents substringWithRange:URIRange];
         NSString *url = [self _urlWithMatchedString:URI];
-        NSData *keyData = [MCSData dataWithContentsOfURL:[NSURL URLWithString:url] error:&error];
-        if ( error != nil ) {
-            *stop = YES;
-            return ;
-        }
         NSString *filename = [MCSFileManager hls_AESKeyFilenameAtIndex:idx inResource:self.resourceName];
-        NSString *filepath = [MCSFileManager getFilePathWithName:filename inResource:self.resourceName];
-        [keyData writeToFile:filepath options:0 error:&error];
-        if ( error != nil ) {
-            *stop = YES;
-            return ;
-        }
-        [indexFileContents replaceCharactersInRange:URIRange withString:filename];
+        __auto_type encodedURLQueryItem = [MCSURLRecognizer.shared encodedURLQueryItemWithUrl:url];
+        NSString *replace = [filename stringByAppendingEncodedURLQueryItem:encodedURLQueryItem];
+        [indexFileContents replaceCharactersInRange:URIRange withString:replace];
     }];
 
     if ( error != nil ) {

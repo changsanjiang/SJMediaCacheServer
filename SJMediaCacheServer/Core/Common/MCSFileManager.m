@@ -9,14 +9,30 @@
 #import "MCSFileManager.h"
 #import <sys/xattr.h>
 
-static NSString *VODPrefix = @"vod";
-static NSString *HLSPrefix = @"hls";
-
 MCSFileExtension const MCSHLSIndexFileExtension = @".m3u8";
 MCSFileExtension const MCSHLSTsFileExtension = @".ts";
 MCSFileExtension const MCSHLSAESKeyFileExtension = @".key";
 
 @implementation MCSFileManager
+static dispatch_semaphore_t _semaphore;
+static NSString *VODPrefix = @"vod";
+static NSString *HLSPrefix = @"hls";
+
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _semaphore = dispatch_semaphore_create(1);
+    });
+}
+
++ (void)lock {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+}
+
++ (void)unlock {
+    dispatch_semaphore_signal(_semaphore);
+}
+
 + (NSString *)rootDirectoryPath {
     static NSString *rootDirectoryPath;
     static dispatch_once_t onceToken;
@@ -101,41 +117,49 @@ MCSFileExtension const MCSHLSAESKeyFileExtension = @".key";
 }
 
 // VOD
-+ (NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(NSString *)pathExtension {
-    NSString *resourcePath = [self getResourcePathWithName:resourceName];
-    [self checkoutDirectoryWithPath:resourcePath];
-    
-    NSUInteger sequence = 0;
-    while (true) {
-        // VOD前缀_偏移量_序号_扩展名
-        NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
-        if ( pathExtension.length != 0 ) filename = [filename stringByAppendingPathExtension:pathExtension];
-        NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-            [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-            return filename;
++ (NSString *)vod_createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(NSString *)pathExtension {
+    [self lock];
+    @try {
+        NSUInteger sequence = 0;
+        while (true) {
+            // VOD前缀_偏移量_序号_扩展名
+            NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
+            if ( pathExtension.length != 0 ) filename = [filename stringByAppendingPathExtension:pathExtension];
+            NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+                return filename;
+            }
         }
+        return nil;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
     }
-    return nil;
 }
 
 // HLS
 + (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length {
-    NSString *resourcePath = [self getResourcePathWithName:resourceName];
-    [self checkoutDirectoryWithPath:resourcePath];
-    
-    NSUInteger sequence = 0;
-    while (true) {
-        // format: HLS前缀_ts长度_序号_ts文件名
-        //
-        NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu_%@", HLSPrefix, (unsigned long)length, (unsigned long)sequence++, tsName];
-        NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-            [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-            return filename;
+    [self lock];
+    @try {
+        NSUInteger sequence = 0;
+        while (true) {
+            // format: HLS前缀_ts长度_序号_ts文件名
+            //
+            NSString *filename = [NSString stringWithFormat:@"%@_%lu_%lu_%@", HLSPrefix, (unsigned long)length, (unsigned long)sequence++, tsName];
+            NSString *filepath = [self getFilePathWithName:filename inResource:resourceName];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+                return filename;
+            }
         }
+        return nil;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
     }
-    return nil;
 }
 
 + (nullable NSArray<MCSResourcePartialContent *> *)getContentsInResource:(NSString *)resourceName {

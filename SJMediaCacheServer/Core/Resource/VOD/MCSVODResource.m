@@ -56,7 +56,7 @@
 - (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
     [self lock];
     @try {
-        NSString *filename = [MCSFileManager createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
+        NSString *filename = [MCSFileManager vod_createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
         MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename offset:offset];
         [self addContent:content];
         return content;

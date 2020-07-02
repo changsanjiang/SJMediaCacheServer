@@ -1,1 +1,1 @@
-../../../../../SJMediaCacheServer/Core/ProxyServer/MCSURLRecognizer.h
+../../../../../SJMediaCacheServer/Core/Common/MCSURLRecognizer.h

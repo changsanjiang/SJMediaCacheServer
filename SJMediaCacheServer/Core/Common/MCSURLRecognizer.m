@@ -33,6 +33,18 @@ MCSMD5(NSString *str) {
     return instance;
 }
 
+- (NSString *)encodeUrl:(NSString *)url {
+    return [[url dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+}
+
+- (NSString *)decodeUrl:(NSString *)url {
+    return [NSString.alloc initWithData:[NSData.alloc initWithBase64EncodedString:url options:0] encoding:NSUTF8StringEncoding];
+}
+
+- (NSURLQueryItem *)encodedURLQueryItemWithUrl:(NSString *)url {
+    return [NSURLQueryItem.alloc initWithName:@"url" value:[self encodeUrl:url]];
+}
+
 - (NSURL *)proxyURLWithURL:(NSURL *)URL {
     NSParameterAssert(_server);
     
@@ -42,7 +54,7 @@ MCSMD5(NSString *str) {
     
     NSURLComponents *components = [NSURLComponents componentsWithURL:serverURL resolvingAgainstBaseURL:NO];
     components.path = URL.path;
-    NSString *url = [[URL.absoluteString dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+    NSString *url = [self encodeUrl:URL.absoluteString];
     [components setQuery:[NSString stringWithFormat:@"url=%@", url]];
     return components.URL;
 }
@@ -51,7 +63,7 @@ MCSMD5(NSString *str) {
     NSURLComponents *components = [NSURLComponents componentsWithURL:proxyURL resolvingAgainstBaseURL:NO];
     for ( NSURLQueryItem *query in components.queryItems ) {
         if ( [query.name isEqualToString:@"url"] ) {
-            NSString *url = [NSString.alloc initWithData:[NSData.alloc initWithBase64EncodedString:query.value options:0] encoding:NSUTF8StringEncoding];
+            NSString *url = [self decodeUrl:query.value];
             return [NSURL URLWithString:url];
         }
     }
@@ -80,5 +92,12 @@ MCSMD5(NSString *str) {
 - (NSURL *)proxyURLWithTsName:(NSString *)tsName {
     NSParameterAssert(_server);
     return [NSURL URLWithString:[_server.serverURL.absoluteString stringByAppendingPathComponent:tsName]];
+}
+@end
+
+
+@implementation NSString (MCSURLRecognizerExtended)
+- (NSString *)stringByAppendingEncodedURLQueryItem:(NSURLQueryItem *)item {
+    return [self stringByAppendingFormat:@"%@%@&%@", [self containsString:@"?"] ? @"&" : @"?", item.name, item.value];
 }
 @end

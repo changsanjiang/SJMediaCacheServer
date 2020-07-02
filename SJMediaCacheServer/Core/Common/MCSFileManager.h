@@ -59,7 +59,7 @@ UIKIT_EXTERN MCSFileExtension const MCSHLSAESKeyFileExtension;
 
 // VOD
 //      注意: 返回文件名
-+ (nullable NSString *)createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension;
++ (nullable NSString *)vod_createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension;
 
 // HLS
 //      注意: 返回文件名
