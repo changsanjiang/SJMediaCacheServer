@@ -198,8 +198,7 @@
 
 @implementation NSURLRequest (MCSHTTPConnectionExtended)
 + (NSMutableURLRequest *)mcs_requestWithMessage:(HTTPMessage *)message {
-    NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:message.url];
-    return [self mcs_requestWithURL:URL headers:message.allHeaderFields];
+    return [self mcs_requestWithURL:message.url headers:message.allHeaderFields];
 }
 @end
 

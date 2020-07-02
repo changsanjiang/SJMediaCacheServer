@@ -249,7 +249,7 @@
             // downloaded part
             NSRange matchedRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
             NSRange fileRange = NSMakeRange(matchedRange.location - content.offset, intersection.length);
-            NSString *path = [MCSFileManager getFilePathWithName:content.name inResource:_resource.name];
+            NSString *path = [MCSFileManager getFilePathWithName:content.filename inResource:_resource.name];
             MCSResourceFileDataReader *reader = [MCSResourceFileDataReader.alloc initWithRange:matchedRange path:path readRange:fileRange delegate:self delegateQueue:_resource.readerOperationQueue];
             [readers addObject:reader];
             

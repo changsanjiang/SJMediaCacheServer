@@ -19,13 +19,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)close;
 
 @property (nonatomic, copy, readonly) NSString *resourceName;
+@property (nonatomic, copy, readonly) NSString *indexFilePath;
 @property (nonatomic, readonly) NSUInteger tsCount;
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;
 
-@property (nonatomic, copy, readonly) NSString *indexFilePath;
-- (NSURL *)tsURLWithTsName:(NSString *)tsName;
-- (nullable NSString *)tsNameAtIndex:(NSUInteger)index;
+- (NSURL *)tsURLWithTsName:(NSString *)tsName __deprecated;
+- (nullable NSString *)tsNameAtIndex:(NSUInteger)index __deprecated;
 @end
 
 

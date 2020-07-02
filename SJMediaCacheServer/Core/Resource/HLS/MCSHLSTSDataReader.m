@@ -15,6 +15,7 @@
 #import "MCSError.h"
 #import "MCSFileManager.h"
 #import "MCSResourceResponse.h"
+#import "MCSURLRecognizer.h"
 
 @interface MCSHLSTSDataReader ()<MCSDownloadTaskDelegate, NSLocking> {
     dispatch_semaphore_t _semaphore;
@@ -43,12 +44,13 @@
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource proxyRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
+        _URL = [MCSURLRecognizer.shared URLWithProxyURL:proxyRequest.URL];
         _networkTaskPriority = networkTaskPriority;
         _resource = resource;
-        _request = request;
+        _request = proxyRequest;
         _delegate = delegate;
         _delegateQueue = queue;
         _semaphore = dispatch_semaphore_create(1);
@@ -66,14 +68,11 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        NSString *tsName = [_resource tsNameForTsProxyURL:_request.URL];
-        _URL = [_resource.parser tsURLWithTsName:tsName];
-        
         MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
 
         _isCalledPrepare = YES;
         
-        _content = [_resource contentForTsProxyURL:_request.URL];
+        _content = [_resource contentForTsURL:_URL];
         
         if ( _content != nil ) {
             // go to read the content
@@ -167,7 +166,8 @@
         [self unlock];
     }
 }
-#pragma mark -
+
+#pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
     [self lock];

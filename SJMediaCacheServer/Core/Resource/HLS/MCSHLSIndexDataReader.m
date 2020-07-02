@@ -12,6 +12,7 @@
 #import "MCSResourceResponse.h"
 #import "MCSHLSResource.h"
 #import "MCSFileManager.h"
+#import "MCSURLRecognizer.h"
 
 @interface MCSHLSIndexDataReader ()<MCSHLSParserDelegate, MCSResourceDataReaderDelegate, NSLocking> {
     dispatch_semaphore_t _semaphore;
@@ -31,10 +32,10 @@
 @implementation MCSHLSIndexDataReader
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
-- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource proxyURL:(NSURL *)proxyURL delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
-        _URL = URL;
+        _URL = [MCSURLRecognizer.shared URLWithProxyURL:proxyURL];
         _resource = resource;
         _parser = resource.parser;
         _delegate = delegate;

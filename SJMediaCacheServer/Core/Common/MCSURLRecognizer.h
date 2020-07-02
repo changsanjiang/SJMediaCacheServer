@@ -29,6 +29,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSURL *)proxyURLWithTsName:(NSString *)tsName;
 @end
 
+
+@interface MCSURLRecognizer (HLS)
+- (NSString *)proxyTsURIWithUrl:(NSString *)url inResource:(NSString *)resource;
+- (NSString *)proxyAESKeyURIWithUrl:(NSString *)url inResource:(NSString *)resource;
+@end
+
 @interface NSString (MCSURLRecognizerExtended)
 - (NSString *)stringByAppendingEncodedURLQueryItem:(NSURLQueryItem *)item;
 @end

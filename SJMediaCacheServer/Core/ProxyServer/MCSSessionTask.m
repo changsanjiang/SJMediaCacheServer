@@ -27,7 +27,7 @@
 }
 
 - (void)prepare {
-    _reader = [MCSResourceManager.shared readerWithRequest:_request];
+    _reader = [MCSResourceManager.shared readerWithProxyRequest:_request];
     _reader.delegate = self;
     @autoreleasepool {
         [_reader prepare];

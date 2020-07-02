@@ -147,13 +147,13 @@
 - (void)removeContent:(MCSResourcePartialContent *)content {
     [self lock];
     [_m removeObject:content];
-    [MCSFileManager removeContentWithName:content.name inResource:_name error:NULL];
+    [MCSFileManager removeContentWithName:content.filename inResource:_name error:NULL];
     [MCSResourceManager.shared didRemoveDataForResource:self length:content.length];
     [self unlock];
 }
 
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-    return [MCSFileManager getFilePathWithName:content.name inResource:_name];
+    return [MCSFileManager getFilePathWithName:content.filename inResource:_name];
 }
 
 #pragma mark -

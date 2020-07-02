@@ -57,7 +57,7 @@
     [self lock];
     @try {
         NSString *filename = [MCSFileManager vod_createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
-        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithName:filename offset:offset];
+        MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename offset:offset];
         [self addContent:content];
         return content;
     } @catch (__unused NSException *exception) {

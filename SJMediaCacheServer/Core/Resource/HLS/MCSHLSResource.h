@@ -17,9 +17,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)AESKeyFilePathForAESKeyProxyURL:(NSURL *)URL;
 - (NSString *)tsNameForTsProxyURL:(NSURL *)URL;
-- (nullable MCSResourcePartialContent *)contentForTsProxyURL:(NSURL *)URL;
+- (nullable MCSResourcePartialContent *)contentForTsProxyURL:(NSURL *)URL __deprecated;
 - (MCSResourcePartialContent *)createContentWithTsProxyURL:(NSURL *)URL tsTotalLength:(NSUInteger)totalLength;
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
 - (void)updateTsContentType:(NSString * _Nullable)tsContentType;
+
+#pragma mark -
+
+- (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL;
+
+- (nullable MCSResourcePartialContent *)contentForAESKeyURL:(NSURL *)URL;
+- (MCSResourcePartialContent *)createContentWithAESKeyURL:(NSURL *)URL totalLength:(NSUInteger)totalLength;
 @end
 NS_ASSUME_NONNULL_END

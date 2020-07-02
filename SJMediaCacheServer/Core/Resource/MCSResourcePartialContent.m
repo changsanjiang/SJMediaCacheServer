@@ -16,6 +16,8 @@
 @property (nonatomic, strong, nullable) dispatch_queue_t delegateQueue;
 @property (nonatomic, readonly) NSUInteger offset;
 @property (nonatomic) NSInteger readWriteCount;
+@property (nonatomic, copy) NSString *AESKeyName;
+@property (nonatomic) NSUInteger AESKeyTotalLength;
 @property (nonatomic, copy) NSString *tsName;
 @property (nonatomic) NSUInteger tsTotalLength;
 
@@ -24,8 +26,16 @@
 @end
 
 @implementation MCSResourcePartialContent
-- (instancetype)initWithName:(NSString *)name tsName:(NSString *)tsName tsTotalLength:(NSUInteger)tsTotalLength length:(NSUInteger)length {
-    self = [self initWithName:name offset:0 length:length];
+- (instancetype)initWithFilename:(NSString *)filename AESKeyName:(NSString *)AESKeyName AESKeyTotalLength:(NSUInteger)AESKeyTotalLength length:(NSUInteger)length {
+    self = [self initWithFilename:filename offset:0 length:length];
+    if ( self ) {
+        _AESKeyName = AESKeyName.copy;
+        _AESKeyTotalLength = AESKeyTotalLength;
+    }
+    return self;
+}
+- (instancetype)initWithFilename:(NSString *)filename tsName:(NSString *)tsName tsTotalLength:(NSUInteger)tsTotalLength length:(NSUInteger)length {
+    self = [self initWithFilename:filename offset:0 length:length];
     if ( self ) {
         _tsName = tsName.copy;
         _tsTotalLength = tsTotalLength;
@@ -33,15 +43,15 @@
     return self;
 }
 
-- (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset {
-    return [self initWithName:name offset:offset length:0];
+- (instancetype)initWithFilename:(NSString *)filename offset:(NSUInteger)offset {
+    return [self initWithFilename:filename offset:offset length:0];
 }
 
-- (instancetype)initWithName:(NSString *)name offset:(NSUInteger)offset length:(NSUInteger)length {
+- (instancetype)initWithFilename:(NSString *)filename offset:(NSUInteger)offset length:(NSUInteger)length {
     self = [super init];
     if ( self ) {
         _semaphore = dispatch_semaphore_create(1);
-        _name = name;
+        _filename = filename;
         _offset = offset;
         _length = length;
     }
@@ -49,7 +59,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, _name, (unsigned long)_offset, (unsigned long)self.length];
+    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, _filename, (unsigned long)_offset, (unsigned long)self.length];
 }
 
 - (void)setDelegate:(id<MCSResourcePartialContentDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)delegateQueue {
