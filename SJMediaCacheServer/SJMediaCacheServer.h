@@ -25,6 +25,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// @return         It may return the local cache playback URL or HTTP proxy URL, but when there is no cache file and the proxy service is not running, it will return the parameter URL.
 ///
 - (NSURL *)playbackURLWithURL:(NSURL *)URL; // 获取播放地址
+ 
+/// The maximum number of queued prefetch tasks that can execute at same time.
+///
+///     The default value is 3.
+///
+@property (nonatomic) NSInteger maxConcurrentPrefetchCount;
 
 /// Prefetch some resources in the cache for future use. resources are downloaded in low priority.
 ///

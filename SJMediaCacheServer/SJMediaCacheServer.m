@@ -58,6 +58,14 @@
     return URL;
 }
 
+- (void)setMaxConcurrentPrefetchCount:(NSInteger)maxConcurrentPrefetchCount {
+    MCSPrefetcherManager.shared.maxConcurrentPrefetchCount = maxConcurrentPrefetchCount;
+}
+ 
+- (NSInteger)maxConcurrentPrefetchCount {
+    return MCSPrefetcherManager.shared.maxConcurrentPrefetchCount;
+}
+
 - (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize {
     return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize];
 }
