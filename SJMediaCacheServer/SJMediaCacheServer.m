@@ -81,6 +81,10 @@
     [MCSResourceManager.shared cancelCurrentReadsForResource:resource];
 }
 
+- (void)cancelAllPrefetchTasks {
+    [MCSPrefetcherManager.shared cancelAllPrefetchTasks];
+}
+
 #pragma mark - MCSProxyServerDelegate
 
 - (id<MCSSessionTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSSessionTaskDelegate>)delegate {

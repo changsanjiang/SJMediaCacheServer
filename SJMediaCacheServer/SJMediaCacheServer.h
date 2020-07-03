@@ -61,6 +61,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param URL      An instance of NSURL that references a media resource.
 ///
 - (void)cancelCurrentRequestsForURL:(NSURL *)URL; // 取消当前的请求, 包括预加载(MCSPrefetchTask)的请求
+
+/// Cancels all queued and executing prefetch tasks.
+///
+- (void)cancelAllPrefetchTasks; // 取消所有的预加载任务
 @end
 
 

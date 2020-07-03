@@ -177,4 +177,8 @@
     [_operationQueue addOperation:operation];
     return operation;
 }
+
+- (void)cancelAllPrefetchTasks {
+    [_operationQueue cancelAllOperations];
+}
 @end
