@@ -12,6 +12,7 @@
 
 #import <Foundation/Foundation.h>
 #import "MCSPrefetcherManager.h"
+#import "MCSDefines.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -70,12 +71,26 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SJMediaCacheServer (Request)
 
-/// Add a request header or something to a request.
+/// Add a request header or something to a data request.
 ///
 ///     This block will be invoked when the download server creates new download task.
 ///
 @property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request); // 为下载请求添加请求头或做一些其他事情
 
+/// 
+///
+/// @param URL      An instance of NSURL that references a media resource.
+///
+- (void)resourceURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field ofType:(MCSDataType)type;
+
+
+#warning next .... 回家做
+
+/// A dictionary of additional headers to send with the resource data requests.
+///
+///     This result specifies additional headers that are added to all tasks within
+///
+- (nullable NSDictionary *)resourceURL:(NSURL *)URL HTTPAdditionalHeadersForResourceDataRequestOfType:(MCSDataType)type;
 @end
 
 

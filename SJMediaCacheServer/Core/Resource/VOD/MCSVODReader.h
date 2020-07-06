@@ -6,7 +6,7 @@
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSDefines.h"
+#import "MCSInterfaces.h"
 #import "MCSResourceDefines.h"
 #import "MCSResourceResponse.h"
 @class MCSVODResource;
