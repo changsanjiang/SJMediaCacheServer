@@ -33,15 +33,9 @@
     
 #pragma mark -
     
-    NSURL *URL = [NSURL URLWithString:@"http://m3u8.soyoung.com/036595cd7159a8ed7aee3cb8190cf6cf.m3u8?sign=df096f6db637fa1be4b4ec1cdbe6d1dd&t=5f047263"];
+    NSURL *URL = nil;
 
-    
-    [SJMediaCacheServer.shared resourceURL:URL setValue:@"Index1" forHTTPHeaderField:@"hello" ofType:MCSDataTypeHLSIndex];
-    [SJMediaCacheServer.shared resourceURL:URL setValue:@"HLS" forHTTPHeaderField:@"hello" ofType:MCSDataTypeHLS];
-    [SJMediaCacheServer.shared resourceURL:URL setValue:@"Index2" forHTTPHeaderField:@"hello" ofType:MCSDataTypeHLSIndex];
-    [SJMediaCacheServer.shared resourceURL:URL setValue:@"VOD" forHTTPHeaderField:@"hello" ofType:MCSDataTypeVOD];
-
-//    URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8"];
+    URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8"];
 
 
 //    URL = [NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"];

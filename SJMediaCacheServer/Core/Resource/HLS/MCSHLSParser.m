@@ -14,7 +14,7 @@
 #import "NSURLRequest+MCS.h"
 
 @interface MCSData : NSObject<MCSDownloadTaskDelegate>
-+ (NSData *)dataWithContentsOfRequest:(NSURLRequest *)request error:(NSError **)error;
++ (NSData *)dataWithContentsOfRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority error:(NSError **)error;
 @end
 
 @implementation MCSData {
@@ -23,18 +23,18 @@
     NSError *_error;
 }
 
-+ (NSData *)dataWithContentsOfRequest:(NSURLRequest *)request error:(NSError **)error {
-    MCSData *data = [MCSData.alloc initWithContentsOfRequest:request error:error];
++ (NSData *)dataWithContentsOfRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority error:(NSError **)error {
+    MCSData *data = [MCSData.alloc initWithContentsOfRequest:request networkTaskPriority:networkTaskPriority error:error];
     return data != nil ? data->_m : nil;
 }
 
-- (instancetype)initWithContentsOfRequest:(NSURLRequest *)request error:(NSError **)error {
+- (instancetype)initWithContentsOfRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority error:(NSError **)error {
     self = [super init];
     if ( self ) {
         _m = NSMutableData.data;
         _semaphore = dispatch_semaphore_create(0);
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            [MCSDownload.shared downloadWithRequest:request priority:1 delegate:self];
+            [MCSDownload.shared downloadWithRequest:request priority:networkTaskPriority delegate:self];
         });
         dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
         if ( _error != nil && error != NULL ) *error = _error;
@@ -67,12 +67,14 @@
 @property (nonatomic, weak, nullable) id<MCSHLSParserDelegate> delegate;
 @property (nonatomic) dispatch_queue_t delegateQueue;
 @property (nonatomic, strong) NSArray<NSString *> *TsURIArray;
+@property (nonatomic) float networkTaskPriority;
 @end
 
 @implementation MCSHLSParser
-- (instancetype)initWithResource:(NSString *)resourceName request:(NSURLRequest *)request delegate:(id<MCSHLSParserDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(NSString *)resourceName request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSHLSParserDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
+        _networkTaskPriority = networkTaskPriority;
         _resourceName = resourceName;
         _request = request;
         _delegate = delegate;
@@ -197,16 +199,18 @@
     NSString *_Nullable contents = nil;
     __block NSError *_Nullable error = nil;
     do {
-        NSData *data = [MCSData dataWithContentsOfRequest:request error:&error];
+        NSData *data = [MCSData dataWithContentsOfRequest:request networkTaskPriority:_networkTaskPriority error:&error];
         if ( _isClosed ) return;
         contents = [NSString.alloc initWithData:data encoding:0];
         if ( contents == nil )
             break;
 
         // 是否重定向
-        NSString *url = [self _urlsWithPattern:MCSURIMatchingPattern_Index indexURL:request.URL source:contents].firstObject;
-        request = url != nil ? [request mcs_requestWithRedirectURL:[NSURL URLWithString:url]] : nil;
-    } while ( request != nil );
+        NSString *redirectUrl = [self _urlsWithPattern:MCSURIMatchingPattern_Index indexURL:request.URL source:contents].firstObject;
+        if ( redirectUrl == nil ) break;
+        
+        request = [request mcs_requestWithRedirectURL:[NSURL URLWithString:redirectUrl]];
+    } while ( true );
 
     if ( error != nil || contents == nil || ![contents hasPrefix:@"#"] ) {
         [self _onError:error ?: [NSError mcs_HLSFileParseError:_request.URL]];

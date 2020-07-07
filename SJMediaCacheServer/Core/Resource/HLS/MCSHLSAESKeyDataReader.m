@@ -77,7 +77,7 @@
         MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
         // download the content
-        _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
+        _task = [MCSDownload.shared downloadWithRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] priority:_networkTaskPriority delegate:self];
 
     } @catch (__unused NSException *exception) {
         

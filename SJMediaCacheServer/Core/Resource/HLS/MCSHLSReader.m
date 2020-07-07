@@ -85,17 +85,14 @@
         NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:_request.URL];
         NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL];
         if      ( [_request.URL.absoluteString containsString:MCSHLSIndexFileExtension] ) {
-            [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSIndex]];
-            _reader = [MCSHLSIndexDataReader.alloc initWithResource:_resource request:request delegate:self delegateQueue:_resource.readerOperationQueue];
+            _reader = [MCSHLSIndexDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
         }
         else if ( [_request.URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ) {
             NSAssert(_resource.parser != nil, @"`parser`不能为nil!");
-            [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]];
             _reader = [MCSHLSAESKeyDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
         }
         else {
             NSAssert(_resource.parser != nil, @"`parser`不能为nil!");
-            [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSTs]];
             _reader = [MCSHLSTSDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
         }
         

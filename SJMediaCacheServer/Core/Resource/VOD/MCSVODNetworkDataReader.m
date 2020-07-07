@@ -73,7 +73,7 @@
         
         _isCalledPrepare = YES;
         
-        _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
+        _task = [MCSDownload.shared downloadWithRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeVOD]] priority:_networkTaskPriority delegate:self];
     } @catch (__unused NSException *exception) {
 
     } @finally {

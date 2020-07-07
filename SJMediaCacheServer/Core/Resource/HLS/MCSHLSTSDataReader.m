@@ -36,7 +36,6 @@
 @property (nonatomic, strong, nullable) NSFileHandle *reader;
 @property (nonatomic, strong, nullable) NSFileHandle *writer;
 @property (nonatomic) float networkTaskPriority;
-@property (nonatomic, strong, nullable) NSURL *URL;
 @end
 
 @implementation MCSHLSTSDataReader
@@ -46,7 +45,6 @@
 - (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
-        _URL = request.URL;
         _networkTaskPriority = networkTaskPriority;
         _resource = resource;
         _request = request;
@@ -58,7 +56,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { URL: %@\n };", NSStringFromClass(self.class), self, _URL];
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@\n };", NSStringFromClass(self.class), self, _request.URL];
 }
 
 - (void)prepare {
@@ -67,11 +65,11 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
+        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
 
         _isCalledPrepare = YES;
         
-        _content = [_resource contentForTsURL:_URL];
+        _content = [_resource contentForTsURL:_request.URL];
         
         if ( _content != nil ) {
             // go to read the content
@@ -79,10 +77,10 @@
             return;
         }
         
-        MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
+        MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
         // download the content
-        _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
+        _task = [MCSDownload.shared downloadWithRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSTs]] priority:_networkTaskPriority delegate:self];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -114,7 +112,7 @@
     } @finally {
 #ifdef DEBUG
         if ( _isDone ) {
-            MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
+            MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         }
 #endif
         [self unlock];

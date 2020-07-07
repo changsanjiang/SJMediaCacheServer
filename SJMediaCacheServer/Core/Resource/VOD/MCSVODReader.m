@@ -388,7 +388,6 @@
 
 - (MCSVODNetworkDataReader *)_networkDataReaderWithURL:(NSURL *)URL range:(NSRange)range {
     NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL range:range];
-    [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeVOD]];
     return [MCSVODNetworkDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];;
 }
 @end

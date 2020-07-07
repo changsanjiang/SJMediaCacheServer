@@ -26,14 +26,16 @@
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
 @property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
+@property (nonatomic) float networkTaskPriority;
 @end
 
 @implementation MCSHLSIndexDataReader
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
-- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
+        _networkTaskPriority = networkTaskPriority;
         _request = request;
         _resource = resource;
         _parser = resource.parser;
@@ -60,7 +62,7 @@
         
         // parse the m3u8 file
         if ( _parser == nil ) {
-            _parser = [MCSHLSParser.alloc initWithResource:_resource.name request:_request delegate:self delegateQueue:_delegateQueue];
+            _parser = [MCSHLSParser.alloc initWithResource:_resource.name request:[_request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSIndex]] networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_delegateQueue];
             [_parser prepare];
             return;
         }
