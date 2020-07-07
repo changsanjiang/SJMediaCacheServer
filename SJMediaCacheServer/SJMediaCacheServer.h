@@ -85,7 +85,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// @param field    The name of the header field to set. In keeping with the HTTP RFC, HTTP header field names are case insensitive.
 ///
-/// @param type     The data type of a partial content in the resource. For example, MCSDataTypeHLSIndex indicates setting the header for the request of the m3u8 playlist file.
+/// @param type     The data type of a partial content in the resource. For example, MCSDataTypeHLSPlaylist indicates setting the header for the request of the m3u8 playlist file.
 ///
 - (void)resourceURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field ofType:(MCSDataType)type;
 

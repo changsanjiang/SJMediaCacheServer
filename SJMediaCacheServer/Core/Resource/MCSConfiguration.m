@@ -32,8 +32,8 @@
             [self _setValue:value forHTTPHeaderField:HTTPHeaderField ofType:MCSDataTypeHLS fallThrough:fallThrough];
             fallThrough = YES;
         }
-        case MCSDataTypeHLSIndex: {
-            [self _setValue:value forHTTPHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSIndex fallThrough:fallThrough];
+        case MCSDataTypeHLSPlaylist: {
+            [self _setValue:value forHTTPHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSPlaylist fallThrough:fallThrough];
             if ( !fallThrough ) break;
         }
         case MCSDataTypeHLSAESKey: {
