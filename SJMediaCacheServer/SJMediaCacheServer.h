@@ -77,20 +77,23 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request); // 为下载请求添加请求头或做一些其他事情
 
-/// 
+/// Sets a value for the header field.
 ///
 /// @param URL      An instance of NSURL that references a media resource.
 ///
+/// @param value    The new value for the header field. Any existing value for the field is replaced by the new value.
+///
+/// @param field    The name of the header field to set. In keeping with the HTTP RFC, HTTP header field names are case insensitive.
+///
+/// @param type     The data type of a partial content in the resource.
+///
 - (void)resourceURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field ofType:(MCSDataType)type;
-
-
-#warning next .... 回家做
 
 /// A dictionary of additional headers to send with the resource data requests.
 ///
-///     This result specifies additional headers that are added to all tasks within
+///     Note that these headers are added to the request only if not already present.
 ///
-- (nullable NSDictionary *)resourceURL:(NSURL *)URL HTTPAdditionalHeadersForResourceDataRequestOfType:(MCSDataType)type;
+- (nullable NSDictionary *)resourceURL:(NSURL *)URL HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type;
 @end
 
 

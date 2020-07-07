@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSConfiguration : NSObject<MCSConfiguration>
 
 - (void)setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field ofType:(MCSDataType)type;
-- (nullable NSDictionary *)HTTPAdditionalHeadersForResourceDataRequestOfType:(MCSDataType)type;
+- (nullable NSDictionary *)HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type;
 
 @end
 NS_ASSUME_NONNULL_END

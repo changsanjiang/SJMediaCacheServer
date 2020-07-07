@@ -33,7 +33,7 @@
     [self unlock];
 }
 
-- (nullable NSDictionary *)HTTPAdditionalHeadersForResourceDataRequestOfType:(MCSDataType)type {
+- (nullable NSDictionary *)HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type {
     [self lock];
     @try {
         return _map[@(type)];
