@@ -53,4 +53,21 @@
 - (NSMutableURLRequest *)mcs_requestWithRedirectURL:(NSURL *)URL {
     return [NSMutableURLRequest mcs_requestWithURL:URL headers:self.allHTTPHeaderFields];
 }
+
+- (NSMutableURLRequest *)mcs_requestWithHTTPAdditionalHeaders:(nullable NSDictionary<NSString *,NSString *> *)HTTPAdditionalHeaders {
+    NSMutableURLRequest *request = nil;
+    if ( [self isKindOfClass:NSMutableURLRequest.class] ) {
+        request = (NSMutableURLRequest *)self;
+    }
+    else {
+        request = [self mutableCopy];
+    }
+    
+    NSDictionary *current = request.allHTTPHeaderFields;
+    [HTTPAdditionalHeaders enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+        if ( current[key] == nil )
+            [request setValue:obj forHTTPHeaderField:key];
+    }];
+    return request;
+}
 @end

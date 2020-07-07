@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSMutableURLRequest *)mcs_requestWithRedirectURL:(NSURL *)URL range:(NSRange)range;
 - (NSMutableURLRequest *)mcs_requestWithRedirectURL:(NSURL *)URL;
+- (NSMutableURLRequest *)mcs_requestWithHTTPAdditionalHeaders:(nullable NSDictionary<NSString *, NSString *> *)HTTPAdditionalHeaders;
 
 - (NSDictionary *)mcs_headers;
 - (NSRange)mcs_range;

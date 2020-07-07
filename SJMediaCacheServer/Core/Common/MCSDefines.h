@@ -13,12 +13,12 @@ typedef NS_ENUM(NSUInteger, MCSResourceType) {
     MCSResourceTypeHLS
 };
 
-
 typedef enum : NSUInteger {
     MCSDataTypeHLSMask      = 0xFF,
-    MCSDataTypeHLS          = 1,
+    MCSDataTypeHLSIndex     = 1,
     MCSDataTypeHLSAESKey    = 2,
     MCSDataTypeHLSTs        = 3,
+    MCSDataTypeHLS          = 1 << MCSDataTypeHLSIndex | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSTs,
 
     MCSDataTypeVODMask      = 0xFF00,
     MCSDataTypeVOD          = 1 << 8,

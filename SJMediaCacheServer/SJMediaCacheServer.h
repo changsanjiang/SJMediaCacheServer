@@ -93,7 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 ///     Note that these headers are added to the request only if not already present.
 ///
-- (nullable NSDictionary *)resourceURL:(NSURL *)URL HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type;
+- (nullable NSDictionary<NSString *, NSString *> *)resourceURL:(NSURL *)URL HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type;
 @end
 
 

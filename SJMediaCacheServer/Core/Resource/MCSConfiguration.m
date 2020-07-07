@@ -9,7 +9,7 @@
 
 @interface MCSConfiguration ()<NSLocking> {
     dispatch_semaphore_t _semaphore;
-    NSMutableDictionary <NSNumber *, NSMutableDictionary *> *_map;
+    NSMutableDictionary <NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_map;
 }
 @end
 
@@ -26,14 +26,39 @@
     [self lock];
     if ( _map == nil ) _map = NSMutableDictionary.dictionary;
     
-    NSNumber *key = @(type);
-    if ( _map[key] == nil ) _map[key] = NSMutableDictionary.dictionary;
-
-    _map[key][HTTPHeaderField] = value;
+    BOOL fallThrough = NO;
+    switch ( type & MCSDataTypeHLSMask ) {
+        case MCSDataTypeHLS: {
+            [self _setValue:value forHTTPHeaderField:HTTPHeaderField ofType:MCSDataTypeHLS fallThrough:fallThrough];
+            fallThrough = YES;
+        }
+        case MCSDataTypeHLSIndex: {
+            [self _setValue:value forHTTPHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSIndex fallThrough:fallThrough];
+            if ( !fallThrough ) break;
+        }
+        case MCSDataTypeHLSAESKey: {
+            [self _setValue:value forHTTPHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSAESKey fallThrough:fallThrough];
+            if ( !fallThrough ) break;
+        }
+        case MCSDataTypeHLSTs: {
+            [self _setValue:value forHTTPHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSTs fallThrough:fallThrough];
+            if ( !fallThrough ) break;
+        }
+        default: break;
+    }
+    
+    switch ( type & MCSDataTypeVODMask ) {
+        case MCSDataTypeVOD: {
+            [self _setValue:value forHTTPHeaderField:HTTPHeaderField ofType:MCSDataTypeVOD fallThrough:fallThrough];
+            break;
+        }
+        default: break;
+    }
+    
     [self unlock];
 }
 
-- (nullable NSDictionary *)HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type {
+- (nullable NSDictionary<NSString *, NSString *> *)HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type {
     [self lock];
     @try {
         return _map[@(type)];
@@ -42,6 +67,17 @@
     } @finally {
         [self unlock];
     }
+}
+
+- (void)_setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)HTTPHeaderField ofType:(MCSDataType)type fallThrough:(BOOL)fallThrough {
+    NSNumber *key = @(type);
+    if ( fallThrough && _map[key][HTTPHeaderField] != nil )
+        return;
+    
+    if ( _map[key] == nil )
+        _map[key] = NSMutableDictionary.dictionary;
+    
+    _map[key][HTTPHeaderField] = value;
 }
 
 #pragma mark -
