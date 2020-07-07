@@ -244,7 +244,7 @@
             // undownloaded part
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
-                MCSVODNetworkDataReader *reader = [MCSVODNetworkDataReader.alloc initWithResource:_resource request:[_request mcs_requestWithRedirectURL:URL range:leftRange] networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
+                MCSVODNetworkDataReader *reader = [self _networkDataReaderWithURL:URL range:leftRange];
                 [readers addObject:reader];
             }
             
@@ -268,7 +268,7 @@
     
     if ( current.length != 0 ) {
         // undownloaded part
-        MCSVODNetworkDataReader *reader = [MCSVODNetworkDataReader.alloc initWithResource:_resource request:[_request mcs_requestWithRedirectURL:URL range:current] networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
+        MCSVODNetworkDataReader *reader = [self _networkDataReaderWithURL:URL range:current];
         [readers addObject:reader];
     }
     
@@ -384,5 +384,11 @@
 
         [self.delegate reader:self anErrorOccurred:error];
     });
+}
+
+- (MCSVODNetworkDataReader *)_networkDataReaderWithURL:(NSURL *)URL range:(NSRange)range {
+    NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL range:range];
+    [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeVOD]];
+    return [MCSVODNetworkDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];;
 }
 @end

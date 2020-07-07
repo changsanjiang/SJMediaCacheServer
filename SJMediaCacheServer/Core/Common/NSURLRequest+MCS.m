@@ -63,11 +63,13 @@
         request = [self mutableCopy];
     }
     
-    NSDictionary *current = request.allHTTPHeaderFields;
-    [HTTPAdditionalHeaders enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-        if ( current[key] == nil )
-            [request setValue:obj forHTTPHeaderField:key];
-    }];
+    if ( HTTPAdditionalHeaders != nil ) {
+        NSDictionary *current = request.allHTTPHeaderFields;
+        [HTTPAdditionalHeaders enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+            if ( current[key] == nil )
+                [request setValue:obj forHTTPHeaderField:key];
+        }];
+    }
     return request;
 }
 @end

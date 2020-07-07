@@ -16,7 +16,7 @@
 @interface MCSHLSIndexDataReader ()<MCSHLSParserDelegate, MCSResourceDataReaderDelegate, NSLocking> {
     dispatch_semaphore_t _semaphore;
 }
-@property (nonatomic, strong) NSURL *URL;
+@property (nonatomic, strong) NSURLRequest *request;
 
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isPrepared;
@@ -31,10 +31,10 @@
 @implementation MCSHLSIndexDataReader
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
-- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
-        _URL = URL;
+        _request = request;
         _resource = resource;
         _parser = resource.parser;
         _delegate = delegate;
@@ -45,7 +45,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { URL: %@\n };", NSStringFromClass(self.class), self, _URL];
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@\n };", NSStringFromClass(self.class), self, _request.URL];
 }
 
 - (void)prepare {
@@ -54,13 +54,13 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
+        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
         _isCalledPrepare = YES;
         
         // parse the m3u8 file
         if ( _parser == nil ) {
-            _parser = [MCSHLSParser.alloc initWithURL:_URL inResource:_resource.name delegate:self delegateQueue:_delegateQueue];
+            _parser = [MCSHLSParser.alloc initWithResource:_resource.name request:_request delegate:self delegateQueue:_delegateQueue];
             [_parser prepare];
             return;
         }
@@ -178,7 +178,7 @@
     [_reader close];
     _isClosed = YES;
     
-    MCSLog(@"%@: <%p>.close { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
+    MCSLog(@"%@: <%p>.close { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
 }
 
 - (void)_parseDidFinish {

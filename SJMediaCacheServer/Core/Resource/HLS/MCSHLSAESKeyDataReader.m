@@ -18,7 +18,7 @@
     dispatch_semaphore_t _semaphore;
 }
 @property (nonatomic, weak) MCSHLSResource *resource;
-@property (nonatomic, strong) NSURL *URL;
+@property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic) float networkTaskPriority;
 
 @property (nonatomic) BOOL isCalledPrepare;
@@ -39,11 +39,11 @@
 @synthesize response = _response;
 @synthesize isPrepared = _isPrepared;
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource URL:(NSURL *)URL networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
         _resource = resource;
-        _URL = URL;
+        _request = request;
         _networkTaskPriority = networkTaskPriority;
         _delegate = delegate;
         _delegateQueue = queue;
@@ -53,7 +53,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { URL: %@\n };", NSStringFromClass(self.class), self, _URL];
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@\n };", NSStringFromClass(self.class), self, _request.URL];
 }
 
 - (void)prepare {
@@ -62,11 +62,11 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
+        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
         _isCalledPrepare = YES;
         
-        _content = [_resource contentForAESKeyURL:_URL];
+        _content = [_resource contentForAESKeyURL:_request.URL];
         
         if ( _content != nil ) {
             // go to read the content
@@ -74,11 +74,10 @@
             return;
         }
         
-        MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
+        MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
-        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:_URL];
         // download the content
-        _task = [MCSDownload.shared downloadWithRequest:request priority:_networkTaskPriority delegate:self];
+        _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
 
     } @catch (__unused NSException *exception) {
         
@@ -111,7 +110,7 @@
     } @finally {
 #ifdef DEBUG
         if ( _isDone ) {
-            MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _URL);
+            MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         }
 #endif
         [self unlock];
@@ -167,7 +166,7 @@
         if ( _isClosed )
             return;
         
-        _content = [_resource createContentWithAESKeyURL:_URL totalLength:response.expectedContentLength];
+        _content = [_resource createContentWithAESKeyURL:_request.URL totalLength:response.expectedContentLength];
         
         [self _prepare];
     } @catch (__unused NSException *exception) {
@@ -238,7 +237,7 @@
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:_content.AESKeyTotalLength];
 
     if ( _reader == nil || _writer == nil ) {
-        [self _onError:[NSError mcs_fileNotExistError:_URL]];
+        [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
         return;
     }
 
