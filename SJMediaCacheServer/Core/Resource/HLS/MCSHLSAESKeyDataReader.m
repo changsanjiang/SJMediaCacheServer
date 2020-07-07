@@ -11,10 +11,11 @@
 #import "MCSError.h"
 #import "MCSResourceResponse.h"
 #import "MCSLogger.h"
-#import "MCSDownload.h"
+#import "MCSData.h"
 #import "MCSUtils.h"
+#import "MCSURLRecognizer.h"
 
-@interface MCSHLSAESKeyDataReader ()<NSLocking, MCSDownloadTaskDelegate> {
+@interface MCSHLSAESKeyDataReader ()<NSLocking> {
     dispatch_semaphore_t _semaphore;
 }
 @property (nonatomic, weak) MCSHLSResource *resource;
@@ -26,10 +27,7 @@
 
 @property (nonatomic) NSUInteger availableLength;
 @property (nonatomic) NSUInteger offset;
-@property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
-@property (nonatomic, strong, nullable) NSURLSessionTask *task;
 @property (nonatomic, strong, nullable) NSFileHandle *reader;
-@property (nonatomic, strong, nullable) NSFileHandle *writer;
 @end
 
 @implementation MCSHLSAESKeyDataReader
@@ -66,19 +64,35 @@
         
         _isCalledPrepare = YES;
         
-        _content = [_resource contentForAESKeyURL:_request.URL];
+        NSString *name = [MCSURLRecognizer.shared nameWithUrl:_request.URL.absoluteString extension:MCSHLSAESKeyFileExtension];
+        NSString *filePath = [MCSFileManager hls_AESKeyFilePathInResource:_resource.name AESKeyName:name];
         
-        if ( _content != nil ) {
+        if ( [MCSFileManager fileExistsAtPath:filePath] ) {
             // go to read the content
-            [self _prepare];
+            [self _prepare:filePath];
             return;
         }
         
         MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
         // download the content
-        _task = [MCSDownload.shared downloadWithRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] priority:_networkTaskPriority delegate:self];
-
+        
+        NSError *error = nil;
+        NSData *data = [MCSData dataWithContentsOfRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:_networkTaskPriority error:&error];
+        if ( _isClosed )
+            return;
+         
+        [MCSFileManager lock];
+        if ( ![MCSFileManager fileExistsAtPath:filePath] ) {
+            if ( ![data writeToFile:filePath atomically:YES] ) {
+                [MCSFileManager unlock];
+                [self _onError:[NSError mcs_HLSAESKeyWriteFailedError:_request.URL]];
+                return;
+            }
+        }
+        [MCSFileManager unlock];
+        
+        [self _prepare:filePath];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -158,66 +172,6 @@
     }
 }
 
-#pragma mark - MCSDownloadTaskDelegate
-
-- (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    [self lock];
-    @try {
-        if ( _isClosed )
-            return;
-        
-        _content = [_resource createContentWithAESKeyURL:_request.URL totalLength:response.expectedContentLength];
-        
-        [self _prepare];
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    [self lock];
-    @try {
-        if ( _isClosed )
-            return;
-        
-        [_writer writeData:data];
-        NSUInteger length = data.length;
-        _availableLength += length;
-        [_content didWriteDataWithLength:length];
-
-        dispatch_async(_delegateQueue, ^{
-            [self.delegate readerHasAvailableData:self];
-        });
-    } @catch (NSException *exception) {
-        [self _onError:[NSError mcs_exception:exception]];
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
-- (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    [self lock];
-    @try {
-        if ( _isClosed )
-            return;
-        
-        if ( error != nil && error.code != NSURLErrorCancelled ) {
-            [self _onError:error];
-        }
-        else {
-            // finished download
-        }
-        
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
 #pragma mark -
 
 - (void)_onError:(NSError *)error {
@@ -228,15 +182,12 @@
     });
 }
 
-- (void)_prepare {
-    [_content readWrite_retain];
-    NSString *filepath = [_resource filePathOfContent:_content];
-    _availableLength = [MCSFileManager fileSizeAtPath:filepath];
-    _reader = [NSFileHandle fileHandleForReadingAtPath:filepath];
-    _writer = [NSFileHandle fileHandleForWritingAtPath:filepath];
-    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:_content.AESKeyTotalLength];
+- (void)_prepare:(NSString *)filePath {
+    _availableLength = [MCSFileManager fileSizeAtPath:filePath];
+    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:_availableLength];
+    _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
 
-    if ( _reader == nil || _writer == nil ) {
+    if ( _reader == nil ) {
         [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
         return;
     }
@@ -252,14 +203,8 @@
         return;
     
     @try {
-        if ( _task.state == NSURLSessionTaskStateRunning ) [_task cancel];
-        _task = nil;
-        [_writer synchronizeFile];
-        [_writer closeFile];
-        _writer = nil;
         [_reader closeFile];
         _reader = nil;
-        [_content readWrite_release];
         _isClosed = YES;
         
         MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
