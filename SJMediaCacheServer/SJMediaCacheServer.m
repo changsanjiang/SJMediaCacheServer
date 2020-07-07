@@ -102,9 +102,9 @@
     return MCSDownload.shared.requestHandler;
 }
 
-- (void)resourceURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field ofType:(MCSDataType)type {
+- (void)resourceURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPAdditionalHeaderField:(NSString *)field ofType:(MCSDataType)type {
     MCSResource *resource = [MCSResourceManager.shared resourceWithURL:URL];
-    [resource.configuration setValue:value forHTTPHeaderField:field ofType:type];
+    [resource.configuration setValue:value forHTTPAdditionalHeaderField:field ofType:type];
 }
 - (nullable NSDictionary *)resourceURL:(NSURL *)URL HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type {
     MCSResource *resource = [MCSResourceManager.shared resourceWithURL:URL];

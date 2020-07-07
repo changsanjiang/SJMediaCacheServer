@@ -87,7 +87,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// @param type     The data type of a partial content in the resource. For example, MCSDataTypeHLSPlaylist indicates setting the header for the request of the m3u8 playlist file.
 ///
-- (void)resourceURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field ofType:(MCSDataType)type;
+- (void)resourceURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPAdditionalHeaderField:(NSString *)field ofType:(MCSDataType)type;
 
 /// A dictionary of additional headers to send with the resource data requests.
 ///

@@ -50,7 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MCSConfiguration <NSObject>
 
 - (nullable NSDictionary<NSString *, NSString *> *)HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type;
-- (void)setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)key ofType:(MCSDataType)type;
+- (void)setValue:(nullable NSString *)value forHTTPAdditionalHeaderField:(NSString *)key ofType:(MCSDataType)type;
 
 @end
 
