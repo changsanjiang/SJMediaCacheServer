@@ -28,7 +28,7 @@
 @implementation MCSVODPrefetcher
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
-- (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nonnull id<MCSPrefetcherDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
+- (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
         _delegate = delegate;

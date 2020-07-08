@@ -36,40 +36,38 @@
     NSString *url = nil;
 //
 //    URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8"];
-//
-//    URL = [NSURL URLWithString:@"http://m3u8.soyoung.com/036595cd7159a8ed7aee3cb8190cf6cf.m3u8?sign=df096f6db637fa1be4b4ec1cdbe6d1dd&t=5f047263"];
-    
-    url = @"http://m3u8.soyoung.com/ad1e2adf81fd282a62160b7d036e708f.m3u8?sign=891b6b6c74f45a968db1f79266fb1568&t=5f058903";
+
+    url = @"https://m3u8.soyoung.com/ad1e2adf81fd282a62160b7d036e708f.m3u8?sign=891b6b6c74f45a968db1f79266fb1568&t=5f058903";
     
     NSURL *URL = [NSURL URLWithString:url];
 
 //    URL = [NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"];
 
     // playback URL
-    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
+//    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
+//
+//    // play
+//    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+//
+    
+#pragma mark -
 
-    // play
-    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
-    
-    
-//#pragma mark -
-//
-//    // 预加载
-//    [SJMediaCacheServer.shared prefetchWithURL:[NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"] preloadSize:20 * 1024 * 1024 progress:^(float progress) {
-//
-//        // progress ...
-//
-//    } completed:^(NSError * _Nullable error) {
-//
-//        // complete ...
-//
-//        if ( error != nil ) {
-//            NSLog(@"error: %@", error);
-//        }
-//        else {
-//            NSLog(@"done");
-//        }
-//    }];
+    // 预加载
+    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
+
+        // progress ...
+
+    } completed:^(NSError * _Nullable error) {
+
+        // complete ...
+
+        if ( error != nil ) {
+            NSLog(@"error: %@", error);
+        }
+        else {
+            NSLog(@"done");
+        }
+    }];
 }
 
 - (void)_setupViews {

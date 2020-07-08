@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;
 
-- (nullable NSString *)TsURIAtIndex:(NSUInteger)index;
+- (nullable NSString *)URIAtIndex:(NSUInteger)index;
 @end
 
 

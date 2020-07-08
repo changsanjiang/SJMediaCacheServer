@@ -34,7 +34,7 @@
 @implementation MCSHLSPrefetcher
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
-- (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nonnull id<MCSPrefetcherDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
+- (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
     self = [super init];
     if ( self ) {
         _delegate = delegate;
@@ -125,7 +125,7 @@
 - (void)_prepareNextFragment {
     _fragmentIndex = (_fragmentIndex == NSNotFound) ? 0 : (_fragmentIndex + 1);
     
-    NSString *TsURI = [_resource.parser TsURIAtIndex:_fragmentIndex];
+    NSString *TsURI = [_resource.parser URIAtIndex:_fragmentIndex];
     NSURL *proxyURL = [MCSURLRecognizer.shared proxyURLWithTsURI:TsURI];
     NSURLRequest *request = [NSURLRequest requestWithURL:proxyURL];
     _reader = [MCSResourceManager.shared readerWithRequest:request];
