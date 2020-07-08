@@ -39,16 +39,16 @@
 
     url = @"https://m3u8.soyoung.com/ad1e2adf81fd282a62160b7d036e708f.m3u8?sign=891b6b6c74f45a968db1f79266fb1568&t=5f058903";
     
+    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+    
     NSURL *URL = [NSURL URLWithString:url];
 
-//    URL = [NSURL URLWithString:@"https://dh2.v.netease.com/2017/cg/fxtpty.mp4"];
-
     // playback URL
-//    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
-//
-//    // play
-//    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
-//
+    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
+
+    // play
+    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+
     
 #pragma mark -
 
