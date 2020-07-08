@@ -49,17 +49,6 @@
     return self;
 }
 
-- (nullable NSString *)TsURIAtIndex:(NSUInteger)index {
-    [self lock];
-    @try {
-        return index < _TsURIArray.count ? _TsURIArray[index] : nil;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
-}
-
 - (nullable NSString *)URIAtIndex:(NSUInteger)index {
     [self lock];
     @try {
