@@ -14,6 +14,7 @@
 #import "MCSLogger.h"
 #import "MCSVODResource.h"
 #import "MCSUtils.h"
+#import "NSFileHandle+MCS.h"
 
 @interface MCSVODNetworkDataReader ()<MCSDownloadTaskDelegate> {
     dispatch_semaphore_t _semaphore;
@@ -32,6 +33,7 @@
 @property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isClosed;
 @property (nonatomic) BOOL isDone;
+@property (nonatomic) BOOL isSought;
 
 @property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
 @property (nonatomic) NSUInteger availableLength;
@@ -87,6 +89,15 @@
         if ( _isClosed || _isDone || !_isPrepared )
             return nil;
         
+        if ( _isSought ) {
+            _isSought = NO;
+            NSError *error = nil;
+            if ( ![_reader mcs_seekToFileOffset:_readLength error:&error] ) {
+                [self _onError:error];
+                return nil;
+            }
+        }
+
         NSData *data = [_reader readDataOfLength:lengthParam];
         NSUInteger readLength = data.length;
         if ( readLength == 0 )
@@ -122,9 +133,11 @@
         
         // offset   = range.location + readLength;
         NSUInteger readLength = offset - range.location;
-        [_reader seekToFileOffset:readLength];
-        _readLength = readLength;
-        _isDone = _readLength == _range.length;
+        if ( readLength != _readLength ) {
+            _isSought = YES;
+            _readLength = readLength;
+            _isDone = _readLength == _range.length;
+        }
         return YES;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];

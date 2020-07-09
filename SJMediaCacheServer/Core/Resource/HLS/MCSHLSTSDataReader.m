@@ -15,6 +15,7 @@
 #import "MCSError.h"
 #import "MCSFileManager.h"
 #import "MCSResourceResponse.h"
+#import "NSFileHandle+MCS.h"
 
 @interface MCSHLSTSDataReader ()<MCSDownloadTaskDelegate, NSLocking> {
     dispatch_semaphore_t _semaphore;
@@ -27,6 +28,7 @@
 @property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isClosed;
 @property (nonatomic) BOOL isDone;
+@property (nonatomic) BOOL isSought;
 
 @property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
 @property (nonatomic) NSUInteger availableLength;
@@ -95,6 +97,15 @@
         if ( _isClosed || _isDone || !_isPrepared )
             return nil;
         
+        if ( _isSought ) {
+            _isSought = NO;
+            NSError *error = nil;
+            if ( ![_reader mcs_seekToFileOffset:_offset error:&error] ) {
+                [self _onError:error];
+                return nil;
+            }
+        }
+        
         NSData *data = nil;
         
         if ( _offset < _availableLength ) {
@@ -126,9 +137,11 @@
         if ( _isClosed || !_isPrepared || offset > _availableLength )
             return NO;
         
-        [_reader seekToFileOffset:offset];
-        _offset = offset;
-        _isDone = _offset == _response.totalLength;
+        if ( offset != _offset ) {
+            _isSought = YES;
+            _offset = offset;
+            _isDone = _offset == _response.totalLength;
+        }
         return YES;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];

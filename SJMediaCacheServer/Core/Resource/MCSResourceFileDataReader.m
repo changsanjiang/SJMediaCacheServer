@@ -10,6 +10,7 @@
 #import "MCSError.h"
 #import "MCSLogger.h"
 #import "MCSFileManager.h"
+#import "NSFileHandle+MCS.h"
 
 @interface MCSResourceFileDataReader() {
     dispatch_semaphore_t _semaphore;
@@ -27,6 +28,7 @@
 @property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isClosed;
 @property (nonatomic) BOOL isDone;
+@property (nonatomic) BOOL isSought;
 @end
 
 @implementation MCSResourceFileDataReader
@@ -86,6 +88,15 @@
         if ( _isClosed || _isDone || !_isPrepared )
             return nil;
         
+        if ( _isSought ) {
+            _isSought = NO;
+            NSError *error = nil;
+            if ( ![_reader mcs_seekToFileOffset:_readRange.location + _readLength error:&error] ) {
+                [self _onError:error];
+                return nil;
+            }
+        }
+        
         NSUInteger length = MIN(lengthParam, _readRange.length - _readLength);
         NSData *data = [_reader readDataOfLength:length];
 
@@ -119,11 +130,14 @@
         if ( !NSLocationInRange(offset - 1, _range) )
             return NO;
         
-        // offset   = _range.location + readLength;
+        // offset     = range.location + readLength;
+        // readLength = offset - range.location
         NSUInteger readLength = offset - _range.location;
-        [_reader seekToFileOffset:_readRange.location + readLength];
-        _readLength = readLength;
-        _isDone = _readLength == _readRange.length;
+        if ( readLength != _readLength ) {
+            _isSought = YES;
+            _readLength = readLength;
+            _isDone = _readLength == _readRange.length;
+        }
         return YES;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
