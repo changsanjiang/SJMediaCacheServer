@@ -21,7 +21,7 @@
 @property (nonatomic) BOOL isClosed;
  
 @property (nonatomic, strong, nullable) id<MCSResourceReader> reader;
-@property (nonatomic) NSUInteger offset;
+@property (nonatomic) NSUInteger loadedLength;
 @property (nonatomic) float progress;
 
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
@@ -145,9 +145,9 @@
         [self lock];
         @try {
             if ( _fragmentIndex != NSNotFound )
-                _offset += length;
+                _loadedLength += length;
             
-            CGFloat progress = _offset * 1.0 / _preloadSize;
+            CGFloat progress = _loadedLength * 1.0 / _preloadSize;
             if ( progress >= 1 ) progress = 1;
             _progress = progress;
             

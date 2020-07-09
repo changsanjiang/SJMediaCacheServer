@@ -117,7 +117,7 @@
             return NO;
     
         NSRange range = NSMakeRange(_range.location, _availableLength);
-        if ( !NSLocationInRange(offset, range) )
+        if ( !NSLocationInRange(offset - 1, range) )
             return NO;
         
         // offset   = range.location + readLength;

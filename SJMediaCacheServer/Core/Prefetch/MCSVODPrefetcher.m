@@ -18,7 +18,7 @@
 @property (nonatomic) BOOL isClosed;
  
 @property (nonatomic, strong, nullable) id<MCSResourceReader> reader;
-@property (nonatomic) NSUInteger offset;
+@property (nonatomic) NSUInteger loadedLength;
 
 @property (nonatomic, strong) NSURL *URL;
 @property (nonatomic) NSUInteger preloadSize;
@@ -129,9 +129,9 @@
 
 - (void)reader:(nonnull id<MCSResourceReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
     if ( [reader seekToOffset:reader.offset + length] ) {
-        _offset += length;
+        _loadedLength += length;
         
-        float progress = _offset * 1.0 / reader.response.contentRange.length;
+        float progress = _loadedLength * 1.0 / reader.response.contentRange.length;
         if ( progress >= 1 ) progress = 1;
         _progress = progress;
 

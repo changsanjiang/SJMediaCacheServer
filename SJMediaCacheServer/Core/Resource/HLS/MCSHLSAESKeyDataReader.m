@@ -98,10 +98,10 @@
     }
 }
 
-- (BOOL)seekToOffset:(NSUInteger)offset {
+- (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     [self lock];
     @try {
-        return [_reader seekToOffset:offset];
+        return [_reader readDataOfLength:lengthParam];
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -109,10 +109,10 @@
     }
 }
 
-- (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
+- (BOOL)seekToOffset:(NSUInteger)offset {
     [self lock];
     @try {
-        return [_reader readDataOfLength:lengthParam];
+        return [_reader seekToOffset:offset];
     } @catch (__unused NSException *exception) {
         
     } @finally {

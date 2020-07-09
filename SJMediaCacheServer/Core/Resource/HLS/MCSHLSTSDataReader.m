@@ -123,10 +123,12 @@
 - (BOOL)seekToOffset:(NSUInteger)offset {
     [self lock];
     @try {
-        if ( _isClosed || !_isPrepared || offset >= _availableLength )
+        if ( _isClosed || !_isPrepared || offset > _availableLength )
             return NO;
         
         [_reader seekToFileOffset:offset];
+        _offset = offset;
+        _isDone = _offset == _response.totalLength;
         return YES;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
@@ -298,6 +300,12 @@
     dispatch_async(_delegateQueue, ^{
         [self.delegate readerPrepareDidFinish:self];
     });
+    
+    if ( _availableLength != 0 ) {
+        dispatch_async(_delegateQueue, ^{
+            [self.delegate reader:self hasAvailableDataWithLength:self.availableLength];
+        });
+    }
 }
 
 - (void)_close {

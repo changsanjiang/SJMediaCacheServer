@@ -34,20 +34,18 @@
 #pragma mark -
     
     NSString *url = nil;
-//
-//    URL = [NSURL URLWithString:@"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8"];
-
-    url = @"https://m3u8.soyoung.com/ad1e2adf81fd282a62160b7d036e708f.m3u8?sign=891b6b6c74f45a968db1f79266fb1568&t=5f058903";
     
-    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+    url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
+    
+//    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     
     NSURL *URL = [NSURL URLWithString:url];
 
-    // playback URL
-    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
-
-    // play
-    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+//    // playback URL
+//    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
+//
+//    // play
+//    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
 
     
 #pragma mark -

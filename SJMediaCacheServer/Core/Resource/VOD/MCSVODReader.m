@@ -155,7 +155,7 @@
             return NO;
         
         for ( id<MCSResourceDataReader> reader in _readers ) {
-            if ( NSLocationInRange(offset, reader.range) ) {
+            if ( NSLocationInRange(offset - 1, reader.range) ) {
                 return [reader seekToOffset:offset];
             }
         }

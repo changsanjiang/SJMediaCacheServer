@@ -116,7 +116,7 @@
         if ( _isClosed || !_isPrepared )
             return NO;
     
-        if ( !NSLocationInRange(offset, _range) )
+        if ( !NSLocationInRange(offset - 1, _range) )
             return NO;
         
         // offset   = _range.location + readLength;
