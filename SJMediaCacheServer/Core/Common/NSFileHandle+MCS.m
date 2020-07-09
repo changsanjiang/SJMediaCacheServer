@@ -28,6 +28,7 @@
                 return YES;
             
             [self seekToFileOffset:offset];
+            return YES;
         } @catch (NSException *exception) {
             if ( error != nil ) *error = [NSError mcs_exception:exception];
             return NO;
