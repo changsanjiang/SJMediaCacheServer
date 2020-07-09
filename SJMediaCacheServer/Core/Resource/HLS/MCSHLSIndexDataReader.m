@@ -181,16 +181,12 @@
     NSUInteger length = [MCSFileManager fileSizeAtPath:indexFilePath];
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegurl" totalLength:length];
     _isPrepared = YES;
-    dispatch_async(_delegateQueue, ^{
-        [self.delegate readerPrepareDidFinish:self];
-    });
     [self unlock];
+    [self.delegate readerPrepareDidFinish:self];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    dispatch_async(_delegateQueue, ^{
-       [self.delegate reader:self hasAvailableDataWithLength:length];
-    });
+    [self.delegate reader:self hasAvailableDataWithLength:length];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {

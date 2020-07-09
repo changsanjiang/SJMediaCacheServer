@@ -244,10 +244,8 @@
         if ( parser != nil && _resource.parser != parser )
             _resource.parser = parser;
     }
-    dispatch_async(_resource.readerOperationQueue, ^{
-        [self.delegate readerPrepareDidFinish:self];
-    });
     [self unlock];
+    [self.delegate readerPrepareDidFinish:self];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {

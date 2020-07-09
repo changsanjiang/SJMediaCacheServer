@@ -385,17 +385,10 @@
         return;
     
     [self lock];
-    @try {
-        _isPrepared = YES;
-        
-        dispatch_async(_resource.readerOperationQueue, ^{
-            [self.delegate readerPrepareDidFinish:self];
-        });
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    _isPrepared = YES;
+    [self unlock];
+    
+    [self.delegate readerPrepareDidFinish:self];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
