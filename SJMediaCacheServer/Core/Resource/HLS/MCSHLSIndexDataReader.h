@@ -18,9 +18,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)prepare;
 @property (nonatomic, strong, readonly, nullable) MCSHLSParser *parser;
-@property (nonatomic, readonly) BOOL isDone;
 @property (nonatomic, strong, readonly, nullable) id<MCSResourceResponse> response;
+@property (nonatomic, readonly) NSRange range;
+@property (nonatomic, readonly) NSUInteger availableLength;
+@property (nonatomic, readonly) NSUInteger offset;
+@property (nonatomic, readonly) BOOL isPrepared;
+@property (nonatomic, readonly) BOOL isDone;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
+- (BOOL)seekToOffset:(NSUInteger)offset;
 - (void)close;
 
 @end

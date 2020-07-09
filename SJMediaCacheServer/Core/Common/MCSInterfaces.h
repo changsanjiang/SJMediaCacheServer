@@ -71,8 +71,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)prepare;
 @property (nonatomic, strong, readonly, nullable) id<MCSResourceResponse> response;
+@property (nonatomic, readonly) NSUInteger availableLength;
 @property (nonatomic, readonly) NSUInteger offset;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
+- (BOOL)seekToOffset:(NSUInteger)offset;
 @property (nonatomic, readonly) BOOL isPrepared;
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
 @property (nonatomic, readonly) BOOL isClosed;
@@ -85,7 +87,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MCSResourceReaderDelegate <NSObject>
 - (void)readerPrepareDidFinish:(id<MCSResourceReader>)reader;
-- (void)readerHasAvailableData:(id<MCSResourceReader>)reader;
+- (void)reader:(id<MCSResourceReader>)reader hasAvailableDataWithLength:(NSUInteger)length;
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error;
 @end
 NS_ASSUME_NONNULL_END

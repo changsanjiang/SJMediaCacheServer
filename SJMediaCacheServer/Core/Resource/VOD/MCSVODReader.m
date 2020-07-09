@@ -29,7 +29,7 @@
 
 @property (nonatomic) NSInteger currentIndex;
 @property (nonatomic, strong, readonly, nullable) id<MCSResourceDataReader> currentReader;
-@property (nonatomic) NSUInteger offset;
+@property (nonatomic) NSUInteger readLength;
 
 @property (nonatomic, weak, nullable) MCSVODResource *resource;
 @property (nonatomic, strong) NSURLRequest *request;
@@ -43,6 +43,7 @@
 
 @implementation MCSVODReader
 @synthesize readDataDecoder = _readDataDecoder;
+@synthesize availableLength = _availableLength;
 
 - (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request {
     self = [super init];
@@ -55,7 +56,6 @@
 
         _resource = resource;
         _request = request;
-        _offset = _request.mcs_range.location;
         
         [_resource readWrite_retain];
         [MCSResourceManager.shared reader:self willReadResource:_resource];
@@ -127,24 +127,47 @@
             return nil;
         
         NSData *data = [self.currentReader readDataOfLength:length];
-        _offset += data.length;
-        if ( _readDataDecoder != nil ) data = _readDataDecoder(_request, _offset, data);
+        _readLength += data.length;
+        
+        if ( _readDataDecoder != nil )
+            data = _readDataDecoder(_request, _response.contentRange.location + _readLength, data);
+        
         return data;
     } @catch (__unused NSException *exception) {
         
     } @finally {
         if ( self.currentReader.isDone ) {
-            if ( self.currentReader != _readers.lastObject ) {
-                [self _prepareNextReader];
-            }
-            else {
+            _readers.lastObject.isDone ? [self _close] : [self _prepareNextReader];
+#ifdef DEBUG
+            if ( _readers.lastObject.isDone ) {
                 MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
-                [self _close];
             }
+#endif
         }
         [self unlock];
     }
 }
+
+- (BOOL)seekToOffset:(NSUInteger)offset {
+    [self lock];
+    @try {
+        if ( _isClosed || !_isPrepared  )
+            return NO;
+        
+        for ( id<MCSResourceDataReader> reader in _readers ) {
+            if ( NSLocationInRange(offset, reader.range) ) {
+                return [reader seekToOffset:offset];
+            }
+        }
+        return NO;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+#pragma mark -
 
 - (id<MCSResourceResponse>)response {
     [self lock];
@@ -156,11 +179,22 @@
         [self unlock];
     }
 }
+
+- (NSUInteger)availableLength {
+    [self lock];
+    @try {
+        return _availableLength;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
  
 - (NSUInteger)offset {
     [self lock];
     @try {
-        return _offset;
+        return _response.contentRange.location + _readLength;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -281,8 +315,6 @@
 }
 
 - (void)_prepareNextReader {
-    [self.currentReader close];
-
     if ( self.currentReader == _readers.lastObject )
         return;
     
@@ -367,8 +399,11 @@
     }
 }
 
-- (void)readerHasAvailableData:(id<MCSResourceDataReader>)reader {
-    [self.delegate readerHasAvailableData:self];
+- (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
+    [self lock];
+    _availableLength += length;
+    [self unlock];
+    [self.delegate reader:self hasAvailableDataWithLength:length];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {

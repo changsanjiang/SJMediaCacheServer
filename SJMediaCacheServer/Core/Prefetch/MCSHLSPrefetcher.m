@@ -137,19 +137,15 @@
 #pragma mark -
 
 - (void)readerPrepareDidFinish:(id<MCSResourceReader>)reader {
-    [self readerHasAvailableData:reader];
+    /* nothing */
 }
 
-- (void)readerHasAvailableData:(id<MCSResourceReader>)reader {
-    [self lock];
-    while (true) {
-        @autoreleasepool {
-            NSData *data = [_reader readDataOfLength:1 * 1024 * 1024];
-            if ( data.length == 0 )
-                break;
-            
+- (void)reader:(id<MCSResourceReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
+    if ( [reader seekToOffset:reader.offset + length] ) {
+        [self lock];
+        @try {
             if ( _fragmentIndex != NSNotFound )
-                _offset += data.length;
+                _offset += length;
             
             CGFloat progress = _offset * 1.0 / _preloadSize;
             if ( progress >= 1 ) progress = 1;
@@ -168,17 +164,20 @@
                 BOOL isFinished = progress >= 1 || isLastFragment;
                 if ( !isFinished ) {
                     [self _prepareNextFragment];
-                    break;
+                    return;
                 }
                 
                 [self _didCompleteWithError:nil];
-                break;
             }
+            
+        } @catch (__unused NSException *exception) {
+            
+        } @finally {
+            [self unlock];
         }
     }
-    [self unlock];
 }
-
+  
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error {
     [self lock];
     [self _didCompleteWithError:error];

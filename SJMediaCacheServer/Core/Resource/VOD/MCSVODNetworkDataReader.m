@@ -34,8 +34,8 @@
 @property (nonatomic) BOOL isDone;
 
 @property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
-@property (nonatomic) NSUInteger downloadedLength;
-@property (nonatomic) NSUInteger offset;
+@property (nonatomic) NSUInteger availableLength;
+@property (nonatomic) NSUInteger readLength;
 
 @property (nonatomic) float networkTaskPriority;
 @end
@@ -87,29 +87,48 @@
         if ( _isClosed || _isDone || !_isPrepared )
             return nil;
         
-        NSData *data = nil;
+        NSData *data = [_reader readDataOfLength:lengthParam];
+        NSUInteger readLength = data.length;
+        if ( readLength == 0 )
+            return nil;
         
-        if ( _offset < _downloadedLength ) {
-            NSUInteger length = MIN(lengthParam, _downloadedLength - _offset);
-            if ( length > 0 ) {
-                data = [_reader readDataOfLength:length];
-
-                MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
-
-                _offset += data.length;
-                _isDone = _offset == _range.length;
-            }
+        _readLength += readLength;
+        _isDone = _readLength == _range.length;
+        
+#ifdef DEBUG
+        MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
+        if ( _isDone ) {
+            MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
         }
+#endif
         return data;
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
     }
     @finally {
-#ifdef DEBUG
-        if ( _isDone ) {
-            MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
-        }
-#endif
+        [self unlock];
+    }
+}
+
+- (BOOL)seekToOffset:(NSUInteger)offset {
+    [self lock];
+    @try {
+        if ( _isClosed || !_isPrepared )
+            return NO;
+    
+        NSRange range = NSMakeRange(_range.location, _availableLength);
+        if ( !NSLocationInRange(offset, range) )
+            return NO;
+        
+        // offset   = range.location + readLength;
+        NSUInteger readLength = offset - range.location;
+        [_reader seekToFileOffset:readLength];
+        _readLength = readLength;
+        _isDone = _readLength == _range.length;
+        return YES;
+    } @catch (NSException *exception) {
+        [self _onError:[NSError mcs_exception:exception]];
+    } @finally {
         [self unlock];
     }
 }
@@ -121,6 +140,17 @@
 }
 
 #pragma mark -
+
+- (NSUInteger)offset {
+    [self lock];
+    @try {
+        return _range.location + _readLength;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
 
 - (BOOL)isPrepared {
     [self lock];
@@ -182,11 +212,11 @@
 
         [_writer writeData:data];
         NSUInteger length = data.length;
-        _downloadedLength += length;
+        _availableLength += length;
         [_content didWriteDataWithLength:length];
      
         dispatch_async(_delegateQueue, ^{
-            [self.delegate readerHasAvailableData:self];
+            [self.delegate reader:self hasAvailableDataWithLength:length];
         });
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];

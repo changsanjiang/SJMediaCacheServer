@@ -41,6 +41,7 @@
 @implementation MCSHLSTSDataReader
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
+@synthesize range = _range;
 
 - (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
@@ -119,6 +120,21 @@
     }
 }
 
+- (BOOL)seekToOffset:(NSUInteger)offset {
+    [self lock];
+    @try {
+        if ( _isClosed || !_isPrepared || offset >= _availableLength )
+            return NO;
+        
+        [_reader seekToFileOffset:offset];
+        return YES;
+    } @catch (NSException *exception) {
+        [self _onError:[NSError mcs_exception:exception]];
+    } @finally {
+        [self unlock];
+    }
+}
+
 - (void)close {
     [self lock];
     [self _close];
@@ -126,6 +142,39 @@
 }
 
 #pragma mark -
+
+- (NSRange)range {
+    [self lock];
+    @try {
+        return _range;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSUInteger)availableLength {
+    [self lock];
+    @try {
+        return _availableLength;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSUInteger)offset {
+    [self lock];
+    @try {
+        return _offset;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
 
 - (BOOL)isPrepared {
     [self lock];
@@ -191,7 +240,7 @@
         [_content didWriteDataWithLength:length];
 
         dispatch_async(_delegateQueue, ^{
-            [self.delegate readerHasAvailableData:self];
+            [self.delegate reader:self hasAvailableDataWithLength:length];
         });
     } @catch (NSException *exception) {
         [self _onError:[NSError mcs_exception:exception]];
@@ -233,10 +282,11 @@
 
 - (void)_prepare {
     [_content readWrite_retain];
-    NSString *filepath = [_resource filePathOfContent:_content];
-    _availableLength = [MCSFileManager fileSizeAtPath:filepath];
-    _reader = [NSFileHandle fileHandleForReadingAtPath:filepath];
-    _writer = [NSFileHandle fileHandleForWritingAtPath:filepath];
+    NSString *filePath = [_resource filePathOfContent:_content];
+    _availableLength = [MCSFileManager fileSizeAtPath:filePath];
+    _range = NSMakeRange(0, _content.tsTotalLength);
+    _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
+    _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_resource.TsContentType totalLength:_content.tsTotalLength];
         
     if ( _reader == nil || _writer == nil ) {

@@ -21,7 +21,6 @@
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isClosed;
-@property (nonatomic) BOOL isDone;
 
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
 @property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
@@ -75,6 +74,17 @@
     }
 }
 
+- (BOOL)seekToOffset:(NSUInteger)offset {
+    [self lock];
+    @try {
+        return [_reader seekToOffset:offset];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
 - (NSData *)readDataOfLength:(NSUInteger)length {
     [self lock];
     @try {
@@ -93,6 +103,28 @@
 }
 
 #pragma mark -
+
+- (NSUInteger)availableLength {
+    [self lock];
+    @try {
+        return _reader.availableLength;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSUInteger)offset {
+    [self lock];
+    @try {
+        return _reader.offset;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
 
 - (BOOL)isPrepared {
     [self lock];
@@ -155,14 +187,16 @@
     [self unlock];
 }
 
-- (void)readerHasAvailableData:(id<MCSResourceDataReader>)reader {
+- (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
     dispatch_async(_delegateQueue, ^{
-        [self.delegate readerHasAvailableData:self];
+       [self.delegate reader:self hasAvailableDataWithLength:length];
     });
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
+    [self lock];
     [self _onError:error];
+    [self unlock];
 }
 
 #pragma mark -

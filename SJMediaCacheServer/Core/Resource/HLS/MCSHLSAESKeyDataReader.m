@@ -14,8 +14,9 @@
 #import "MCSData.h"
 #import "MCSUtils.h"
 #import "MCSURLRecognizer.h"
+#import "MCSResourceFileDataReader.h"
 
-@interface MCSHLSAESKeyDataReader ()<NSLocking> {
+@interface MCSHLSAESKeyDataReader ()<NSLocking, MCSResourceDataReaderDelegate> {
     dispatch_semaphore_t _semaphore;
 }
 @property (nonatomic, weak) MCSHLSResource *resource;
@@ -25,15 +26,12 @@
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isClosed;
 
-@property (nonatomic) NSUInteger availableLength;
-@property (nonatomic) NSUInteger offset;
-@property (nonatomic, strong, nullable) NSFileHandle *reader;
+@property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
 @end
 
 @implementation MCSHLSAESKeyDataReader
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
-@synthesize isDone = _isDone;
 @synthesize response = _response;
 @synthesize isPrepared = _isPrepared;
 
@@ -100,33 +98,24 @@
     }
 }
 
+- (BOOL)seekToOffset:(NSUInteger)offset {
+    [self lock];
+    @try {
+        return [_reader seekToOffset:offset];
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     [self lock];
     @try {
-        if ( _isClosed || _isDone || !_isPrepared )
-            return nil;
+        return [_reader readDataOfLength:lengthParam];
+    } @catch (__unused NSException *exception) {
         
-        NSData *data = nil;
-        
-        if ( _offset < _availableLength ) {
-            NSUInteger length = MIN(lengthParam, _availableLength - _offset);
-            if ( length > 0 ) {
-                data = [_reader readDataOfLength:length];
-                _offset += data.length;
-                _isDone = _offset == _response.totalLength;
-                MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
-            }
-        }
-        
-        return data;
-    } @catch (NSException *exception) {
-        [self _onError:[NSError mcs_exception:exception]];
     } @finally {
-#ifdef DEBUG
-        if ( _isDone ) {
-            MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
-        }
-#endif
         [self unlock];
     }
 }
@@ -138,6 +127,39 @@
 }
 
 #pragma mark -
+
+- (NSRange)range {
+    [self lock];
+    @try {
+        return _reader.range;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSUInteger)availableLength {
+    [self lock];
+    @try {
+        return _reader.availableLength;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
+
+- (NSUInteger)offset {
+    [self lock];
+    @try {
+        return _reader.offset;
+    } @catch (__unused NSException *exception) {
+        
+    } @finally {
+        [self unlock];
+    }
+}
 
 - (BOOL)isPrepared {
     [self lock];
@@ -153,7 +175,7 @@
 - (BOOL)isDone {
     [self lock];
     @try {
-        return _isDone;
+        return _reader.isDone;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -172,6 +194,29 @@
     }
 }
 
+#pragma mark - MCSResourceDataReaderDelegate
+
+- (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
+    [self lock];
+    _isPrepared = YES;
+    dispatch_async(_delegateQueue, ^{
+        [self.delegate readerPrepareDidFinish:self];
+    });
+    [self unlock];
+}
+
+- (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
+    dispatch_async(_delegateQueue, ^{
+        [self.delegate reader:self hasAvailableDataWithLength:length];
+    });
+}
+
+- (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
+    [self lock];
+    [self _onError:error];
+    [self unlock];
+}
+
 #pragma mark -
 
 - (void)_onError:(NSError *)error {
@@ -183,34 +228,22 @@
 }
 
 - (void)_prepare:(NSString *)filePath {
-    _availableLength = [MCSFileManager fileSizeAtPath:filePath];
-    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:_availableLength];
-    _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
-
-    if ( _reader == nil ) {
-        [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
-        return;
-    }
-
-    _isPrepared = YES;
-    dispatch_async(_delegateQueue, ^{
-        [self.delegate readerPrepareDidFinish:self];
-    });
+    NSUInteger fileSize = [MCSFileManager fileSizeAtPath:filePath];
+    NSRange range = NSMakeRange(0, fileSize);
+    
+    _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:fileSize];
+    _reader = [MCSResourceFileDataReader.alloc initWithRange:range path:filePath readRange:range delegate:self delegateQueue:_delegateQueue];
+    [_reader prepare];
 }
 
 - (void)_close {
     if ( _isClosed )
         return;
     
-    @try {
-        [_reader closeFile];
-        _reader = nil;
-        _isClosed = YES;
-        
-        MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
-    } @catch (__unused NSException *exception) {
-        
-    }
+    [_reader close];
+    _isClosed = YES;
+    
+    MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
 
 #pragma mark -

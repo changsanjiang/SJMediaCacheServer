@@ -124,42 +124,28 @@
 #pragma mark -
 
 - (void)readerPrepareDidFinish:(id<MCSResourceReader>)reader {
-    [self readerHasAvailableData:reader];
+    /* nothing */
 }
 
-- (void)readerHasAvailableData:(id<MCSResourceReader>)reader {
-    [self lock];
-    @try {
-        while (true) {
-            @autoreleasepool {
-                NSData *data = [_reader readDataOfLength:1 * 1024 * 1024];
-                if ( data.length == 0 )
-                    break;
-                
-                _offset += data.length;
-                
-                float progress = _offset * 1.0 / reader.response.contentRange.length;
-                if ( progress >= 1 ) progress = 1;
-                _progress = progress;
-                
-                MCSLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, progress);
-
-                if ( _delegate != nil ) {
-                    dispatch_async(_delegateQueue, ^{
-                        [self.delegate prefetcher:self progressDidChange:progress];
-                    });
-                }
-                
-                if ( _progress >= 1 || _reader.isReadingEndOfData ) {
-                    [self _didCompleteWithError:nil];
-                    break;
-                }
-            }
-        }
-    } @catch (__unused NSException *exception) {
+- (void)reader:(nonnull id<MCSResourceReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
+    if ( [reader seekToOffset:reader.offset + length] ) {
+        _offset += length;
         
-    } @finally {
-        [self unlock];
+        float progress = _offset * 1.0 / reader.response.contentRange.length;
+        if ( progress >= 1 ) progress = 1;
+        _progress = progress;
+
+        MCSLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, progress);
+
+        if ( _delegate != nil ) {
+            dispatch_async(_delegateQueue, ^{
+                [self.delegate prefetcher:self progressDidChange:progress];
+            });
+        }
+
+        if ( _progress >= 1 || _reader.isReadingEndOfData ) {
+            [self _didCompleteWithError:nil];
+        }
     }
 }
 
