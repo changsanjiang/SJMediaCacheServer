@@ -43,7 +43,6 @@
 
 @implementation MCSVODReader
 @synthesize readDataDecoder = _readDataDecoder;
-@synthesize availableLength = _availableLength;
 
 - (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request {
     self = [super init];
@@ -123,14 +122,14 @@
 - (NSData *)readDataOfLength:(NSUInteger)length {
     [self lock];
     @try {
-        if ( _isClosed || _currentIndex == NSNotFound || !self.currentReader.isPrepared )
+        if ( _isClosed || !self.currentReader.isPrepared )
             return nil;
         
         NSData *data = [self.currentReader readDataOfLength:length];
-        _readLength += data.length;
-        
+        NSUInteger readLength = data.length;
         if ( _readDataDecoder != nil )
             data = _readDataDecoder(_request, _response.contentRange.location + _readLength, data);
+        _readLength += readLength;
         
         return data;
     } @catch (__unused NSException *exception) {
@@ -183,7 +182,7 @@
 - (NSUInteger)availableLength {
     [self lock];
     @try {
-        return _availableLength;
+        return self.currentReader.range.location + self.currentReader.availableLength;
     } @catch (__unused NSException *exception) {
         
     } @finally {
@@ -400,9 +399,6 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    [self lock];
-    _availableLength += length;
-    [self unlock];
     [self.delegate reader:self hasAvailableDataWithLength:length];
 }
 

@@ -36,19 +36,21 @@
     NSString *url = nil;
     
     url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
-    
-//    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     
     NSURL *URL = [NSURL URLWithString:url];
 
-//    // playback URL
-//    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
-//
-//    // play
-//    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+    // playback URL
+    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
 
+    // play
+    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
     
 #pragma mark -
+    
+    url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
+    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+    URL = [NSURL URLWithString:url];
 
     // 预加载
     [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
