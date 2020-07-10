@@ -89,6 +89,9 @@
 
 - (void)cancel {
     @synchronized (self) {
+        if ( _isCancelled || _isFinished )
+            return;
+        
         _isCancelled = YES;
         if ( _isExecuting ) [self _completeOperation];
     }
@@ -98,6 +101,9 @@
 
 - (void)_completeOperation {
     @synchronized (self) {
+        if ( _isFinished )
+            return;
+        
         [self willChangeValueForKey:@"isFinished"];
         [self willChangeValueForKey:@"isExecuting"];
         
