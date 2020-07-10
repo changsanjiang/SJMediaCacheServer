@@ -129,6 +129,7 @@
 
 - (void)reader:(nonnull id<MCSResourceReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
     if ( [reader seekToOffset:reader.offset + length] ) {
+        [self lock];
         _loadedLength += length;
         
         float progress = _loadedLength * 1.0 / reader.response.contentRange.length;
@@ -146,6 +147,7 @@
         if ( _progress >= 1 || _reader.isReadingEndOfData ) {
             [self _didCompleteWithError:nil];
         }
+        [self unlock];
     }
 }
 
