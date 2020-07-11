@@ -52,7 +52,7 @@
 }
 
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error {
-    [self _completeOperation];
+    [self _completeOperationIfExecuting];
     if ( _mcs_completionBlock != nil ) {
         _mcs_completionBlock(error);
     }
@@ -62,16 +62,14 @@
  
 - (void)start {
     @synchronized (self) {
-        if ( _isCancelled || _URL == nil ) {
-            // Must move the operation to the finished state if it is canceled.
-            [self _completeOperation];
-            return;
-        }
-        
-        
         [self willChangeValueForKey:@"isExecuting"];
         _isExecuting = YES;
         [self didChangeValueForKey:@"isExecuting"];
+
+        if ( _isCancelled || _URL == nil ) {
+            [self _completeOperationIfExecuting];
+            return;
+        }
  
         MCSResourceType type = [MCSURLRecognizer.shared resourceTypeForURL:_URL];
         id<MCSPrefetcherDelegate> delegate = _mcs_progressBlock != nil || _mcs_completionBlock != nil ? self : nil;
@@ -93,14 +91,18 @@
             return;
         
         _isCancelled = YES;
-        if ( _isExecuting ) [self _completeOperation];
+        
+        [self _completeOperationIfExecuting];
     }
 }
 
 #pragma mark -
 
-- (void)_completeOperation {
+- (void)_completeOperationIfExecuting {
     @synchronized (self) {
+        if ( !_isExecuting )
+            return;
+        
         if ( _isFinished )
             return;
         
