@@ -27,7 +27,11 @@
     if ( _map == nil ) _map = NSMutableDictionary.dictionary;
     
     BOOL fallThrough = NO;
-    switch ( type & MCSDataTypeHLSMask ) {
+    switch ( (MCSDataType)(type & MCSDataTypeHLSMask) ) {
+        case MCSDataTypeHLSMask:
+        case MCSDataTypeVODMask:
+        case MCSDataTypeVOD:
+            break;
         case MCSDataTypeHLS: {
             [self _setValue:value forHTTPAdditionalHeaderField:HTTPHeaderField ofType:MCSDataTypeHLS fallThrough:fallThrough];
             fallThrough = YES;
@@ -44,15 +48,20 @@
             [self _setValue:value forHTTPAdditionalHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSTs fallThrough:fallThrough];
             if ( !fallThrough ) break;
         }
-        default: break;
     }
     
-    switch ( type & MCSDataTypeVODMask ) {
+    switch ( (MCSDataType)(type & MCSDataTypeVODMask) ) {
+        case MCSDataTypeHLSMask:
+        case MCSDataTypeHLSPlaylist:
+        case MCSDataTypeHLSAESKey:
+        case MCSDataTypeHLSTs:
+        case MCSDataTypeHLS:
+        case MCSDataTypeVODMask:
+            break;
         case MCSDataTypeVOD: {
             [self _setValue:value forHTTPAdditionalHeaderField:HTTPHeaderField ofType:MCSDataTypeVOD fallThrough:fallThrough];
             break;
         }
-        default: break;
     }
     
     [self unlock];
