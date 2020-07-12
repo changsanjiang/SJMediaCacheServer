@@ -32,7 +32,6 @@
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
 @synthesize response = _response;
-@synthesize isPrepared = _isPrepared;
 
 - (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
     self = [super init];
@@ -74,7 +73,14 @@
         // download the content
         
         NSError *error = nil;
+        
+        // Wait until the download is complete
         NSData *data = [MCSData dataWithContentsOfRequest:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:self->_networkTaskPriority error:&error];
+        
+        if ( error != nil ) {
+            [self _onError:error];
+            return;
+        }
         
         // lock
         [MCSFileManager lock];
@@ -130,11 +136,7 @@
 }
 
 - (BOOL)isPrepared {
-    __block BOOL isPrepared = NO;
-    dispatch_sync(_queue, ^{
-        isPrepared = self->_isPrepared;
-    });
-    return isPrepared;
+    return self.reader.isPrepared;
 }
 
 - (BOOL)isDone {
@@ -152,10 +154,7 @@
 #pragma mark - MCSResourceDataReaderDelegate
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
-    dispatch_sync(_queue, ^{
-        self->_isPrepared = YES;
-        [self.delegate readerPrepareDidFinish:self];
-    });
+    [self.delegate readerPrepareDidFinish:self];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
