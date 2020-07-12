@@ -136,12 +136,12 @@
         NSString *indexFilePath = self->_parser.indexFilePath;
         NSUInteger length = [MCSFileManager fileSizeAtPath:indexFilePath];
         self->_response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegurl" totalLength:length];
-        [self->_delegate readerPrepareDidFinish:self];
     });
+    [_delegate readerPrepareDidFinish:self];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    [self->_delegate reader:self hasAvailableDataWithLength:length];
+    [_delegate reader:self hasAvailableDataWithLength:length];
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
