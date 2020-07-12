@@ -93,7 +93,7 @@
                 }
             }
             
-            NSData *data = [self->_reader readDataOfLength:lengthParam];
+            data = [self->_reader readDataOfLength:lengthParam];
             NSUInteger readLength = data.length;
             if ( readLength == 0 )
                 return;
