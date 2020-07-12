@@ -99,15 +99,14 @@
             }
             
             NSUInteger length = MIN(lengthParam, self->_readRange.length - self->_readLength);
-            NSData *readData = [self->_reader readDataOfLength:length];
+            data = [self->_reader readDataOfLength:length];
             
-            NSUInteger readLength = readData.length;
+            NSUInteger readLength = data.length;
             if ( readLength == 0 )
                 return;
             
             self->_readLength += readLength;
             self->_isDone = (self->_readLength == self->_readRange.length);
-            data = readData;
             
 #ifdef DEBUG
             MCSLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(self->_range.location + self->_readLength), (unsigned long)readLength);
