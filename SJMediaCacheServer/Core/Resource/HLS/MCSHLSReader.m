@@ -53,7 +53,7 @@
 - (void)didRemoveResource:(NSNotification *)note {
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource )  {
-        dispatch_sync(_resource.resourceReaderOperationQueue, ^{
+        dispatch_barrier_sync(_resource.resourceReaderOperationQueue, ^{
             if ( self->_isClosed )
                 return;
             [self _onError:[NSError mcs_removedResource:self->_request.URL]];
@@ -64,7 +64,7 @@
 - (void)userCancelledReading:(NSNotification *)note {
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
-        dispatch_sync(_resource.resourceReaderOperationQueue, ^{
+        dispatch_barrier_sync(_resource.resourceReaderOperationQueue, ^{
            if ( self->_isClosed )
                return;
             [self _onError:[NSError mcs_userCancelledError:self->_request.URL]];
@@ -73,7 +73,7 @@
 }
 
 - (void)prepare {
-    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.resourceReaderOperationQueue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -109,7 +109,7 @@
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
     __block NSData *data = nil;
-    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.resourceReaderOperationQueue, ^{
         NSUInteger offset = self->_reader.offset;
         data = [self->_reader readDataOfLength:length];
         
@@ -131,7 +131,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.resourceReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -181,7 +181,7 @@
 #pragma mark -
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
-    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.resourceReaderOperationQueue, ^{
         if ( [reader isKindOfClass:MCSHLSIndexDataReader.class] ) {
             MCSHLSParser *parser = [(MCSHLSIndexDataReader *)reader parser];
             if ( parser != nil && self->_resource.parser != parser )
@@ -197,7 +197,7 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.resourceReaderOperationQueue, ^{
         [self _onError:error];
     });
 }

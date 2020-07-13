@@ -112,7 +112,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -158,7 +158,7 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         [self _onError:error];
     });
 }

@@ -61,7 +61,7 @@
 }
 
 - (void)prepare {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -75,7 +75,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed || self->_isDone || !self->_isPrepared )
                 return;
@@ -112,7 +112,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || !self->_isPrepared )
             return;
         
@@ -133,7 +133,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -167,7 +167,7 @@
 #pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed )
             return;
         self->_response = response;
@@ -190,7 +190,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed )
                 return;
@@ -210,7 +210,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed )
             return;
         

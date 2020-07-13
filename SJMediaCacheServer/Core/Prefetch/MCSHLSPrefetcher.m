@@ -73,7 +73,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _close];
     });
 }
@@ -123,7 +123,7 @@
 }
 
 - (void)reader:(id<MCSResourceReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( [reader seekToOffset:reader.offset + length] ) {
             if ( self->_fragmentIndex != NSNotFound )
                 self->_loadedLength += length;
@@ -155,7 +155,7 @@
 }
   
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _didCompleteWithError:error];
     });
 }

@@ -231,7 +231,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 - (__kindof MCSResource *)resourceWithURL:(NSURL *)URL {
     __block MCSResource *resource = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         MCSResourceType type = [MCSURLRecognizer.shared resourceTypeForURL:URL];
         NSString *name = [MCSURLRecognizer.shared resourceNameForURL:URL];
         if ( _resources[name] == nil ) {
@@ -264,7 +264,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 - (void)saveMetadata:(MCSResource *)resource {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _update:resource];
     });
 }
@@ -283,7 +283,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_async(_queue, ^{
         // update
         resource.log.usageCount += 1;
         resource.log.updatedTime = NSDate.date.timeIntervalSince1970;
@@ -293,7 +293,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 // 读取结束, 清理剩余的超出个数限制的资源
 - (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_async(_queue, ^{
         if ( self->_cacheCountLimit == 0 || self->_count < self->_cacheCountLimit )
             return;
         [self _removeResourcesForLimit:MCSLimitCount];
@@ -302,7 +302,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 // 剩余磁盘空间在发生变化
 - (void)didWriteDataForResource:(MCSResource *)resource length:(NSUInteger)length {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_async(_queue, ^{
         if ( self->_reservedFreeDiskSpace == 0 && self->_maxDiskSizeForCache == 0 )
             return;
         self->_cacheDiskSpace += length;
@@ -313,14 +313,14 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 - (void)didRemoveDataForResource:(MCSResource *)resource length:(NSUInteger)length {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         self->_cacheDiskSpace -= length;
         self->_freeDiskSpace += length;
     });
 }
 
 - (void)removeAllResources {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         NSArray<MCSVODResource *> *VODResources = [_sqlite3 objectsForClass:MCSVODResource.class conditions:nil orderBy:nil error:NULL];
         [self _removeResources:VODResources];
         NSArray<MCSHLSResource *> *HLSResources = [_sqlite3 objectsForClass:MCSHLSResource.class conditions:nil orderBy:nil error:NULL];
@@ -332,7 +332,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     if ( URL == nil )
         return;
     MCSResource *resource = [self resourceWithURL:URL];
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _removeResources:@[resource]];
     });
 }

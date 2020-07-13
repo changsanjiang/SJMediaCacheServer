@@ -80,7 +80,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -114,13 +114,13 @@
 #pragma mark - MCSHLSParserDelegate
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         [self _parseDidFinish];
     });
 }
 
 - (void)parser:(MCSHLSParser *)parser anErrorOccurred:(NSError *)error {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         [self _onError:error];
     });
 }
@@ -128,7 +128,7 @@
 #pragma mark - MCSResourceDataReaderDelegate
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         NSString *indexFilePath = self->_parser.indexFilePath;
         NSUInteger length = [MCSFileManager fileSizeAtPath:indexFilePath];
         self->_response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegurl" totalLength:length];
@@ -141,7 +141,7 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         [self _onError:error];
     });
 }

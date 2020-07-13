@@ -52,7 +52,7 @@
 }
 
 - (void)prepare {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed || self->_isCalledPrepare )
                 return;
@@ -82,7 +82,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed || self->_isDone || !self->_isPrepared )
                 return;
@@ -122,7 +122,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || !self->_isPrepared )
             return;
         if ( !NSLocationInRange(offset - 1, self->_range) )
@@ -142,7 +142,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }

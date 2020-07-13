@@ -66,7 +66,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( _isClosed )
             return;
         
@@ -107,7 +107,7 @@
 }
 
 - (void)reader:(nonnull id<MCSResourceReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( _isDone )
             return;
         
@@ -134,7 +134,7 @@
 }
 
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_sync(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _didCompleteWithError:error];
     });
 }
