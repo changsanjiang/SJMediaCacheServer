@@ -36,24 +36,19 @@
 @property (nonatomic, strong, nullable) NSFileHandle *reader;
 @property (nonatomic, strong, nullable) NSFileHandle *writer;
 @property (nonatomic) float networkTaskPriority;
-
-@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSHLSTSDataReader
 @synthesize delegate = _delegate;
-@synthesize delegateQueue = _delegateQueue;
 @synthesize range = _range;
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _networkTaskPriority = networkTaskPriority;
         _resource = resource;
         _request = request;
         _delegate = delegate;
-        _delegateQueue = queue;
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, NULL);
     }
     return self;
 }
@@ -63,7 +58,7 @@
 }
 
 - (void)prepare {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -88,7 +83,7 @@
 
 - (NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed || self->_isDone || !self->_isPrepared )
                 return;
@@ -126,7 +121,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || !self->_isPrepared || offset > self->_availableLength )
             return;
         
@@ -141,7 +136,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -150,7 +145,7 @@
 
 - (NSRange)range {
     __block NSRange range = NSMakeRange(0, 0);
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         range = _range;
     });
     return range;
@@ -158,7 +153,7 @@
 
 - (NSUInteger)availableLength {
     __block NSUInteger availableLength = 0;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         availableLength = _availableLength;
     });
     return availableLength;
@@ -166,7 +161,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         offset = _offset;
     });
     return offset;
@@ -174,7 +169,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         isPrepared = _isPrepared;
     });
     return isPrepared;
@@ -182,7 +177,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         isDone = _isDone;
     });
     return isDone;
@@ -190,7 +185,7 @@
 
 - (id<MCSResourceResponse>)response {
     __block id<MCSResourceResponse> response = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         response = _response;
     });
     return response;
@@ -199,7 +194,7 @@
 #pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed )
             return;
         
@@ -211,7 +206,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed )
                 return;
@@ -221,7 +216,7 @@
             self->_availableLength += length;
             [self->_content didWriteDataWithLength:length];
 
-            dispatch_async(self->_delegateQueue, ^{
+            dispatch_async(self->_resource.delegateOperationQueue, ^{
                 [self.delegate reader:self hasAvailableDataWithLength:length];
             });
         } @catch (NSException *exception) {
@@ -232,7 +227,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed )
             return;
         
@@ -250,7 +245,7 @@
 - (void)_onError:(NSError *)error {
     [self _close];
     
-    dispatch_async(_delegateQueue, ^{
+    dispatch_async(_resource.delegateOperationQueue, ^{
         [self.delegate reader:self anErrorOccurred:error];
     });
 }
@@ -258,11 +253,12 @@
 - (void)_prepare {
     [_content readWrite_retain];
     NSString *filePath = [_resource filePathOfContent:_content];
-    _availableLength = [MCSFileManager fileSizeAtPath:filePath];
+    NSUInteger availableLength = [MCSFileManager fileSizeAtPath:filePath];
     _range = NSMakeRange(0, _content.tsTotalLength);
     _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
     _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:_resource.TsContentType totalLength:_content.tsTotalLength];
+    _availableLength = availableLength;
         
     if ( _reader == nil || _writer == nil ) {
         [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
@@ -270,13 +266,13 @@
     }
 
     _isPrepared = YES;
-    dispatch_async(_delegateQueue, ^{
+    dispatch_async(_resource.delegateOperationQueue, ^{
         [self.delegate readerPrepareDidFinish:self];
     });
     
-    if ( _availableLength != 0 ) {
-        dispatch_async(_delegateQueue, ^{
-            [self.delegate reader:self hasAvailableDataWithLength:self.availableLength];
+    if ( availableLength != 0 ) {
+        dispatch_async(_resource.delegateOperationQueue, ^{
+            [self.delegate reader:self hasAvailableDataWithLength:availableLength];
         });
     }
 }

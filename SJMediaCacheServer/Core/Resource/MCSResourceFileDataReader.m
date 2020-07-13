@@ -11,6 +11,7 @@
 #import "MCSLogger.h"
 #import "MCSFileManager.h"
 #import "NSFileHandle+MCS.h"
+#import "MCSResource.h"
 
 @interface MCSResourceFileDataReader()
 @property (nonatomic) NSRange range;
@@ -27,23 +28,21 @@
 @property (nonatomic) BOOL isDone;
 @property (nonatomic) BOOL isSought;
 
-@property (nonatomic) dispatch_queue_t queue;
+@property (nonatomic, weak, nullable) MCSResource *resource;
 @end
 
 @implementation MCSResourceFileDataReader
 @synthesize delegate = _delegate;
-@synthesize delegateQueue = _delegateQueue;
 
-- (instancetype)initWithRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSResource *)resource range:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
+        _resource = resource;
         _range = range;
         _path = path.copy;
         _readRange = readRange;
         _delegate = delegate;
-        _delegateQueue = queue;
         _availableLength = readRange.length;
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, NULL);
     }
     return self;
 }
@@ -53,7 +52,7 @@
 }
 
 - (void)prepare {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed || self->_isCalledPrepare )
                 return;
@@ -67,12 +66,12 @@
             [self->_reader seekToFileOffset:self->_readRange.location];
             self->_isPrepared = YES;
             
-            dispatch_async(self->_delegateQueue, ^{
+            dispatch_async(self->_resource.delegateOperationQueue, ^{
                 [self.delegate readerPrepareDidFinish:self];
             });
             
             NSUInteger length = self->_readRange.length;
-            dispatch_async(self->_delegateQueue, ^{
+            dispatch_async(self->_resource.delegateOperationQueue, ^{
                 [self.delegate reader:self hasAvailableDataWithLength:length];
             });
         } @catch (NSException *exception) {
@@ -83,7 +82,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed || self->_isDone || !self->_isPrepared )
                 return;
@@ -123,7 +122,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || !self->_isPrepared )
             return;
         if ( !NSLocationInRange(offset - 1, self->_range) )
@@ -143,7 +142,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -152,7 +151,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         offset = self->_range.location + _readLength;
     });
     return offset;
@@ -160,7 +159,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         isPrepared = self->_isPrepared;
     });
     return isPrepared;
@@ -168,7 +167,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         isDone = self->_isDone;
     });
     return isDone;
@@ -179,7 +178,7 @@
 - (void)_onError:(NSError *)error {
     [self _close];
     
-    dispatch_async(_delegateQueue, ^{
+    dispatch_async(_resource.delegateOperationQueue, ^{
         [self.delegate reader:self anErrorOccurred:error];
     });
 }

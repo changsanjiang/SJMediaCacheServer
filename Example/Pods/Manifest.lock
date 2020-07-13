@@ -40,11 +40,11 @@ PODS:
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJMediaCacheServer (1.1.0):
+  - SJMediaCacheServer (1.1.2):
     - CocoaHTTPServer
-    - SJMediaCacheServer/Core (= 1.1.0)
+    - SJMediaCacheServer/Core (= 1.1.2)
     - SJUIKit/SQLite3
-  - SJMediaCacheServer/Core (1.1.0):
+  - SJMediaCacheServer/Core (1.1.2):
     - CocoaHTTPServer
     - SJUIKit/SQLite3
   - SJUIKit/AttributesFactory (0.0.0.48):
@@ -109,7 +109,7 @@ SPEC CHECKSUMS:
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
   SJBaseVideoPlayer: ebe3f08587d1af6c98cd450ecea73b89ba68d9f8
-  SJMediaCacheServer: e008d86d3915408a33c89ae1702d511cc4de84f3
+  SJMediaCacheServer: 6d7150891db453be0bc3c2e253e0f87d412c350c
   SJUIKit: dd52a4c3879610d9382e5a26b01cb56bcf25e205
   SJVideoPlayer: fb53250dbf0ad2f95c963e9a42efb2057b9e9f27
   YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30

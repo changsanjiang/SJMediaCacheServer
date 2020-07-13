@@ -25,23 +25,19 @@
 @property (nonatomic) BOOL isClosed;
 
 @property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
-@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSHLSAESKeyDataReader
 @synthesize delegate = _delegate;
-@synthesize delegateQueue = _delegateQueue;
 @synthesize response = _response;
 
-- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _resource = resource;
         _request = request;
         _networkTaskPriority = networkTaskPriority;
         _delegate = delegate;
-        _delegateQueue = queue;
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, NULL);
     }
     return self;
 }
@@ -51,7 +47,7 @@
 }
 
 - (void)prepare {
-    dispatch_async(_queue, ^{
+    dispatch_barrier_async(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -101,7 +97,7 @@
 
 - (nullable MCSResourceFileDataReader *)reader {
     __block MCSResourceFileDataReader *reader = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         reader = _reader;
     });
     return reader;
@@ -116,7 +112,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -145,7 +141,7 @@
 
 - (id<MCSResourceResponse>)response {
     __block id<MCSResourceResponse> response = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         response = self->_response;
     });
     return response;
@@ -162,7 +158,7 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _onError:error];
     });
 }
@@ -172,7 +168,7 @@
 - (void)_onError:(NSError *)error {
     [self _close];
     
-    dispatch_async(_delegateQueue, ^{
+    dispatch_async(_resource.delegateOperationQueue, ^{
         [self.delegate reader:self anErrorOccurred:error];
     });
 }
@@ -182,7 +178,7 @@
     NSRange range = NSMakeRange(0, fileSize);
     
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:fileSize];
-    _reader = [MCSResourceFileDataReader.alloc initWithRange:range path:filePath readRange:range delegate:self delegateQueue:_delegateQueue];
+    _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource range:range path:filePath readRange:range delegate:self];
     [_reader prepare];
 }
 

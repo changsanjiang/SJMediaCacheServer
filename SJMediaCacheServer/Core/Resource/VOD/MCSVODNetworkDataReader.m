@@ -38,15 +38,13 @@
 @property (nonatomic) NSUInteger readLength;
 
 @property (nonatomic) float networkTaskPriority;
-@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSVODNetworkDataReader
 @synthesize delegate = _delegate;
-@synthesize delegateQueue = _delegateQueue;
 @synthesize isPrepared = _isPrepared;
 
-- (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(__weak MCSVODResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _resource = resource;
@@ -54,8 +52,6 @@
         _range = request.mcs_range;
         _networkTaskPriority = networkTaskPriority;
         _delegate = delegate;
-        _delegateQueue = queue;
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, NULL);
     }
     return self;
 }
@@ -65,7 +61,7 @@
 }
 
 - (void)prepare {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -79,7 +75,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed || self->_isDone || !self->_isPrepared )
                 return;
@@ -116,7 +112,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || !self->_isPrepared )
             return;
         
@@ -137,7 +133,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -146,7 +142,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         offset = self->_range.location + self->_readLength;
     });
     return offset;
@@ -154,7 +150,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         isPrepared = self->_isPrepared;
     });
     return isPrepared;
@@ -162,7 +158,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         isDone = _isDone;
     });
     return isDone;
@@ -171,7 +167,7 @@
 #pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed )
             return;
         self->_response = response;
@@ -187,14 +183,14 @@
         
         self->_isPrepared = YES;
         
-        dispatch_async(self->_delegateQueue, ^{
+        dispatch_async(self->_resource.delegateOperationQueue, ^{
             [self->_delegate readerPrepareDidFinish:self];
         });
     });
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         @try {
             if ( self->_isClosed )
                 return;
@@ -204,7 +200,7 @@
             self->_availableLength += length;
             [self->_content didWriteDataWithLength:length];
             
-            dispatch_async(self->_delegateQueue, ^{
+            dispatch_async(self->_resource.delegateOperationQueue, ^{
                 [self->_delegate reader:self hasAvailableDataWithLength:length];
             });
         } @catch (NSException *exception) {
@@ -214,7 +210,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed )
             return;
         
@@ -232,7 +228,7 @@
 - (void)_onError:(NSError *)error {
     [self _close];
     
-    dispatch_async(_delegateQueue, ^{
+    dispatch_async(_resource.delegateOperationQueue, ^{
         [self.delegate reader:self anErrorOccurred:error];
     });
 }

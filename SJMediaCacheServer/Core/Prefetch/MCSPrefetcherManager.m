@@ -22,6 +22,7 @@
 @end
 
 @interface MCSPrefetchOperation ()<MCSPrefetcherDelegate> {
+    NSRecursiveLock *_lock;
     BOOL _isFinished;
     BOOL _isCancelled;
     BOOL _isExecuting;
@@ -41,6 +42,7 @@
         _preloadSize = bytes;
         _mcs_progressBlock = progressBlock;
         _mcs_completionBlock = completionBlock;
+        _lock = NSRecursiveLock.alloc.init;
     }
     return self;
 }
@@ -52,7 +54,9 @@
 }
 
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error {
-    [self _completeOperationIfExecuting];
+    [self _lock:^{
+        [self _completeOperationIfExecuting];
+    }];
     if ( _mcs_completionBlock != nil ) {
         _mcs_completionBlock(error);
     }
@@ -61,62 +65,60 @@
 #pragma mark -
  
 - (void)start {
-    @synchronized (self) {
+    [self _lock:^{
         [self willChangeValueForKey:@"isExecuting"];
-        _isExecuting = YES;
+        self->_isExecuting = YES;
         [self didChangeValueForKey:@"isExecuting"];
-
-        if ( _isCancelled || _URL == nil ) {
+        
+        if ( self->_isCancelled || self->_URL == nil ) {
             [self _completeOperationIfExecuting];
             return;
         }
- 
-        MCSResourceType type = [MCSURLRecognizer.shared resourceTypeForURL:_URL];
-        id<MCSPrefetcherDelegate> delegate = _mcs_progressBlock != nil || _mcs_completionBlock != nil ? self : nil;
+        
+        MCSResourceType type = [MCSURLRecognizer.shared resourceTypeForURL:self->_URL];
+        id<MCSPrefetcherDelegate> delegate = self->_mcs_progressBlock != nil || self->_mcs_completionBlock != nil ? self : nil;
         switch ( type ) {
             case MCSResourceTypeVOD:
-                _prefetcher = [MCSVODPrefetcher.alloc initWithURL:_URL preloadSize:_preloadSize delegate:delegate delegateQueue:dispatch_get_main_queue()];
+                self->_prefetcher = [MCSVODPrefetcher.alloc initWithURL:self->_URL preloadSize:self->_preloadSize delegate:delegate delegateQueue:dispatch_get_main_queue()];
                 break;
             case MCSResourceTypeHLS:
-                _prefetcher = [MCSHLSPrefetcher.alloc initWithURL:_URL preloadSize:_preloadSize delegate:delegate delegateQueue:dispatch_get_main_queue()];
+                self->_prefetcher = [MCSHLSPrefetcher.alloc initWithURL:self->_URL preloadSize:self->_preloadSize delegate:delegate delegateQueue:dispatch_get_main_queue()];
                 break;
         }
-        [_prefetcher prepare];
-    }
+        [self->_prefetcher prepare];
+    }];
 }
 
 - (void)cancel {
-    @synchronized (self) {
-        if ( _isCancelled || _isFinished )
+    [self _lock:^{
+        if ( self->_isCancelled || self->_isFinished )
             return;
         
-        _isCancelled = YES;
+        self->_isCancelled = YES;
         
         [self _completeOperationIfExecuting];
-    }
+    }];
 }
 
 #pragma mark -
 
 - (void)_completeOperationIfExecuting {
-    @synchronized (self) {
-        if ( !_isExecuting )
-            return;
-        
-        if ( _isFinished )
-            return;
-        
-        [self willChangeValueForKey:@"isFinished"];
-        [self willChangeValueForKey:@"isExecuting"];
-        
-        [_prefetcher close];
-        _prefetcher = nil;
-        _isExecuting = NO;
-        _isFinished = YES;
-        
-        [self didChangeValueForKey:@"isExecuting"];
-        [self didChangeValueForKey:@"isFinished"];
-    }
+    if ( !self->_isExecuting )
+        return;
+    
+    if ( self->_isFinished )
+        return;
+    
+    [self willChangeValueForKey:@"isFinished"];
+    [self willChangeValueForKey:@"isExecuting"];
+    
+    [self->_prefetcher close];
+    self->_prefetcher = nil;
+    self->_isExecuting = NO;
+    self->_isFinished = YES;
+    
+    [self didChangeValueForKey:@"isExecuting"];
+    [self didChangeValueForKey:@"isFinished"];
 }
 
 #pragma mark -
@@ -126,19 +128,31 @@
 }
 
 - (BOOL)isExecuting {
-    @synchronized (self) {
-        return _isExecuting;
-    }
+    __block BOOL isExecuting = NO;
+    [self _lock:^{
+        isExecuting = self->_isExecuting;
+    }];
+    return isExecuting;
 }
 
 - (BOOL)isFinished {
-    @synchronized (self) {
-        return _isFinished;
-    }
+    __block BOOL isFinished = NO;
+    [self _lock:^{
+        isFinished = self->_isFinished;
+    }];
+    return isFinished;
 }
 
 - (BOOL)isCancelled {
     return NO;
+}
+
+#pragma mark -
+
+- (void)_lock:(void(^)(void))block {
+    [_lock lock];
+    block();
+    [_lock unlock];
 }
 @end
 

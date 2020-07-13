@@ -23,13 +23,11 @@
 @property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 @property (nonatomic) float networkTaskPriority;
-@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSHLSIndexDataReader
 @synthesize delegate = _delegate;
-@synthesize delegateQueue = _delegateQueue;
-- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _networkTaskPriority = networkTaskPriority;
@@ -37,8 +35,6 @@
         _resource = resource;
         _parser = resource.parser;
         _delegate = delegate;
-        _delegateQueue = queue;
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, NULL);
     }
     return self;
 }
@@ -48,7 +44,7 @@
 }
 
 - (void)prepare {
-    dispatch_async(_queue, ^{
+    dispatch_barrier_async(_resource.dataReaderOperationQueue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -58,7 +54,7 @@
         
         // parse the m3u8 file
         if ( self->_parser == nil ) {
-            self->_parser = [MCSHLSParser.alloc initWithResource:self->_resource.name request:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:self->_networkTaskPriority delegate:self delegateQueue:self->_delegateQueue];
+            self->_parser = [MCSHLSParser.alloc initWithResource:self->_resource.name request:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:self->_networkTaskPriority delegate:self delegateQueue:self->_resource.delegateOperationQueue];
             [self->_parser prepare];
             return;
         }
@@ -69,7 +65,7 @@
 
 - (nullable MCSResourceFileDataReader *)reader {
     __block MCSResourceFileDataReader *reader = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         reader = _reader;
     });
     return reader;
@@ -84,7 +80,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -109,7 +105,7 @@
 
 - (id<MCSResourceResponse>)response {
     __block id<MCSResourceResponse> response = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         response = _response;
     });
     return response;
@@ -118,13 +114,13 @@
 #pragma mark - MCSHLSParserDelegate
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _parseDidFinish];
     });
 }
 
 - (void)parser:(MCSHLSParser *)parser anErrorOccurred:(NSError *)error {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _onError:error];
     });
 }
@@ -132,7 +128,7 @@
 #pragma mark - MCSResourceDataReaderDelegate
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         NSString *indexFilePath = self->_parser.indexFilePath;
         NSUInteger length = [MCSFileManager fileSizeAtPath:indexFilePath];
         self->_response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegurl" totalLength:length];
@@ -145,7 +141,7 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.dataReaderOperationQueue, ^{
         [self _onError:error];
     });
 }
@@ -154,7 +150,7 @@
 
 - (void)_onError:(NSError *)error {
     [self _close];
-    dispatch_async(_delegateQueue, ^{
+    dispatch_async(_resource.delegateOperationQueue, ^{
         [self.delegate reader:self anErrorOccurred:error];
     });
 }
@@ -179,7 +175,7 @@
     NSString *indexFilePath = _parser.indexFilePath;
     NSUInteger fileSize = [MCSFileManager fileSizeAtPath:indexFilePath];
     NSRange range = NSMakeRange(0, fileSize);
-    _reader = [MCSResourceFileDataReader.alloc initWithRange:range path:indexFilePath readRange:range delegate:_delegate delegateQueue:_delegateQueue];
+    _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource range:range path:indexFilePath readRange:range delegate:_delegate];
     [_reader prepare];
 }
 @end

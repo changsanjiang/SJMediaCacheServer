@@ -22,7 +22,6 @@
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
 @property (nonatomic, strong, nullable) NSURLRequest *request;
 @property (nonatomic, strong, nullable) id<MCSHLSDataReader> reader;
-@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSHLSReader
@@ -35,7 +34,6 @@
         _networkTaskPriority = 1.0;
         _resource = resource;
         _request = request;
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, NULL);
         [_resource readWrite_retain];
         [MCSResourceManager.shared reader:self willReadResource:resource];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(didRemoveResource:) name:MCSResourceManagerDidRemoveResourceNotification object:nil];
@@ -55,7 +53,7 @@
 - (void)didRemoveResource:(NSNotification *)note {
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource )  {
-        dispatch_sync(_queue, ^{
+        dispatch_sync(_resource.resourceReaderOperationQueue, ^{
             if ( self->_isClosed )
                 return;
             [self _onError:[NSError mcs_removedResource:self->_request.URL]];
@@ -66,7 +64,7 @@
 - (void)userCancelledReading:(NSNotification *)note {
     MCSResource *resource = note.userInfo[MCSResourceManagerUserInfoResourceKey];
     if ( resource == _resource && !self.isClosed )  {
-        dispatch_sync(_queue, ^{
+        dispatch_sync(_resource.resourceReaderOperationQueue, ^{
            if ( self->_isClosed )
                return;
             [self _onError:[NSError mcs_userCancelledError:self->_request.URL]];
@@ -75,7 +73,7 @@
 }
 
 - (void)prepare {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -86,15 +84,15 @@
         NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:self->_request.URL];
         NSMutableURLRequest *request = [self->_request mcs_requestWithRedirectURL:URL];
         if      ( [self->_request.URL.absoluteString containsString:MCSHLSIndexFileExtension] ) {
-            self->_reader = [MCSHLSIndexDataReader.alloc initWithResource:self->_resource request:request networkTaskPriority:self->_networkTaskPriority delegate:self delegateQueue:_resource.readerOperationQueue];
+            self->_reader = [MCSHLSIndexDataReader.alloc initWithResource:self->_resource request:request networkTaskPriority:self->_networkTaskPriority delegate:self];
         }
         else if ( [self->_request.URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ) {
             NSAssert(self->_resource.parser != nil, @"`parser`不能为nil!");
-            self->_reader = [MCSHLSAESKeyDataReader.alloc initWithResource:self->_resource request:request networkTaskPriority:self->_networkTaskPriority delegate:self delegateQueue:self->_resource.readerOperationQueue];
+            self->_reader = [MCSHLSAESKeyDataReader.alloc initWithResource:self->_resource request:request networkTaskPriority:self->_networkTaskPriority delegate:self];
         }
         else {
             NSAssert(self->_resource.parser != nil, @"`parser`不能为nil!");
-            self->_reader = [MCSHLSTSDataReader.alloc initWithResource:self->_resource request:request networkTaskPriority:self->_networkTaskPriority delegate:self delegateQueue:self->_resource.readerOperationQueue];
+            self->_reader = [MCSHLSTSDataReader.alloc initWithResource:self->_resource request:request networkTaskPriority:self->_networkTaskPriority delegate:self];
         }
         
         [self->_reader prepare];
@@ -103,7 +101,7 @@
 
 - (nullable id<MCSHLSDataReader>)reader {
     __block id<MCSHLSDataReader> reader = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
         reader = _reader;
     });
     return reader;
@@ -111,7 +109,7 @@
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
     __block NSData *data = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
         NSUInteger offset = self->_reader.offset;
         data = [self->_reader readDataOfLength:length];
         
@@ -133,7 +131,7 @@
 }
 
 - (void)close {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
         [self _close];
     });
 }
@@ -158,7 +156,7 @@
 
 - (BOOL)isClosed {
     __block BOOL result = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
         result = _isClosed;
     });
     return result;
@@ -183,7 +181,7 @@
 #pragma mark -
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
         if ( [reader isKindOfClass:MCSHLSIndexDataReader.class] ) {
             MCSHLSParser *parser = [(MCSHLSIndexDataReader *)reader parser];
             if ( parser != nil && self->_resource.parser != parser )
@@ -199,14 +197,14 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_sync(_queue, ^{
+    dispatch_sync(_resource.resourceReaderOperationQueue, ^{
         [self _onError:error];
     });
 }
 
 - (void)_onError:(NSError *)error {
     [self _close];
-    dispatch_async(_resource.readerOperationQueue, ^{
+    dispatch_async(_resource.resourceReaderOperationQueue, ^{
         
         MCSLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
 
