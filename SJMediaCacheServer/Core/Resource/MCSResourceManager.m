@@ -133,7 +133,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        _queue = dispatch_queue_create("SJMediaCacheServer.resourceManagerOperationQueue", DISPATCH_QUEUE_CONCURRENT);
+        _queue = dispatch_get_global_queue(0, 0);
         dispatch_barrier_async(_queue, ^{
             self->_sqlite3 = [SJSQLite3.alloc initWithDatabasePath:[MCSFileManager databasePath]];
             self->_count = [self->_sqlite3 countOfObjectsForClass:MCSResourceUsageLog.class conditions:nil error:NULL];
@@ -454,9 +454,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             [SJSQLite3Condition conditionWithColumn:@"resource" value:@(r.id)],
             [SJSQLite3Condition conditionWithColumn:@"resourceType" value:@(r.type)],
         ] error:NULL];
-        dispatch_barrier_async(r.resourceReaderOperationQueue, ^{
-            [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerDidRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : r }];
-        });
+        [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerDidRemoveResourceNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : r }];
     }];
     
     _count -= resources.count;

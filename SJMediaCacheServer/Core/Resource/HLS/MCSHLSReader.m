@@ -32,7 +32,7 @@
 - (instancetype)initWithResource:(__weak MCSHLSResource *)resource request:(NSURLRequest *)request {
     self = [super init];
     if ( self ) {
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, DISPATCH_QUEUE_CONCURRENT);
+        _queue = dispatch_get_global_queue(0, 0);
         _networkTaskPriority = 1.0;
         _resource = resource;
         _request = request;

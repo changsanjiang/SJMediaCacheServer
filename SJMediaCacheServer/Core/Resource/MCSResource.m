@@ -31,7 +31,6 @@
         _configuration = MCSConfiguration.alloc.init;
         _lock = NSRecursiveLock.alloc.init;
         _m = NSMutableArray.array;
-        _resourceReaderOperationQueue = dispatch_queue_create("SJMediaCacheServer.resourceReaderOperationQueue", DISPATCH_QUEUE_CONCURRENT);
         _delegateOperationQueue = dispatch_queue_create("SJMediaCacheServer.delegateOperationQueue", DISPATCH_QUEUE_SERIAL);
     }
     return self;

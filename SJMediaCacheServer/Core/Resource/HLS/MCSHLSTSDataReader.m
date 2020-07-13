@@ -47,7 +47,7 @@
 - (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, DISPATCH_QUEUE_CONCURRENT);
+        _queue = dispatch_get_global_queue(0, 0);
         _networkTaskPriority = networkTaskPriority;
         _resource = resource;
         _request = request;

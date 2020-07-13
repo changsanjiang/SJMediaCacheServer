@@ -38,7 +38,7 @@
 - (instancetype)initWithResource:(MCSResource *)resource range:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
-        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, NULL);
+        _queue = dispatch_get_global_queue(0, 0);
         _resource = resource;
         _range = range;
         _path = path.copy;
