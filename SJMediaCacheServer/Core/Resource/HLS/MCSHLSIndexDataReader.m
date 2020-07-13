@@ -23,6 +23,8 @@
 @property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 @property (nonatomic) float networkTaskPriority;
+
+@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSHLSIndexDataReader
@@ -30,6 +32,7 @@
 - (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
+        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, DISPATCH_QUEUE_CONCURRENT);
         _networkTaskPriority = networkTaskPriority;
         _request = request;
         _resource = resource;
@@ -44,7 +47,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_async(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_async(_queue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -65,7 +68,7 @@
 
 - (nullable MCSResourceFileDataReader *)reader {
     __block MCSResourceFileDataReader *reader = nil;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         reader = _reader;
     });
     return reader;
@@ -80,7 +83,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _close];
     });
 }
@@ -105,7 +108,7 @@
 
 - (id<MCSResourceResponse>)response {
     __block id<MCSResourceResponse> response = nil;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         response = _response;
     });
     return response;
@@ -114,13 +117,13 @@
 #pragma mark - MCSHLSParserDelegate
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _parseDidFinish];
     });
 }
 
 - (void)parser:(MCSHLSParser *)parser anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _onError:error];
     });
 }
@@ -128,7 +131,7 @@
 #pragma mark - MCSResourceDataReaderDelegate
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         NSString *indexFilePath = self->_parser.indexFilePath;
         NSUInteger length = [MCSFileManager fileSizeAtPath:indexFilePath];
         self->_response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/x-mpegurl" totalLength:length];
@@ -141,7 +144,7 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _onError:error];
     });
 }

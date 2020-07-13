@@ -36,6 +36,8 @@
 @property (nonatomic, strong, nullable) NSFileHandle *reader;
 @property (nonatomic, strong, nullable) NSFileHandle *writer;
 @property (nonatomic) float networkTaskPriority;
+
+@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSHLSTSDataReader
@@ -45,6 +47,7 @@
 - (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
+        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, DISPATCH_QUEUE_CONCURRENT);
         _networkTaskPriority = networkTaskPriority;
         _resource = resource;
         _request = request;
@@ -58,7 +61,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -83,7 +86,7 @@
 
 - (NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         @try {
             if ( self->_isClosed || self->_isDone || !self->_isPrepared )
                 return;
@@ -121,7 +124,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_isClosed || !self->_isPrepared || offset > self->_availableLength )
             return;
         
@@ -136,7 +139,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _close];
     });
 }
@@ -145,7 +148,7 @@
 
 - (NSRange)range {
     __block NSRange range = NSMakeRange(0, 0);
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         range = _range;
     });
     return range;
@@ -153,7 +156,7 @@
 
 - (NSUInteger)availableLength {
     __block NSUInteger availableLength = 0;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         availableLength = _availableLength;
     });
     return availableLength;
@@ -161,7 +164,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         offset = _offset;
     });
     return offset;
@@ -169,7 +172,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         isPrepared = _isPrepared;
     });
     return isPrepared;
@@ -177,7 +180,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         isDone = _isDone;
     });
     return isDone;
@@ -185,7 +188,7 @@
 
 - (id<MCSResourceResponse>)response {
     __block id<MCSResourceResponse> response = nil;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         response = _response;
     });
     return response;
@@ -194,7 +197,7 @@
 #pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_isClosed )
             return;
         
@@ -206,7 +209,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         @try {
             if ( self->_isClosed )
                 return;
@@ -227,7 +230,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_isClosed )
             return;
         

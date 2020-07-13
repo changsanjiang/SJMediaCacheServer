@@ -25,6 +25,7 @@
 @property (nonatomic) BOOL isClosed;
 
 @property (nonatomic, strong, nullable) MCSResourceFileDataReader *reader;
+@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSHLSAESKeyDataReader
@@ -34,6 +35,7 @@
 - (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
+        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, DISPATCH_QUEUE_CONCURRENT);
         _resource = resource;
         _request = request;
         _networkTaskPriority = networkTaskPriority;
@@ -47,7 +49,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_async(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -97,7 +99,7 @@
 
 - (nullable MCSResourceFileDataReader *)reader {
     __block MCSResourceFileDataReader *reader = nil;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         reader = _reader;
     });
     return reader;
@@ -112,7 +114,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _close];
     });
 }
@@ -141,7 +143,7 @@
 
 - (id<MCSResourceResponse>)response {
     __block id<MCSResourceResponse> response = nil;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         response = self->_response;
     });
     return response;
@@ -158,7 +160,7 @@
 }
 
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _onError:error];
     });
 }

@@ -25,7 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSURL *)playbackURLForCacheWithURL:(NSURL *)URL;
 
 @property (nonatomic, strong, readonly) dispatch_queue_t resourceReaderOperationQueue;
-@property (nonatomic, strong, readonly) dispatch_queue_t dataReaderOperationQueue;
 @property (nonatomic, strong, readonly) dispatch_queue_t delegateOperationQueue;
 @end
 

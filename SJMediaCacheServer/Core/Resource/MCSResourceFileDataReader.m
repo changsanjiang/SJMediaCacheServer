@@ -29,6 +29,7 @@
 @property (nonatomic) BOOL isSought;
 
 @property (nonatomic, weak, nullable) MCSResource *resource;
+@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSResourceFileDataReader
@@ -37,6 +38,7 @@
 - (instancetype)initWithResource:(MCSResource *)resource range:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
+        _queue = dispatch_queue_create(NSStringFromClass(self.class).UTF8String, NULL);
         _resource = resource;
         _range = range;
         _path = path.copy;
@@ -52,7 +54,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         @try {
             if ( self->_isClosed || self->_isCalledPrepare )
                 return;
@@ -82,7 +84,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         @try {
             if ( self->_isClosed || self->_isDone || !self->_isPrepared )
                 return;
@@ -122,7 +124,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_isClosed || !self->_isPrepared )
             return;
         if ( !NSLocationInRange(offset - 1, self->_range) )
@@ -142,7 +144,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_barrier_sync(_queue, ^{
         [self _close];
     });
 }
@@ -151,7 +153,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         offset = self->_range.location + _readLength;
     });
     return offset;
@@ -159,7 +161,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         isPrepared = self->_isPrepared;
     });
     return isPrepared;
@@ -167,7 +169,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(_resource.dataReaderOperationQueue, ^{
+    dispatch_sync(_queue, ^{
         isDone = self->_isDone;
     });
     return isDone;

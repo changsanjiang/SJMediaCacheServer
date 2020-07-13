@@ -23,9 +23,7 @@
 - (nullable NSArray<NSTextCheckingResult *> *)mcs_textCheckingResultsByMatchPattern:(NSString *)pattern;
 @end
 
-@interface MCSHLSParser ()<NSLocking> {
-    dispatch_semaphore_t _semaphore;
-}
+@interface MCSHLSParser ()
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic, weak, nullable) id<MCSHLSParserDelegate> delegate;
@@ -33,6 +31,7 @@
 @property (nonatomic, strong) NSArray<NSString *> *TsURIArray;
 @property (nonatomic) float networkTaskPriority;
 @property (nonatomic, strong) NSArray<NSString *> *URIs;
+@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSHLSParser
@@ -44,87 +43,65 @@
         _request = request;
         _delegate = delegate;
         _delegateQueue = queue;
-        _semaphore = dispatch_semaphore_create(1);
+        _queue = dispatch_get_global_queue(0, 0);
     }
     return self;
 }
 
 - (nullable NSString *)URIAtIndex:(NSUInteger)index {
-    [self lock];
-    @try {
-        return index < _URIs.count ? _URIs[index] : nil;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    __block NSString *URI = nil;
+    dispatch_sync(_queue, ^{
+        URI = index < _URIs.count ? _URIs[index] : nil;
+    });
+    return URI;
 }
 
 - (void)prepare {
-    [self lock];
-    @try {
-        if ( _isClosed || _isCalledPrepare )
+    dispatch_barrier_async(_queue, ^{
+        if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
-        _isCalledPrepare = YES;
+        self->_isCalledPrepare = YES;
         
         @autoreleasepool {
             [self _parse];
         }
-    } @catch (__unused NSException *exception) {
-
-    } @finally {
-        [self unlock];
-    }
+    });
 }
 
 - (void)close {
-    [self lock];
-    @try {
-        if ( _isClosed )
+    dispatch_barrier_sync(_queue, ^{
+        if ( self->_isClosed )
             return;
         
-        _isClosed = YES;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+        self->_isClosed = YES;
+    });
 }
 
 @synthesize isDone = _isDone;
 - (BOOL)isDone {
-    [self lock];
-    @try {
-        return _isDone;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    __block BOOL isDone = NO;
+    dispatch_sync(_queue, ^{
+        isDone = self->_isDone;
+    });
+    return isDone;
 }
 
 @synthesize isClosed = _isClosed;
 - (BOOL)isClosed {
-    [self lock];
-    @try {
-        return _isClosed;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    __block BOOL isClosed = NO;
+    dispatch_sync(_queue, ^{
+        isClosed = _isClosed;
+    });
+    return isClosed;
 }
 
 - (NSUInteger)TsCount {
-    [self lock];
-    @try {
-        return _TsURIArray.count;
-    } @catch (__unused NSException *exception) {
-        
-    } @finally {
-        [self unlock];
-    }
+    __block NSUInteger count = 0;
+    dispatch_sync(_queue, ^{
+        count = _TsURIArray.count;
+    });
+    return count;
 }
 
 - (NSString *)indexFilePath {
@@ -147,7 +124,6 @@
     __block NSError *_Nullable error = nil;
     do {
         NSData *data = [MCSData dataWithContentsOfRequest:request networkTaskPriority:_networkTaskPriority error:&error];
-        if ( _isClosed ) return;
         contents = [NSString.alloc initWithData:data encoding:0];
         if ( contents == nil )
             break;
@@ -279,14 +255,6 @@
     dispatch_async(_delegateQueue, ^{
         [self.delegate parserParseDidFinish:self];
     });
-}
-
-- (void)lock {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-}
-
-- (void)unlock {
-    dispatch_semaphore_signal(_semaphore);
 }
 @end
 
