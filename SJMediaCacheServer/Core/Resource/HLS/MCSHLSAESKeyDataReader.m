@@ -49,7 +49,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(_queue, ^{
+    dispatch_barrier_async(_queue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -170,9 +170,7 @@
 - (void)_onError:(NSError *)error {
     [self _close];
     
-    dispatch_async(_resource.delegateOperationQueue, ^{
-        [self.delegate reader:self anErrorOccurred:error];
-    });
+    [_delegate reader:self anErrorOccurred:error];
 }
 
 - (void)_prepare:(NSString *)filePath {

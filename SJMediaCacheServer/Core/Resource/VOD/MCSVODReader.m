@@ -363,12 +363,9 @@
 - (void)_onError:(NSError *)error {
     [self _close];
     
-    dispatch_async(_resource.delegateOperationQueue, ^{
-        
-        MCSLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
-
-        [self.delegate reader:self anErrorOccurred:error];
-    });
+    MCSLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
+    
+    [_delegate reader:self anErrorOccurred:error];
 }
 
 - (MCSVODNetworkDataReader *)_networkDataReaderWithURL:(NSURL *)URL range:(NSRange)range {

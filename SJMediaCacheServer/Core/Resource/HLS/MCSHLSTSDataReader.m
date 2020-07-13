@@ -218,10 +218,7 @@
             NSUInteger length = data.length;
             self->_availableLength += length;
             [self->_content didWriteDataWithLength:length];
-
-            dispatch_async(self->_resource.delegateOperationQueue, ^{
-                [self.delegate reader:self hasAvailableDataWithLength:length];
-            });
+            [self->_delegate reader:self hasAvailableDataWithLength:length];
         } @catch (NSException *exception) {
             [self _onError:[NSError mcs_exception:exception]];
             
@@ -248,9 +245,7 @@
 - (void)_onError:(NSError *)error {
     [self _close];
     
-    dispatch_async(_resource.delegateOperationQueue, ^{
-        [self.delegate reader:self anErrorOccurred:error];
-    });
+    [_delegate reader:self anErrorOccurred:error];
 }
 
 - (void)_prepare {
@@ -269,14 +264,10 @@
     }
 
     _isPrepared = YES;
-    dispatch_async(_resource.delegateOperationQueue, ^{
-        [self.delegate readerPrepareDidFinish:self];
-    });
+    [_delegate readerPrepareDidFinish:self];
     
     if ( availableLength != 0 ) {
-        dispatch_async(_resource.delegateOperationQueue, ^{
-            [self.delegate reader:self hasAvailableDataWithLength:availableLength];
-        });
+        [_delegate reader:self hasAvailableDataWithLength:availableLength];
     }
 }
 

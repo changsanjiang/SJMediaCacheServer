@@ -57,7 +57,7 @@
         
         // parse the m3u8 file
         if ( self->_parser == nil ) {
-            self->_parser = [MCSHLSParser.alloc initWithResource:self->_resource.name request:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:self->_networkTaskPriority delegate:self delegateQueue:self->_resource.delegateOperationQueue];
+            self->_parser = [MCSHLSParser.alloc initWithResource:self->_resource.name request:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:self->_networkTaskPriority delegate:self];
             [self->_parser prepare];
             return;
         }
@@ -153,9 +153,7 @@
 
 - (void)_onError:(NSError *)error {
     [self _close];
-    dispatch_async(_resource.delegateOperationQueue, ^{
-        [self.delegate reader:self anErrorOccurred:error];
-    });
+    [_delegate reader:self anErrorOccurred:error];
 }
 
 - (void)_close {

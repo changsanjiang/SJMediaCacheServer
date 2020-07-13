@@ -11,7 +11,6 @@
 
 @interface MCSResourcePartialContent ()
 @property (nonatomic, weak, nullable) id<MCSResourcePartialContentDelegate> delegate;
-@property (nonatomic, strong, nullable) dispatch_queue_t delegateQueue;
 @property (nonatomic, readonly) NSUInteger offset;
 @property (nonatomic) NSInteger readWriteCount;
 @property (nonatomic, copy) NSString *AESKeyName;
@@ -59,11 +58,18 @@
     return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, _filename, (unsigned long)_offset, (unsigned long)self.length];
 }
 
-- (void)setDelegate:(id<MCSResourcePartialContentDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)delegateQueue {
+@synthesize delegate = _delegate;
+- (void)setDelegate:(nullable id<MCSResourcePartialContentDelegate>)delegate {
     dispatch_barrier_sync(_queue, ^{
         self->_delegate = delegate;
-        self->_delegateQueue = delegateQueue;
     });
+}
+- (nullable id<MCSResourcePartialContentDelegate>)delegate {
+    __block id<MCSResourcePartialContentDelegate> delegate;
+    dispatch_sync(_queue, ^{
+        delegate = _delegate;
+    });
+    return delegate;
 }
 
 @synthesize length = _length;
@@ -73,9 +79,7 @@
     
     dispatch_barrier_sync(_queue, ^{
         _length += length;
-        dispatch_async(_delegateQueue, ^{
-            [self.delegate partialContent:self didWriteDataWithLength:length];
-        });
+        [self->_delegate partialContent:self didWriteDataWithLength:length];
     });
 }
 
@@ -92,9 +96,7 @@
     dispatch_barrier_sync(_queue, ^{
         if ( _readWriteCount != readWriteCount ) {
             _readWriteCount = readWriteCount;;
-            dispatch_async(_delegateQueue, ^{
-                [self.delegate readWriteCountDidChangeForPartialContent:self];
-            });
+            [self->_delegate readWriteCountDidChangeForPartialContent:self];
         }
     });
 }

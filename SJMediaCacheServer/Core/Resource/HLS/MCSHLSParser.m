@@ -27,7 +27,6 @@
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic, weak, nullable) id<MCSHLSParserDelegate> delegate;
-@property (nonatomic) dispatch_queue_t delegateQueue;
 @property (nonatomic, strong) NSArray<NSString *> *TsURIArray;
 @property (nonatomic) float networkTaskPriority;
 @property (nonatomic, strong) NSArray<NSString *> *URIs;
@@ -35,14 +34,13 @@
 @end
 
 @implementation MCSHLSParser
-- (instancetype)initWithResource:(NSString *)resourceName request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSHLSParserDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
+- (instancetype)initWithResource:(NSString *)resourceName request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSHLSParserDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _networkTaskPriority = networkTaskPriority;
         _resourceName = resourceName;
         _request = request;
         _delegate = delegate;
-        _delegateQueue = queue;
         _queue = dispatch_get_global_queue(0, 0);
     }
     return self;
@@ -214,9 +212,7 @@
         error = [NSError mcs_HLSFileParseError:_request.URL];
     }
     
-    dispatch_async(_delegateQueue, ^{
-        [self.delegate parser:self anErrorOccurred:error];
-    });
+    [_delegate parser:self anErrorOccurred:error];
 }
 
 - (void)_finished {
@@ -252,9 +248,7 @@
     
     _isDone = YES;
     
-    dispatch_async(_delegateQueue, ^{
-        [self.delegate parserParseDidFinish:self];
-    });
+    [_delegate parserParseDidFinish:self];
 }
 @end
 

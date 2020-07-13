@@ -68,14 +68,9 @@
             [self->_reader seekToFileOffset:self->_readRange.location];
             self->_isPrepared = YES;
             
-            dispatch_async(self->_resource.delegateOperationQueue, ^{
-                [self.delegate readerPrepareDidFinish:self];
-            });
+            [self->_delegate readerPrepareDidFinish:self];
+            [self->_delegate reader:self hasAvailableDataWithLength:self->_readRange.length];
             
-            NSUInteger length = self->_readRange.length;
-            dispatch_async(self->_resource.delegateOperationQueue, ^{
-                [self.delegate reader:self hasAvailableDataWithLength:length];
-            });
         } @catch (NSException *exception) {
             [self _onError:[NSError mcs_exception:exception]];
         }
@@ -180,9 +175,7 @@
 - (void)_onError:(NSError *)error {
     [self _close];
     
-    dispatch_async(_resource.delegateOperationQueue, ^{
-        [self.delegate reader:self anErrorOccurred:error];
-    });
+    [_delegate reader:self anErrorOccurred:error];
 }
 
 - (void)_close {

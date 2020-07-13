@@ -283,7 +283,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource {
-    dispatch_barrier_async(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         // update
         resource.log.usageCount += 1;
         resource.log.updatedTime = NSDate.date.timeIntervalSince1970;
@@ -293,7 +293,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 // 读取结束, 清理剩余的超出个数限制的资源
 - (void)reader:(id<MCSResourceReader>)reader didEndReadResource:(MCSResource *)resource {
-    dispatch_barrier_async(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_cacheCountLimit == 0 || self->_count < self->_cacheCountLimit )
             return;
         [self _removeResourcesForLimit:MCSLimitCount];
@@ -302,7 +302,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 // 剩余磁盘空间在发生变化
 - (void)didWriteDataForResource:(MCSResource *)resource length:(NSUInteger)length {
-    dispatch_barrier_async(_queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_reservedFreeDiskSpace == 0 && self->_maxDiskSizeForCache == 0 )
             return;
         self->_cacheDiskSpace += length;

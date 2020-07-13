@@ -22,7 +22,7 @@
 @end
 
 @interface MCSPrefetchOperation ()<MCSPrefetcherDelegate> {
-    NSRecursiveLock *_lock;
+    dispatch_queue_t _queue;
     BOOL _isFinished;
     BOOL _isCancelled;
     BOOL _isExecuting;
@@ -42,7 +42,7 @@
         _preloadSize = bytes;
         _mcs_progressBlock = progressBlock;
         _mcs_completionBlock = completionBlock;
-        _lock = NSRecursiveLock.alloc.init;
+        _queue = dispatch_get_global_queue(0, 0);
     }
     return self;
 }
@@ -54,9 +54,9 @@
 }
 
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error {
-    [self _lock:^{
+    dispatch_barrier_sync(_queue, ^{
         [self _completeOperationIfExecuting];
-    }];
+    });
     if ( _mcs_completionBlock != nil ) {
         _mcs_completionBlock(error);
     }
@@ -65,7 +65,7 @@
 #pragma mark -
  
 - (void)start {
-    [self _lock:^{
+    dispatch_barrier_sync(_queue, ^{
         [self willChangeValueForKey:@"isExecuting"];
         self->_isExecuting = YES;
         [self didChangeValueForKey:@"isExecuting"];
@@ -86,18 +86,18 @@
                 break;
         }
         [self->_prefetcher prepare];
-    }];
+    });
 }
 
 - (void)cancel {
-    [self _lock:^{
+    dispatch_barrier_sync(_queue, ^{
         if ( self->_isCancelled || self->_isFinished )
             return;
         
         self->_isCancelled = YES;
         
         [self _completeOperationIfExecuting];
-    }];
+    });
 }
 
 #pragma mark -
@@ -129,30 +129,22 @@
 
 - (BOOL)isExecuting {
     __block BOOL isExecuting = NO;
-    [self _lock:^{
+    dispatch_sync(_queue, ^{
         isExecuting = self->_isExecuting;
-    }];
+    });
     return isExecuting;
 }
 
 - (BOOL)isFinished {
     __block BOOL isFinished = NO;
-    [self _lock:^{
+    dispatch_sync(_queue, ^{
         isFinished = self->_isFinished;
-    }];
+    });
     return isFinished;
 }
 
 - (BOOL)isCancelled {
     return NO;
-}
-
-#pragma mark -
-
-- (void)_lock:(void(^)(void))block {
-    [_lock lock];
-    block();
-    [_lock unlock];
 }
 @end
 
