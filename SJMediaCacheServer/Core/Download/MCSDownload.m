@@ -57,7 +57,14 @@
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
- 
+
+- (void)cancelAllDownloadTasks {
+    dispatch_barrier_sync(MCSDownloadQueue(), ^{
+        [_session invalidateAndCancel];
+        _session = [NSURLSession sessionWithConfiguration:_sessionConfiguration delegate:self delegateQueue:_sessionDelegateQueue];
+    });
+}
+
 - (nullable NSURLSessionTask *)downloadWithRequest:(NSURLRequest *)requestParam priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate {
     NSURLRequest *request = [self _requestWithParam:requestParam];
     if ( request == nil )

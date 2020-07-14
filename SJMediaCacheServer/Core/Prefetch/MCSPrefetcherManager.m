@@ -89,10 +89,6 @@
 }
 
 - (void)cancel {
-#ifdef DEBUG
-    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-#endif
-
     dispatch_barrier_sync(_queue, ^{
         if ( self->_isCancelled || self->_isFinished )
             return;
