@@ -12,15 +12,12 @@
 #import "MCSResourceManager.h"
 #import "MCSConfiguration.h"
 
-@interface MCSResource ()<MCSResourcePartialContentDelegate> {
-    NSMutableArray<MCSResourcePartialContent *> *_m;
-}
+@interface MCSResource ()<MCSResourcePartialContentDelegate>
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) MCSResourceUsageLog *log;
 @property (nonatomic) NSInteger readWriteCount;
 @property (nonatomic) BOOL isCacheFinished;
-@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation MCSResource
@@ -59,7 +56,6 @@
 
 #pragma mark -
 
-@synthesize isCacheFinished = _isCacheFinished;
 - (void)setIsCacheFinished:(BOOL)isCacheFinished {
     dispatch_barrier_sync(_queue, ^{
         self->_isCacheFinished = isCacheFinished;
@@ -68,7 +64,7 @@
 
 - (BOOL)isCacheFinished {
     __block BOOL isCacheFinished = NO;
-    dispatch_barrier_sync(_queue, ^{
+    dispatch_sync(_queue, ^{
         isCacheFinished = self->_isCacheFinished;
     });
     return isCacheFinished;
@@ -89,7 +85,7 @@
 
 - (NSInteger)readWriteCount {
     __block NSInteger readWriteCount;
-    dispatch_barrier_sync(_queue, ^{
+    dispatch_sync(_queue, ^{
         readWriteCount = _readWriteCount;
     });
     return readWriteCount;
@@ -107,8 +103,8 @@
 
 - (NSArray<MCSResourcePartialContent *> *)contents {
     __block NSArray<MCSResourcePartialContent *> *contents = nil;
-    dispatch_barrier_sync(_queue, ^{
-        contents = self->_m.count >= 0 ? _m : nil;
+    dispatch_sync(_queue, ^{
+        contents = self->_m.count >= 0 ? _m.copy : nil;
     });
     return contents;
 }

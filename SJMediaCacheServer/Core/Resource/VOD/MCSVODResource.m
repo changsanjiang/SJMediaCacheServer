@@ -35,7 +35,7 @@
 
 - (NSURL *)playbackURLForCacheWithURL:(NSURL *)URL {
     __block NSURL *playbackURLForCache = nil;
-    dispatch_sync(self.queue, ^{
+    dispatch_sync(_queue, ^{
         playbackURLForCache = _playbackURLForCache;
     });
     return playbackURLForCache;
@@ -44,8 +44,8 @@
 #pragma mark -
 
 - (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
-    [super addContents:contents];
-    dispatch_barrier_sync(self.queue, ^{
+    dispatch_barrier_sync(_queue, ^{
+        [super addContents:contents];
         [self _contentsDidChange];
     });
 }
@@ -59,7 +59,7 @@
  
 - (NSUInteger)totalLength {
     __block NSUInteger totalLength = 0;
-    dispatch_sync(self.queue, ^{
+    dispatch_sync(_queue, ^{
         totalLength = self->_totalLength;
     });
     return totalLength;
@@ -67,7 +67,7 @@
  
 - (NSString *)contentType {
     __block NSString *contentType = nil;
-    dispatch_sync(self.queue, ^{
+    dispatch_sync(_queue, ^{
         contentType = self->_contentType;
     });
     return contentType;
@@ -75,14 +75,14 @@
  
 - (NSString *)server {
     __block NSString *server = nil;
-    dispatch_sync(self.queue, ^{
+    dispatch_sync(_queue, ^{
         server = self->_server;
     });
     return server;
 }
 
 - (void)updateServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength pathExtension:(nullable NSString *)pathExtension {
-    dispatch_barrier_sync(self.queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         _server = server.copy;
         _contentType = contentType.copy;
         _totalLength = totalLength;
@@ -92,18 +92,20 @@
 }
 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-    dispatch_barrier_sync(self.queue, ^{
-        if ( self.isCacheFinished )
+    if ( content.readWriteCount > 0 )
+        return;
+    
+    dispatch_barrier_sync(_queue, ^{
+        if ( self->_isCacheFinished )
             return;
-        if ( content.readWriteCount > 0 )
-            return;
-        if ( self.contents.count <= 1 )
+
+        if ( self->_m.count <= 1 )
             return;
         
         @try {
             // 合并文件
             NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
-            for ( MCSResourcePartialContent *content in self.contents ) {
+            for ( MCSResourcePartialContent *content in self->_m ) {
                 if ( content.readWriteCount == 0 )
                     [list addObject:content];
             }
@@ -174,12 +176,11 @@
 }
 
 - (void)_contentsDidChange {
-    NSArray *contents = self.contents;
-    if ( contents.count == 1 ) {
-        MCSResourcePartialContent *content = contents.lastObject;
+    if ( _m.count == 1 ) {
+        MCSResourcePartialContent *content = _m.lastObject;
         if ( content.length != 0 ) {
-            self.isCacheFinished = content.length == self.totalLength;
-            if ( self.isCacheFinished ) {
+            _isCacheFinished = content.length == _totalLength;
+            if ( _isCacheFinished ) {
                 NSString *path = [self filePathOfContent:content];
                 _playbackURLForCache = [NSURL fileURLWithPath:path];
             }

@@ -28,7 +28,9 @@
  
 - (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
     [super addContents:contents];
-    [self _contentsDidChange];
+    dispatch_barrier_sync(_queue, ^{
+        [self _contentsDidChange];
+    });
 }
 
 - (NSURL *)playbackURLForCacheWithURL:(NSURL *)URL {
@@ -37,7 +39,7 @@
 
 @synthesize parser = _parser;
 - (void)setParser:(MCSHLSParser *)parser {
-    dispatch_barrier_sync(self.queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         self->_parser = parser;
         self->_TsCount = parser.TsCount;
         [MCSResourceManager.shared saveMetadata:self];
@@ -46,7 +48,7 @@
 
 - (MCSHLSParser *)parser {
     __block MCSHLSParser *parser = nil;
-    dispatch_sync(self.queue, ^{
+    dispatch_sync(_queue, ^{
         parser = _parser;
     });
     return parser;
@@ -55,22 +57,25 @@
 @synthesize TsContentType = _TsContentType;
 - (NSString *)TsContentType {
     __block NSString *TsContentType = nil;
-    dispatch_sync(self.queue, ^{
+    dispatch_sync(_queue, ^{
         TsContentType = _TsContentType;
     });
     return TsContentType;
 }
 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-    dispatch_barrier_sync(self.queue, ^{
-        if ( self.isCacheFinished )
+    if ( content.readWriteCount > 0 )
+        return;
+    
+    dispatch_barrier_sync(_queue, ^{
+        if ( self->_isCacheFinished )
             return;
-        if ( content.readWriteCount > 0 )
+        
+        if ( self->_m.count <= 1 )
             return;
-        if ( self.contents.count <= 1 )
-            return;
+        
         NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
-        for ( MCSResourcePartialContent *content in self.contents ) {
+        for ( MCSResourcePartialContent *content in self->_m ) {
             if ( content.readWriteCount == 0 )
                 [list addObject:content];
         }
@@ -84,9 +89,6 @@
             for ( NSInteger j = i + 1 ; j < list.count ; ++ j ) {
                 MCSResourcePartialContent *obj2 = list[j];
                 if ( [obj1.tsName isEqualToString:obj2.tsName] ) {
-                    [deleteContents addObject:obj1.length >= obj2.length ? obj2 : obj1];
-                }
-                else if ( [obj1.AESKeyName isEqualToString:obj2.AESKeyName] ) {
                     [deleteContents addObject:obj1.length >= obj2.length ? obj2 : obj1];
                 }
             }
@@ -104,7 +106,7 @@
 }
 
 - (void)_contentsDidChange {
-    NSArray *contents = self.contents.copy;
+    NSArray *contents = _m.copy;
     
     BOOL isContentsFinished = YES;
     NSUInteger count = 0;
@@ -118,7 +120,7 @@
         }
     }
     
-    self.isCacheFinished = isContentsFinished && count == _TsCount;
+    _isCacheFinished = isContentsFinished && count == _TsCount;
 }
 
  
@@ -130,25 +132,27 @@
 }
 
 - (void)updateTsContentType:(NSString * _Nullable)TsContentType {
-    dispatch_barrier_sync(self.queue, ^{
+    dispatch_barrier_sync(_queue, ^{
         self->_TsContentType = TsContentType;
         [MCSResourceManager.shared saveMetadata:self];
     });
 }
 
 - (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL {
-    MCSResourcePartialContent *content = nil;
+    __block MCSResourcePartialContent *content = nil;
     NSString *TsName = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString extension:MCSHLSTsFileExtension];
-    for ( MCSResourcePartialContent *c in self.contents ) {
-        if ( [c.tsName isEqualToString:TsName] ) {
-            NSString *contentPath = [MCSFileManager getFilePathWithName:c.filename inResource:self.name];
-            NSUInteger length = [MCSFileManager fileSizeAtPath:contentPath];
-            if ( length == c.tsTotalLength ) {
-                content = c;
-                break;
+    dispatch_barrier_sync(_queue, ^{
+        for ( MCSResourcePartialContent *c in self->_m ) {
+            if ( [c.tsName isEqualToString:TsName] ) {
+                NSString *contentPath = [MCSFileManager getFilePathWithName:c.filename inResource:self.name];
+                NSUInteger length = [MCSFileManager fileSizeAtPath:contentPath];
+                if ( length == c.tsTotalLength ) {
+                    content = c;
+                    break;
+                }
             }
         }
-    }
+    });
     return content;
 }
 
