@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SJMediaCacheServer'
-  s.version          = '1.1.4'
+  s.version          = '1.1.5'
   s.summary          = 'A HTTP Media Caching Framework. It can cache VOD or HLS media.'
 
 # This description is used to generate tags and improve search results.
