@@ -11,6 +11,7 @@
 #import "MCSResourceSubclass.h"
 #import "MCSResourceManager.h"
 #import "MCSConfiguration.h"
+#import "MCSQueue.h"
 
 @interface MCSResource ()<MCSResourcePartialContentDelegate>
 @property (nonatomic) NSInteger id;
@@ -26,11 +27,10 @@
     self = [super init];
     if ( self ) {
         _configuration = MCSConfiguration.alloc.init;
-        _queue = dispatch_get_global_queue(0, 0);
-        _m = NSMutableArray.array; 
+        _m = NSMutableArray.array;
     }
     return self;
-}
+} 
 
 - (MCSResourceType)type {
     @throw [NSException exceptionWithName:NSInternalInconsistencyException
@@ -56,15 +56,9 @@
 
 #pragma mark -
 
-- (void)setIsCacheFinished:(BOOL)isCacheFinished {
-    dispatch_barrier_sync(_queue, ^{
-        self->_isCacheFinished = isCacheFinished;
-    });
-}
-
 - (BOOL)isCacheFinished {
     __block BOOL isCacheFinished = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(MCSResourceQueue(), ^{
         isCacheFinished = self->_isCacheFinished;
     });
     return isCacheFinished;
@@ -78,15 +72,15 @@
 
 @synthesize readWriteCount = _readWriteCount;
 - (void)setReadWriteCount:(NSInteger)readWriteCount {
-    dispatch_barrier_sync(_queue, ^{
+    dispatch_barrier_sync(MCSResourceQueue(), ^{
         self->_readWriteCount = readWriteCount;
     });
 }
 
 - (NSInteger)readWriteCount {
     __block NSInteger readWriteCount;
-    dispatch_sync(_queue, ^{
-        readWriteCount = _readWriteCount;
+    dispatch_sync(MCSResourceQueue(), ^{
+        readWriteCount = self->_readWriteCount;
     });
     return readWriteCount;
 }
@@ -103,18 +97,19 @@
 
 - (NSArray<MCSResourcePartialContent *> *)contents {
     __block NSArray<MCSResourcePartialContent *> *contents = nil;
-    dispatch_sync(_queue, ^{
-        contents = self->_m.count >= 0 ? _m.copy : nil;
+    dispatch_sync(MCSResourceQueue(), ^{
+        contents = self->_m.count > 0 ? self->_m.copy : nil;
     });
     return contents;
 }
 
 - (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
     if ( contents.count != 0 ) {
-        dispatch_barrier_sync(_queue, ^{
+        dispatch_barrier_sync(MCSResourceQueue(), ^{
             for ( MCSResourcePartialContent *content in contents )
                 content.delegate = self;
-            [_m addObjectsFromArray:contents];
+            [self->_m addObjectsFromArray:contents];
+            [self contentsDidChange:self->_m.copy];
         });
     }
 }
@@ -124,14 +119,29 @@
 }
 
 - (void)removeContent:(MCSResourcePartialContent *)content {
-    dispatch_barrier_sync(_queue, ^{
-        [self->_m removeObject:content];
-        [MCSFileManager removeContentWithName:content.filename inResource:self->_name error:NULL];
-        [MCSResourceManager.shared didRemoveDataForResource:self length:content.length];
+    if ( content != nil ) {
+        [self removeContents:@[content]];
+    }
+}
+
+- (void)removeContents:(NSArray<MCSResourcePartialContent *> *)contents {
+    __block NSUInteger length = 0;
+    dispatch_barrier_sync(MCSResourceQueue(), ^{
+        for ( MCSResourcePartialContent *content in contents ) {
+            length += content.length;
+            [MCSFileManager removeContentWithName:content.filename inResource:_name error:NULL];
+        }
+        [self->_m removeObjectsInArray:contents];
+        [self contentsDidChange:self->_m.copy];
     });
+    [MCSResourceManager.shared didRemoveDataForResource:self length:length];
 }
 
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
     return [MCSFileManager getFilePathWithName:content.filename inResource:_name];
+}
+
+- (void)contentsDidChange:(NSArray<MCSResourcePartialContent *> *)contents {
+    /* subclass */
 }
 @end

@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
     @protected
     NSMutableArray<MCSResourcePartialContent *> *_m;
     BOOL _isCacheFinished;
-    dispatch_queue_t _queue;
+    NSString *_name;
 }
 
 @property (nonatomic, readonly) MCSResourceType type;
@@ -29,7 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isCacheFinished;
 
 - (nullable NSURL *)playbackURLForCacheWithURL:(NSURL *)URL;
-
 @end
 
 NS_ASSUME_NONNULL_END

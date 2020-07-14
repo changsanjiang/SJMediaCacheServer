@@ -71,8 +71,8 @@
     
     dispatch_barrier_sync(_queue, ^{
         _length += length;
-        [self->_delegate partialContent:self didWriteDataWithLength:length];
     });
+    [self->_delegate partialContent:self didWriteDataWithLength:length];
 }
 
 - (NSUInteger)length {
@@ -86,11 +86,9 @@
 @synthesize readWriteCount = _readWriteCount;
 - (void)setReadWriteCount:(NSInteger)readWriteCount {
     dispatch_barrier_sync(_queue, ^{
-        if ( _readWriteCount != readWriteCount ) {
-            _readWriteCount = readWriteCount;;
-            [self->_delegate readWriteCountDidChangeForPartialContent:self];
-        }
+        _readWriteCount = readWriteCount;;
     });
+    [self->_delegate readWriteCountDidChangeForPartialContent:self];
 }
 
 - (NSInteger)readWriteCount {
