@@ -140,7 +140,7 @@
                 });
             }
             
-            if ( progress >= 1 || reader.isReadingEndOfData ) {
+            if ( reader.isReadingEndOfData ) {
                 BOOL isLastFragment = reader.isReadingEndOfData && self->_fragmentIndex == self->_resource.parser.TsCount - 1;
                 BOOL isFinished = progress >= 1 || isLastFragment;
                 if ( !isFinished ) {
