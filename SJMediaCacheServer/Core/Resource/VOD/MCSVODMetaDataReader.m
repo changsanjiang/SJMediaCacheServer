@@ -35,8 +35,7 @@
     _contentType = MCSGetResponseContentType(response);
     _server = MCSGetResponseServer(response);
     _totalLength = MCSGetResponseContentRange(response).totalLength;
-    
-    _pathExtension = response.suggestedFilename.pathExtension;
+    _pathExtension = MCSSuggestedFilePathExtension(response);
     [task cancel];
     
     dispatch_barrier_sync(MCSDelegateQueue(), ^{
