@@ -441,7 +441,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         return;
 
     [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSUInteger length = [MCSFileManager fileSizeAtPath:[MCSFileManager getResourcePathWithName:r.name]];
+        NSUInteger length = [MCSFileManager directorySizeAtPath:[MCSFileManager getResourcePathWithName:r.name]];
         self->_cacheDiskSpace -= length;
         self->_freeDiskSpace += length;
 
