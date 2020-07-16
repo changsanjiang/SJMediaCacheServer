@@ -118,6 +118,9 @@
 - (NSData *)readDataOfLength:(NSUInteger)length {
     __block NSData *data = nil;
     dispatch_barrier_sync(MCSReaderQueue(), ^{
+        if ( _reader.isDone )
+            return;
+        
         NSUInteger offset = _reader.offset;
         data = [_reader readDataOfLength:length];
         

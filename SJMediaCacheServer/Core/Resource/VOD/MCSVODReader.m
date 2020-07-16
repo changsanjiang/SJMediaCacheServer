@@ -120,6 +120,8 @@
     dispatch_barrier_sync(MCSReaderQueue(), ^{
         if ( _isClosed )
             return;
+        if ( _readers.lastObject.isDone )
+            return;
         
         id<MCSResourceDataReader> currentReader = self.currentReader;
         if ( !currentReader.isPrepared )
