@@ -102,9 +102,9 @@
                 NSUInteger length = MIN(lengthParam, _availableLength - _offset);
                 if ( length > 0 ) {
                     data = [_reader readDataOfLength:length];
+                    MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
                     _offset += data.length;
                     _isDone = (_offset == _response.totalLength);
-                    MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
                 }
             }
             

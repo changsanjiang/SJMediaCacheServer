@@ -99,7 +99,7 @@
             _isDone = (_readLength == _range.length);
             
 #ifdef DEBUG
-            MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
+            MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location), (unsigned long)readLength);
             if ( _isDone ) {
                 MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
             }
@@ -171,6 +171,11 @@
     dispatch_barrier_sync(MCSVODNetworkDataReaderQueue(), ^{
         if ( _isClosed )
             return;
+        NSString *contentType = MCSGetResponseContentType(response);
+        NSString *server = MCSGetResponseServer(response);
+        NSUInteger totalLength = MCSGetResponseContentRange(response).totalLength;
+        NSString *extension = MCSSuggestedFilePathExtension(response);
+        [_resource updateServer:server contentType:contentType totalLength:totalLength pathExtension:extension];        
         _response = response;
         _content = [_resource createContentWithOffset:_range.location];
         NSString *filePath = [_resource filePathOfContent:_content];

@@ -249,7 +249,6 @@
 		8B16B143031A9CB6EBA16C0DA1F00813 /* MCSConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 88B686BF772525CECB0426B711FDE596 /* MCSConfiguration.m */; };
 		8BBCAE76AF2179BDA620D71429E32F88 /* SJTimerControl.h in Headers */ = {isa = PBXBuildFile; fileRef = B9F4E2DD8C6BAEE0FBFF38227E8E3371 /* SJTimerControl.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		8BEBC514663A3F70776363A293263257 /* SJVideoPlayerPresentView.h in Headers */ = {isa = PBXBuildFile; fileRef = 08D6BD065CA037DF9075C5122634B97B /* SJVideoPlayerPresentView.h */; settings = {ATTRIBUTES = (Project, ); }; };
-		8C193AB554F4603DB413E318AF6880A1 /* MCSVODMetaDataReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 47B102D2C7E14D2A1B5DBB705BD02DF2 /* MCSVODMetaDataReader.m */; };
 		8D1CCAD1488F1E537BBB1BFB5865DDAC /* SJPlaybackHistoryControllerDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 50B4F902141EA018229E0D56AFDE90BA /* SJPlaybackHistoryControllerDefines.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		8E5E99AD6565F75EA348713A50616ABF /* SJVideoPlayerSettings.h in Headers */ = {isa = PBXBuildFile; fileRef = F2EEEE86BDEE2455256C9CB0609BE84F /* SJVideoPlayerSettings.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		8ED0204AEA0EAFD6AC387554E0CD216D /* MultipartMessageHeader.h in Headers */ = {isa = PBXBuildFile; fileRef = 6C3218ED775126B4C93242FDFEEE9966 /* MultipartMessageHeader.h */; settings = {ATTRIBUTES = (Project, ); }; };
@@ -313,7 +312,6 @@
 		AF72DEC92EA10CB8A58F7AB54B2A2B3C /* SJVideoPlayerPresentViewDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 52CF7B1441DB0FBF526B0CD0A9773C3E /* SJVideoPlayerPresentViewDefines.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		B0C11C059EC308963B04653C35D51FCC /* SJProgressSlider.m in Sources */ = {isa = PBXBuildFile; fileRef = 2523D5B075E9B46428055A2A4C47B6B0 /* SJProgressSlider.m */; };
 		B0ED107F3AAF83FDD3035D0B3D864953 /* GCDAsyncUdpSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = FFEEA49763125B956D89B899DB71E925 /* GCDAsyncUdpSocket.h */; settings = {ATTRIBUTES = (Project, ); }; };
-		B0F4A5BBE50D331FACB5B979E586416E /* MCSVODMetaDataReader.h in Headers */ = {isa = PBXBuildFile; fileRef = 1E2BD32940B3297C3DDB93A9EDBE5F71 /* MCSVODMetaDataReader.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		B14862F701C1CAEF6BE8B44C3322DFBA /* MCSHLSReader.h in Headers */ = {isa = PBXBuildFile; fileRef = C4AEB983AA4BEAF58E05DD0924A1E66B /* MCSHLSReader.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		B19A631CD51B246962D92D2644EAF5AB /* DDRange.h in Headers */ = {isa = PBXBuildFile; fileRef = E3877D1AFD996AEC87985E0F00BD50B4 /* DDRange.h */; settings = {ATTRIBUTES = (Project, ); }; };
 		B1F99C281C814D7684B9DE024A786BDB /* SJPlaybackHistoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 35807072D9F360F5EDD1817153EE03DF /* SJPlaybackHistoryController.m */; };
@@ -686,7 +684,6 @@
 		1D114BEF5B6BE1698E4C3CA629316CE1 /* SJSQLiteObjectInfo.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = SJSQLiteObjectInfo.h; path = SJUIKit/SQLite3/Core/SJSQLiteObjectInfo.h; sourceTree = "<group>"; };
 		1DEFCCFAED7B83BC5D0977C4B32990EE /* SJFilmEditingResultShareItem.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = SJFilmEditingResultShareItem.h; path = SJVideoPlayer/ControlLayers/SJFilmEditingControlLayer/Core/Model/SJFilmEditingResultShareItem.h; sourceTree = "<group>"; };
 		1E1AFEB89AA4C411D0784C58EADC51D7 /* MCSResourceResponse.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MCSResourceResponse.m; sourceTree = "<group>"; };
-		1E2BD32940B3297C3DDB93A9EDBE5F71 /* MCSVODMetaDataReader.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = MCSVODMetaDataReader.h; sourceTree = "<group>"; };
 		1E2CE67D4BEE81DBD2FA1EC45ABE20CD /* SJPromptDefines.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = SJPromptDefines.h; path = SJBaseVideoPlayer/Common/Interfaces/SJPromptDefines.h; sourceTree = "<group>"; };
 		1E56DAD68DDE2EF145396E4E0084E567 /* Reachability.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Reachability.release.xcconfig; sourceTree = "<group>"; };
 		1E81256FE2E553BCA8A73EBD8C3371FB /* SJViewControllerManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = SJViewControllerManager.m; path = SJBaseVideoPlayer/Common/Implements/SJViewControllerManager.m; sourceTree = "<group>"; };
@@ -772,7 +769,6 @@
 		4632A75C6C83298E2770BA5918DED489 /* SJFlipTransitionManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = SJFlipTransitionManager.m; path = SJBaseVideoPlayer/Common/Implements/SJFlipTransitionManager.m; sourceTree = "<group>"; };
 		46340AD74571E200D5824DBE93F18F12 /* SJAttributeWorker.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = SJAttributeWorker.m; path = SJUIKit/AttributesFactory/Deprecated/SJAttributeWorker.m; sourceTree = "<group>"; };
 		46E3A78E33A2D585EE0D0405036B7342 /* CocoaHTTPServer-prefix.pch */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "CocoaHTTPServer-prefix.pch"; sourceTree = "<group>"; };
-		47B102D2C7E14D2A1B5DBB705BD02DF2 /* MCSVODMetaDataReader.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MCSVODMetaDataReader.m; sourceTree = "<group>"; };
 		47DAEBD08DACAD9ADB21088A712147CE /* HTTPAuthenticationRequest.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = HTTPAuthenticationRequest.m; path = Core/HTTPAuthenticationRequest.m; sourceTree = "<group>"; };
 		48555F56D589B25E2D91322219CCE04A /* MCSHLSIndexDataReader.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = MCSHLSIndexDataReader.h; sourceTree = "<group>"; };
 		48DEC137A46434092D1D31473A43ABE7 /* MCSDownload.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MCSDownload.m; sourceTree = "<group>"; };
@@ -2075,8 +2071,6 @@
 		BF92A2486F2E5E4CB82532AE31F836AF /* VOD */ = {
 			isa = PBXGroup;
 			children = (
-				1E2BD32940B3297C3DDB93A9EDBE5F71 /* MCSVODMetaDataReader.h */,
-				47B102D2C7E14D2A1B5DBB705BD02DF2 /* MCSVODMetaDataReader.m */,
 				67FFC760B3A5FD100E6E53C290AF20D3 /* MCSVODNetworkDataReader.h */,
 				BF009B7DAD7BAE5E7DFCE26212A9C5A1 /* MCSVODNetworkDataReader.m */,
 				E3BBF0DFA87EEF101C5B59E36D7D464B /* MCSVODReader.h */,
@@ -2231,7 +2225,6 @@
 				A6C8FFC024BE1FA000C67993 /* MCSQueue.h in Headers */,
 				87D12911B9669BCFEE4CD9E150F3E781 /* MCSURLRecognizer.h in Headers */,
 				15156FA1EBCDAA940763170F422B7ED8 /* MCSUtils.h in Headers */,
-				B0F4A5BBE50D331FACB5B979E586416E /* MCSVODMetaDataReader.h in Headers */,
 				265D0909A28F4B90B3FBDE28A219FAD3 /* MCSVODNetworkDataReader.h in Headers */,
 				644CFED7135005CC2252C4824B737841 /* MCSVODPrefetcher.h in Headers */,
 				B9EA3F75FB08FCF29F8BAC13C6D0393B /* MCSVODReader.h in Headers */,
@@ -3037,7 +3030,6 @@
 				7503B5B712BB82137A3D893A89FCD01C /* MCSSessionTask.m in Sources */,
 				FD6DEF2997E36E65DE458A1C92325D34 /* MCSURLRecognizer.m in Sources */,
 				96572188ADF3230C6EF6AA56FFCB8882 /* MCSUtils.m in Sources */,
-				8C193AB554F4603DB413E318AF6880A1 /* MCSVODMetaDataReader.m in Sources */,
 				32FDE087F20456D2E5A8DB8C028C4EEE /* MCSVODNetworkDataReader.m in Sources */,
 				68DE3BA3B9357751E0C3AFE51EFD86FD /* MCSVODPrefetcher.m in Sources */,
 				93C4664D5463621483EF39BC6A7F6B1D /* MCSVODReader.m in Sources */,

@@ -16,11 +16,11 @@
 #import "MCSLogger.h"
 #import "MCSVODResource.h"
 #import "MCSResourceSubclass.h"
-#import "MCSVODMetaDataReader.h"
 #import "MCSVODNetworkDataReader.h"
 #import "MCSQueue.h"
+#import "MCSUtils.h"
 
-@interface MCSVODReader ()<MCSResourceDataReaderDelegate, MCSVODMetaDataReaderDelegate>
+@interface MCSVODReader ()<MCSResourceDataReaderDelegate>
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic) BOOL isPrepared;
 @property (nonatomic) BOOL isClosed;
@@ -34,9 +34,12 @@
 @property (nonatomic, copy, nullable) NSArray<id<MCSResourceDataReader>> *readers;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 
-@property (nonatomic, strong, nullable) MCSVODMetaDataReader *metaDataReader;
-
 @property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *readWriteContents;
+@property (nonatomic) NSRange range;
+
+#ifdef DEBUG
+@property (nonatomic) uint64_t time;
+#endif
 @end
 
 @implementation MCSVODReader
@@ -101,15 +104,12 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
+#ifdef DEBUG
+        _time = MCSTimerStart();
         MCSLog(@"%@: <%p>.prepare { name: %@, range: %@ };\n", NSStringFromClass(self.class), self, _resource.name, NSStringFromRange(_request.mcs_range));
-        
+#endif
+
         _isCalledPrepare = YES;
-        
-        if ( _resource.totalLength == 0 || _resource.pathExtension.length == 0 ) {
-            NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:_request.URL];
-            _metaDataReader = [MCSVODMetaDataReader.alloc initWithRequest:[_request mcs_requestWithRedirectURL:URL] delegate:self];
-            return;
-        }
         
         [self _prepare];
     });
@@ -137,7 +137,7 @@
             currentReader != _readers.lastObject ? [self _prepareNextReader] : [self _close];
 #ifdef DEBUG
             if ( currentReader == _readers.lastObject ) {
-                MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
+                MCSLog(@"%@: <%p>.done { range: %@, after (%lf) seconds };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range), MCSTimerMilePost(_time));
             }
 #endif
         }
@@ -221,9 +221,7 @@
 #pragma mark -
 
 - (void)_prepare {
-    NSUInteger totalLength = _resource.totalLength;
-    NSAssert(totalLength != 0, @"`_resource.totalLength`不能为`0`!");
-     
+    NSUInteger totalLength = _resource.totalLength ?: NSUIntegerMax;
     // `length`经常变动, 暂时这里排序吧
     __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
         if ( obj1.offset == obj2.offset )
@@ -252,8 +250,8 @@
         current.length = totalLength - current.location;
     }
     
-    _response = [MCSResourceResponse.alloc initWithServer:_resource.server contentType:_resource.contentType totalLength:totalLength contentRange:current];
-
+    _range = current;
+    
     NSMutableArray<id<MCSResourceDataReader>> *readers = NSMutableArray.array;
     NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:_request.URL];
     for ( MCSResourcePartialContent *content in contents ) {
@@ -291,7 +289,6 @@
         [readers addObject:reader];
     }
     
-    _metaDataReader = nil;
     _readers = readers.copy;
      
     MCSLog(@"%@: <%p>.createSubreaders { range: %@, count: %lu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range), (unsigned long)_readers.count);
@@ -334,24 +331,6 @@
     MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
 }
 
-#pragma mark - MCSVODMetaDataReaderDelegate
-
-- (void)metaDataReader:(MCSVODMetaDataReader *)reader didCompleteWithError:(NSError *_Nullable)error {
-    dispatch_barrier_sync(MCSReaderQueue(), ^{
-        if ( _isClosed )
-            return;
-        
-        if ( error ) {
-            [self _onError:error];
-            return;
-        }
-        
-        [_resource updateServer:reader.server contentType:reader.contentType totalLength:reader.totalLength pathExtension:reader.pathExtension];
-        
-        [self _prepare];
-    });
-}
-
 #pragma mark - MCSResourceDataReaderDelegate
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
@@ -359,6 +338,7 @@
         return;
     
     dispatch_barrier_sync(MCSReaderQueue(), ^{
+        _response = [MCSResourceResponse.alloc initWithServer:_resource.server contentType:_resource.contentType totalLength:_resource.totalLength contentRange:_range];
         _isPrepared = YES;
     });
     

@@ -54,4 +54,16 @@ MCSNSRangeContains(NSRange main, NSRange sub);
 
 FOUNDATION_EXPORT NSString *_Nullable
 MCSSuggestedFilePathExtension(NSHTTPURLResponse *response);
+
+#ifdef DEBUG
+FOUNDATION_EXPORT uint64_t
+MCSTimerStart(void);
+
+FOUNDATION_EXPORT NSTimeInterval
+MCSTimerMilePost(uint64_t elapsed_time);
+#else
+#define MCSTimerStart()
+#define MCSTimerMilePost(...)
+#endif
+
 NS_ASSUME_NONNULL_END
