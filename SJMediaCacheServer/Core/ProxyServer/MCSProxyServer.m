@@ -152,7 +152,7 @@
 - (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig {
     self = [super initWithAsyncSocket:newSocket configuration:aConfig];
     if ( self ) {
-        MCSLog(@"\n%@: <%p>.init;\n", NSStringFromClass(self.class), self);
+        MCSHTTPConnectionLog(@"\n%@: <%p>.init;\n", NSStringFromClass(self.class), self);
     }
     return self;
 }
@@ -160,7 +160,7 @@
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
     MCSHTTPResponse *response = [MCSHTTPResponse.alloc initWithConnection:self];
     
-    MCSLog(@"%@: <%p>.response { URL: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, method, response.request.URL, NSStringFromRange(response.request.mcs_range));
+    MCSHTTPConnectionLog(@"%@: <%p>.response { URL: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, method, response.request.URL, NSStringFromRange(response.request.mcs_range));
     
     [response prepareForReadingData];
     return response;
@@ -177,21 +177,21 @@
 - (void)finishResponse {
     [super finishResponse];
     
-    MCSLog(@"%@: <%p>.finishResponse;\n", NSStringFromClass(self.class), self);
+    MCSHTTPConnectionLog(@"%@: <%p>.finishResponse;\n", NSStringFromClass(self.class), self);
 }
 
 - (void)die {
     [super die];
-    MCSLog(@"%@: <%p>.die;\n", NSStringFromClass(self.class), self);
+    MCSHTTPConnectionLog(@"%@: <%p>.die;\n", NSStringFromClass(self.class), self);
 }
 
 - (void)dealloc {
-    MCSLog(@"%@: <%p>.dealloc;\n\n", NSStringFromClass(self.class), self);
+    MCSHTTPConnectionLog(@"%@: <%p>.dealloc;\n\n", NSStringFromClass(self.class), self);
 }
 
 - (void)responseDidAbort:(NSObject<HTTPResponse> *)sender {
     [super responseDidAbort:sender];
-    MCSLog(@"%@: <%p>.abort;\n", NSStringFromClass(self.class), self);
+    MCSHTTPConnectionLog(@"%@: <%p>.abort;\n", NSStringFromClass(self.class), self);
 }
 @end
 

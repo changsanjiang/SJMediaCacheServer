@@ -66,7 +66,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
+        MCSDataReaderLog(@"%@: <%p>.prepare { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
         
         _isCalledPrepare = YES;
         
@@ -95,14 +95,14 @@
             if ( readLength == 0 )
                 return;
             
-            MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
+            MCSDataReaderLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
 
             _readLength += readLength;
             _isDone = (_readLength == _range.length);
             
 #ifdef DEBUG
             if ( _isDone ) {
-                MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
+                MCSDataReaderLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
             }
 #endif
         } @catch (NSException *exception) {
@@ -259,7 +259,7 @@
         _reader = nil;
         _isClosed = YES;
         
-        MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
+        MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (__unused NSException *exception) {
         
     }

@@ -118,11 +118,6 @@
     {
       "name": "SQLite3",
       "source_files": "SJUIKit/SQLite3/*.{h,m}",
-      "dependencies": {
-        "YYModel": [
-
-        ]
-      },
       "subspecs": [
         {
           "name": "Protocol",

@@ -8,16 +8,16 @@ PODS:
   - CocoaLumberjack/Core (3.6.1)
   - Masonry (1.1.0)
   - Reachability (3.2)
-  - SJBaseVideoPlayer (3.3.5):
+  - SJBaseVideoPlayer (3.3.6):
     - Masonry
     - Reachability
-    - SJBaseVideoPlayer/AVPlayer (= 3.3.5)
-    - SJBaseVideoPlayer/Common (= 3.3.5)
+    - SJBaseVideoPlayer/AVPlayer (= 3.3.6)
+    - SJBaseVideoPlayer/Common (= 3.3.6)
     - SJUIKit/AttributesFactory (>= 0.0.0.38)
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJBaseVideoPlayer/AVPlayer (3.3.5):
+  - SJBaseVideoPlayer/AVPlayer (3.3.6):
     - Masonry
     - Reachability
     - SJBaseVideoPlayer/Common
@@ -25,7 +25,7 @@ PODS:
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJBaseVideoPlayer/Common (3.3.5):
+  - SJBaseVideoPlayer/Common (3.3.6):
     - Masonry
     - Reachability
     - SJBaseVideoPlayer/ResourceLoader
@@ -33,18 +33,18 @@ PODS:
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJBaseVideoPlayer/ResourceLoader (3.3.5):
+  - SJBaseVideoPlayer/ResourceLoader (3.3.6):
     - Masonry
     - Reachability
     - SJUIKit/AttributesFactory (>= 0.0.0.38)
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJMediaCacheServer (1.1.2):
+  - SJMediaCacheServer (1.1.5):
     - CocoaHTTPServer
-    - SJMediaCacheServer/Core (= 1.1.2)
+    - SJMediaCacheServer/Core (= 1.1.5)
     - SJUIKit/SQLite3
-  - SJMediaCacheServer/Core (1.1.2):
+  - SJMediaCacheServer/Core (1.1.5):
     - CocoaHTTPServer
     - SJUIKit/SQLite3
   - SJUIKit/AttributesFactory (0.0.0.48):
@@ -57,12 +57,9 @@ PODS:
   - SJUIKit/SQLite3 (0.0.0.48):
     - SJUIKit/SQLite3/Core (= 0.0.0.48)
     - SJUIKit/SQLite3/Protocol (= 0.0.0.48)
-    - YYModel
   - SJUIKit/SQLite3/Core (0.0.0.48):
     - SJUIKit/SQLite3/Protocol
-    - YYModel
-  - SJUIKit/SQLite3/Protocol (0.0.0.48):
-    - YYModel
+  - SJUIKit/SQLite3/Protocol (0.0.0.48)
   - SJVideoPlayer (3.2.6):
     - SJBaseVideoPlayer (>= 3.3.3)
     - SJVideoPlayer/Common (= 3.2.6)
@@ -82,8 +79,9 @@ PODS:
 
 DEPENDENCIES:
   - SJMediaCacheServer (from `../`)
-  - SJUIKit/SQLite3 (from `https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec`)
+  - SJUIKit/SQLite3 (from `https://gitee.com/changsanjiang/SJUIKit.git`)
   - SJVideoPlayer
+  - YYModel
 
 SPEC REPOS:
   trunk:
@@ -100,7 +98,12 @@ EXTERNAL SOURCES:
   SJMediaCacheServer:
     :path: "../"
   SJUIKit:
-    :podspec: https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec
+    :git: https://gitee.com/changsanjiang/SJUIKit.git
+
+CHECKOUT OPTIONS:
+  SJUIKit:
+    :commit: 50c60f4d6ed73a33884cd3b7f7abe951a9f9424c
+    :git: https://gitee.com/changsanjiang/SJUIKit.git
 
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 694058e7c0ed05a9e217d1b3c7ded962f4180845
@@ -108,12 +111,12 @@ SPEC CHECKSUMS:
   CocoaLumberjack: b17ae15142558d08bbacf69775fa10c4abbebcc9
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
-  SJBaseVideoPlayer: ebe3f08587d1af6c98cd450ecea73b89ba68d9f8
-  SJMediaCacheServer: 6d7150891db453be0bc3c2e253e0f87d412c350c
-  SJUIKit: dd52a4c3879610d9382e5a26b01cb56bcf25e205
+  SJBaseVideoPlayer: d51e031dce27bdc72eb62c452b0a28ba45e4c86c
+  SJMediaCacheServer: 9a5db126915a94c4ec308d5c4d83808a9816b9e5
+  SJUIKit: fc4b3a3e54bea1d8d9b982df5110a0d9ded27a12
   SJVideoPlayer: fb53250dbf0ad2f95c963e9a42efb2057b9e9f27
   YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30
 
-PODFILE CHECKSUM: 95dee248f06d3812045ce8588db03683d14e11c8
+PODFILE CHECKSUM: 3f21ad421cdcb395a390531f63b71c7d1463573a
 
 COCOAPODS: 1.9.3

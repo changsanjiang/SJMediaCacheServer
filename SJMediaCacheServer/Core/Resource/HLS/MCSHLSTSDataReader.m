@@ -63,7 +63,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+        MCSDataReaderLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
 
         _isCalledPrepare = YES;
         
@@ -75,7 +75,7 @@
             return;
         }
         
-        MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+        MCSDataReaderLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
         // download the content
         _task = [MCSDownload.shared downloadWithRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSTs]] priority:_networkTaskPriority delegate:self];
@@ -102,7 +102,7 @@
                 NSUInteger length = MIN(lengthParam, _availableLength - _offset);
                 if ( length > 0 ) {
                     data = [_reader readDataOfLength:length];
-                    MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
+                    MCSDataReaderLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_offset, (unsigned long)data.length);
                     _offset += data.length;
                     _isDone = (_offset == _response.totalLength);
                 }
@@ -110,7 +110,7 @@
             
 #ifdef DEBUG
             if ( _isDone ) {
-                MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+                MCSDataReaderLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
             }
 #endif
         } @catch (NSException *exception) {
@@ -296,7 +296,7 @@
         [_content readWrite_release];
         _isClosed = YES;
         
-        MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
+        MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (__unused NSException *exception) {
         
     }

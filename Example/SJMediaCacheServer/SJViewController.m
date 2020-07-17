@@ -29,7 +29,7 @@
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownload;
     
 #pragma mark -
     

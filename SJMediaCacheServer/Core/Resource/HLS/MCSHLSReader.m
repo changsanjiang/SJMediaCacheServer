@@ -48,7 +48,7 @@
     [_resource readWrite_release];
     [MCSResourceManager.shared reader:self didEndReadResource:_resource];
     if ( !_isClosed ) [self _close];
-    MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
+    MCSResourceReaderLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
 - (void)didRemoveResource:(NSNotification *)note {
@@ -78,7 +78,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { name: %@, URL: %@ };\n", NSStringFromClass(self.class), self, _resource.name, _request.URL);
+        MCSResourceReaderLog(@"%@: <%p>.prepare { name: %@, URL: %@ };\n", NSStringFromClass(self.class), self, _resource.name, _request.URL);
 
         NSParameterAssert(_resource);
         
@@ -130,7 +130,7 @@
         
 #ifdef DEBUG
         if ( _reader.isDone ) {
-            MCSLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+            MCSResourceReaderLog(@"%@: <%p>.done { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         }
 #endif
     });
@@ -187,7 +187,7 @@
      
     _isClosed = YES;
     
-    MCSLog(@"%@: <%p>.close { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+    MCSResourceReaderLog(@"%@: <%p>.close { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
 }
 
 #pragma mark -
@@ -218,7 +218,7 @@
     if ( _isClosed )
         return;
     [self _close];
-    MCSLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
+    MCSResourceReaderLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
     
     dispatch_async(MCSDelegateQueue(), ^{
         [self->_delegate reader:self anErrorOccurred:error];

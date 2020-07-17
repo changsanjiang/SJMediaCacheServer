@@ -147,6 +147,15 @@
 - (BOOL)isEnabledConsoleLog {
     return MCSLogger.shared.enabledConsoleLog;
 }
+
+- (void)setLogOptions:(MCSLogOptions)logOptions {
+    MCSLogger.shared.options = logOptions;
+}
+
+- (MCSLogOptions)logOptions {
+    return MCSLogger.shared.options;
+}
+
 @end
 
 @implementation SJMediaCacheServer (Cache)

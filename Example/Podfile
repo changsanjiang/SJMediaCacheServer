@@ -35,7 +35,10 @@ target 'SJMediaCacheServer_Example' do
   pod 'SJVideoPlayer'
    
 #  pod 'SJBaseVideoPlayer/AliPlayer'
-  pod 'SJUIKit/SQLite3', :podspec => 'https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec'
+#  pod 'SJUIKit/SQLite3', :podspec => 'https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec'
   
+  pod 'SJUIKit/SQLite3', :git => 'https://gitee.com/changsanjiang/SJUIKit.git'
+  
+  pod 'YYModel'
 #  pod 'KTVHTTPCache'
 end

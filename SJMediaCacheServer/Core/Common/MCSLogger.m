@@ -7,6 +7,7 @@
 //
 
 #import "MCSLogger.h"
+#import <SJUIKit/SJSQLite3Logger.h>
 #import <stdarg.h>
 
 @implementation MCSLogger
@@ -17,13 +18,26 @@
         instance = [[self alloc] init];
     });
     return instance;
-} 
+}
 
-- (void)addLog:(NSString *)format, ... {
+- (instancetype)init {
+    self = [super init];
+    if ( self ) {
+        _options = MCSLogOptionDefault;
+    }
+    return self;
+}
+
+- (void)setOptions:(MCSLogOptions)options {
+    _options = options;
+    SJSQLite3Logger.shared.enabledConsoleLog = options & MCSLogOptionSQLite;
+}
+
+- (void)option:(MCSLogOptions)option addLog:(NSString *)format, ... NS_FORMAT_FUNCTION(2,3) {
     if ( format == nil )
         return;
-
-    if ( _enabledConsoleLog ) {
+    
+    if ( _enabledConsoleLog && (option & _options) ) {
         va_list ap;
         va_start(ap, format);
         NSString *string = [NSString.alloc initWithFormat:format arguments:ap];

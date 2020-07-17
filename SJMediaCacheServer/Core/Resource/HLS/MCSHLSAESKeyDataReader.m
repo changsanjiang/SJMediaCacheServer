@@ -52,7 +52,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+        MCSDataReaderLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
         _isCalledPrepare = YES;
         
@@ -65,7 +65,7 @@
             return;
         }
         
-        MCSLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+        MCSDataReaderLog(@"%@: <%p>.request { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
         
         // download the content
         
@@ -189,7 +189,7 @@
     [_reader close];
     _isClosed = YES;
     
-    MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
+    MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
 
 @end

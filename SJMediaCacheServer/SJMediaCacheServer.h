@@ -130,6 +130,12 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic, getter=isEnabledConsoleLog) BOOL enabledConsoleLog; // 是否开启控制日志
 
+/// Set more options to output more detailed log.
+///
+///     The default value is MCSLogOptionDefault.
+///
+@property (nonatomic) MCSLogOptions logOptions; // 设置日志选项, 以提供更加详细的日志
+
 @end
 
 

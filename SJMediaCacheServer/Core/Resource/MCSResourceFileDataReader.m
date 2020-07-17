@@ -60,7 +60,7 @@
             
             _isCalledPrepare = YES;
             
-            MCSLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
+            MCSDataReaderLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
             
             _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
             
@@ -106,9 +106,9 @@
             _isDone = (_readLength == _readRange.length);
             
 #ifdef DEBUG
-            MCSLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
+            MCSDataReaderLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
             if ( _isDone ) {
-                MCSLog(@"%@: <%p>.done { range: %@ , file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
+                MCSDataReaderLog(@"%@: <%p>.done { range: %@ , file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
             }
 #endif
         } @catch (NSException *exception) {
@@ -190,7 +190,7 @@
         _reader = nil;
         _isClosed = YES;
         
-        MCSLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
+        MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (__unused NSException *exception) {
         
     }

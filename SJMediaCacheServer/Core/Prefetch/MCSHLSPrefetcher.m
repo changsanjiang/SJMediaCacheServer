@@ -50,7 +50,7 @@
 }
 
 - (void)dealloc {
-    MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
+    MCSPrefetcherLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
 - (void)prepare {
@@ -58,7 +58,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
 
-        MCSLog(@"%@: <%p>.prepare { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
+        MCSPrefetcherLog(@"%@: <%p>.prepare { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
         
         _isCalledPrepare = YES;
         _resource = [MCSResourceManager.shared resourceWithURL:_URL];
@@ -119,7 +119,7 @@
             if ( progress >= 1 ) progress = 1;
             _progress = progress;
             
-            MCSLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, _progress);
+            MCSPrefetcherLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, _progress);
             
             if ( _delegate != nil ) {
                 dispatch_async(_delegateQueue, ^{
@@ -169,9 +169,9 @@
     
 #ifdef DEBUG
     if ( _isDone )
-        MCSLog(@"%@: <%p>.done { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
+        MCSPrefetcherLog(@"%@: <%p>.done { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
     else
-        MCSLog(@"%@: <%p>.error { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
+        MCSPrefetcherLog(@"%@: <%p>.error { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
 #endif
     
     [self _close];
@@ -191,6 +191,6 @@
     
     _isClosed = YES;
 
-    MCSLog(@"%@: <%p>.close { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
+    MCSPrefetcherLog(@"%@: <%p>.close { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
 }
 @end

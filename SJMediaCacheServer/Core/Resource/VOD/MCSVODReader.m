@@ -70,7 +70,7 @@
     [_resource readWrite_release];
     [MCSResourceManager.shared reader:self didEndReadResource:_resource];
     if ( !_isClosed ) [self _close];
-    MCSLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
+    MCSResourceReaderLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
 - (NSString *)description {
@@ -106,7 +106,7 @@
         
 #ifdef DEBUG
         _time = MCSTimerStart();
-        MCSLog(@"%@: <%p>.prepare { name: %@, range: %@ };\n", NSStringFromClass(self.class), self, _resource.name, NSStringFromRange(_request.mcs_range));
+        MCSResourceReaderLog(@"%@: <%p>.prepare { name: %@, range: %@ };\n", NSStringFromClass(self.class), self, _resource.name, NSStringFromRange(_request.mcs_range));
 #endif
 
         _isCalledPrepare = YES;
@@ -137,7 +137,7 @@
             currentReader != _readers.lastObject ? [self _prepareNextReader] : [self _close];
 #ifdef DEBUG
             if ( currentReader == _readers.lastObject ) {
-                MCSLog(@"%@: <%p>.done { range: %@, after (%lf) seconds };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range), MCSTimerMilePost(_time));
+                MCSResourceReaderLog(@"%@: <%p>.done { range: %@, after (%lf) seconds };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range), MCSTimerMilePost(_time));
             }
 #endif
         }
@@ -291,7 +291,7 @@
     
     _readers = readers.copy;
      
-    MCSLog(@"%@: <%p>.createSubreaders { range: %@, count: %lu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range), (unsigned long)_readers.count);
+    MCSResourceReaderLog(@"%@: <%p>.createSubreaders { range: %@, count: %lu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range), (unsigned long)_readers.count);
 
     [self _prepareNextReader];
 }
@@ -328,7 +328,7 @@
     }
      
     _isClosed = YES;
-    MCSLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
+    MCSResourceReaderLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
 }
 
 #pragma mark - MCSResourceDataReaderDelegate
@@ -361,7 +361,7 @@
     
     [self _close];
     
-    MCSLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
+    MCSResourceReaderLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
     
     dispatch_async(MCSDelegateQueue(), ^{
         [self->_delegate reader:self anErrorOccurred:error];

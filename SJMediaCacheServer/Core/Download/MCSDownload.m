@@ -10,6 +10,7 @@
 #import "MCSError.h"
 #import "MCSUtils.h"
 #import "MCSQueue.h"
+#import "MCSLogger.h"
 
 @interface MCSDownload () <NSURLSessionDataDelegate>
 @property (nonatomic, strong) NSURLSession *session;
@@ -18,9 +19,11 @@
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSError *> *errorDictionary;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, id<MCSDownloadTaskDelegate>> *delegateDictionary;
 @property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
+@property (nonatomic) NSInteger taskCount;
 @end
 
 @implementation MCSDownload
+@synthesize taskCount = _taskCount;
 + (instancetype)shared {
     static MCSDownload *obj = nil;
     static dispatch_once_t onceToken;
@@ -60,6 +63,7 @@
 
 - (void)cancelAllDownloadTasks {
     dispatch_barrier_sync(MCSDownloadQueue(), ^{
+        _taskCount = 0;
         [_session invalidateAndCancel];
         _session = [NSURLSession sessionWithConfiguration:_sessionConfiguration delegate:self delegateQueue:_sessionDelegateQueue];
     });
@@ -74,6 +78,10 @@
     task.priority = priority;
     [self _setDelegate:delegate forTask:task];
     [task resume];
+    
+    self.taskCount += 1;
+    MCSDownloadLog(@"\nTask:<%lu>.resume, Tasks: %ld. \n", (unsigned long)task.taskIdentifier, self.taskCount);
+    
     return task;
 }
 
@@ -84,6 +92,8 @@
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(NSHTTPURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
+    MCSDownloadLog(@"Task:<%lu>.response, Tasks: %ld. \n", (unsigned long)task.taskIdentifier, self.taskCount);
+
     NSError *error = nil;
     if ( response.statusCode > 400 || response.statusCode < 200 ) {
         error = [NSError mcs_responseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
@@ -121,6 +131,8 @@
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)dataParam {
+    MCSDownloadLog(@"Task:<%lu>:%lld\t", (unsigned long)dataTask.taskIdentifier, dataTask.countOfBytesReceived);
+    
     __auto_type delegate = [self _delegateForTask:dataTask];
     NSData *data = dataParam;
     if ( _dataEncoder != nil )
@@ -129,7 +141,9 @@
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)errorParam {
+    self.taskCount -= 1;
     NSError *error = [self _errorForTask:task] ?: errorParam;
+    MCSDownloadLog(@"\nTask:<%lu>.complete, error: %@, Tasks: %ld. \n", (unsigned long)task.taskIdentifier, error, self.taskCount);
     
     __auto_type delegate = [self _delegateForTask:task];
     [delegate downloadTask:task didCompleteWithError:error];
@@ -187,6 +201,20 @@
 }
 
 #pragma mark -
+
+- (void)setTaskCount:(NSInteger)taskCount {
+    dispatch_barrier_sync(MCSDownloadQueue(), ^{
+        _taskCount = taskCount;
+    });
+}
+
+- (NSInteger)taskCount {
+    __block NSInteger taskCount = 0;
+    dispatch_sync(MCSDownloadQueue(), ^{
+        taskCount = _taskCount;
+    });
+    return taskCount;
+}
 
 - (void)_setDelegate:(nullable id<MCSDownloadTaskDelegate>)delegate forTask:(NSURLSessionTask *)task {
     dispatch_barrier_sync(MCSDownloadQueue(), ^{
