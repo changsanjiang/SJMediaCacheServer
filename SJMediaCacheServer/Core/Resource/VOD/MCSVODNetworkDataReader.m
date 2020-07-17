@@ -95,11 +95,12 @@
             if ( readLength == 0 )
                 return;
             
+            MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
+
             _readLength += readLength;
             _isDone = (_readLength == _range.length);
             
 #ifdef DEBUG
-            MCSLog(@"%@: <%p>.read { offset: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location), (unsigned long)readLength);
             if ( _isDone ) {
                 MCSLog(@"%@: <%p>.done { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range));
             }
