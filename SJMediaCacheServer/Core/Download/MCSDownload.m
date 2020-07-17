@@ -85,7 +85,7 @@
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(NSHTTPURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     NSError *error = nil;
-    if ( response.statusCode > 400 ) {
+    if ( response.statusCode > 400 || response.statusCode < 200 ) {
         error = [NSError mcs_responseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
     }
     
