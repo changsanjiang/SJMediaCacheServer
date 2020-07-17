@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *_name;
 }
 
+- (instancetype)initWithName:(NSString *)name;
+
 @property (nonatomic, readonly) MCSResourceType type;
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
@@ -29,6 +31,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isCacheFinished;
 
 - (nullable NSURL *)playbackURLForCacheWithURL:(NSURL *)URL;
+
+- (void)prepareForReader;
+
 @end
 
 NS_ASSUME_NONNULL_END

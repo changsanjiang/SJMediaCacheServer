@@ -241,8 +241,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             
             // create
             if ( r == nil ) {
-                r = [cls.alloc init];
-                r.name = name;
+                r = [cls.alloc initWithName:name];
                 [self _update:r]; // save resource
                 r.log = [MCSResourceUsageLog.alloc initWithResource:r];
                 [self _update:r]; // save log
@@ -253,7 +252,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             [MCSFileManager checkoutResourceWithName:name error:NULL];
             
             // contents
-            [r addContents:[MCSFileManager getContentsInResource:name]];
+            [r prepareForReader];
             _resources[name] = r;
         }
         resource  = _resources[name];

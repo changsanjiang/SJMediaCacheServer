@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark -
 
 @property (nonatomic, copy, readonly, nullable) NSArray<MCSResourcePartialContent *> *contents;
-- (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents;
+- (void)addContents:(nullable NSArray<MCSResourcePartialContent *> *)contents;
 - (void)addContent:(MCSResourcePartialContent *)content;
 - (void)removeContent:(MCSResourcePartialContent *)content;
 - (void)removeContents:(NSArray<MCSResourcePartialContent *> *)contents;

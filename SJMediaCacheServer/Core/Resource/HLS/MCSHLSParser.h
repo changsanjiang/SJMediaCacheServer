@@ -12,6 +12,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSHLSParser : NSObject
++ (nullable instancetype)parserInResourceIfExists:(NSString *)resourceName;
+
 - (instancetype)initWithResource:(NSString *)resourceName request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSHLSParserDelegate>)delegate;
 
 - (void)prepare;

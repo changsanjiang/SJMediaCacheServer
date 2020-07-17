@@ -23,9 +23,10 @@
 
 @implementation MCSResource
 
-- (instancetype)init {
+- (instancetype)initWithName:(NSString *)name {
     self = [super init];
     if ( self ) {
+        _name = name;
         _configuration = MCSConfiguration.alloc.init;
         _m = NSMutableArray.array;
     }
@@ -52,6 +53,12 @@
 
 - (void)partialContent:(MCSResourcePartialContent *)content didWriteDataWithLength:(NSUInteger)length {
     [MCSResourceManager.shared didWriteDataForResource:self length:length];
+}
+
+- (void)prepareForReader {
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+      reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
+    userInfo:nil];
 }
 
 #pragma mark -

@@ -42,6 +42,10 @@
     return playbackURLForCache;
 }
 
+- (void)prepareForReader {
+    [self addContents:[MCSFileManager getContentsInResource:_name]];
+}
+
 #pragma mark -
 
 - (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {

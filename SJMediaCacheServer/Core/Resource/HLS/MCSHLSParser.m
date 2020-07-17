@@ -35,8 +35,22 @@
 @end
 
 @implementation MCSHLSParser
+
++ (nullable instancetype)parserInResourceIfExists:(NSString *)resourceName {
+    NSParameterAssert(resourceName);
+    NSString *indexFilePath = [MCSFileManager hls_indexFilePathInResource:resourceName];
+    // 已解析过, 将直接读取本地
+    if ( [MCSFileManager fileExistsAtPath:indexFilePath] ) {
+        MCSHLSParser *parser = MCSHLSParser.alloc.init;
+        parser->_resourceName = resourceName;
+        [parser _finished];
+        return parser;
+    }
+    return nil;
+}
+
 - (instancetype)initWithResource:(NSString *)resourceName request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSHLSParserDelegate>)delegate {
-    self = [super init];
+    self = [self init];
     if ( self ) {
         NSParameterAssert(resourceName);
         
@@ -44,6 +58,13 @@
         _resourceName = resourceName;
         _request = request;
         _delegate = delegate;
+    }
+    return self;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if ( self ) {
         _queue = dispatch_get_global_queue(0, 0);
     }
     return self;

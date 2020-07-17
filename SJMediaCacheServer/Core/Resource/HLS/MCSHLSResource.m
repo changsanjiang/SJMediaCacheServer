@@ -31,6 +31,14 @@
     return [MCSURLRecognizer.shared proxyURLWithURL:URL];
 }
 
+- (void)prepareForReader {
+#ifdef DEBUG
+    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
+#endif
+    self.parser = [MCSHLSParser parserInResourceIfExists:_name];
+    [self addContents:[MCSFileManager getContentsInResource:_name]];
+}
+
 @synthesize parser = _parser;
 - (void)setParser:(MCSHLSParser *)parser {
     dispatch_barrier_sync(MCSResourceQueue(), ^{
