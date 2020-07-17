@@ -23,12 +23,19 @@
 
 @implementation MCSResource
 
-- (instancetype)initWithName:(NSString *)name {
+- (instancetype)init {
     self = [super init];
     if ( self ) {
-        _name = name;
         _configuration = MCSConfiguration.alloc.init;
         _m = NSMutableArray.array;
+    }
+    return self;
+}
+
+- (instancetype)initWithName:(NSString *)name {
+    self = [self init];
+    if ( self ) {
+        _name = name;
     }
     return self;
 } 
