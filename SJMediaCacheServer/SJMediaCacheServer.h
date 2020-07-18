@@ -134,7 +134,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 ///     The default value is MCSLogOptionDefault.
 ///
-@property (nonatomic) MCSLogOptions logOptions; // 设置日志选项, 以提供更加详细的日志
+@property (nonatomic) MCSLogOptions logOptions; // 设置日志选项, 以提供更加详细的日志.
 
 @end
 

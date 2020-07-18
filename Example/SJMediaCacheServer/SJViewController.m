@@ -29,14 +29,14 @@
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownload;
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionResourceReader | MCSLogOptionDataReader | MCSLogOptionHTTPConnection;
     
 #pragma mark -
     
     NSString *url = nil;
     
     url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
-    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+//    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     
     NSURL *URL = [NSURL URLWithString:url];
 
@@ -53,21 +53,21 @@
     URL = [NSURL URLWithString:url];
 
     // 预加载
-    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:1 * 1024 * 1024 progress:^(float progress) {
-
-        // progress ...
-
-    } completed:^(NSError * _Nullable error) {
-
-        // complete ...
-
-        if ( error != nil ) {
-            NSLog(@"error: %@", error);
-        }
-        else {
-            NSLog(@"done");
-        }
-    }];
+//    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:1 * 1024 * 1024 progress:^(float progress) {
+//
+//        // progress ...
+//
+//    } completed:^(NSError * _Nullable error) {
+//
+//        // complete ...
+//
+//        if ( error != nil ) {
+//            NSLog(@"error: %@", error);
+//        }
+//        else {
+//            NSLog(@"done");
+//        }
+//    }];
 }
 
 - (void)_setupViews {

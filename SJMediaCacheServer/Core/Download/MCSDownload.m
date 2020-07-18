@@ -206,6 +206,7 @@
 #pragma mark -
 
 - (void)setTaskCount:(NSInteger)taskCount {
+    if ( taskCount < 0 ) return;
     dispatch_barrier_sync(MCSDownloadQueue(), ^{
         _taskCount = taskCount;
     });

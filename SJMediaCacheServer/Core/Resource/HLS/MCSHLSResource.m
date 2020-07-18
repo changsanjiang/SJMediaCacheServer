@@ -32,10 +32,9 @@
 }
 
 - (void)prepareForReader {
-#ifdef DEBUG
-    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-#endif
-    self.parser = [MCSHLSParser parserInResourceIfExists:_name];
+    dispatch_barrier_sync(MCSResourceQueue(), ^{
+        _parser = [MCSHLSParser parserInResourceIfExists:_name];
+    });
     [self addContents:[MCSFileManager getContentsInResource:_name]];
 }
 

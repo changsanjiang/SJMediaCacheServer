@@ -199,8 +199,10 @@
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
     dispatch_barrier_sync(MCSVODNetworkDataReaderQueue(), ^{
         @try {
-            if ( _isClosed )
+            if ( _isClosed ) {
+                [task cancel];
                 return;
+            }
             
             if ( _resource == nil ) {
                 [self _close];

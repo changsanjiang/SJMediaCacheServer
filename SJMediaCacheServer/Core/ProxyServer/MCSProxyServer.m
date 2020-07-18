@@ -259,8 +259,8 @@
 - (void)task:(id<MCSSessionTask>)task anErrorOccurred:(NSError *)error {
     [_connection responseDidAbort:self];
 }
-//
-//- (BOOL)isChunked {
-//    return YES;
-//}
+
+- (BOOL)isChunked {
+    return YES;
+}
 @end
