@@ -47,19 +47,22 @@ PODS:
   - SJMediaCacheServer/Core (1.1.5):
     - CocoaHTTPServer
     - SJUIKit/SQLite3
-  - SJUIKit/AttributesFactory (0.0.0.48):
-    - SJUIKit/AttributesFactory/Deprecated (= 0.0.0.48)
-    - SJUIKit/AttributesFactory/UIKitText (= 0.0.0.48)
-  - SJUIKit/AttributesFactory/Deprecated (0.0.0.48)
-  - SJUIKit/AttributesFactory/UIKitText (0.0.0.48)
-  - SJUIKit/ObserverHelper (0.0.0.48)
-  - SJUIKit/Queues (0.0.0.48)
-  - SJUIKit/SQLite3 (0.0.0.48):
-    - SJUIKit/SQLite3/Core (= 0.0.0.48)
-    - SJUIKit/SQLite3/Protocol (= 0.0.0.48)
-  - SJUIKit/SQLite3/Core (0.0.0.48):
+  - SJUIKit/AttributesFactory (0.0.0.49):
+    - SJUIKit/AttributesFactory/Deprecated (= 0.0.0.49)
+    - SJUIKit/AttributesFactory/UIKitText (= 0.0.0.49)
+  - SJUIKit/AttributesFactory/Deprecated (0.0.0.49)
+  - SJUIKit/AttributesFactory/UIKitText (0.0.0.49)
+  - SJUIKit/ObserverHelper (0.0.0.49)
+  - SJUIKit/Queues (0.0.0.49)
+  - SJUIKit/SQLite3 (0.0.0.49):
+    - SJUIKit/SQLite3/Core (= 0.0.0.49)
+    - SJUIKit/SQLite3/Protocol (= 0.0.0.49)
+    - YYModel
+  - SJUIKit/SQLite3/Core (0.0.0.49):
     - SJUIKit/SQLite3/Protocol
-  - SJUIKit/SQLite3/Protocol (0.0.0.48)
+    - YYModel
+  - SJUIKit/SQLite3/Protocol (0.0.0.49):
+    - YYModel
   - SJVideoPlayer (3.2.6):
     - SJBaseVideoPlayer (>= 3.3.3)
     - SJVideoPlayer/Common (= 3.2.6)
@@ -79,7 +82,7 @@ PODS:
 
 DEPENDENCIES:
   - SJMediaCacheServer (from `../`)
-  - SJUIKit/SQLite3 (from `https://gitee.com/changsanjiang/SJUIKit.git`)
+  - SJUIKit/SQLite3 (from `https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec`)
   - SJVideoPlayer
   - YYModel
 
@@ -98,7 +101,7 @@ EXTERNAL SOURCES:
   SJMediaCacheServer:
     :path: "../"
   SJUIKit:
-    :git: https://gitee.com/changsanjiang/SJUIKit.git
+    :podspec: https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec
 
 CHECKOUT OPTIONS:
   SJUIKit:
@@ -113,10 +116,10 @@ SPEC CHECKSUMS:
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
   SJBaseVideoPlayer: d51e031dce27bdc72eb62c452b0a28ba45e4c86c
   SJMediaCacheServer: 9a5db126915a94c4ec308d5c4d83808a9816b9e5
-  SJUIKit: fc4b3a3e54bea1d8d9b982df5110a0d9ded27a12
+  SJUIKit: 5b3208e7984227254b705fdc9356be7e1b330b1e
   SJVideoPlayer: fb53250dbf0ad2f95c963e9a42efb2057b9e9f27
   YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30
 
-PODFILE CHECKSUM: 3f21ad421cdcb395a390531f63b71c7d1463573a
+PODFILE CHECKSUM: 0eadeb9ca4346131e4fe216f4c239ee985f1defb
 
 COCOAPODS: 1.9.3

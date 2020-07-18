@@ -80,7 +80,8 @@
     [task resume];
     
     self.taskCount += 1;
-    MCSDownloadLog(@"\nTask:<%lu>.resume, Tasks: %ld. \n", (unsigned long)task.taskIdentifier, self.taskCount);
+    MCSDownloadLog(@"\nTask:<%lu>.resume \n", (unsigned long)task.taskIdentifier);
+    MCSDownloadLog(@"TaskCount: %ld\n", self.taskCount);
     
     return task;
 }
@@ -92,8 +93,9 @@
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(NSHTTPURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
-    MCSDownloadLog(@"Task:<%lu>.response, Tasks: %ld. \n", (unsigned long)task.taskIdentifier, self.taskCount);
-
+    MCSDownloadLog(@"Task:<%lu>.response, statusCode: %ld. \n", (unsigned long)task.taskIdentifier, response.statusCode);
+    MCSDownloadLog(@"TaskCount: %ld\n", self.taskCount);
+    
     NSError *error = nil;
     if ( response.statusCode > 400 || response.statusCode < 200 ) {
         error = [NSError mcs_responseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
@@ -143,7 +145,8 @@
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)errorParam {
     self.taskCount -= 1;
     NSError *error = [self _errorForTask:task] ?: errorParam;
-    MCSDownloadLog(@"\nTask:<%lu>.complete, error: %@, Tasks: %ld. \n", (unsigned long)task.taskIdentifier, error, self.taskCount);
+    MCSDownloadLog(@"Task:<%lu>.complete, error: %@\n", (unsigned long)task.taskIdentifier, error);
+    MCSDownloadLog(@"TaskCount: %ld\n\n", self.taskCount);
     
     __auto_type delegate = [self _delegateForTask:task];
     [delegate downloadTask:task didCompleteWithError:error];

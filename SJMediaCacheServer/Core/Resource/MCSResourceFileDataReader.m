@@ -102,11 +102,12 @@
             if ( readLength == 0 )
                 return;
             
+            MCSDataReaderLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
+            
             _readLength += readLength;
             _isDone = (_readLength == _readRange.length);
             
 #ifdef DEBUG
-            MCSDataReaderLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
             if ( _isDone ) {
                 MCSDataReaderLog(@"%@: <%p>.done { range: %@ , file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
             }

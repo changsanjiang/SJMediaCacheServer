@@ -372,4 +372,18 @@
     NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL range:range];
     return [MCSVODNetworkDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self];
 }
+//
+//- (NSArray<NSValue *> *)_suitableRangesWithRange:(NSRange)range {
+//    NSMutableArray<NSValue *> *m = NSMutableArray.array;
+//    NSUInteger maxReadLength = 1024 * 1024;
+//    do {
+//        if ( range.length > maxReadLength ) {
+//            [m addObject:[NSValue valueWithRange:NSMakeRange(range.location + maxReadLength, range.length - maxReadLength)]];
+//            range.location += maxReadLength;
+//            range.length -= maxReadLength;
+//        }
+//    } while (range.length > maxReadLength);
+//    [m addObject:[NSValue valueWithRange:NSMakeRange(range.location + maxReadLength, range.length)]];
+//    return m;
+//}
 @end
