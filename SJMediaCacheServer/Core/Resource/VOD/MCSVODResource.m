@@ -100,74 +100,69 @@
         if ( _m.count <= 1 )
             return;
         
-        @try {
-            // 合并文件
-            NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
-            for ( MCSResourcePartialContent *content in _m ) {
-                if ( content.readWriteCount == 0 )
-                    [list addObject:content];
+        // 合并文件
+        NSMutableArray<MCSResourcePartialContent *> *list = NSMutableArray.alloc.init;
+        for ( MCSResourcePartialContent *content in _m ) {
+            if ( content.readWriteCount == 0 )
+                [list addObject:content];
+        }
+        
+        NSMutableArray<MCSResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
+        [list sortUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
+            NSRange range1 = NSMakeRange(obj1.offset, obj1.length);
+            NSRange range2 = NSMakeRange(obj2.offset, obj2.length);
+            
+            // 1 包含 2
+            if ( MCSNSRangeContains(range1, range2) ) {
+                if ( ![deleteContents containsObject:obj2] ) [deleteContents addObject:obj2];
+            }
+            // 2 包含 1
+            else if ( MCSNSRangeContains(range2, range1) ) {
+                if ( ![deleteContents containsObject:obj1] ) [deleteContents addObject:obj1];;
             }
             
-            NSMutableArray<MCSResourcePartialContent *> *deleteContents = NSMutableArray.alloc.init;
-            [list sortUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
-                NSRange range1 = NSMakeRange(obj1.offset, obj1.length);
-                NSRange range2 = NSMakeRange(obj2.offset, obj2.length);
-                
-                // 1 包含 2
-                if ( MCSNSRangeContains(range1, range2) ) {
-                    if ( ![deleteContents containsObject:obj2] ) [deleteContents addObject:obj2];
-                }
-                // 2 包含 1
-                else if ( MCSNSRangeContains(range2, range1) ) {
-                    if ( ![deleteContents containsObject:obj1] ) [deleteContents addObject:obj1];;
-                }
-                
-                return range1.location < range2.location ? NSOrderedAscending : NSOrderedDescending;
-            }];
+            return range1.location < range2.location ? NSOrderedAscending : NSOrderedDescending;
+        }];
+        
+        if ( deleteContents.count != 0 ) [list removeObjectsInArray:deleteContents];
+        
+        for ( NSInteger i = 0 ; i < list.count - 1; i += 2 ) {
+            MCSResourcePartialContent *write = list[i];
+            MCSResourcePartialContent *read  = list[i + 1];
+            NSRange readRange = NSMakeRange(0, 0);
             
-            if ( deleteContents.count != 0 ) [list removeObjectsInArray:deleteContents];
-
-            for ( NSInteger i = 0 ; i < list.count - 1; i += 2 ) {
-                MCSResourcePartialContent *write = list[i];
-                MCSResourcePartialContent *read  = list[i + 1];
-                NSRange readRange = NSMakeRange(0, 0);
-
-                NSUInteger maxA = write.offset + write.length;
-                NSUInteger maxR = read.offset + read.length;
-                if ( maxA >= read.offset && maxA < maxR ) // 有交集
-                    readRange = NSMakeRange(maxA - read.offset, maxR - maxA); // 读取read中未相交的部分
-
-                if ( readRange.length != 0 ) {
-                    NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];
-                    NSFileHandle *reader = [NSFileHandle fileHandleForReadingAtPath:[self filePathOfContent:read]];
-                    @try {
-                        [writer seekToEndOfFile];
-                        [reader seekToFileOffset:readRange.location];
-                        while (true) {
-                            @autoreleasepool {
-                                NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
-                                if ( data.length == 0 )
-                                    break;
-                                [writer writeData:data];
-                            }
+            NSUInteger maxA = write.offset + write.length;
+            NSUInteger maxR = read.offset + read.length;
+            if ( maxA >= read.offset && maxA < maxR ) // 有交集
+                readRange = NSMakeRange(maxA - read.offset, maxR - maxA); // 读取read中未相交的部分
+            
+            if ( readRange.length != 0 ) {
+                NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];
+                NSFileHandle *reader = [NSFileHandle fileHandleForReadingAtPath:[self filePathOfContent:read]];
+                @try {
+                    [writer seekToEndOfFile];
+                    [reader seekToFileOffset:readRange.location];
+                    while (true) {
+                        @autoreleasepool {
+                            NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
+                            if ( data.length == 0 )
+                                break;
+                            [writer writeData:data];
                         }
-                        [reader closeFile];
-                        [writer synchronizeFile];
-                        [writer closeFile];
-                        [write didWriteDataWithLength:readRange.length];
-                        [deleteContents addObject:read];
-                    } @catch (NSException *exception) {
-                        break;
                     }
+                    [reader closeFile];
+                    [writer synchronizeFile];
+                    [writer closeFile];
+                    [write didWriteDataWithLength:readRange.length];
+                    [deleteContents addObject:read];
+                } @catch (NSException *exception) {
+                    break;
                 }
             }
-            
-            for ( MCSResourcePartialContent *content in deleteContents ) {
-                [self removeContent:content];
-            }
-            
-        } @catch (__unused NSException *exception) {
-            
+        }
+        
+        for ( MCSResourcePartialContent *content in deleteContents ) {
+            [self removeContent:content];
         }
     });
 }

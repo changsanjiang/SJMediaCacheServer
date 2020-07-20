@@ -29,7 +29,7 @@
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionSessionTask;
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownload;
     
 #pragma mark -
     
@@ -44,7 +44,7 @@
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
 
     // play
-    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:20];
+    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:50];
     
 #pragma mark -
     

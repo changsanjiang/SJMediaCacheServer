@@ -172,16 +172,26 @@
     dispatch_barrier_sync(MCSVODNetworkDataReaderQueue(), ^{
         if ( _isClosed )
             return;
-        NSString *contentType = MCSGetResponseContentType(response);
-        NSString *server = MCSGetResponseServer(response);
-        NSUInteger totalLength = MCSGetResponseContentRange(response).totalLength;
-        NSString *extension = MCSSuggestedFilePathExtension(response);
-        [_resource updateServer:server contentType:contentType totalLength:totalLength pathExtension:extension];        
+        
+        if ( _resource.server == nil || _resource.contentType == nil || _resource.totalLength == 0 || _resource.pathExtension == nil ) {
+            NSString *contentType = MCSGetResponseContentType(response);
+            NSString *server = MCSGetResponseServer(response);
+            NSUInteger totalLength = MCSGetResponseContentRange(response).totalLength;
+            NSString *extension = MCSSuggestedFilePathExtension(response);
+            [_resource updateServer:server contentType:contentType totalLength:totalLength pathExtension:extension];
+        }
+        
         _response = response;
         _content = [_resource createContentWithOffset:_range.location];
         NSString *filePath = [_resource filePathOfContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
+        
+        @try {
+            [_writer seekToEndOfFile];
+        } @catch (NSException *exception) {
+            [self _onError:[NSError mcs_exception:exception]];
+        }
         
         if ( _reader == nil || _writer == nil ) {
             [self _onError:[NSError mcs_fileNotExistError:_request.URL]];

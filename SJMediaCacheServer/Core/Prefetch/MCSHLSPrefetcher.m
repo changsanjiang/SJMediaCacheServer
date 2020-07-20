@@ -128,7 +128,7 @@
             }
             
             if ( reader.isReadingEndOfData ) {
-                BOOL isLastFragment = reader.isReadingEndOfData && _fragmentIndex == _resource.parser.TsCount - 1;
+                BOOL isLastFragment = _fragmentIndex == _resource.parser.TsCount - 1;
                 BOOL isFinished = progress >= 1 || isLastFragment;
                 if ( !isFinished ) {
                     [self _prepareNextFragment];
