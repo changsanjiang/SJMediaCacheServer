@@ -20,6 +20,9 @@
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, id<MCSDownloadTaskDelegate>> *delegateDictionary;
 @property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
 @property (nonatomic) NSInteger taskCount;
+#ifdef DEBUG
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *responseTimeDictionary;
+#endif
 @end
 
 @implementation MCSDownload
@@ -53,6 +56,11 @@
                                                  selector:@selector(applicationWillEnterForeground:)
                                                      name:UIApplicationWillEnterForegroundNotification
                                                    object:[UIApplication sharedApplication]];
+        
+
+#ifdef DEBUG
+        _responseTimeDictionary = [NSMutableDictionary dictionary];
+#endif
     }
     return self;
 }
@@ -77,6 +85,9 @@
     NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
     task.priority = priority;
     [self _setDelegate:delegate forTask:task];
+#ifdef DEBUG
+    [self _setStartTime:MCSTimerStart() forTask:task];
+#endif
     [task resume];
     
     self.taskCount += 1;
@@ -93,7 +104,7 @@
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(NSHTTPURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
-    MCSDownloadLog(@"Task:<%lu>.response, statusCode: %ld. \n", (unsigned long)task.taskIdentifier, response.statusCode);
+    MCSDownloadLog(@"Task:<%lu>.response, after (%lf) seconds, statusCode: %ld. \n", (unsigned long)task.taskIdentifier, MCSTimerMilePost([self _startTimeForTask:task remove:NO]), response.statusCode);
     MCSDownloadLog(@"TaskCount: %ld\n", self.taskCount);
     
     NSError *error = nil;
@@ -145,7 +156,7 @@
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)errorParam {
     self.taskCount -= 1;
     NSError *error = [self _errorForTask:task] ?: errorParam;
-    MCSDownloadLog(@"Task:<%lu>.complete, error: %@\n", (unsigned long)task.taskIdentifier, error);
+    MCSDownloadLog(@"\nTask:<%lu>.complete, after (%lf) seconds, error: %@.\n", (unsigned long)task.taskIdentifier, MCSTimerMilePost([self _startTimeForTask:task remove:YES]), error);
     MCSDownloadLog(@"TaskCount: %ld\n\n", self.taskCount);
     
     __auto_type delegate = [self _delegateForTask:task];
@@ -249,4 +260,25 @@
     });
     return error;
 }
+
+#ifdef DEBUG
+- (void)_setStartTime:(uint64_t)time forTask:(NSURLSessionTask *)task {
+    dispatch_barrier_sync(MCSDownloadQueue(), ^{
+        self->_responseTimeDictionary[@(task.taskIdentifier)] = @(time);
+    });
+}
+
+- (uint64_t)_startTimeForTask:(NSURLSessionTask *)task remove:(BOOL)remove {
+    __block uint64_t time = 0;
+    dispatch_sync(MCSDownloadQueue(), ^{
+        time = [_responseTimeDictionary[@(task.taskIdentifier)] unsignedLongLongValue];
+    });
+    if ( remove ) {
+        dispatch_barrier_sync(MCSDownloadQueue(), ^{
+            self->_responseTimeDictionary[@(task.taskIdentifier)] = nil;
+        });
+    }
+    return time;
+}
+#endif
 @end

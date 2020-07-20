@@ -8,12 +8,17 @@
 
 #import "MCSSessionTask.h"
 #import "MCSResourceManager.h"
+#import "MCSUtils.h"
+#import "MCSLogger.h"
 
 @interface MCSSessionTask ()<MCSResourceReaderDelegate>
 @property (nonatomic, weak) id<MCSSessionTaskDelegate> delegate;
 @property (nonatomic, strong) NSURLRequest * request;
 @property (nonatomic, strong) id<MCSResource> resource;
 @property (nonatomic, strong) id<MCSResourceReader> reader;
+#ifdef DEBUG
+@property (nonatomic) uint64_t startTime;
+#endif
 @end
 
 @implementation MCSSessionTask
@@ -27,6 +32,11 @@
 }
 
 - (void)prepare {
+#ifdef DEBUG
+    MCSSessionTaskLog(@"%@: <%p>.prepare { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
+    _startTime = MCSTimerStart();
+#endif
+    
     _reader = [MCSResourceManager.shared readerWithRequest:_request];
     _reader.delegate = self;
     @autoreleasepool {
@@ -43,7 +53,15 @@
 }
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)length {
-    return [_reader readDataOfLength:length];
+    NSData *data = [_reader readDataOfLength:length];
+#ifdef DEBUG
+    if ( data.length != 0 ) {
+        MCSSessionTaskLog(@"%@: <%p>.read { length: %ld };\n", NSStringFromClass(self.class), self, data.length);
+        if ( _reader.isReadingEndOfData )
+            MCSSessionTaskLog(@"%@: <%p>.done { after (%lf) seconds, URL: %@ };\n", NSStringFromClass(self.class), self, MCSTimerMilePost(_startTime), _request.URL);
+    }
+#endif
+    return data;
 }
 
 - (NSUInteger)offset {
@@ -59,6 +77,7 @@
 }
 
 - (void)close {
+    MCSSessionTaskLog(@"%@: <%p>.close;\n\n", NSStringFromClass(self.class), self);
     [_reader close];
 }
 

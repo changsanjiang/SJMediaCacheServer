@@ -32,8 +32,9 @@ typedef NS_OPTIONS(NSUInteger, MCSLogOptions) {
     MCSLogOptionDownload            = 1 << 3,
     MCSLogOptionHTTPConnection      = 1 << 4,
     MCSLogOptionSQLite              = 1 << 5,
+    MCSLogOptionSessionTask         = 1 << 6,
     MCSLogOptionDefault = MCSLogOptionPrefetcher | MCSLogOptionResourceReader | MCSLogOptionDataReader | MCSLogOptionHTTPConnection,
-    MCSLogOptionAll = MCSLogOptionDefault | MCSLogOptionDownload | MCSLogOptionSQLite,
+    MCSLogOptionAll = MCSLogOptionDefault | MCSLogOptionDownload | MCSLogOptionSQLite | MCSLogOptionSessionTask,
 };
 
 #endif /* MCSDefines_h */

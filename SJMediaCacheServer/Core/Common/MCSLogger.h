@@ -47,6 +47,10 @@ MCSLog(MCSLogOptionDownload, format, ##arg)
 #define MCSHTTPConnectionLog(format, arg...) \
 MCSLog(MCSLogOptionHTTPConnection, format, ##arg)
 
+// Session Task
+#define MCSSessionTaskLog(format, arg...) \
+MCSLog(MCSLogOptionSessionTask, format, ##arg)
+
 #else
 #define MCSLog(option, format, arg...)
 #define MCSPrefetcherLog(format, arg...)
