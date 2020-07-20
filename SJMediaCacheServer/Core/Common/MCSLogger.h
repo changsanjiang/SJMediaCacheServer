@@ -58,5 +58,6 @@ MCSLog(MCSLogOptionSessionTask, format, ##arg)
 #define MCSDataReaderLog(format, arg...)
 #define MCSDownloadLog(format, arg...)
 #define MCSHTTPConnectionLog(format, arg...)
+#define MCSSessionTaskLog(format, arg...)
 #endif
 NS_ASSUME_NONNULL_END
