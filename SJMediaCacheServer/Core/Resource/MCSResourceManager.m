@@ -111,6 +111,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 @interface MCSResourceManager ()
 @property (nonatomic, strong) NSMutableDictionary<NSString *, MCSResource *> *resources;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, MCSResourceUsageLog *> *usageLogs;
 @property (nonatomic, strong) SJSQLite3 *sqlite3;
 @property (nonatomic) NSUInteger count;
 
@@ -137,9 +138,12 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         _sqlite3 = [SJSQLite3.alloc initWithDatabasePath:[MCSFileManager databasePath]];
         _count = [_sqlite3 countOfObjectsForClass:MCSResourceUsageLog.class conditions:nil error:NULL];
         _resources = NSMutableDictionary.dictionary;
+        _usageLogsSaveInterval = 30;
+        _usageLogs = NSMutableDictionary.dictionary;
         // 获取磁盘剩余空间, 以及所有资源已占空间大小
         _freeDiskSpace = [MCSFileManager systemFreeSize];
         _cacheDiskSpace = [MCSFileManager rootDirectorySize];
+        [self _saveRecursively];
     }
     return self;
 }
@@ -225,6 +229,23 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     return reservedFreeDiskSpace;
 }
 
+@synthesize usageLogsSaveInterval = _usageLogsSaveInterval;
+- (void)setUsageLogsSaveInterval:(NSTimeInterval)usageLogsSaveInterval {
+    dispatch_barrier_sync(_queue, ^{
+        if ( usageLogsSaveInterval != self->_usageLogsSaveInterval ) {
+            self->_usageLogsSaveInterval = usageLogsSaveInterval;
+        }
+    });
+}
+
+- (NSTimeInterval)usageLogsSaveInterval {
+    __block NSUInteger usageLogsSaveInterval = 0;
+    dispatch_sync(_queue, ^{
+        usageLogsSaveInterval = self->_usageLogsSaveInterval;
+    });
+    return usageLogsSaveInterval;
+}
+
 #pragma mark -
 
 - (__kindof MCSResource *)resourceWithURL:(NSURL *)URL {
@@ -282,9 +303,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (void)reader:(id<MCSResourceReader>)reader willReadResource:(MCSResource *)resource {
     dispatch_barrier_sync(_queue, ^{
         // update
-        resource.log.usageCount += 1;
-        resource.log.updatedTime = NSDate.date.timeIntervalSince1970;
-        [self->_sqlite3 update:resource.log forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
+        MCSResourceUsageLog *log = resource.log;
+        log.usageCount += 1;
+        log.updatedTime = NSDate.date.timeIntervalSince1970;
+        self->_usageLogs[resource.name] = log;
     });
 }
 
@@ -454,6 +476,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             [SJSQLite3Condition conditionWithColumn:@"resourceType" value:@(r.type)],
         ] error:NULL];
         [self.resources removeObjectForKey:r.name];
+        [self.usageLogs removeObjectForKey:r.name];
     }];
     
     _count -= resources.count;
@@ -462,9 +485,23 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (void)_update:(MCSResource *)resource {
     if ( resource.log != nil ) resource.log.updatedTime = NSDate.date.timeIntervalSince1970;
     if ( resource != nil ) [_sqlite3 save:resource error:NULL];
+    [_usageLogs removeObjectForKey:resource.name];
 }
 
 - (Class)_resourceClassForType:(MCSResourceType)type {
     return type == MCSResourceTypeVOD ? MCSVODResource.class : MCSHLSResource.class;
 }
+
+- (void)_saveRecursively {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_usageLogsSaveInterval * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
+        dispatch_barrier_sync(self->_queue, ^{
+            if ( self->_usageLogs.count != 0 ) {
+                [self->_sqlite3 updateObjects:self->_usageLogs.allValues forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
+                [self->_usageLogs removeAllObjects];
+            }
+        });
+        [self _saveRecursively];
+    });
+}
+
 @end

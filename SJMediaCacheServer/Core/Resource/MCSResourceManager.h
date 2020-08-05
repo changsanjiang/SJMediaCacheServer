@@ -54,6 +54,12 @@ FOUNDATION_EXTERN NSString *MCSResourceManagerUserInfoResourceKey;
 
 - (void)removeResourceForURL:(NSURL *)URL;
 
+/// The usage logs save interval in seconds.
+///
+///     The manager holds an internal timer to save resource usage logs. The default value is 30.
+///
+@property (nonatomic) NSTimeInterval usageLogsSaveInterval;
+
 @property (nonatomic, readonly) NSUInteger cachedSizeForResources;
 
 /// Decode the read data.
