@@ -33,6 +33,8 @@ FOUNDATION_EXTERN NSString * const MCSErrorUserInfoURLKey;
 FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRequestKey;
 FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResponseKey;
 
+FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResourceKey;
+FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRangeKey;
 
 @interface NSError (MCSExtended)
 + (NSError *)mcs_responseUnavailable:(NSURL *)URL request:(NSURLRequest *)request response:(NSURLResponse *)response;
@@ -47,7 +49,7 @@ FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResponseKey;
 
 + (NSError *)mcs_HLSAESKeyWriteFailedError:(NSURL *)URL;
 
-+ (NSError *)mcs_fileNotExistError:(NSURL *)URL;
++ (NSError *)mcs_fileNotExistError:(NSDictionary *)userInfo;
 
 + (NSError *)mcs_userCancelledError:(NSURL *)URL;
 @end

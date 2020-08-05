@@ -12,6 +12,8 @@ NSString * const MCSErrorDomain = @"lib.changsanjiang.SJMediaCacheServer.error";
 NSString * const MCSErrorUserInfoURLKey = @"URL";
 NSString * const MCSErrorUserInfoRequestKey = @"Request";
 NSString * const MCSErrorUserInfoResponseKey = @"Response";
+NSString * const MCSErrorUserInfoResourceKey = @"Resource";
+NSString * const MCSErrorUserInfoRangeKey = @"Range";
 
 @implementation NSError(MCSExtended)
 + (NSError *)mcs_responseUnavailable:(NSURL *)URL request:(NSURLRequest *)request response:(NSURLResponse *)response {
@@ -52,10 +54,10 @@ NSString * const MCSErrorUserInfoResponseKey = @"Response";
     return [NSError errorWithDomain:MCSErrorDomain code:MCSHLSAESKeyWriteFailedError userInfo:userInfo];
 }
 
-+ (NSError *)mcs_fileNotExistError:(NSURL *)URL {
-    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
-    userInfo[MCSErrorUserInfoURLKey] = URL;
-    userInfo[NSLocalizedDescriptionKey] = @"The corresponding file does not exist";
++ (NSError *)mcs_fileNotExistError:(NSDictionary *)userInfo {
+//    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+//    userInfo[MCSErrorUserInfoURLKey] = URL;
+//    userInfo[NSLocalizedDescriptionKey] = @"The corresponding file does not exist";
     return [NSError errorWithDomain:MCSErrorDomain code:MCSFileNotExistError userInfo:userInfo];
 }
 

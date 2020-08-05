@@ -11,14 +11,14 @@
 #import "MCSResourceResponse.h"
 #import "MCSResourceManager.h"
 #import "MCSFileManager.h"
-#import "MCSResourceFileDataReader.h"
 #import "MCSError.h"
 #import "MCSLogger.h"
 #import "MCSVODResource.h"
 #import "MCSResourceSubclass.h"
-#import "MCSVODNetworkDataReader.h"
 #import "MCSQueue.h"
 #import "MCSUtils.h"
+#import "MCSResourceFileDataReader2.h"
+#import "MCSResourceNetworkDataReader.h"
 
 @interface MCSVODReader ()<MCSResourceDataReaderDelegate>
 @property (nonatomic) BOOL isCalledPrepare;
@@ -34,7 +34,6 @@
 @property (nonatomic, copy, nullable) NSArray<id<MCSResourceDataReader>> *readers;
 @property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 
-@property (nonatomic, strong) NSMutableArray<MCSResourcePartialContent *> *readWriteContents;
 @property (nonatomic) NSRange range;
 
 #ifdef DEBUG
@@ -49,8 +48,6 @@
     self = [super init];
     if ( self ) {
         _networkTaskPriority = 1.0;
-        
-        _readWriteContents = NSMutableArray.array;
         _currentIndex = NSNotFound;
 
         _resource = resource;
@@ -261,20 +258,15 @@
             // undownloaded part
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
-                MCSVODNetworkDataReader *reader = [self _networkDataReaderWithURL:URL range:leftRange];
+                MCSResourceNetworkDataReader *reader = [self _networkDataReaderWithURL:URL range:leftRange];
                 [readers addObject:reader];
             }
             
             // downloaded part
             NSRange matchedRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
             NSUInteger startOffsetInFile = matchedRange.location - content.offset;
-            NSString *path = [MCSFileManager getFilePathWithName:content.filename inResource:_resource.name];
-            MCSResourceFileDataReader *reader = [MCSResourceFileDataReader.alloc initWithResource:_resource range:matchedRange filePath:path startOffsetInFile:startOffsetInFile delegate:self];
+            MCSResourceFileDataReader2 *reader = [MCSResourceFileDataReader2.alloc initWithResource:_resource inRange:matchedRange partialContent:content startOffsetInFile:startOffsetInFile delegate:self];
             [readers addObject:reader];
-            
-            // retain
-            [content readWrite_retain];
-            [_readWriteContents addObject:content];
             
             // next part
             current = NSMakeRange(NSMaxRange(intersection), NSMaxRange(_request.mcs_range) - NSMaxRange(intersection));
@@ -285,7 +277,7 @@
     
     if ( current.length != 0 ) {
         // undownloaded part
-        MCSVODNetworkDataReader *reader = [self _networkDataReaderWithURL:URL range:current];
+        MCSResourceNetworkDataReader *reader = [self _networkDataReaderWithURL:URL range:current];
         [readers addObject:reader];
     }
     
@@ -323,10 +315,6 @@
         [reader close];
     }
     
-    for ( MCSResourcePartialContent *content in _readWriteContents ) {
-        [content readWrite_release];
-    }
-     
     _isClosed = YES;
     MCSResourceReaderLog(@"%@: <%p>.close { range: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range));
 }
@@ -368,9 +356,11 @@
     });
 }
 
-- (MCSVODNetworkDataReader *)_networkDataReaderWithURL:(NSURL *)URL range:(NSRange)range {
+- (MCSResourceNetworkDataReader *)_networkDataReaderWithURL:(NSURL *)URL range:(NSRange)range {
     NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL range:range];
-    return [MCSVODNetworkDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self];
+    [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeVOD]];
+    MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self];
+    return reader;
 }
 
 //- (NSArray<NSValue *> *)_suitableRangesWithRange:(NSRange)range {

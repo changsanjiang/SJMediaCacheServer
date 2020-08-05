@@ -47,4 +47,7 @@ MCSDownloadQueue(void);
 FOUNDATION_EXPORT dispatch_queue_t
 MCSDelegateQueue(void);
 
+FOUNDATION_EXPORT dispatch_queue_t
+MCSResourceDataReaderQueue(void);
+
 NS_ASSUME_NONNULL_END

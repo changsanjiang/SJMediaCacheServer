@@ -266,7 +266,7 @@
     _availableLength = availableLength;
         
     if ( _reader == nil || _writer == nil ) {
-        [self _onError:[NSError mcs_fileNotExistError:_request.URL]];
+        [self _onError:[NSError mcs_fileNotExistError:nil]];
         return;
     }
 
@@ -302,3 +302,98 @@
     }
 }
 @end
+
+//
+//<NSHTTPURLResponse: 0x6000031fed20> { URL: http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/0.ts } { Status Code: 200, Headers {
+//    "Accept-Ranges" =     (
+//        bytes
+//    );
+//    "Access-Control-Allow-Credentials" =     (
+//        true
+//    );
+//    "Access-Control-Allow-Methods" =     (
+//        GET
+//    );
+//    "Access-Control-Allow-Origin" =     (
+//        "*"
+//    );
+//    Age =     (
+//        4438779
+//    );
+//    "Ali-Swift-Global-Savetime" =     (
+//        1592187539
+//    );
+//    Connection =     (
+//        "keep-alive"
+//    );
+//    "Content-Length" =     (
+//        791292
+//    );
+//    "Content-Type" =     (
+//        "video/MP2T"
+//    );
+//    Date =     (
+//        "Mon, 15 Jun 2020 02:18:59 GMT"
+//    );
+//    EagleId =     (
+//        65e21b1a15966263187734958e
+//    );
+//    Etag =     (
+//        "\"F7FEE5C1B199B60F3145350FB6C9C311\""
+//    );
+//    "Last-Modified" =     (
+//        "Tue, 27 Aug 2019 03:47:58 GMT"
+//    );
+//    Server =     (
+//        Tengine
+//    );
+//    "Timing-Allow-Origin" =     (
+//        "*"
+//    );
+//    Via =     (
+//        "cache37.l2cm9-2[0,206-0,H], cache18.l2cm9-2[0,0], cache43.l2cn1807[0,206-0,H], cache12.l2cn1807[1,0], cache15.cn1906[0,206-0,H], cache6.cn1906[26,0]"
+//    );
+//    "X-Cache" =     (
+//        "HIT TCP_HIT dirn:8:899603854 mlen:0"
+//    );
+//    "X-Swift-CacheTime" =     (
+//        8640000
+//    );
+//    "X-Swift-SaveTime" =     (
+//        "Mon, 20 Jul 2020 03:34:45 GMT"
+//    );
+//    cdncip =     (
+//        "180.174.11.154"
+//    );
+//    cdnsip =     (
+//        "cache6.cn1906"
+//    );
+//    "x-oss-cdn-auth" =     (
+//        success
+//    );
+//    "x-oss-hash-crc64ecma" =     (
+//        16822164302262876552
+//    );
+//    "x-oss-meta-access-control-allow-credentials" =     (
+//        true
+//    );
+//    "x-oss-meta-access-control-allow-methods" =     (
+//        GET
+//    );
+//    "x-oss-meta-access-control-allow-origin" =     (
+//        "*"
+//    );
+//    "x-oss-object-type" =     (
+//        Normal
+//    );
+//    "x-oss-request-id" =     (
+//        5EE6DA93CF4DC1373876B7D3
+//    );
+//    "x-oss-server-time" =     (
+//        79
+//    );
+//    "x-oss-storage-class" =     (
+//        Standard
+//    );
+//} }
+//

@@ -34,6 +34,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)prepareForReader;
 
+- (MCSResourcePartialContent *)createContentWithRequest:(NSURLRequest *)request response:(NSHTTPURLResponse *)response;
+- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
 @end
 
 NS_ASSUME_NONNULL_END

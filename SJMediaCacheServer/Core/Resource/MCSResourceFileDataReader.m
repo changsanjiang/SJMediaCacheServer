@@ -57,7 +57,6 @@
         @try {
             if ( _isClosed || _isCalledPrepare )
                 return;
-            
             _isCalledPrepare = YES;
             
             MCSDataReaderLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(NSMakeRange(_startOffsetInFile, _availableLength)));

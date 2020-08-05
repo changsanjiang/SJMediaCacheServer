@@ -108,7 +108,7 @@
     MCSDownloadLog(@"TaskCount: %ld\n", (long)self.taskCount);
     
     NSError *error = nil;
-    if ( response.statusCode > 400 || response.statusCode < 200 ) {
+    if ( ![response isKindOfClass:NSHTTPURLResponse.class] || response.statusCode > 400 || response.statusCode < 200 ) {
         error = [NSError mcs_responseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
     }
     

@@ -115,3 +115,14 @@ MCSDelegateQueue(void) {
     });
     return queue;
 }
+
+
+dispatch_queue_t
+MCSResourceDataReaderQueue(void) {
+    static dispatch_queue_t queue = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("mcs.MCSResourceDataReaderQueue", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}

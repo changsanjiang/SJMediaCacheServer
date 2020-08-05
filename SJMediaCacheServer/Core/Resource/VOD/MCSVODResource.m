@@ -46,6 +46,29 @@
     [self addContents:[MCSFileManager getContentsInResource:_name]];
 }
 
+- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
+    return [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
+}
+
+- (MCSResourcePartialContent *)createContentWithRequest:(NSURLRequest *)request response:(NSHTTPURLResponse *)response {
+    __block BOOL isUpdated = NO;
+    dispatch_barrier_sync(MCSResourceQueue(), ^{
+        if ( _server == nil || _contentType == nil || _totalLength == 0 || _pathExtension == nil ) {
+            _contentType = MCSGetResponseContentType(response);
+            _server = MCSGetResponseServer(response);
+            _totalLength = MCSGetResponseContentRange(response).totalLength;
+            _pathExtension = MCSSuggestedFilePathExtension(response);
+            isUpdated = YES;
+        }
+    });
+    if ( isUpdated ) [MCSResourceManager.shared saveMetadata:self];
+    NSUInteger offset = request.mcs_range.location;
+    NSString *filename = [MCSFileManager vod_createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
+    MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename offset:offset];
+    [self addContent:content];
+    return content;
+}
+
 #pragma mark -
 
 - (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
