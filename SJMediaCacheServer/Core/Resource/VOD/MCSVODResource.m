@@ -50,7 +50,7 @@
     return [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
 }
 
-- (MCSResourcePartialContent *)createContentWithRequest:(NSURLRequest *)request response:(NSHTTPURLResponse *)response {
+- (nullable MCSResourcePartialContent *)createContentWithRequest:(NSURLRequest *)request response:(NSHTTPURLResponse *)response {
     __block BOOL isUpdated = NO;
     dispatch_barrier_sync(MCSResourceQueue(), ^{
         if ( _server == nil || _contentType == nil || _totalLength == 0 || _pathExtension == nil ) {
@@ -71,13 +71,6 @@
 
 #pragma mark -
 
-- (MCSResourcePartialContent *)createContentWithOffset:(NSUInteger)offset {
-    NSString *filename = [MCSFileManager vod_createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
-    MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename offset:offset];
-    [self addContent:content];
-    return content;
-}
- 
 - (NSUInteger)totalLength {
     __block NSUInteger totalLength = 0;
     dispatch_sync(MCSResourceQueue(), ^{
@@ -102,20 +95,12 @@
     return server;
 }
 
-- (void)updateServer:(NSString * _Nullable)server contentType:(NSString * _Nullable)contentType totalLength:(NSUInteger)totalLength pathExtension:(nullable NSString *)pathExtension {
-    dispatch_barrier_sync(MCSResourceQueue(), ^{
-        _server = server.copy;
-        _contentType = contentType.copy;
-        _totalLength = totalLength;
-        _pathExtension = pathExtension.copy;
-    });
-    [MCSResourceManager.shared saveMetadata:self];
-}
+#pragma mark -
 
 - (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
     if ( content.readWriteCount > 0 )
         return;
-    
+
     dispatch_barrier_sync(MCSResourceQueue(), ^{
         if ( _isCacheFinished )
             return;

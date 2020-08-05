@@ -79,13 +79,17 @@
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
     dispatch_barrier_sync(MCSResourceDataReaderQueue(), ^{
         if ( _isClosed || _resource == nil ) {
-            [task cancel];
             [self _close];
             return;
         }
 
-        _range = NSMakeRange(_request.mcs_range.location, MCSGetResponseContentLength(response));
         _content = [_resource createContentWithRequest:_request response:response];
+        if ( _content == nil ) {
+            [self _onError:[NSError mcs_responseUnavailable:_request.URL request:_request response:response]];
+            return;
+        }
+        
+        _range = NSMakeRange(_request.mcs_range.location, MCSGetResponseContentLength(response));
         [_content readWrite_retain];
         NSString *filePath = [_resource filePathOfContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
