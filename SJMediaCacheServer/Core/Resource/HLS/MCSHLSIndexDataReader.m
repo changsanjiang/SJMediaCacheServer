@@ -182,7 +182,7 @@
     NSString *indexFilePath = _parser.indexFilePath;
     NSUInteger fileSize = [MCSFileManager fileSizeAtPath:indexFilePath];
     NSRange range = NSMakeRange(0, fileSize);
-    _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource range:range path:indexFilePath readRange:range delegate:_delegate];
+    _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource range:range filePath:indexFilePath startOffsetInFile:0 delegate:_delegate];
     [_reader prepare];
 }
 @end

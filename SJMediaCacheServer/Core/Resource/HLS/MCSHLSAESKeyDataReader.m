@@ -178,7 +178,7 @@
     NSRange range = NSMakeRange(0, fileSize);
     
     _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:fileSize];
-    _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource range:range path:filePath readRange:range delegate:self];
+    _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource range:range filePath:filePath startOffsetInFile:0 delegate:self];
     [_reader prepare];
 }
 

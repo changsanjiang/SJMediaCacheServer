@@ -92,7 +92,7 @@
     
     self.taskCount += 1;
     MCSDownloadLog(@"\nTask:<%lu>.resume \n", (unsigned long)task.taskIdentifier);
-    MCSDownloadLog(@"TaskCount: %ld\n", self.taskCount);
+    MCSDownloadLog(@"TaskCount: %ld\n", (long)self.taskCount);
     
     return task;
 }
@@ -104,8 +104,8 @@
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(NSHTTPURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
-    MCSDownloadLog(@"Task:<%lu>.response, after (%lf) seconds, statusCode: %ld. \n", (unsigned long)task.taskIdentifier, MCSTimerMilePost([self _startTimeForTask:task remove:NO]), response.statusCode);
-    MCSDownloadLog(@"TaskCount: %ld\n", self.taskCount);
+    MCSDownloadLog(@"Task:<%lu>.response, after (%lf) seconds, statusCode: %ld. \n", (unsigned long)task.taskIdentifier, MCSTimerMilePost([self _startTimeForTask:task remove:NO]), (long)response.statusCode);
+    MCSDownloadLog(@"TaskCount: %ld\n", (long)self.taskCount);
     
     NSError *error = nil;
     if ( response.statusCode > 400 || response.statusCode < 200 ) {
@@ -157,7 +157,7 @@
     self.taskCount -= 1;
     NSError *error = [self _errorForTask:task] ?: errorParam;
     MCSDownloadLog(@"\nTask:<%lu>.complete, after (%lf) seconds, error: %@.\n", (unsigned long)task.taskIdentifier, MCSTimerMilePost([self _startTimeForTask:task remove:YES]), error);
-    MCSDownloadLog(@"TaskCount: %ld\n\n", self.taskCount);
+    MCSDownloadLog(@"TaskCount: %ld\n\n", (long)self.taskCount);
     
     __auto_type delegate = [self _delegateForTask:task];
     [delegate downloadTask:task didCompleteWithError:error];

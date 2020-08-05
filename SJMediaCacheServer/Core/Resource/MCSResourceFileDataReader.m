@@ -16,7 +16,7 @@
 
 @interface MCSResourceFileDataReader()
 @property (nonatomic) NSRange range;
-@property (nonatomic) NSRange readRange;
+@property (nonatomic) NSUInteger startOffsetInFile;
 @property (nonatomic, copy) NSString *path;
 @property (nonatomic, strong) NSFileHandle *reader;
 
@@ -35,15 +35,15 @@
 @implementation MCSResourceFileDataReader
 @synthesize delegate = _delegate;
 
-- (instancetype)initWithResource:(MCSResource *)resource range:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSResourceDataReaderDelegate>)delegate {
+- (instancetype)initWithResource:(MCSResource *)resource range:(NSRange)range filePath:(NSString *)path startOffsetInFile:(NSUInteger)startOffsetInFile delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _resource = resource;
         _range = range;
         _path = path.copy;
-        _readRange = readRange;
+        _startOffsetInFile = startOffsetInFile;
         _delegate = delegate;
-        _availableLength = readRange.length;
+        _availableLength = _range.length;
     }
     return self;
 }
@@ -60,16 +60,16 @@
             
             _isCalledPrepare = YES;
             
-            MCSDataReaderLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
+            MCSDataReaderLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(NSMakeRange(_startOffsetInFile, _availableLength)));
             
             _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
             
-            [_reader seekToFileOffset:_readRange.location];
+            if ( _startOffsetInFile != 0 ) [_reader seekToFileOffset:_startOffsetInFile];
             _isPrepared = YES;
             
             dispatch_async(MCSDelegateQueue(), ^{
                 [self->_delegate readerPrepareDidFinish:self];
-                [self->_delegate reader:self hasAvailableDataWithLength:self->_readRange.length];
+                [self->_delegate reader:self hasAvailableDataWithLength:self->_availableLength];
             });
             
         } @catch (NSException *exception) {
@@ -88,14 +88,14 @@
             if ( _isSought ) {
                 _isSought = NO;
                 NSError *error = nil;
-                NSUInteger offset = _readRange.location + _readLength;
+                NSUInteger offset = _startOffsetInFile + _readLength;
                 if ( ![_reader mcs_seekToFileOffset:offset error:&error] ) {
                     [self _onError:error];
                     return;
                 }
             }
             
-            NSUInteger length = MIN(lengthParam, _readRange.length - _readLength);
+            NSUInteger length = MIN(lengthParam, _range.length - _readLength);
             data = [_reader readDataOfLength:length];
             
             NSUInteger readLength = data.length;
@@ -105,11 +105,11 @@
             MCSDataReaderLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
             
             _readLength += readLength;
-            _isDone = (_readLength == _readRange.length);
+            _isDone = (_readLength == _range.length);
             
 #ifdef DEBUG
             if ( _isDone ) {
-                MCSDataReaderLog(@"%@: <%p>.done { range: %@ , file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
+                MCSDataReaderLog(@"%@: <%p>.done { range: %@ , file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(NSMakeRange(_startOffsetInFile, _availableLength)));
             }
 #endif
         } @catch (NSException *exception) {
@@ -133,7 +133,7 @@
         if ( readLength != _readLength ) {
             _isSought = YES;
             _readLength = readLength;
-            _isDone = (_readLength == _readRange.length);
+            _isDone = (_readLength == _range.length);
         }
         result = YES;
     });

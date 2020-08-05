@@ -12,7 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResourceFileDataReader : NSObject<MCSResourceDataReader>
-- (instancetype)initWithResource:(MCSResource *)resource range:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSResourceDataReaderDelegate>)delegate;
+- (instancetype)initWithResource:(MCSResource *)resource range:(NSRange)range filePath:(NSString *)path startOffsetInFile:(NSUInteger)startOffsetInFile delegate:(id<MCSResourceDataReaderDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) NSRange range;

@@ -201,7 +201,7 @@
         
         NSString *contentType = MCSGetResponseContentType(response);
         [_resource updateTsContentType:contentType];
-        _content = [_resource createContentWithTsURL:_request.URL totalLength:response.expectedContentLength];
+        _content = [_resource createContentWithTsURL:_request.URL totalLength:(NSUInteger)response.expectedContentLength];
         [self _prepare];
     });
 }
