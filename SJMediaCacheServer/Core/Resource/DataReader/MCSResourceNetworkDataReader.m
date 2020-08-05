@@ -88,9 +88,10 @@
             [self _onError:[NSError mcs_responseUnavailable:_request.URL request:_request response:response]];
             return;
         }
+
+        [_content readWrite_retain];
         
         _range = NSMakeRange(_request.mcs_range.location, MCSGetResponseContentLength(response));
-        [_content readWrite_retain];
         NSString *filePath = [_resource filePathOfContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];

@@ -75,9 +75,7 @@
 }
 
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-    @throw [NSException exceptionWithName:NSInternalInconsistencyException
-      reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
-    userInfo:nil];
+    return [MCSFileManager getFilePathWithName:content.filename inResource:_name];
 }
 
 #pragma mark -
@@ -162,11 +160,6 @@
     });
     [MCSResourceManager.shared didRemoveDataForResource:self length:length];
 }
-
-#warning next ...
-//- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-//    return [MCSFileManager getFilePathWithName:content.filename inResource:_name];
-//}
 
 - (void)contentsDidChange:(NSArray<MCSResourcePartialContent *> *)contents {
     /* subclass */

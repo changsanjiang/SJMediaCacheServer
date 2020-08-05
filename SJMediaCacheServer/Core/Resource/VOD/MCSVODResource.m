@@ -46,10 +46,6 @@
     [self addContents:[MCSFileManager getContentsInResource:_name]];
 }
 
-- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content {
-    return [MCSFileManager getFilePathWithName:content.filename inResource:self.name];
-}
-
 - (nullable MCSResourcePartialContent *)createContentWithRequest:(NSURLRequest *)request response:(NSHTTPURLResponse *)response {
     __block BOOL isUpdated = NO;
     dispatch_barrier_sync(MCSResourceQueue(), ^{
