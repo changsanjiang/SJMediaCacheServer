@@ -71,42 +71,48 @@
     if ( extension == nil )
         return nil;
     
-    NSString *name = [MCSURLRecognizer.shared nameWithUrl:proxyURL.absoluteString extension:extension];
-    for ( MCSHLSPartialContent *c in self.contents ) {
-        if ( c.type == dataType && [c.name isEqualToString:name] && c.length == c.totalLength) {
-            return c;
+    __block MCSHLSPartialContent *content = nil;
+    dispatch_barrier_sync(MCSResourceQueue(), ^{
+        NSString *name = [MCSURLRecognizer.shared nameWithUrl:proxyURL.absoluteString extension:extension];
+        for ( MCSHLSPartialContent *c in _m.copy ) {
+            if ( c.type == dataType && [c.name isEqualToString:name] && c.length == c.totalLength) {
+                content = c;
+                break;
+            }
         }
-    }
-    return nil;
+    });
+    return content;
 }
 
 - (nullable MCSResourcePartialContent *)createContentForDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
-    MCSDataType dataType = [MCSURLRecognizer.shared dataTypeForProxyURL:proxyURL];
-    MCSHLSPartialContent *_Nullable content = nil;
-    NSUInteger totalLength = (NSUInteger)response.expectedContentLength;
-    NSAssert(totalLength != 0, @"The content totalLength must be greater than 0!");
-    
-    switch ( dataType ) {
-        case MCSDataTypeHLSAESKey: {
-            NSString *AESKeyName = [MCSURLRecognizer.shared nameWithUrl:proxyURL.absoluteString extension:MCSHLSAESKeyFileExtension];
-            NSString *filename = [MCSFileManager hls_createAESKeyFileInResource:_name AESKeyName:AESKeyName totalLength:totalLength];
-            content = [MCSHLSPartialContent AESKeyPartialContentWithFilename:filename name:AESKeyName totalLength:totalLength length:0];
+    __block MCSHLSPartialContent *_Nullable content = nil;
+    dispatch_barrier_sync(MCSResourceQueue(), ^{
+        MCSDataType dataType = [MCSURLRecognizer.shared dataTypeForProxyURL:proxyURL];
+        NSUInteger totalLength = (NSUInteger)response.expectedContentLength;
+        NSAssert(totalLength != 0, @"The content totalLength must be greater than 0!");
+        
+        switch ( dataType ) {
+            case MCSDataTypeHLSAESKey: {
+                NSString *AESKeyName = [MCSURLRecognizer.shared nameWithUrl:proxyURL.absoluteString extension:MCSHLSAESKeyFileExtension];
+                NSString *filename = [MCSFileManager hls_createAESKeyFileInResource:_name AESKeyName:AESKeyName totalLength:totalLength];
+                content = [MCSHLSPartialContent AESKeyPartialContentWithFilename:filename name:AESKeyName totalLength:totalLength length:0];
+            }
+                break;
+            case MCSDataTypeHLSTs: {
+                NSString *TsName = [MCSURLRecognizer.shared nameWithUrl:proxyURL.absoluteString extension:MCSHLSTsFileExtension];
+                NSString *filename = [MCSFileManager hls_createTsFileInResource:_name tsName:TsName tsTotalLength:totalLength];
+                content = [MCSHLSPartialContent TsPartialContentWithFilename:filename name:TsName totalLength:totalLength length:0];
+            }
+                break;
+            default:
+                assert("Invalid data type!");
+                break;
         }
-            break;
-        case MCSDataTypeHLSTs: {
-            NSString *TsName = [MCSURLRecognizer.shared nameWithUrl:proxyURL.absoluteString extension:MCSHLSTsFileExtension];
-            NSString *filename = [MCSFileManager hls_createTsFileInResource:_name tsName:TsName tsTotalLength:totalLength];
-            content = [MCSHLSPartialContent TsPartialContentWithFilename:filename name:TsName totalLength:totalLength length:0];
+        if ( content != nil ) {
+            [content readWrite_retain];
+            [self _addContent:content];
         }
-            break;
-        default:
-            assert("Invalid data type!");
-            break;
-    }
-    if ( content != nil ) {
-        [content readWrite_retain];
-        [self _addContent:content];
-    }
+    });
     return content;
 }
 
@@ -125,7 +131,7 @@
             return;
         
         NSMutableArray<MCSHLSPartialContent *> *contents = NSMutableArray.alloc.init;
-        for ( MCSHLSPartialContent *c in _m ) {
+        for ( MCSHLSPartialContent *c in _m.copy ) {
             if ( c.readWriteCount == 0 ) {
                 [contents addObject:c];
             }

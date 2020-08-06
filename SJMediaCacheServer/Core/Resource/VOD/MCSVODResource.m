@@ -48,6 +48,7 @@
 
 - (nullable MCSResourcePartialContent *)createContentForDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
     __block BOOL isUpdated = NO;
+    __block MCSResourcePartialContent *content;
     dispatch_barrier_sync(MCSResourceQueue(), ^{
         if ( _server == nil || _contentType == nil || _totalLength == 0 || _pathExtension == nil ) {
             _contentType = MCSGetResponseContentType(response);
@@ -56,13 +57,14 @@
             _pathExtension = MCSSuggestedFilePathExtension(response);
             isUpdated = YES;
         }
+        
+        NSUInteger offset = MCSGetResponseContentRange(response).start;
+        NSString *filename = [MCSFileManager vod_createContentFileInResource:_name atOffset:offset pathExtension:_pathExtension];
+        content = [MCSVODPartialContent.alloc initWithFilename:filename offset:offset length:0];
+        [content readWrite_retain];
+        [self _addContent:content];
     });
     if ( isUpdated ) [MCSResourceManager.shared saveMetadata:self];
-    NSUInteger offset = MCSGetResponseContentRange(response).start;
-    NSString *filename = [MCSFileManager vod_createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
-    MCSResourcePartialContent *content = [MCSVODPartialContent.alloc initWithFilename:filename offset:offset length:0];
-    [content readWrite_retain];
-    [self _addContent:content];
     return content;
 }
 
@@ -78,12 +80,12 @@
         if ( _isCacheFinished )
             return;
         
-        if ( _m.count <= 1 )
+        if ( _m.count < 2 )
             return;
         
         // 合并文件
         NSMutableArray<MCSVODPartialContent *> *list = NSMutableArray.alloc.init;
-        for ( MCSVODPartialContent *content in _m ) {
+        for ( MCSVODPartialContent *content in _m.copy ) {
             if ( content.readWriteCount == 0 )
                 [list addObject:content];
         }
