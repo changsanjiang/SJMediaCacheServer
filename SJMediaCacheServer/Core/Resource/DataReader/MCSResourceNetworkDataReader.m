@@ -81,7 +81,7 @@
 #pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    dispatch_barrier_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
         if ( _isClosed || _resource == nil ) {
             [self _close];
             return;
@@ -126,7 +126,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    dispatch_barrier_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
         @try {
             if ( _isClosed || _resource == nil ) {
                 [task cancel];
@@ -148,7 +148,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    dispatch_barrier_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
        if ( _isClosed )
            return;
         

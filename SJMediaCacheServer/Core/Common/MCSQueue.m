@@ -12,8 +12,7 @@ MCSResourceQueue(void) {
     static dispatch_queue_t queue = NULL;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-//        queue = dispatch_queue_create("mcs.MCSResourceQueue", DISPATCH_QUEUE_CONCURRENT);
-        queue = dispatch_get_global_queue(0, 0);
+        queue = dispatch_queue_create("mcs.MCSResourceQueue", DISPATCH_QUEUE_CONCURRENT);
     });
     return queue;
 }
@@ -34,62 +33,6 @@ MCSReaderQueue(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         queue = dispatch_queue_create("mcs.MCSReaderQueue", DISPATCH_QUEUE_CONCURRENT);
-    });
-    return queue;
-}
-
-#pragma mark -
-
-dispatch_queue_t
-MCSFileDataReaderQueue(void) {
-    static dispatch_queue_t queue = NULL;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSFileDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
-    });
-    return queue;
-}
-
-#pragma mark -
-
-dispatch_queue_t
-MCSHLSAESDataReaderQueue(void) {
-    static dispatch_queue_t queue = NULL;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSHLSAESDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
-    });
-    return queue;
-}
-
-dispatch_queue_t
-MCSHLSIndexDataReaderQueue(void) {
-    static dispatch_queue_t queue = NULL;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSHLSIndexDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
-    });
-    return queue;
-}
-
-dispatch_queue_t
-MCSHLSTsDataReaderQueue(void) {
-    static dispatch_queue_t queue = NULL;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSHLSTsDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
-    });
-    return queue;
-}
-
-#pragma mark -
-
-dispatch_queue_t
-MCSVODNetworkDataReaderQueue(void) {
-    static dispatch_queue_t queue = NULL;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSVODNetworkDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
     });
     return queue;
 }
@@ -118,11 +61,11 @@ MCSDelegateQueue(void) {
 
 
 dispatch_queue_t
-MCSResourceDataReaderQueue(void) {
+MCSDataReaderQueue(void) {
     static dispatch_queue_t queue = NULL;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSResourceDataReaderQueue", DISPATCH_QUEUE_SERIAL);
+        queue = dispatch_queue_create("mcs.MCSDataReaderQueue", DISPATCH_QUEUE_SERIAL);
     });
     return queue;
 }

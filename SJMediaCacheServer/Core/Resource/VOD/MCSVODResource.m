@@ -61,6 +61,7 @@
     NSUInteger offset = MCSGetResponseContentRange(response).start;
     NSString *filename = [MCSFileManager vod_createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
     MCSResourcePartialContent *content = [MCSVODPartialContent.alloc initWithFilename:filename offset:offset length:0];
+    [content readWrite_retain];
     [self _addContent:content];
     return content;
 }
@@ -106,37 +107,39 @@
         
         if ( deleteContents.count != 0 ) [list removeObjectsInArray:deleteContents];
         
-        for ( NSInteger i = 0 ; i < list.count - 1; i += 2 ) {
-            MCSVODPartialContent *write = list[i];
-            MCSVODPartialContent *read  = list[i + 1];
-            NSRange readRange = NSMakeRange(0, 0);
-            
-            NSUInteger maxA = write.offset + write.length;
-            NSUInteger maxR = read.offset + read.length;
-            if ( maxA >= read.offset && maxA < maxR ) // 有交集
-                readRange = NSMakeRange(maxA - read.offset, maxR - maxA); // 读取read中未相交的部分
-            
-            if ( readRange.length != 0 ) {
-                NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];
-                NSFileHandle *reader = [NSFileHandle fileHandleForReadingAtPath:[self filePathOfContent:read]];
-                @try {
-                    [writer seekToEndOfFile];
-                    [reader seekToFileOffset:readRange.location];
-                    while (true) {
-                        @autoreleasepool {
-                            NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
-                            if ( data.length == 0 )
-                                break;
-                            [writer writeData:data];
+        if ( list.count > 1 ) {
+            for ( NSInteger i = 0 ; i < list.count - 1; i += 2 ) {
+                MCSVODPartialContent *write = list[i];
+                MCSVODPartialContent *read  = list[i + 1];
+                NSRange readRange = NSMakeRange(0, 0);
+                
+                NSUInteger maxA = write.offset + write.length;
+                NSUInteger maxR = read.offset + read.length;
+                if ( maxA >= read.offset && maxA < maxR ) // 有交集
+                    readRange = NSMakeRange(maxA - read.offset, maxR - maxA); // 读取read中未相交的部分
+                
+                if ( readRange.length != 0 ) {
+                    NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self filePathOfContent:write]];
+                    NSFileHandle *reader = [NSFileHandle fileHandleForReadingAtPath:[self filePathOfContent:read]];
+                    @try {
+                        [writer seekToEndOfFile];
+                        [reader seekToFileOffset:readRange.location];
+                        while (true) {
+                            @autoreleasepool {
+                                NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
+                                if ( data.length == 0 )
+                                    break;
+                                [writer writeData:data];
+                            }
                         }
+                        [reader closeFile];
+                        [writer synchronizeFile];
+                        [writer closeFile];
+                        [self _didWriteDataForContent:write length:readRange.length];
+                        [deleteContents addObject:read];
+                    } @catch (NSException *exception) {
+                        break;
                     }
-                    [reader closeFile];
-                    [writer synchronizeFile];
-                    [writer closeFile];
-                    [self _didWriteDataForContent:write length:readRange.length];
-                    [deleteContents addObject:read];
-                } @catch (NSException *exception) {
-                    break;
                 }
             }
         }

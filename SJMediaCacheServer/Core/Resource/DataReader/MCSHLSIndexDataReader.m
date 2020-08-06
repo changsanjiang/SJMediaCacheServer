@@ -63,13 +63,13 @@
 #pragma mark - MCSHLSParserDelegate
 
 - (void)parserParseDidFinish:(MCSHLSParser *)parser {
-    dispatch_barrier_sync(MCSHLSIndexDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
         [self _parseDidFinish];
     });
 }
 
 - (void)parser:(MCSHLSParser *)parser anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(MCSHLSIndexDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
         [self _onError:error];
     });
 }

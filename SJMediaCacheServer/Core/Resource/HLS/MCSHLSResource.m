@@ -104,6 +104,7 @@
             break;
     }
     if ( content != nil ) {
+        [content readWrite_retain];
         [self _addContent:content];
     }
     return content;

@@ -25,7 +25,7 @@
 
 - (NSUInteger)availableLength {
     __block NSUInteger availableLength = 0;
-    dispatch_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_sync(MCSDataReaderQueue(), ^{
         availableLength = _availableLength;
     });
     return availableLength;
@@ -33,7 +33,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_sync(MCSDataReaderQueue(), ^{
         offset = _range.location + _readLength;
     });
     return offset;
@@ -42,7 +42,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_sync(MCSDataReaderQueue(), ^{
         isPrepared = _isPrepared;
     });
     return isPrepared;
@@ -50,14 +50,14 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_sync(MCSDataReaderQueue(), ^{
         isDone = _isPrepared && (_readLength == _range.length);
     });
     return isDone;
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
         if ( _isClosed || _isCalledPrepare )
             return;
         
@@ -67,7 +67,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)param {
     __block NSData *data = nil;
-    dispatch_barrier_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
         @try {
             if ( _readLength == _range.length || _isClosed || !_isPrepared )
                 return;
@@ -110,7 +110,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_barrier_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
         if ( _isClosed || !_isPrepared )
             return;
         if ( offset < _range.location )
@@ -131,7 +131,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(MCSResourceDataReaderQueue(), ^{
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
         if ( _isClosed )
             return;
         [self _close];

@@ -18,29 +18,6 @@ MCSPrefetcherQueue(void);
 FOUNDATION_EXPORT dispatch_queue_t
 MCSReaderQueue(void);
 
-#pragma mark -
-
-FOUNDATION_EXPORT dispatch_queue_t
-MCSFileDataReaderQueue(void);
-
-#pragma mark -
-
-FOUNDATION_EXPORT dispatch_queue_t
-MCSHLSAESDataReaderQueue(void);
-
-FOUNDATION_EXPORT dispatch_queue_t
-MCSHLSIndexDataReaderQueue(void);
-
-FOUNDATION_EXPORT dispatch_queue_t
-MCSHLSTsDataReaderQueue(void);
-
-#pragma mark -
-
-FOUNDATION_EXPORT dispatch_queue_t
-MCSVODNetworkDataReaderQueue(void);
-
-#pragma mark -
-
 FOUNDATION_EXPORT dispatch_queue_t
 MCSDownloadQueue(void);
 
@@ -48,6 +25,6 @@ FOUNDATION_EXPORT dispatch_queue_t
 MCSDelegateQueue(void);
 
 FOUNDATION_EXPORT dispatch_queue_t
-MCSResourceDataReaderQueue(void);
+MCSDataReaderQueue(void);
 
 NS_ASSUME_NONNULL_END

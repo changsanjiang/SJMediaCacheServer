@@ -1,1 +1,1 @@
-../../../../../SJMediaCacheServer/Core/Resource/HLS/MCSHLSIndexDataReader.h
+../../../../../SJMediaCacheServer/Core/Resource/DataReader/MCSHLSIndexDataReader.h

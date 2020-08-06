@@ -13,6 +13,7 @@
 @interface MCSResourceDataReader (Subclass)
 
 - (instancetype)initWithResource:(MCSResource *)resource delegate:(id<MCSResourceDataReaderDelegate>)delegate;
+
 - (void)_onError:(NSError *)error;
 
 - (void)_close;

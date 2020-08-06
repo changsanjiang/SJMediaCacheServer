@@ -51,7 +51,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_offset, (unsigned long)self.length];
+    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu, readWriteCount: %lu };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_offset, (unsigned long)self.length, (unsigned long)self.readWriteCount];
 }
 @end
 
@@ -74,6 +74,6 @@
     return self;
 }
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%s: <%p> { name: %@, totalLength: %lu, length: %lu };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_totalLength, (unsigned long)self.length];
+    return [NSString stringWithFormat:@"%s: <%p> { name: %@, totalLength: %lu, length: %lu, readWriteCount: %lu  };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_totalLength, (unsigned long)self.length, self.readWriteCount];
 }
 @end
