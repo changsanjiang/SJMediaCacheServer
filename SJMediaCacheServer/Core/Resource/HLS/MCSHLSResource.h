@@ -15,11 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSUInteger TsCount;
 @property (nonatomic, strong, nullable) MCSHLSParser *parser;
 
-
-- (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
-- (void)updateTsContentType:(NSString * _Nullable)TsContentType;
-
-- (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL;
-- (MCSResourcePartialContent *)createContentWithTsURL:(NSURL *)URL totalLength:(NSUInteger)totalLength;
+- (void)updateTsContentType:(NSString * _Nullable)TsContentType __deprecated;
+- (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL __deprecated;
+- (MCSResourcePartialContent *)createContentWithTsURL:(NSURL *)URL totalLength:(NSUInteger)totalLength __deprecated;
 @end
 NS_ASSUME_NONNULL_END

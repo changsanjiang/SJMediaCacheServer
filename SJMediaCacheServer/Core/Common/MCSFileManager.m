@@ -92,9 +92,9 @@ static NSString *HLSPrefix = @"hls";
             // VOD前缀_偏移量_序号.扩展名
             NSString *fname = [NSString stringWithFormat:@"%@_%lu_%lu", VODPrefix, (unsigned long)offset, (unsigned long)sequence++];
             if ( pathExtension.length != 0 ) fname = [fname stringByAppendingPathExtension:pathExtension];
-            NSString *filepath = [self getFilePathWithName:fname inResource:resourceName];
-            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-                [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+            NSString *filePath = [self getFilePathWithName:fname inResource:resourceName];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
                 filename = fname;
                 return;
             }
@@ -118,6 +118,25 @@ static NSString *HLSPrefix = @"hls";
     return [self getFilePathWithName:filename inResource:resourceName];
 }
 
+//      注意: 返回文件名
++ (NSString *)hls_createIndexFileInResource:(NSString *)resourceName totalLength:(NSUInteger)totalLength {
+    // format: HLS前缀_长度_序号_index.m3u8
+    //
+    __block NSString *filename = nil;
+    [self lockWithBlock:^{
+        NSUInteger sequence = 0;
+        do {
+            NSString *fname = [NSString stringWithFormat:@"%@_%lu_%lu_index.m3u8", HLSPrefix, (unsigned long)totalLength, (unsigned long)sequence++];
+            NSString *filePath = [self getFilePathWithName:fname inResource:resourceName];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
+                filename = fname;
+                return;
+            }
+        } while (true);
+    }];
+    return nil;
+}
 @end
 
 
@@ -129,26 +148,45 @@ static NSString *HLSPrefix = @"hls";
     return [self getFilePathWithName:AESKeyName inResource:resourceName];
 }
 
++ (NSString *)hls_createAESKeyFileInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName totalLength:(NSUInteger)totalLength {
+    // format: HLS前缀_长度_序号_AESKeyName
+    //
+    __block NSString *filename = nil;
+    [self lockWithBlock:^{
+        NSUInteger sequence = 0;
+        do {
+            NSString *fname = [NSString stringWithFormat:@"%@_%lu_%lu_%@", HLSPrefix, (unsigned long)totalLength, (unsigned long)sequence++, AESKeyName];
+            NSString *filePath = [self getFilePathWithName:fname inResource:resourceName];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
+                filename = fname;
+                return;
+            }
+        } while (true);
+    }];
+    return nil;
+}
+
 @end
 
 @implementation MCSFileManager (HLS_TS)
 //      注意: 返回文件名
-+ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length {
++ (nullable NSString *)hls_createTsFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length {
     __block NSString *filename = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    [self lockWithBlock:^{
         NSUInteger sequence = 0;
         while (true) {
             // format: HLS前缀_长度_序号_tsName
             //
             NSString *fname = [NSString stringWithFormat:@"%@_%lu_%lu_%@", HLSPrefix, (unsigned long)length, (unsigned long)sequence++, tsName];
-            NSString *filepath = [self getFilePathWithName:fname inResource:resourceName];
-            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-                [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+            NSString *filePath = [self getFilePathWithName:fname inResource:resourceName];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
                 filename = fname;
                 return;
             }
         }
-    });
+    }];
     return filename;
 }
 

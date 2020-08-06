@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSResource : NSObject<MCSResource> {
     @protected
-    NSMutableArray<MCSResourcePartialContent *> *_m;
+    NSMutableArray<__kindof MCSResourcePartialContent *> *_m;
     BOOL _isCacheFinished;
     NSString *_name;
 }

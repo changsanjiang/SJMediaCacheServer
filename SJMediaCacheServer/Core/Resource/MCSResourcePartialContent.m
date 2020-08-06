@@ -106,4 +106,46 @@
 - (void)readWrite_release {
     self.readWriteCount -= 1;
 }
+
+- (instancetype)initWithType:(MCSDataType)type filename:(NSString *)filename length:(NSUInteger)length {
+    self = [super init];
+    if ( self ) {
+        _type = type;
+        _filename = filename.copy;
+        _length = length;
+    }
+    return self;
+}
+@end
+
+@implementation MCSHLSIndexPartialContent
+- (instancetype)initWithFilename:(NSString *)filename totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
+    self = [super initWithType:MCSDataTypeHLSPlaylist filename:filename length:length];
+    if ( self ) {
+        _totalLength = totalLength;
+    }
+    return self;
+}
+@end
+
+@implementation MCSHLSAESKeyPartialContent
+- (instancetype)initWithFilename:(NSString *)filename AESKeyName:(NSString *)AESKeyName totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
+    self = [super initWithType:MCSDataTypeHLSAESKey filename:filename length:length];
+    if ( self ) {
+        _AESKeyName = AESKeyName.copy;
+        _totalLength = totalLength;
+    }
+    return self;
+}
+@end
+
+@implementation MCSHLSTsPartialContent
+- (instancetype)initWithFilename:(NSString *)filename TsName:(NSString *)TsName totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
+    self = [super initWithType:MCSDataTypeHLSTs filename:filename length:length];
+    if ( self ) {
+        _TsName = TsName.copy;
+        _totalLength = totalLength;
+    }
+    return self;
+}
 @end

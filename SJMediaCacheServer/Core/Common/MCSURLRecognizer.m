@@ -117,6 +117,16 @@ MCSMD5(NSString *str) {
            [URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ? MCSResourceTypeHLS : MCSResourceTypeVOD;
 }
 
+- (MCSDataType)dataTypeForURL:(NSURL *)URL {
+    if ( [URL.absoluteString containsString:MCSHLSIndexFileExtension] )
+        return MCSDataTypeHLSPlaylist;
+    if ( [URL.absoluteString containsString:MCSHLSTsFileExtension] )
+        return MCSDataTypeHLSTs;
+    if ( [URL.absoluteString containsString:MCSHLSAESKeyFileExtension] )
+        return MCSDataTypeHLSAESKey;
+    return MCSDataTypeVOD;
+}
+
 - (NSString *)nameWithUrl:(NSString *)url extension:(NSString *)extension {
     NSString *filename = url.mcs_fname;
     // 添加扩展名

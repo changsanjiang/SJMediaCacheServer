@@ -35,20 +35,26 @@ UIKIT_EXTERN MCSFileExtension const MCSHLSAESKeyFileExtension;
 
 
 @interface MCSFileManager (HLS_Index)
-+ (NSString *)hls_indexFilePathInResource:(NSString *)resourceName;
++ (NSString *)hls_indexFilePathInResource:(NSString *)resourceName __deprecated;
+
+//      注意: 返回文件名
++ (NSString *)hls_createIndexFileInResource:(NSString *)resourceName totalLength:(NSUInteger)totalLength;
 @end
 
 
 @interface MCSFileManager (HLS_AESKey)
 
-+ (NSString *)hls_AESKeyFilePathInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName;
++ (NSString *)hls_AESKeyFilePathInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName __deprecated;
+
+//      注意: 返回文件名
++ (NSString *)hls_createAESKeyFileInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName totalLength:(NSUInteger)totalLength;
 
 @end
 
 
 @interface MCSFileManager (HLS_TS)
 //      注意: 返回文件名
-+ (nullable NSString *)hls_createContentFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length;
++ (nullable NSString *)hls_createTsFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length;
 
 + (nullable NSString *)hls_TsNameOfContent:(NSString *)contentFilename;
 
