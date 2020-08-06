@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface MCSResourceNetworkDataReader : MCSResourceDataReader
 
-- (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate;
+- (instancetype)initWithResource:(__weak MCSResource *)resource proxyRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate;
 
 @end
 NS_ASSUME_NONNULL_END

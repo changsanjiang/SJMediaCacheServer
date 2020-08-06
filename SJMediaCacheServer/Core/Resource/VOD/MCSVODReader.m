@@ -250,7 +250,6 @@
     _range = current;
     
     NSMutableArray<id<MCSResourceDataReader>> *readers = NSMutableArray.array;
-    NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:_request.URL];
     for ( MCSResourcePartialContent *content in contents ) {
         NSRange available = NSMakeRange(content.offset, content.length);
         NSRange intersection = NSIntersectionRange(current, available);
@@ -258,7 +257,7 @@
             // undownloaded part
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
-                MCSResourceNetworkDataReader *reader = [self _networkDataReaderWithURL:URL range:leftRange];
+                MCSResourceNetworkDataReader *reader = [self _networkDataReaderWithRange:leftRange];
                 [readers addObject:reader];
             }
             
@@ -277,7 +276,7 @@
     
     if ( current.length != 0 ) {
         // undownloaded part
-        MCSResourceNetworkDataReader *reader = [self _networkDataReaderWithURL:URL range:current];
+        MCSResourceNetworkDataReader *reader = [self _networkDataReaderWithRange:current];
         [readers addObject:reader];
     }
     
@@ -356,10 +355,9 @@
     });
 }
 
-- (MCSResourceNetworkDataReader *)_networkDataReaderWithURL:(NSURL *)URL range:(NSRange)range {
-    NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL range:range];
-    [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeVOD]];
-    MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self];
+- (MCSResourceNetworkDataReader *)_networkDataReaderWithRange:(NSRange)range {
+    NSMutableURLRequest *request = [_request mcs_requestWithRange:range];
+    MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource proxyRequest:request networkTaskPriority:_networkTaskPriority delegate:self];
     return reader;
 }
 

@@ -29,7 +29,7 @@
 }
 
 - (void)dealloc {
-    [_content readWrite_release];
+    if ( !_isClosed ) [self _close];
 }
 
 - (void)_prepare {
@@ -75,7 +75,7 @@
         [_reader closeFile];
         _reader = nil;
         _isClosed = YES;
-        
+        [_content readWrite_release];
         MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (NSException *exception) {
         

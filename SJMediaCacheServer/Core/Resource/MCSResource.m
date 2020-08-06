@@ -68,7 +68,7 @@
     userInfo:nil];
 }
 
-- (nullable MCSResourcePartialContent *)createContentWithRequest:(NSURLRequest *)request response:(NSHTTPURLResponse *)response {
+- (nullable MCSResourcePartialContent *)createContentWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
     @throw [NSException exceptionWithName:NSInternalInconsistencyException
       reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
     userInfo:nil];

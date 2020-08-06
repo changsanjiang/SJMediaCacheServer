@@ -31,21 +31,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSUInteger tsTotalLength;
 @end
 
-
-@interface MCSHLSIndexPartialContent : MCSResourcePartialContent
-- (instancetype)initWithFilename:(NSString *)filename totalLength:(NSUInteger)totalLength length:(NSUInteger)length;
-@property (nonatomic, readonly) NSUInteger totalLength;
-@end
-
-@interface MCSHLSAESKeyPartialContent : MCSResourcePartialContent
-- (instancetype)initWithFilename:(NSString *)filename AESKeyName:(NSString *)AESKeyName totalLength:(NSUInteger)totalLength length:(NSUInteger)length;
-@property (nonatomic, copy, readonly) NSString *AESKeyName;
-@property (nonatomic, readonly) NSUInteger totalLength;
-@end
-
-@interface MCSHLSTsPartialContent : MCSResourcePartialContent
-- (instancetype)initWithFilename:(NSString *)filename TsName:(NSString *)TsName totalLength:(NSUInteger)totalLength length:(NSUInteger)length;
-@property (nonatomic, copy, readonly) NSString *TsName;
+@interface MCSHLSPartialContent : MCSResourcePartialContent
++ (instancetype)AESKeyPartialContentWithFilename:(NSString *)filename name:(NSString *)name totalLength:(NSUInteger)totalLength length:(NSUInteger)length;
++ (instancetype)TsPartialContentWithFilename:(NSString *)filename name:(NSString *)name totalLength:(NSUInteger)totalLength length:(NSUInteger)length;
+@property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, readonly) NSUInteger totalLength;
 @end
 NS_ASSUME_NONNULL_END

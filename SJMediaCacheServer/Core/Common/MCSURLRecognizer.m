@@ -117,7 +117,7 @@ MCSMD5(NSString *str) {
            [URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ? MCSResourceTypeHLS : MCSResourceTypeVOD;
 }
 
-- (MCSDataType)dataTypeForURL:(NSURL *)URL {
+- (MCSDataType)dataTypeForProxyURL:(NSURL *)URL {
     if ( [URL.absoluteString containsString:MCSHLSIndexFileExtension] )
         return MCSDataTypeHLSPlaylist;
     if ( [URL.absoluteString containsString:MCSHLSTsFileExtension] )

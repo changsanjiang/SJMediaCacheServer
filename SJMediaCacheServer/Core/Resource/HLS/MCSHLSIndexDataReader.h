@@ -14,7 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSHLSIndexDataReader : NSObject<MCSHLSDataReader>
-- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate;
+- (instancetype)initWithResource:(MCSHLSResource *)resource proxyRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, strong, readonly, nullable) MCSHLSParser *parser;

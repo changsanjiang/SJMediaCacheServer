@@ -13,6 +13,7 @@
 #import "MCSHLSResource.h"
 #import "MCSFileManager.h"
 #import "MCSQueue.h"
+#import "MCSURLRecognizer.h"
 
 @interface MCSHLSIndexDataReader ()<MCSHLSParserDelegate, MCSResourceDataReaderDelegate>
 @property (nonatomic, strong) NSURLRequest *request;
@@ -28,7 +29,7 @@
 
 @implementation MCSHLSIndexDataReader
 @synthesize delegate = _delegate;
-- (instancetype)initWithResource:(MCSHLSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
+- (instancetype)initWithResource:(MCSHLSResource *)resource proxyRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _networkTaskPriority = networkTaskPriority;
@@ -57,7 +58,11 @@
         
         // parse the m3u8 file
         if ( _parser == nil ) {
-            _parser = [MCSHLSParser.alloc initWithResource:_resource.name request:[_request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:_networkTaskPriority delegate:self];
+            NSURL *proxyURL = _request.URL;
+            NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:proxyURL];
+            NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL];
+            [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]];
+            _parser = [MCSHLSParser.alloc initWithResource:_resource.name request:request networkTaskPriority:_networkTaskPriority delegate:self];
             [_parser prepare];
             return;
         }

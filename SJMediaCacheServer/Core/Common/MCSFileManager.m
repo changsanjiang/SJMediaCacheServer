@@ -64,10 +64,17 @@ static NSString *HLSPrefix = @"hls";
         // HLS
         else if ( [filename hasPrefix:HLSPrefix] ) {
             NSString *path = [resourcePath stringByAppendingPathComponent:filename];
-            NSString *TsName = [self hls_TsNameOfContent:filename];
+            NSString *name = [self hls_TsNameOfContent:filename];
             NSUInteger totalLength = [self hls_TsTotalLengthOfContent:filename];
             NSUInteger length = [self fileSizeAtPath:path];
-            __auto_type content = [MCSResourcePartialContent.alloc initWithFilename:filename tsName:TsName  tsTotalLength:totalLength length:length];
+            
+            MCSHLSPartialContent *content = nil;
+            if ( [name containsString:MCSHLSTsFileExtension] ) {
+                content = [MCSHLSPartialContent TsPartialContentWithFilename:filename name:name totalLength:totalLength length:length];
+            }
+            else if ( [name containsString:MCSHLSAESKeyFileExtension] ) {
+                content = [MCSHLSPartialContent AESKeyPartialContentWithFilename:filename name:name totalLength:totalLength length:length];
+            }
             [m addObject:content];
         }
     }];
@@ -118,25 +125,6 @@ static NSString *HLSPrefix = @"hls";
     return [self getFilePathWithName:filename inResource:resourceName];
 }
 
-//      注意: 返回文件名
-+ (NSString *)hls_createIndexFileInResource:(NSString *)resourceName totalLength:(NSUInteger)totalLength {
-    // format: HLS前缀_长度_序号_index.m3u8
-    //
-    __block NSString *filename = nil;
-    [self lockWithBlock:^{
-        NSUInteger sequence = 0;
-        do {
-            NSString *fname = [NSString stringWithFormat:@"%@_%lu_%lu_index.m3u8", HLSPrefix, (unsigned long)totalLength, (unsigned long)sequence++];
-            NSString *filePath = [self getFilePathWithName:fname inResource:resourceName];
-            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
-                [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
-                filename = fname;
-                return;
-            }
-        } while (true);
-    }];
-    return nil;
-}
 @end
 
 

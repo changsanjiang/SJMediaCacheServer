@@ -13,6 +13,7 @@
 #import "MCSResourcePartialContent.h"
 #import "MCSResourceSubclass.h"
 #import "MCSUtils.h"
+#import "MCSURLRecognizer.h"
 
 @interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate>
 @property (nonatomic, strong, nullable) NSURLRequest *request;
@@ -24,7 +25,7 @@
 
 @implementation MCSResourceNetworkDataReader
 
-- (instancetype)initWithResource:(__weak MCSResource *)resource request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
+- (instancetype)initWithResource:(__weak MCSResource *)resource proxyRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super initWithResource:resource delegate:delegate];
     if ( self ) {
         _request = request;
@@ -34,7 +35,7 @@
 }
 
 - (void)dealloc {
-    [_content readWrite_release];
+    if ( !_isClosed ) [self _close];
 }
 
 - (void)_prepare {
@@ -42,8 +43,12 @@
     
     MCSDataReaderLog(@"%@: <%p>.prepare { request: %@ };\n", NSStringFromClass(self.class), self, _request.mcs_description);
     
-    _task = [MCSDownload.shared downloadWithRequest:_request priority:_networkTaskPriority delegate:self];
-
+    NSURL *proxyURL = _request.URL;
+    MCSDataType dataType = [MCSURLRecognizer.shared dataTypeForProxyURL:proxyURL];
+    NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:proxyURL];
+    NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL];
+    [request mcs_requestWithHTTPAdditionalHeaders:[_resource.configuration HTTPAdditionalHeadersForDataRequestsOfType:dataType]];
+    _task = [MCSDownload.shared downloadWithRequest:request priority:_networkTaskPriority delegate:self];
 }
 
 - (void)_onError:(NSError *)error {
@@ -67,7 +72,7 @@
         [_reader closeFile];
         _reader = nil;
         _isClosed = YES;
-        
+        [_content readWrite_release];
         MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (__unused NSException *exception) {
         
@@ -83,9 +88,9 @@
             return;
         }
 
-        _content = [_resource createContentWithRequest:_request response:response];
+        _content = [_resource createContentWithProxyURL:_request.URL response:response];
         if ( _content == nil ) {
-            [self _onError:[NSError mcs_responseUnavailable:_request.URL request:_request response:response]];
+            [self _onError:[NSError mcs_responseUnavailable:task.currentRequest.URL request:_request response:response]];
             return;
         }
 

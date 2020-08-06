@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSUInteger TsCount;
 @property (nonatomic, strong, nullable) MCSHLSParser *parser;
 
+- (nullable __kindof MCSResourcePartialContent *)contentForProxyURL:(NSURL *)proxyURL;
+
 - (void)updateTsContentType:(NSString * _Nullable)TsContentType __deprecated;
 - (nullable MCSResourcePartialContent *)contentForTsURL:(NSURL *)URL __deprecated;
 - (MCSResourcePartialContent *)createContentWithTsURL:(NSURL *)URL totalLength:(NSUInteger)totalLength __deprecated;

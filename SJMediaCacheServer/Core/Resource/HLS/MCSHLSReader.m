@@ -18,11 +18,16 @@
 #import "MCSError.h"
 #import "MCSQueue.h"
 
+#import "MCSResourceFileDataReader2.h"
+#import "MCSResourceNetworkDataReader.h"
+
 @interface MCSHLSReader ()<MCSResourceDataReaderDelegate> 
 @property (nonatomic) BOOL isCalledPrepare;
+@property (nonatomic) BOOL isPrepared;
 @property (nonatomic, weak, nullable) MCSHLSResource *resource;
 @property (nonatomic, strong, nullable) NSURLRequest *request;
-@property (nonatomic, strong, nullable) id<MCSHLSDataReader> reader;
+@property (nonatomic, strong, nullable) id<MCSResourceDataReader> reader;
+@property (nonatomic, strong, nullable) id<MCSResourceResponse> response;
 @end
 
 @implementation MCSHLSReader
@@ -83,32 +88,39 @@
         NSParameterAssert(_resource);
         
         _isCalledPrepare = YES;
-        NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:_request.URL];
-        NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL];
-        if      ( [_request.URL.absoluteString containsString:MCSHLSIndexFileExtension] ) {
-            _reader = [MCSHLSIndexDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self];
-        }
-        else if ( [_request.URL.absoluteString containsString:MCSHLSAESKeyFileExtension] ) {
-            if ( _resource.parser == nil ) {
-                [self _onError:[NSError mcs_HLSFileParseError:_request.URL]];
-                return;
+        NSURL *proxyURL = _request.URL;
+        MCSDataType dataType = [MCSURLRecognizer.shared dataTypeForProxyURL:proxyURL];
+        switch ( dataType ) {
+            case MCSDataTypeHLSPlaylist: {
+                _reader = [MCSHLSIndexDataReader.alloc initWithResource:_resource proxyRequest:_request networkTaskPriority:_networkTaskPriority delegate:self];
             }
-            _reader = [MCSHLSAESKeyDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self];
-        }
-        else {
-            if ( _resource.parser == nil ) {
-                [self _onError:[NSError mcs_HLSFileParseError:_request.URL]];
-                return;
+                break;
+            case MCSDataTypeHLSAESKey:
+            case MCSDataTypeHLSTs: {
+                if ( _resource.parser == nil ) {
+                    [self _onError:[NSError mcs_HLSFileParseError:_request.URL]];
+                    return;
+                }
+                
+                MCSHLSPartialContent *content = [_resource contentForProxyURL:_request.URL];
+                if ( content != nil ) {
+                    _reader = [MCSResourceFileDataReader2.alloc initWithResource:_resource inRange:NSMakeRange(0, content.totalLength) partialContent:content startOffsetInFile:0 delegate:self];
+                }
+                else {
+                    _reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource proxyRequest:_request networkTaskPriority:_networkTaskPriority delegate:self];
+                }
             }
-            _reader = [MCSHLSTSDataReader.alloc initWithResource:_resource request:request networkTaskPriority:_networkTaskPriority delegate:self];
+                break;
+            default:
+                assert("Invalid data type!");
+                break;
         }
-        
         [_reader prepare];
     });
 }
 
-- (nullable id<MCSHLSDataReader>)reader {
-    __block id<MCSHLSDataReader> reader = nil;
+- (nullable id<MCSResourceDataReader>)reader {
+    __block id<MCSResourceDataReader> reader = nil;
     dispatch_sync(MCSReaderQueue(), ^{
         reader = _reader;
     });
@@ -158,7 +170,11 @@
 }
 
 - (BOOL)isPrepared {
-    return self.reader.isPrepared;
+    __block BOOL isPrepared = NO;
+    dispatch_sync(MCSReaderQueue(), ^{
+        isPrepared = _isPrepared;
+    });
+    return isPrepared;
 }
 
 - (BOOL)isReadingEndOfData {
@@ -174,7 +190,11 @@
 }
 
 - (id<MCSResourceResponse>)response {
-    return self.reader.response;
+    __block id<MCSResourceResponse> response = nil;
+    dispatch_sync(MCSReaderQueue(), ^{
+        response = _response;
+    });
+    return response;
 }
 
 #pragma mark -
@@ -199,7 +219,9 @@
             if ( parser != nil && _resource.parser != parser )
                 _resource.parser = parser;
         }
-        
+
+        _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:reader.range.length];
+        _isPrepared = YES;
     });
     [_delegate readerPrepareDidFinish:self];
 }

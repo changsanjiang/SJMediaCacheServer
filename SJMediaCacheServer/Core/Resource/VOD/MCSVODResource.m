@@ -46,7 +46,7 @@
     [self addContents:[MCSFileManager getContentsInResource:_name]];
 }
 
-- (nullable MCSResourcePartialContent *)createContentWithRequest:(NSURLRequest *)request response:(NSHTTPURLResponse *)response {
+- (nullable MCSResourcePartialContent *)createContentWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
     __block BOOL isUpdated = NO;
     dispatch_barrier_sync(MCSResourceQueue(), ^{
         if ( _server == nil || _contentType == nil || _totalLength == 0 || _pathExtension == nil ) {
@@ -58,7 +58,7 @@
         }
     });
     if ( isUpdated ) [MCSResourceManager.shared saveMetadata:self];
-    NSUInteger offset = request.mcs_range.location;
+    NSUInteger offset = MCSGetResponseContentRange(response).start;
     NSString *filename = [MCSFileManager vod_createContentFileInResource:self.name atOffset:offset pathExtension:self.pathExtension];
     MCSResourcePartialContent *content = [MCSResourcePartialContent.alloc initWithFilename:filename offset:offset];
     [self addContent:content];

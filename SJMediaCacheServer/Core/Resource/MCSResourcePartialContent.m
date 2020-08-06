@@ -113,38 +113,26 @@
         _type = type;
         _filename = filename.copy;
         _length = length;
+        _queue = dispatch_get_global_queue(0, 0);
     }
     return self;
 }
 @end
 
-@implementation MCSHLSIndexPartialContent
-- (instancetype)initWithFilename:(NSString *)filename totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
-    self = [super initWithType:MCSDataTypeHLSPlaylist filename:filename length:length];
-    if ( self ) {
-        _totalLength = totalLength;
-    }
-    return self;
+@implementation MCSHLSPartialContent
++ (instancetype)AESKeyPartialContentWithFilename:(NSString *)filename name:(NSString *)name totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
+    return [MCSHLSPartialContent.alloc initWithType:MCSDataTypeHLSAESKey filename:filename name:name totalLength:totalLength length:length];
 }
-@end
 
-@implementation MCSHLSAESKeyPartialContent
-- (instancetype)initWithFilename:(NSString *)filename AESKeyName:(NSString *)AESKeyName totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
-    self = [super initWithType:MCSDataTypeHLSAESKey filename:filename length:length];
-    if ( self ) {
-        _AESKeyName = AESKeyName.copy;
-        _totalLength = totalLength;
-    }
-    return self;
++ (instancetype)TsPartialContentWithFilename:(NSString *)filename name:(NSString *)name totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
+    return [MCSHLSPartialContent.alloc initWithType:MCSDataTypeHLSTs filename:filename name:name totalLength:totalLength length:length];
 }
-@end
 
-@implementation MCSHLSTsPartialContent
-- (instancetype)initWithFilename:(NSString *)filename TsName:(NSString *)TsName totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
-    self = [super initWithType:MCSDataTypeHLSTs filename:filename length:length];
+- (instancetype)initWithType:(MCSDataType)type filename:(NSString *)filename name:(NSString *)name totalLength:(NSUInteger)totalLength length:(NSUInteger)length {
+    self = [super initWithType:type filename:filename length:length];
     if ( self ) {
-        _TsName = TsName.copy;
-        _totalLength = totalLength;
+        _totalLength = totalLength;;
+        _name = name;
     }
     return self;
 }

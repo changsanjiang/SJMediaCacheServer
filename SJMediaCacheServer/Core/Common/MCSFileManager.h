@@ -35,10 +35,9 @@ UIKIT_EXTERN MCSFileExtension const MCSHLSAESKeyFileExtension;
 
 
 @interface MCSFileManager (HLS_Index)
-+ (NSString *)hls_indexFilePathInResource:(NSString *)resourceName __deprecated;
 
-//      注意: 返回文件名
-+ (NSString *)hls_createIndexFileInResource:(NSString *)resourceName totalLength:(NSUInteger)totalLength;
++ (NSString *)hls_indexFilePathInResource:(NSString *)resourceName;
+
 @end
 
 
