@@ -35,7 +35,7 @@
     
     NSString *url = nil;
     
-    url = @"https://yunke.zto.com/api/common/mu/getMyM3u8.m3u8?courseWareId=6420832&key=s5VcBNQ3pEMOkP1EteNxWH5W83B9fsEhY5PmvciNYK5mBsxiw1c0c4eLR7c2QVQ%2Bu4%2BcbY%2FXsbMMW%2BU75LbUhHqXGvSW%2BZZNAQSfaqcybCZruN2FztypfZifUy3UKHCrbUSMDQRBhFeLjIOcFUjQGFMrzXDd1I8QiVI9TR0MpZIF%2B8IbaUsBvK7F4oQeICbfXe2%2Fvmy9W2f%2BLE7ch%2B0JjazjyGDb8goeuXjDwkz7yAY126d%2BQ%2BBy5azxQYlO9V90xaGLlv9mEKGzW%2FijWKKFJ8LsxM%2FFQQ5Wc1Z23Z%2Fynn%2FWmAjdZFMhidtAdKu6Kb%2F61eqZs%2BZYqCyRRTsZwXu6d%2B0wyckpuu6VX6J4eWFXwJ******";
+    url = @"http://playertest.longtailvideo.com/adaptive/oceans_aes/oceans_aes.m3u8";
 //    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     
     NSURL *URL = [NSURL URLWithString:url];

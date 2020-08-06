@@ -24,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id<MCSResourceReader>)readerWithRequest:(NSURLRequest *)request;
 
+@property (nonatomic, copy, readonly, nullable) NSArray<MCSResourcePartialContent *> *contents;
+
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
 
 @property (nonatomic, strong, readonly) MCSResourceUsageLog *log;
@@ -34,8 +36,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)prepareForReader;
 
-- (nullable MCSResourcePartialContent *)createContentWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response;
+- (nullable MCSResourcePartialContent *)createContentForDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response;
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
+- (void)didWriteDataForContent:(MCSResourcePartialContent *)content length:(NSUInteger)length;
+- (void)willReadContent:(MCSResourcePartialContent *)content;
+- (void)didEndReadContent:(MCSResourcePartialContent *)content;
+
 @end
 
 NS_ASSUME_NONNULL_END

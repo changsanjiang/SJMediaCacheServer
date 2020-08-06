@@ -30,36 +30,21 @@ UIKIT_EXTERN MCSFileExtension const MCSHLSAESKeyFileExtension;
 //      注意: 返回文件名
 + (nullable NSString *)vod_createContentFileInResource:(NSString *)resourceName atOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension;
 
-+ (NSUInteger)vod_offsetOfContent:(NSString *)contentFilename;
 @end
 
 
-@interface MCSFileManager (HLS_Index)
+@interface MCSFileManager (HLS)
 
 + (NSString *)hls_indexFilePathInResource:(NSString *)resourceName;
-
-@end
-
-
-@interface MCSFileManager (HLS_AESKey)
-
-+ (NSString *)hls_AESKeyFilePathInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName __deprecated;
 
 //      注意: 返回文件名
 + (NSString *)hls_createAESKeyFileInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName totalLength:(NSUInteger)totalLength;
 
-@end
-
-
-@interface MCSFileManager (HLS_TS)
 //      注意: 返回文件名
-+ (nullable NSString *)hls_createTsFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length;
-
-+ (nullable NSString *)hls_TsNameOfContent:(NSString *)contentFilename;
-
-+ (NSUInteger)hls_TsTotalLengthOfContent:(NSString *)contentFilename;
++ (NSString *)hls_createTsFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length;
 
 @end
+ 
 
 @interface MCSFileManager (FileSize)
 + (NSUInteger)rootDirectorySize;

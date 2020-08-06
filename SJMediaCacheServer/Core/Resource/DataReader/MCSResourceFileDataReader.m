@@ -1,27 +1,26 @@
 //
-//  MCSResourceFileDataReader2.m
+//  MCSResourceFileDataReader.m
 //  Pods
 //
 //  Created by BlueDancer on 2020/8/5.
 //
 
-#import "MCSResourceFileDataReader2.h"
+#import "MCSResourceFileDataReader.h"
 #import "MCSResourceDataReaderSubclass.h"
-#import "MCSResourceSubclass.h"
+#import "MCSResource.h"
 
-@interface MCSResourceFileDataReader2 ()
+@interface MCSResourceFileDataReader ()
 @property (nonatomic, copy, nullable) NSString *path;
 @property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
 @end
 
-@implementation MCSResourceFileDataReader2
-
+@implementation MCSResourceFileDataReader
 - (instancetype)initWithResource:(MCSResource *)resource inRange:(NSRange)range partialContent:(MCSResourcePartialContent *)content startOffsetInFile:(NSUInteger)startOffsetInFile  delegate:(id<MCSResourceDataReaderDelegate>)delegate {
     self = [super initWithResource:resource delegate:delegate];
     if ( self ) {
         _range = range;
         _content = content;
-        [_content readWrite_retain];
+        [_resource willReadContent:content];
         _path = [resource filePathOfContent:content];
         _startOffsetInFile = startOffsetInFile;
     }
@@ -75,7 +74,7 @@
         [_reader closeFile];
         _reader = nil;
         _isClosed = YES;
-        [_content readWrite_release];
+        [_resource didEndReadContent:_content];
         MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (NSException *exception) {
         

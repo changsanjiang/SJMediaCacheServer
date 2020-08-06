@@ -58,14 +58,14 @@ static NSString *HLSPrefix = @"hls";
             NSString *path = [resourcePath stringByAppendingPathComponent:filename];
             NSUInteger offset = [self vod_offsetOfContent:filename];
             NSUInteger length = [self fileSizeAtPath:path];
-            __auto_type content = [MCSResourcePartialContent.alloc initWithFilename:filename offset:offset length:length];
+            __auto_type content = [MCSVODPartialContent.alloc initWithFilename:filename offset:offset length:length];
             [m addObject:content];
         }
         // HLS
         else if ( [filename hasPrefix:HLSPrefix] ) {
             NSString *path = [resourcePath stringByAppendingPathComponent:filename];
-            NSString *name = [self hls_TsNameOfContent:filename];
-            NSUInteger totalLength = [self hls_TsTotalLengthOfContent:filename];
+            NSString *name = [self hls_nameOfContent:filename];
+            NSUInteger totalLength = [self hls_totalLengthOfContent:filename];
             NSUInteger length = [self fileSizeAtPath:path];
             
             MCSHLSPartialContent *content = nil;
@@ -81,6 +81,21 @@ static NSString *HLSPrefix = @"hls";
     return m;
 }
 
+
+// format: HLS前缀_长度_序号_name
++ (nullable NSString *)hls_nameOfContent:(NSString *)contentFilename {
+    return [contentFilename componentsSeparatedByString:@"_"].lastObject;
+}
+
+// format: HLS前缀_长度_序号_name
++ (NSUInteger)hls_totalLengthOfContent:(NSString *)contentFilename {
+    return (NSUInteger)[[contentFilename componentsSeparatedByString:@"_"][1] longLongValue];
+}
+
+// format: VOD前缀_偏移量_序号.扩展名
++ (NSUInteger)vod_offsetOfContent:(NSString *)contentFilename {
+    return (NSUInteger)[[contentFilename componentsSeparatedByString:@"_"][1] longLongValue];
+}
 @end
 
 
@@ -110,34 +125,20 @@ static NSString *HLSPrefix = @"hls";
     return filename;
 }
 
-// format: VOD前缀_偏移量_序号.扩展名
-+ (NSUInteger)vod_offsetOfContent:(NSString *)contentFilename {
-    return (NSUInteger)[[contentFilename componentsSeparatedByString:@"_"][1] longLongValue];
-}
 @end
 
 #pragma mark -
 
-@implementation MCSFileManager (HLS_Index)
+@implementation MCSFileManager (HLS)
 
 + (NSString *)hls_indexFilePathInResource:(NSString *)resourceName {
     NSString *filename = @"index.m3u8";
     return [self getFilePathWithName:filename inResource:resourceName];
 }
 
-@end
-
-
-#pragma mark -
-
-@implementation MCSFileManager (HLS_AESKey)
-
-+ (NSString *)hls_AESKeyFilePathInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName {
-    return [self getFilePathWithName:AESKeyName inResource:resourceName];
-}
-
+//      注意: 返回文件名
 + (NSString *)hls_createAESKeyFileInResource:(NSString *)resourceName AESKeyName:(NSString *)AESKeyName totalLength:(NSUInteger)totalLength {
-    // format: HLS前缀_长度_序号_AESKeyName
+    // format: HLS前缀_长度_序号_name
     //
     __block NSString *filename = nil;
     [self lockWithBlock:^{
@@ -152,19 +153,16 @@ static NSString *HLSPrefix = @"hls";
             }
         } while (true);
     }];
-    return nil;
+    return filename;
 }
 
-@end
-
-@implementation MCSFileManager (HLS_TS)
 //      注意: 返回文件名
-+ (nullable NSString *)hls_createTsFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length {
++ (NSString *)hls_createTsFileInResource:(NSString *)resourceName tsName:(NSString *)tsName tsTotalLength:(NSUInteger)length {
     __block NSString *filename = nil;
     [self lockWithBlock:^{
         NSUInteger sequence = 0;
         while (true) {
-            // format: HLS前缀_长度_序号_tsName
+            // format: HLS前缀_长度_序号_name
             //
             NSString *fname = [NSString stringWithFormat:@"%@_%lu_%lu_%@", HLSPrefix, (unsigned long)length, (unsigned long)sequence++, tsName];
             NSString *filePath = [self getFilePathWithName:fname inResource:resourceName];
@@ -176,16 +174,6 @@ static NSString *HLSPrefix = @"hls";
         }
     }];
     return filename;
-}
-
-// format: HLS前缀_长度_序号_tsName
-+ (nullable NSString *)hls_TsNameOfContent:(NSString *)contentFilename {
-    return [contentFilename componentsSeparatedByString:@"_"].lastObject;
-}
-
-// format: HLS前缀_长度_序号_tsName
-+ (NSUInteger)hls_TsTotalLengthOfContent:(NSString *)contentFilename {
-    return (NSUInteger)[[contentFilename componentsSeparatedByString:@"_"][1] longLongValue];
 }
 
 @end

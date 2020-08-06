@@ -17,7 +17,7 @@
 #import "MCSResourceSubclass.h"
 #import "MCSQueue.h"
 #import "MCSUtils.h"
-#import "MCSResourceFileDataReader2.h"
+#import "MCSResourceFileDataReader.h"
 #import "MCSResourceNetworkDataReader.h"
 
 @interface MCSVODReader ()<MCSResourceDataReaderDelegate>
@@ -220,7 +220,7 @@
 - (void)_prepare {
     NSUInteger totalLength = _resource.totalLength ?: NSUIntegerMax;
     // `length`经常变动, 暂时这里排序吧
-    __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(MCSResourcePartialContent *obj1, MCSResourcePartialContent *obj2) {
+    __auto_type contents = [_resource.contents sortedArrayUsingComparator:^NSComparisonResult(MCSVODPartialContent *obj1, MCSVODPartialContent *obj2) {
         if ( obj1.offset == obj2.offset )
             return obj1.length >= obj2.length ? NSOrderedAscending : NSOrderedDescending;
         return obj1.offset < obj2.offset ? NSOrderedAscending : NSOrderedDescending;
@@ -250,7 +250,7 @@
     _range = current;
     
     NSMutableArray<id<MCSResourceDataReader>> *readers = NSMutableArray.array;
-    for ( MCSResourcePartialContent *content in contents ) {
+    for ( MCSVODPartialContent *content in contents ) {
         NSRange available = NSMakeRange(content.offset, content.length);
         NSRange intersection = NSIntersectionRange(current, available);
         if ( intersection.length != 0 ) {
@@ -264,7 +264,7 @@
             // downloaded part
             NSRange matchedRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
             NSUInteger startOffsetInFile = matchedRange.location - content.offset;
-            MCSResourceFileDataReader2 *reader = [MCSResourceFileDataReader2.alloc initWithResource:_resource inRange:matchedRange partialContent:content startOffsetInFile:startOffsetInFile delegate:self];
+            MCSResourceFileDataReader *reader = [MCSResourceFileDataReader.alloc initWithResource:_resource inRange:matchedRange partialContent:content startOffsetInFile:startOffsetInFile delegate:self];
             [readers addObject:reader];
             
             // next part

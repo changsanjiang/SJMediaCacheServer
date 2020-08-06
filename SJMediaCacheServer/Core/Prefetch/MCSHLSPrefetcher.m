@@ -9,8 +9,7 @@
 #import "MCSLogger.h"
 #import "MCSResourceManager.h"
 #import "NSURLRequest+MCS.h"  
-#import "MCSHLSResource.h"
-#import "MCSHLSTSDataReader.h"
+#import "MCSHLSResource.h" 
 #import "MCSHLSIndexDataReader.h"
 #import "MCSQueue.h"
 

@@ -11,7 +11,6 @@
 #import "NSURLRequest+MCS.h"
 #import "MCSResource.h"
 #import "MCSResourcePartialContent.h"
-#import "MCSResourceSubclass.h"
 #import "MCSUtils.h"
 #import "MCSURLRecognizer.h"
 
@@ -72,7 +71,7 @@
         [_reader closeFile];
         _reader = nil;
         _isClosed = YES;
-        [_content readWrite_release];
+        [_resource didEndReadContent:_content];
         MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (__unused NSException *exception) {
         
@@ -88,15 +87,16 @@
             return;
         }
 
-        _content = [_resource createContentWithProxyURL:_request.URL response:response];
+        _content = [_resource createContentForDataReaderWithProxyURL:_request.URL response:response];
         if ( _content == nil ) {
             [self _onError:[NSError mcs_responseUnavailable:task.currentRequest.URL request:_request response:response]];
             return;
         }
-
-        [_content readWrite_retain];
         
-        _range = NSMakeRange(_request.mcs_range.location, MCSGetResponseContentLength(response));
+        NSRange range = _request.mcs_range;
+        if ( range.location == NSNotFound ) range.location = 0;
+        range.length = MCSGetResponseContentLength(response);
+        _range = range;
         NSString *filePath = [_resource filePathOfContent:_content];
         _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
         _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
@@ -137,8 +137,7 @@
             [_writer writeData:data];
             NSUInteger length = data.length;
             _availableLength += length;
-            [_content didWriteDataWithLength:length];
-            
+            [_resource didWriteDataForContent:_content length:length];
             dispatch_async(MCSDelegateQueue(), ^{
                 [self->_delegate reader:self hasAvailableDataWithLength:length];
             });

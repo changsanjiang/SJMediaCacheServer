@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface MCSResourceDataReader : NSObject<MCSResourceDataReader> {
     @protected
-    __weak MCSResource *_resource;
+    __weak __kindof MCSResource *_resource;
     __weak id<MCSResourceDataReaderDelegate>_Nullable _delegate;
     NSFileHandle *_Nullable _reader;
     NSRange _range;

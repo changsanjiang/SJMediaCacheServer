@@ -7,10 +7,7 @@
 //
 
 #import "MCSHLSReader.h"
-#import "MCSHLSResource.h"
-#import "MCSHLSIndexDataReader.h"
-#import "MCSHLSAESKeyDataReader.h"
-#import "MCSHLSTSDataReader.h"
+#import "MCSHLSResource.h" 
 #import "MCSFileManager.h"
 #import "MCSLogger.h"
 #import "MCSHLSResource.h"
@@ -18,7 +15,8 @@
 #import "MCSError.h"
 #import "MCSQueue.h"
 
-#import "MCSResourceFileDataReader2.h"
+#import "MCSHLSIndexDataReader.h"
+#import "MCSResourceFileDataReader.h"
 #import "MCSResourceNetworkDataReader.h"
 
 @interface MCSHLSReader ()<MCSResourceDataReaderDelegate> 
@@ -104,7 +102,7 @@
                 
                 MCSHLSPartialContent *content = [_resource contentForProxyURL:_request.URL];
                 if ( content != nil ) {
-                    _reader = [MCSResourceFileDataReader2.alloc initWithResource:_resource inRange:NSMakeRange(0, content.totalLength) partialContent:content startOffsetInFile:0 delegate:self];
+                    _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource inRange:NSMakeRange(0, content.totalLength) partialContent:content startOffsetInFile:0 delegate:self];
                 }
                 else {
                     _reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource proxyRequest:_request networkTaskPriority:_networkTaskPriority delegate:self];
@@ -214,12 +212,6 @@
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
     dispatch_barrier_sync(MCSReaderQueue(), ^{
-        if ( [reader isKindOfClass:MCSHLSIndexDataReader.class] ) {
-            MCSHLSParser *parser = [(MCSHLSIndexDataReader *)reader parser];
-            if ( parser != nil && _resource.parser != parser )
-                _resource.parser = parser;
-        }
-
         _response = [MCSResourceResponse.alloc initWithServer:@"localhost" contentType:@"application/octet-stream" totalLength:reader.range.length];
         _isPrepared = YES;
     });

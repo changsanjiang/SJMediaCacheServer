@@ -1,5 +1,5 @@
 //
-//  MCSResourceFileDataReader2.h
+//  MCSResourceFileDataReader.h
 //  Pods
 //
 //  Created by BlueDancer on 2020/8/5.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSResourceFileDataReader2 : MCSResourceDataReader
+@interface MCSResourceFileDataReader : MCSResourceDataReader
 
 - (instancetype)initWithResource:(MCSResource *)resource inRange:(NSRange)range partialContent:(MCSResourcePartialContent *)content startOffsetInFile:(NSUInteger)startOffsetInFile  delegate:(id<MCSResourceDataReaderDelegate>)delegate;
 

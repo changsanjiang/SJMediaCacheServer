@@ -13,7 +13,7 @@
 #import "MCSConfiguration.h"
 #import "MCSQueue.h"
 
-@interface MCSResource ()<MCSResourcePartialContentDelegate>
+@interface MCSResource ()
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) MCSResourceUsageLog *log;
@@ -52,23 +52,13 @@
     userInfo:nil];
 }
  
-- (void)readWriteCountDidChangeForPartialContent:(MCSResourcePartialContent *)content {
-//#ifdef DEBUG
-//    NSLog(@"%d - -[%@ %s]", (int)__LINE__, NSStringFromClass([self class]), sel_getName(_cmd));
-//#endif
-}
-
-- (void)partialContent:(MCSResourcePartialContent *)content didWriteDataWithLength:(NSUInteger)length {
-    [MCSResourceManager.shared didWriteDataForResource:self length:length];
-}
-
 - (void)prepareForReader {
     @throw [NSException exceptionWithName:NSInternalInconsistencyException
       reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
     userInfo:nil];
 }
 
-- (nullable MCSResourcePartialContent *)createContentWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
+- (nullable MCSResourcePartialContent *)createContentForDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
     @throw [NSException exceptionWithName:NSInternalInconsistencyException
       reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
     userInfo:nil];
@@ -78,12 +68,30 @@
     return [MCSFileManager getFilePathWithName:content.filename inResource:_name];
 }
 
+- (void)didWriteDataForContent:(MCSResourcePartialContent *)content length:(NSUInteger)length {
+    dispatch_barrier_sync(MCSResourceQueue(), ^{
+        [self _didWriteDataForContent:content length:length];
+    });
+}
+
+- (void)willReadContent:(MCSResourcePartialContent *)content {
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+      reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
+    userInfo:nil];
+}
+
+- (void)didEndReadContent:(MCSResourcePartialContent *)content {
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+      reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
+    userInfo:nil];
+}
+
 #pragma mark -
 
 - (BOOL)isCacheFinished {
     __block BOOL isCacheFinished = NO;
     dispatch_sync(MCSResourceQueue(), ^{
-        isCacheFinished = self->_isCacheFinished;
+        isCacheFinished = _isCacheFinished;
     });
     return isCacheFinished;
 }
@@ -97,14 +105,14 @@
 @synthesize readWriteCount = _readWriteCount;
 - (void)setReadWriteCount:(NSInteger)readWriteCount {
     dispatch_barrier_sync(MCSResourceQueue(), ^{
-        self->_readWriteCount = readWriteCount;
+        _readWriteCount = readWriteCount;
     });
 }
 
 - (NSInteger)readWriteCount {
     __block NSInteger readWriteCount;
     dispatch_sync(MCSResourceQueue(), ^{
-        readWriteCount = self->_readWriteCount;
+        readWriteCount = _readWriteCount;
     });
     return readWriteCount;
 }
@@ -122,46 +130,45 @@
 - (NSArray<MCSResourcePartialContent *> *)contents {
     __block NSArray<MCSResourcePartialContent *> *contents = nil;
     dispatch_sync(MCSResourceQueue(), ^{
-        contents = self->_m.count > 0 ? self->_m.copy : nil;
+        contents = _m.count > 0 ? _m.copy : nil;
     });
     return contents;
 }
 
-- (void)addContents:(NSArray<MCSResourcePartialContent *> *)contents {
+- (void)_addContents:(NSArray<MCSResourcePartialContent *> *)contents {
     if ( contents.count != 0 ) {
-        dispatch_barrier_sync(MCSResourceQueue(), ^{
-            for ( MCSResourcePartialContent *content in contents )
-                content.delegate = self;
-            [self->_m addObjectsFromArray:contents];
-            [self contentsDidChange:self->_m.copy];
-        });
+        [_m addObjectsFromArray:contents];
+        [self _contentsDidChange:_m.copy];
     }
 }
 
-- (void)addContent:(MCSResourcePartialContent *)content {
-    if ( content != nil ) [self addContents:@[content]];
+- (void)_addContent:(MCSResourcePartialContent *)content {
+    if ( content != nil ) [self _addContents:@[content]];
 }
 
-- (void)removeContent:(MCSResourcePartialContent *)content {
+- (void)_removeContent:(MCSResourcePartialContent *)content {
     if ( content != nil ) {
-        [self removeContents:@[content]];
+        [self _removeContents:@[content]];
     }
 }
 
-- (void)removeContents:(NSArray<MCSResourcePartialContent *> *)contents {
-    __block NSUInteger length = 0;
-    dispatch_barrier_sync(MCSResourceQueue(), ^{
-        for ( MCSResourcePartialContent *content in contents ) {
-            length += content.length;
-            [MCSFileManager removeContentWithName:content.filename inResource:_name error:NULL];
-        }
-        [self->_m removeObjectsInArray:contents];
-        [self contentsDidChange:self->_m.copy];
-    });
+- (void)_removeContents:(NSArray<MCSResourcePartialContent *> *)contents {
+    NSUInteger length = 0;
+    for ( MCSResourcePartialContent *content in contents ) {
+        length += content.length;
+        [MCSFileManager removeContentWithName:content.filename inResource:_name error:NULL];
+    }
+    [_m removeObjectsInArray:contents];
+    [self _contentsDidChange:_m.copy];
     [MCSResourceManager.shared didRemoveDataForResource:self length:length];
 }
 
-- (void)contentsDidChange:(NSArray<MCSResourcePartialContent *> *)contents {
+- (void)_contentsDidChange:(NSArray<MCSResourcePartialContent *> *)contents {
     /* subclass */
+}
+
+- (void)_didWriteDataForContent:(MCSResourcePartialContent *)content length:(NSUInteger)length {
+    [content didWriteDataWithLength:length];
+    [MCSResourceManager.shared didWriteDataForResource:self length:length];
 }
 @end
