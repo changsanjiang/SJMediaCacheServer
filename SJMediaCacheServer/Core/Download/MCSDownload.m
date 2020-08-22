@@ -82,7 +82,10 @@
     if ( request == nil )
         return nil;
 
-    NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
+    __block NSURLSessionDataTask *task = nil;
+    dispatch_barrier_sync(MCSDownloadQueue(), ^{
+        task = [_session dataTaskWithRequest:request];
+    });
     task.priority = priority;
     [self _setDelegate:delegate forTask:task];
 #ifdef DEBUG
