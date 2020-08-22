@@ -1,6 +1,6 @@
 {
   "name": "SJMediaCacheServer",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "summary": "A HTTP Media Caching Framework. It can cache VOD or HLS media.",
   "description": "https://github.com/changsanjiang/SJMediaCacheServer/blob/master/README.md",
   "homepage": "https://github.com/changsanjiang/SJMediaCacheServer",
@@ -13,14 +13,14 @@
   },
   "source": {
     "git": "https://github.com/changsanjiang/SJMediaCacheServer.git",
-    "tag": "1.1.5"
+    "tag": "1.1.6"
   },
   "platforms": {
     "ios": "8.0"
   },
   "source_files": "SJMediaCacheServer/*.{h,m}",
   "dependencies": {
-    "CocoaHTTPServer": [
+    "KTVCocoaHTTPServer": [
 
     ],
     "SJUIKit/SQLite3": [

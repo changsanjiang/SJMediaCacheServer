@@ -33,6 +33,6 @@ Pod::Spec.new do |s|
     ss.source_files = 'SJMediaCacheServer/Core/**/*.{h,m}'
   end
   
-  s.dependency 'CocoaHTTPServer'
+  s.dependency 'KTVCocoaHTTPServer'
   s.dependency 'SJUIKit/SQLite3'
 end

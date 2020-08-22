@@ -38,7 +38,7 @@
     
     url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
 //    url = @"http://video.youcheyihou.com/3240b282-6806-43c7-9c41-428d51a9fc1f.mp4";
-//    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     
     NSURL *URL = [NSURL URLWithString:url];
 
