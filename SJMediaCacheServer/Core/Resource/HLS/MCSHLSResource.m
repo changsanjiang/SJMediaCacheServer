@@ -53,7 +53,7 @@
  
 #pragma mark -
 
-- (nullable __kindof MCSResourcePartialContent *)contentForProxyURL:(NSURL *)proxyURL {
+- (nullable __kindof MCSResourcePartialContent *)partialContentForFileDataReaderWithProxyURL:(NSURL *)proxyURL {
     MCSDataType dataType = [MCSURLRecognizer.shared dataTypeForProxyURL:proxyURL];
     NSString *extension = nil;
     switch ( dataType ) {
@@ -84,7 +84,7 @@
     return content;
 }
 
-- (nullable MCSResourcePartialContent *)createContentForDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
+- (nullable MCSResourcePartialContent *)partialContentForNetworkDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
     __block MCSHLSPartialContent *_Nullable content = nil;
     dispatch_barrier_sync(MCSResourceQueue(), ^{
         MCSDataType dataType = [MCSURLRecognizer.shared dataTypeForProxyURL:proxyURL];

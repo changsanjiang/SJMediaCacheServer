@@ -46,7 +46,7 @@
     [self _addContents:[MCSFileManager getContentsInResource:_name]];
 }
 
-- (nullable MCSResourcePartialContent *)createContentForDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
+- (nullable MCSResourcePartialContent *)partialContentForNetworkDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
     __block BOOL isUpdated = NO;
     __block MCSResourcePartialContent *content;
     dispatch_barrier_sync(MCSResourceQueue(), ^{

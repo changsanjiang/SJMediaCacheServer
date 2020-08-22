@@ -74,6 +74,6 @@
     return self;
 }
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%s: <%p> { name: %@, totalLength: %lu, length: %lu, readWriteCount: %lu  };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_totalLength, (unsigned long)self.length, self.readWriteCount];
+    return [NSString stringWithFormat:@"%s: <%p> { name: %@, totalLength: %lu, length: %lu, readWriteCount: %ld  };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_totalLength, (unsigned long)self.length, (long)self.readWriteCount];
 }
 @end

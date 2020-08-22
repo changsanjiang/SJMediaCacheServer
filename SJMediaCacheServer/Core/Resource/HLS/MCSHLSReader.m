@@ -100,7 +100,7 @@
                     return;
                 }
                 
-                MCSHLSPartialContent *content = [_resource contentForProxyURL:_request.URL];
+                MCSHLSPartialContent *content = [_resource partialContentForFileDataReaderWithProxyURL:_request.URL];
                 if ( content != nil ) {
                     _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource inRange:NSMakeRange(0, content.totalLength) partialContent:content startOffsetInFile:0 delegate:self];
                 }
@@ -208,7 +208,49 @@
     MCSResourceReaderLog(@"%@: <%p>.close { URL: %@ };\n", NSStringFromClass(self.class), self, _request.URL);
 }
 
-#pragma mark -
+- (void)_onError:(NSError *)error {
+    if ( _isClosed )
+        return;
+    [self _close];
+    MCSResourceReaderLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
+    
+    dispatch_async(MCSDelegateQueue(), ^{
+        [self->_delegate reader:self anErrorOccurred:error];
+    });
+}
+
+- (nullable __kindof MCSResourcePartialContent *)partialContentForFileDataReaderWithProxyURL:(NSURL *)proxyURL {
+    MCSDataType dataType = [MCSURLRecognizer.shared dataTypeForProxyURL:proxyURL];
+    NSString *extension = nil;
+    switch ( dataType ) {
+        case MCSDataTypeHLSAESKey:
+            extension = MCSHLSAESKeyFileExtension;
+            break;
+        case MCSDataTypeHLSTs:
+            extension = MCSHLSTsFileExtension;
+            break;
+        default:
+            assert("Invalid data type!");
+            break;
+    }
+
+    if ( extension == nil )
+        return nil;
+    
+    __block MCSHLSPartialContent *content = nil;
+    dispatch_barrier_sync(MCSResourceQueue(), ^{
+        NSString *name = [MCSURLRecognizer.shared nameWithUrl:proxyURL.absoluteString extension:extension];
+        for ( MCSHLSPartialContent *c in _resource.contents ) {
+            if ( c.type == dataType && [c.name isEqualToString:name] && c.length == c.totalLength) {
+                content = c;
+                break;
+            }
+        }
+    });
+    return content;
+}
+
+#pragma mark - MCSResourceDataReaderDelegate
 
 - (void)readerPrepareDidFinish:(id<MCSResourceDataReader>)reader {
     dispatch_barrier_sync(MCSReaderQueue(), ^{
@@ -225,17 +267,6 @@
 - (void)reader:(id<MCSResourceDataReader>)reader anErrorOccurred:(NSError *)error {
     dispatch_barrier_sync(MCSReaderQueue(), ^{
         [self _onError:error];
-    });
-}
-
-- (void)_onError:(NSError *)error {
-    if ( _isClosed )
-        return;
-    [self _close];
-    MCSResourceReaderLog(@"%@: <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
-    
-    dispatch_async(MCSDelegateQueue(), ^{
-        [self->_delegate reader:self anErrorOccurred:error];
     });
 }
 @end

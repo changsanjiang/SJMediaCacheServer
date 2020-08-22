@@ -81,7 +81,7 @@
     NSURLRequest *request = [self _requestWithParam:requestParam];
     if ( request == nil )
         return nil;
-    
+
     NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
     task.priority = priority;
     [self _setDelegate:delegate forTask:task];

@@ -87,7 +87,7 @@
             return;
         }
 
-        _content = [_resource createContentForDataReaderWithProxyURL:_request.URL response:response];
+        _content = [_resource partialContentForNetworkDataReaderWithProxyURL:_request.URL response:response];
         if ( _content == nil ) {
             [self _onError:[NSError mcs_responseUnavailable:task.currentRequest.URL request:_request response:response]];
             return;

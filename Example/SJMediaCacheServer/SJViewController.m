@@ -13,6 +13,7 @@
 #import "SJMediaCacheServer.h"
 #import "MCSLogger.h"
  
+//#import <SJBaseVideoPlayer/SJIJKMediaPlaybackController.h>
 
 @interface SJViewController ()
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
@@ -35,8 +36,8 @@
     
     NSString *url = nil;
     
-    url = @"http://playertest.longtailvideo.com/adaptive/oceans_aes/oceans_aes.m3u8";
     url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
+//    url = @"http://video.youcheyihou.com/3240b282-6806-43c7-9c41-428d51a9fc1f.mp4";
 //    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     
     NSURL *URL = [NSURL URLWithString:url];
@@ -44,31 +45,36 @@
     // playback URL
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
 
-    // play
-    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:50];
+//    _player.playbackController = SJIJKMediaPlaybackController.new;
     
-//#pragma mark -
-//    
-////    url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
+    // play
+    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+    
+#pragma mark -
+    
+//    url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
 ////    url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
 //    URL = [NSURL URLWithString:url];
 //
-//    // 预加载
-//    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:1 * 1024 * 1024 progress:^(float progress) {
+//    for ( NSInteger i = 0 ; i < 10 ; ++ i ) {
+//        // 预加载
+//        [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:1 * 1024 * 1024 progress:^(float progress) {
 //
-//        // progress ...
+//            // progress ...
 //
-//    } completed:^(NSError * _Nullable error) {
+//        } completed:^(NSError * _Nullable error) {
 //
-//        // complete ...
+//            // complete ...
 //
-//        if ( error != nil ) {
-//            NSLog(@"error: %@", error);
-//        }
-//        else {
-//            NSLog(@"done");
-//        }
-//    }];
+//            if ( error != nil ) {
+//                NSLog(@"error: %@", error);
+//            }
+//            else {
+//                NSLog(@"done");
+//            }
+//        }];
+//
+//    }
 }
 
 - (void)_setupViews {

@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSHLSResource : MCSResource
 @property (nonatomic, strong, readonly, nullable) MCSHLSParser *parser;
 
-- (nullable __kindof MCSResourcePartialContent *)contentForProxyURL:(NSURL *)proxyURL;
+- (nullable __kindof MCSResourcePartialContent *)partialContentForFileDataReaderWithProxyURL:(NSURL *)proxyURL;
 - (void)parseDidFinish:(MCSHLSParser *)parser;
 @end
 NS_ASSUME_NONNULL_END
