@@ -77,7 +77,7 @@
 }
 
 - (void)close {
-    MCSSessionTaskLog(@"%@: <%p>.close;\n\n", NSStringFromClass(self.class), self);
+    MCSSessionTaskLog(@"%@: <%p>.close { after (%lf) seconds };\n\n", NSStringFromClass(self.class), self, MCSTimerMilePost(_startTime));
     [_reader close];
 }
 
