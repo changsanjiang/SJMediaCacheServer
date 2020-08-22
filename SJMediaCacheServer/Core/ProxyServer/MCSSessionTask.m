@@ -58,7 +58,7 @@
     if ( data.length != 0 ) {
         MCSSessionTaskLog(@"%@: <%p>.read { length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)data.length);
         if ( _reader.isReadingEndOfData )
-            MCSSessionTaskLog(@"%@: <%p>.done { after (%lf) seconds, URL: %@ };\n", NSStringFromClass(self.class), self, MCSTimerMilePost(_startTime), _request.URL);
+            MCSSessionTaskLog(@"%@: <%p>.done { after (%lf) seconds };\n", NSStringFromClass(self.class), self, MCSTimerMilePost(_startTime));
     }
 #endif
     return data;
