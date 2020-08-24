@@ -92,6 +92,9 @@
 }
 
 - (void)reader:(id<MCSResourceReader>)reader anErrorOccurred:(NSError *)error {
+    
+    NSLog(@"AError: %@", error);
+    
     [reader close];
     [_delegate task:self anErrorOccurred:error];
 }

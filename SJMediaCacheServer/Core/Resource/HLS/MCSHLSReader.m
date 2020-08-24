@@ -38,7 +38,7 @@
         _networkTaskPriority = 1.0;
         _resource = resource;
         _request = request;
-        [_resource readWrite_retain];
+        [_resource readwriteRetain];
         [MCSResourceManager.shared reader:self willReadResource:resource];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(didRemoveResource:) name:MCSResourceManagerDidRemoveResourceNotification object:nil];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(userCancelledReading:) name:MCSResourceManagerUserCancelledReadingNotification object:nil];
@@ -48,7 +48,7 @@
 
 - (void)dealloc {
     [NSNotificationCenter.defaultCenter removeObserver:self];
-    [_resource readWrite_release];
+    [_resource readwriteRelease];
     [MCSResourceManager.shared reader:self didEndReadResource:_resource];
     if ( !_isClosed ) [self _close];
     MCSResourceReaderLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
@@ -105,7 +105,11 @@
                     _reader = [MCSResourceFileDataReader.alloc initWithResource:_resource inRange:NSMakeRange(0, content.totalLength) partialContent:content startOffsetInFile:0 delegate:self];
                 }
                 else {
-                    _reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource proxyRequest:_request networkTaskPriority:_networkTaskPriority delegate:self];
+                    NSMutableURLRequest *request = [_request mutableCopy];
+                    if ( dataType == MCSDataTypeHLSAESKey ) {
+                        [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+                    }
+                    _reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource proxyRequest:request networkTaskPriority:_networkTaskPriority delegate:self];
                 }
             }
                 break;
@@ -217,37 +221,6 @@
     dispatch_async(MCSDelegateQueue(), ^{
         [self->_delegate reader:self anErrorOccurred:error];
     });
-}
-
-- (nullable __kindof MCSResourcePartialContent *)partialContentForFileDataReaderWithProxyURL:(NSURL *)proxyURL {
-    MCSDataType dataType = [MCSURLRecognizer.shared dataTypeForProxyURL:proxyURL];
-    NSString *extension = nil;
-    switch ( dataType ) {
-        case MCSDataTypeHLSAESKey:
-            extension = MCSHLSAESKeyFileExtension;
-            break;
-        case MCSDataTypeHLSTs:
-            extension = MCSHLSTsFileExtension;
-            break;
-        default:
-            assert("Invalid data type!");
-            break;
-    }
-
-    if ( extension == nil )
-        return nil;
-    
-    __block MCSHLSPartialContent *content = nil;
-    dispatch_barrier_sync(MCSResourceQueue(), ^{
-        NSString *name = [MCSURLRecognizer.shared nameWithUrl:proxyURL.absoluteString extension:extension];
-        for ( MCSHLSPartialContent *c in _resource.contents ) {
-            if ( c.type == dataType && [c.name isEqualToString:name] && c.length == c.totalLength) {
-                content = c;
-                break;
-            }
-        }
-    });
-    return content;
 }
 
 #pragma mark - MCSResourceDataReaderDelegate

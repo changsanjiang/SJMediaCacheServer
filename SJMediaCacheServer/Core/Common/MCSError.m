@@ -54,7 +54,7 @@ NSString * const MCSErrorUserInfoRangeKey = @"Range";
     return [NSError errorWithDomain:MCSErrorDomain code:MCSHLSAESKeyWriteFailedError userInfo:userInfo];
 }
 
-+ (NSError *)mcs_fileNotExistError:(NSDictionary *)userInfo {
++ (NSError *)mcs_fileNotExistErrorWithUserInfo:(NSDictionary *)userInfo {
 //    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
 //    userInfo[MCSErrorUserInfoURLKey] = URL;
 //    userInfo[NSLocalizedDescriptionKey] = @"The corresponding file does not exist";
@@ -66,5 +66,16 @@ NSString * const MCSErrorUserInfoRangeKey = @"Range";
     userInfo[MCSErrorUserInfoURLKey] = URL;
     userInfo[NSLocalizedDescriptionKey] = @"The user canceled the request.";
     return [NSError errorWithDomain:MCSErrorDomain code:MCSUserCancelledError userInfo:userInfo];
+}
+
++ (NSError *)mcs_invalidRangeErrorWithRequest:(NSURLRequest *)request {
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+    userInfo[MCSErrorUserInfoRequestKey] = request;
+    userInfo[NSLocalizedDescriptionKey] = @"无效的请求范围!";
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSInvalidRangeError userInfo:userInfo];
+}
+
++ (NSError *)mcs_invalidParameterErrorWithUserInfo:(NSDictionary *)userInfo {
+    return [NSError errorWithDomain:MCSErrorDomain code:MCSInvalidParameterError userInfo:userInfo];
 }
 @end

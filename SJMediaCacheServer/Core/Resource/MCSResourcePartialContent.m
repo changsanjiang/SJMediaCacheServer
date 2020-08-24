@@ -10,10 +10,10 @@
 #import "MCSResourceSubclass.h"
 
 @interface MCSResourcePartialContent ()
-@property (nonatomic) NSInteger readWriteCount;
+@property (nonatomic) NSInteger readwriteCount;
 
-- (void)readWrite_retain;
-- (void)readWrite_release;
+- (void)readwriteRetain;
+- (void)readwriteRelease;
 @end
 
 @implementation MCSResourcePartialContent
@@ -27,12 +27,12 @@
     return self;
 }
     
-- (void)readWrite_retain {
-    self.readWriteCount += 1;
+- (void)readwriteRetain {
+    self.readwriteCount += 1;
 }
 
-- (void)readWrite_release {
-    self.readWriteCount -= 1;
+- (void)readwriteRelease {
+    self.readwriteCount -= 1;
 }
 
 - (void)didWriteDataWithLength:(NSUInteger)length {
@@ -51,7 +51,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu, readWriteCount: %lu };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_offset, (unsigned long)self.length, (unsigned long)self.readWriteCount];
+    return [NSString stringWithFormat:@"%s: <%p> { name: %@, offset: %lu, length: %lu, readwriteCount: %lu };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_offset, (unsigned long)self.length, (unsigned long)self.readwriteCount];
 }
 @end
 
@@ -74,6 +74,6 @@
     return self;
 }
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%s: <%p> { name: %@, totalLength: %lu, length: %lu, readWriteCount: %ld  };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_totalLength, (unsigned long)self.length, (long)self.readWriteCount];
+    return [NSString stringWithFormat:@"%s: <%p> { name: %@, totalLength: %lu, length: %lu, readwriteCount: %ld  };", NSStringFromClass(self.class).UTF8String, self, self.filename, (unsigned long)_totalLength, (unsigned long)self.length, (long)self.readwriteCount];
 }
 @end

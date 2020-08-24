@@ -34,10 +34,16 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol MCSReadWrite <NSObject>
-@property (nonatomic, readonly) NSInteger readWriteCount;
+@property (nonatomic, readonly) NSInteger readwriteCount;
 
-- (void)readWrite_retain;
-- (void)readWrite_release;
+- (void)readwriteRetain;
+- (void)readwriteRelease;
+@end
+
+
+@protocol MCSContentReader <NSObject>
+- (BOOL)seekToFileOffset:(NSUInteger)offset error:(out NSError **)error;
+- (nullable NSData *)readDataOfLength:(NSUInteger)length;
 @end
 NS_ASSUME_NONNULL_END
 #endif /* MCSResourceDefines_h */

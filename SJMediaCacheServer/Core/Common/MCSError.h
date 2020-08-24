@@ -26,6 +26,10 @@ typedef NS_ENUM(NSUInteger, MCSErrorCode) {
     MCSFileNotExistError           = 100007,
     
     MCSUserCancelledError          = 100008,
+    
+    MCSInvalidRangeError           = 100009,
+    
+    MCSInvalidParameterError       = 100010,
 };
 
 FOUNDATION_EXTERN NSString * const MCSErrorDomain;
@@ -49,8 +53,12 @@ FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRangeKey;
 
 + (NSError *)mcs_HLSAESKeyWriteFailedError:(NSURL *)URL;
 
-+ (NSError *)mcs_fileNotExistError:(NSDictionary *)userInfo;
++ (NSError *)mcs_fileNotExistErrorWithUserInfo:(NSDictionary *)userInfo;
 
 + (NSError *)mcs_userCancelledError:(NSURL *)URL;
+
++ (NSError *)mcs_invalidRangeErrorWithRequest:(NSURLRequest *)request;
+
++ (NSError *)mcs_invalidParameterErrorWithUserInfo:(NSDictionary *)userInfo;
 @end
 NS_ASSUME_NONNULL_END

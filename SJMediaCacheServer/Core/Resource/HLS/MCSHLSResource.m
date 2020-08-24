@@ -84,6 +84,10 @@
     return content;
 }
 
+/// 创建一个content
+///
+///     注意: 请在读写结束后调用 [resource didEndReadwriteContent:content];
+///
 - (nullable MCSResourcePartialContent *)partialContentForNetworkDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
     __block MCSHLSPartialContent *_Nullable content = nil;
     dispatch_barrier_sync(MCSResourceQueue(), ^{
@@ -109,20 +113,20 @@
                 break;
         }
         if ( content != nil ) {
-            [content readWrite_retain];
+            [content readwriteRetain];
             [self _addContent:content];
         }
     });
     return content;
 }
 
-- (void)willReadContent:(MCSResourcePartialContent *)content {
+- (void)willReadwriteContent:(MCSResourcePartialContent *)content {
     dispatch_barrier_sync(MCSResourceQueue(), ^{
-        [content readWrite_retain];
+        [content readwriteRetain];
     });
 }
 
-- (void)didEndReadContent:(MCSResourcePartialContent *)content {
+- (void)didEndReadwriteContent:(MCSResourcePartialContent *)content {
     dispatch_barrier_sync(MCSResourceQueue(), ^{
         if ( _isCacheFinished )
             return;
@@ -132,7 +136,7 @@
         
         NSMutableArray<MCSHLSPartialContent *> *contents = NSMutableArray.alloc.init;
         for ( MCSHLSPartialContent *c in _m.copy ) {
-            if ( c.readWriteCount == 0 ) {
+            if ( c.readwriteCount == 0 ) {
                 [contents addObject:c];
             }
         }

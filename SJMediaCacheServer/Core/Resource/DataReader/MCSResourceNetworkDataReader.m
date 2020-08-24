@@ -13,13 +13,14 @@
 #import "MCSResourcePartialContent.h"
 #import "MCSUtils.h"
 #import "MCSURLRecognizer.h"
+#import "MCSContentNetworkReadwrite.h"
 
-@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate>
+@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate, MCSContentNetworkReadwriteDelegate>
 @property (nonatomic, strong, nullable) NSURLRequest *request;
 @property (nonatomic) float networkTaskPriority;
 @property (nonatomic, strong, nullable) NSURLSessionTask *task;
 @property (nonatomic, strong, nullable) MCSResourcePartialContent *content;
-@property (nonatomic, strong, nullable) NSFileHandle *writer;
+//@property (nonatomic, strong, nullable) NSFileHandle *writer;
 @end
 
 @implementation MCSResourceNetworkDataReader
@@ -65,17 +66,24 @@
     @try {
         [_task cancel];
         _task = nil;
-        [_writer synchronizeFile];
-        [_writer closeFile];
-        _writer = nil;
-        [_reader closeFile];
         _reader = nil;
         _isClosed = YES;
-        [_resource didEndReadContent:_content];
         MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (__unused NSException *exception) {
         
     }
+}
+
+#pragma mark - MCSContentNetworkReadwriteDelegate
+
+- (void)contentReader:(MCSContentNetworkReadwrite *)reader anErrorOccurred:(NSError *)error {
+    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
+        [self _onError:error];
+    });
+}
+
+- (void)contentReader:(MCSContentNetworkReadwrite *)reader didWriteDataWithLength:(NSUInteger)length {
+    [_resource didWriteDataForContent:_content length:length];
 }
 
 #pragma mark - MCSDownloadTaskDelegate
@@ -92,28 +100,22 @@
             [self _onError:[NSError mcs_responseUnavailable:task.currentRequest.URL request:_request response:response]];
             return;
         }
-        
         NSRange range = _request.mcs_range;
         if ( range.location == NSNotFound ) range.location = 0;
         range.length = MCSGetResponseContentLength(response);
         _range = range;
         NSString *filePath = [_resource filePathOfContent:_content];
-        _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
-        _writer = [NSFileHandle fileHandleForWritingAtPath:filePath];
-        
-        if ( _writer != nil ) {
-            @try {
-                [_writer seekToEndOfFile];
-            } @catch (NSException *exception) {
-                [task cancel];
-                [self _onError:[NSError mcs_exception:exception]];
-            }
-        }
-        
-        if ( _reader == nil || _writer == nil ) {
-            [self _onError:[NSError mcs_fileNotExistError:@{
+        MCSContentNetworkReadwrite *reader = [MCSContentNetworkReadwrite readerWithPath:filePath delegate:self];
+        __auto_type resource = _resource;
+        __auto_type content = _content;
+        reader.writeFinishedExecuteBlock = ^{
+            [resource didEndReadwriteContent:content];
+        };
+        _reader = reader;
+        if ( _reader == nil ) {
+            [self _onError:[NSError mcs_fileNotExistErrorWithUserInfo:@{
                 MCSErrorUserInfoResourceKey : _resource,
-                MCSErrorUserInfoRequestKey : _request
+                MCSErrorUserInfoRangeKey : [NSValue valueWithRange:_range]
             }]];
             return;
         }
@@ -134,10 +136,11 @@
                 return;
             }
             
-            [_writer writeData:data];
+            MCSContentNetworkReadwrite *reader = _reader;
+            [reader appendData:data];
+            
             NSUInteger length = data.length;
             _availableLength += length;
-            [_resource didWriteDataForContent:_content length:length];
             dispatch_async(MCSDelegateQueue(), ^{
                 [self->_delegate reader:self hasAvailableDataWithLength:length];
             });

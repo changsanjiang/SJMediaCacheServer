@@ -46,6 +46,10 @@
     [self _addContents:[MCSFileManager getContentsInResource:_name]];
 }
 
+/// 创建一个content
+///
+///     注意: 请在读写结束后调用 [resource didEndReadwriteContent:content];
+///
 - (nullable MCSResourcePartialContent *)partialContentForNetworkDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response {
     __block BOOL isUpdated = NO;
     __block MCSResourcePartialContent *content;
@@ -61,22 +65,22 @@
         NSUInteger offset = MCSGetResponseContentRange(response).start;
         NSString *filename = [MCSFileManager vod_createContentFileInResource:_name atOffset:offset pathExtension:_pathExtension];
         content = [MCSVODPartialContent.alloc initWithFilename:filename offset:offset length:0];
-        [content readWrite_retain];
+        [content readwriteRetain];
         [self _addContent:content];
     });
     if ( isUpdated ) [MCSResourceManager.shared saveMetadata:self];
     return content;
 }
 
-- (void)willReadContent:(MCSResourcePartialContent *)content {
+- (void)willReadwriteContent:(MCSResourcePartialContent *)content {
     dispatch_barrier_sync(MCSResourceQueue(), ^{
-        [content readWrite_retain];
+        [content readwriteRetain];
     });
 }
 
-- (void)didEndReadContent:(MCSResourcePartialContent *)content {
+- (void)didEndReadwriteContent:(MCSResourcePartialContent *)content {
     dispatch_barrier_sync(MCSResourceQueue(), ^{
-        [content readWrite_release];
+        [content readwriteRelease];
         if ( _isCacheFinished )
             return;
         
@@ -86,7 +90,7 @@
         // 合并文件
         NSMutableArray<MCSVODPartialContent *> *list = NSMutableArray.alloc.init;
         for ( MCSVODPartialContent *content in _m.copy ) {
-            if ( content.readWriteCount == 0 )
+            if ( content.readwriteCount == 0 )
                 [list addObject:content];
         }
         
@@ -196,3 +200,11 @@
     }
 }
 @end
+
+
+/*
+ 
+ - 会存在两个地方同时写入的情况
+ 
+ */
+

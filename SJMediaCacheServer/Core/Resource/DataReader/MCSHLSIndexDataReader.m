@@ -14,6 +14,7 @@
 #import "MCSFileManager.h"
 #import "MCSQueue.h"
 #import "MCSURLRecognizer.h"
+#import "MCSContentFileRead.h"
 
 @interface MCSHLSIndexDataReader ()<MCSHLSParserDelegate>
 @property (nonatomic, strong) NSURLRequest *request;
@@ -86,7 +87,6 @@
 
 - (void)_close {
     @try {
-        [_reader closeFile];
         _reader = nil;
         _reader = nil;
         _isClosed = YES;
@@ -107,10 +107,10 @@
     NSString *filePath = _parser.indexFilePath;
     NSUInteger fileSize = [MCSFileManager fileSizeAtPath:filePath];
     _range = NSMakeRange(0, fileSize);
-    _reader = [NSFileHandle fileHandleForReadingAtPath:filePath];
+    _reader = [MCSContentFileRead readerWithPath:filePath];
     
     if ( _reader == nil ) {
-        [self _onError:[NSError mcs_fileNotExistError:@{
+        [self _onError:[NSError mcs_fileNotExistErrorWithUserInfo:@{
             MCSErrorUserInfoResourceKey : _resource,
             MCSErrorUserInfoRequestKey : _request
         }]];

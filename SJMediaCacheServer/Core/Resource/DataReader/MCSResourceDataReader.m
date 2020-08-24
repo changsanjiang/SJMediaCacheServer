@@ -79,7 +79,7 @@
                 _isSought = NO;
                 NSError *error = nil;
                 NSUInteger offset = _startOffsetInFile + _readLength;
-                if ( ![_reader mcs_seekToFileOffset:offset error:&error] ) {
+                if ( ![_reader seekToFileOffset:offset error:&error] ) {
                     [self _onError:error];
                     return;
                 }

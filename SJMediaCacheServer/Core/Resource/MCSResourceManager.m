@@ -84,7 +84,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 + (NSArray<NSString *> *)sql_blacklist {
-    return @[@"readWriteCount", @"isCacheFinished", @"playbackURLForCache", @"queue"];
+    return @[@"readwriteCount", @"isCacheFinished", @"playbackURLForCache", @"queue"];
 }
 @end
 
@@ -288,7 +288,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 - (void)cancelCurrentReadsForResource:(MCSResource *)resource {
-    if ( resource.readWriteCount != 0 ) {
+    if ( resource.readwriteCount != 0 ) {
         [NSNotificationCenter.defaultCenter postNotificationName:MCSResourceManagerUserCancelledReadingNotification object:self userInfo:@{ MCSResourceManagerUserInfoResourceKey : resource }];
     }
 }
@@ -404,7 +404,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     
     NSMutableArray<NSNumber *> *usingResources = NSMutableArray.alloc.init;
     [_resources enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, MCSResource * _Nonnull obj, BOOL * _Nonnull stop) {
-        if ( obj.readWriteCount > 0 )
+        if ( obj.readwriteCount > 0 )
             [usingResources addObject:@(obj.id)];
     }];
 
@@ -462,7 +462,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         return;
 
     [resources enumerateObjectsUsingBlock:^(MCSResource * _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
-        if( self.resources[r.name].readWriteCount != 0 )
+        if( self.resources[r.name].readwriteCount != 0 )
             return;
         NSUInteger length = [MCSFileManager directorySizeAtPath:[MCSFileManager getResourcePathWithName:r.name]];
         self->_cacheDiskSpace -= length;

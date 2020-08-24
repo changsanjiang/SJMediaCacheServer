@@ -18,12 +18,36 @@
                     <view key="view" contentMode="scaleToFill" id="TpU-gO-2f1">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3Gd-wV-5xf">
+                                <rect key="frame" x="165.5" y="84" width="44" height="39"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
+                                <state key="normal" title="Test"/>
+                                <connections>
+                                    <action selector="test:" destination="whP-gf-Uak" eventType="touchUpInside" id="8cM-QM-kye"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Y2E-OA-2Ec">
+                                <rect key="frame" x="145.5" y="149" width="84" height="39"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
+                                <state key="normal" title="Remove"/>
+                                <connections>
+                                    <action selector="remove:" destination="whP-gf-Uak" eventType="touchUpInside" id="XUQ-l3-vh6"/>
+                                </connections>
+                            </button>
+                        </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="3Gd-wV-5xf" firstAttribute="top" secondItem="uEw-UM-LJ8" secondAttribute="bottom" constant="84" id="czi-JL-tgI"/>
+                            <constraint firstItem="Y2E-OA-2Ec" firstAttribute="top" secondItem="3Gd-wV-5xf" secondAttribute="bottom" constant="26" id="nuC-bF-vZD"/>
+                            <constraint firstItem="3Gd-wV-5xf" firstAttribute="centerX" secondItem="TpU-gO-2f1" secondAttribute="centerX" id="tOR-n0-xiu"/>
+                            <constraint firstItem="Y2E-OA-2Ec" firstAttribute="centerX" secondItem="3Gd-wV-5xf" secondAttribute="centerX" id="xbJ-13-RRX"/>
+                        </constraints>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="tc2-Qw-aMS" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-214" y="421"/>
+            <point key="canvasLocation" x="-897" y="348"/>
         </scene>
         <!--Test View Controller-->
         <scene sceneID="1Dn-Zu-gYe">

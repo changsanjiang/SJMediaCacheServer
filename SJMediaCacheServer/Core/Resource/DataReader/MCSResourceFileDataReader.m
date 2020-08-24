@@ -8,6 +8,7 @@
 #import "MCSResourceFileDataReader.h"
 #import "MCSResourceDataReaderSubclass.h"
 #import "MCSResource.h"
+#import "MCSContentFileRead.h"
 
 @interface MCSResourceFileDataReader ()
 @property (nonatomic, copy, nullable) NSString *path;
@@ -20,7 +21,7 @@
     if ( self ) {
         _range = range;
         _content = content;
-        [_resource willReadContent:content];
+        [_resource willReadwriteContent:content];
         _path = [resource filePathOfContent:content];
         _startOffsetInFile = startOffsetInFile;
     }
@@ -36,17 +37,17 @@
     
     MCSDataReaderLog(@"%@: <%p>.prepare { range: %@, file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(NSMakeRange(_startOffsetInFile, _range.length)));
 
-    @try {
-        _reader = [NSFileHandle fileHandleForReadingAtPath:_path];
-        if ( _startOffsetInFile != 0 && _reader != nil ) {
-            [_reader seekToFileOffset:_startOffsetInFile];
+    _reader = [MCSContentFileRead readerWithPath:_path];
+    if ( _startOffsetInFile != 0 && _reader != nil ) {
+        NSError *error = nil;
+        if ( ![_reader seekToFileOffset:_startOffsetInFile error:&error] ) {
+            [self _onError:error];
+            return;
         }
-    } @catch (NSException *exception) {
-        [self _onError:[NSError mcs_exception:exception]];
     }
     
     if ( _reader == nil ) {
-        [self _onError:[NSError mcs_fileNotExistError:@{
+        [self _onError:[NSError mcs_fileNotExistErrorWithUserInfo:@{
             MCSErrorUserInfoResourceKey : _resource,
             MCSErrorUserInfoRangeKey : [NSValue valueWithRange:_range]
         }]];
@@ -71,10 +72,9 @@
 
 - (void)_close {
     @try {
-        [_reader closeFile];
         _reader = nil;
         _isClosed = YES;
-        [_resource didEndReadContent:_content];
+        [_resource didEndReadwriteContent:_content];
         MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
     } @catch (NSException *exception) {
         

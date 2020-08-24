@@ -65,7 +65,7 @@ MCSDataReaderQueue(void) {
     static dispatch_queue_t queue = NULL;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSDataReaderQueue", DISPATCH_QUEUE_SERIAL);
+        queue = dispatch_queue_create("mcs.MCSDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
     });
     return queue;
 }

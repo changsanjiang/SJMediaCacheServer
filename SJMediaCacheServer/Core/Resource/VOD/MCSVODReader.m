@@ -53,7 +53,7 @@
         _resource = resource;
         _request = request;
         
-        [_resource readWrite_retain];
+        [_resource readwriteRetain];
         [MCSResourceManager.shared reader:self willReadResource:_resource];
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(didRemoveResource:) name:MCSResourceManagerDidRemoveResourceNotification object:nil];
@@ -64,14 +64,14 @@
 
 - (void)dealloc {
     [NSNotificationCenter.defaultCenter removeObserver:self];
-    [_resource readWrite_release];
+    [_resource readwriteRelease];
     [MCSResourceManager.shared reader:self didEndReadResource:_resource];
     if ( !_isClosed ) [self _close];
     MCSResourceReaderLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { range: %@\n };", NSStringFromClass(self.class), self, NSStringFromRange(_request.mcs_range)];
+    return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description];
 }
 
 - (void)didRemoveResource:(NSNotification *)note {
@@ -249,6 +249,11 @@
     
     _range = current;
     
+    if ( current.length == 0 ) {
+        [self _onError:[NSError mcs_invalidRangeErrorWithRequest:_request]];
+        return;
+    }
+    
     NSMutableArray<id<MCSResourceDataReader>> *readers = NSMutableArray.array;
     for ( MCSVODPartialContent *content in contents ) {
         NSRange available = NSMakeRange(content.offset, content.length);
@@ -357,6 +362,15 @@
 
 - (MCSResourceNetworkDataReader *)_networkDataReaderWithRange:(NSRange)range {
     NSMutableURLRequest *request = [_request mcs_requestWithRange:range];
+
+    static BOOL flag = NO;
+    
+    if ( !flag ) {
+        flag = YES;
+        MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource proxyRequest:request networkTaskPriority:_networkTaskPriority delegate:self];
+        return reader;
+    }
+    
     MCSResourceNetworkDataReader *reader = [MCSResourceNetworkDataReader.alloc initWithResource:_resource proxyRequest:request networkTaskPriority:_networkTaskPriority delegate:self];
     return reader;
 }

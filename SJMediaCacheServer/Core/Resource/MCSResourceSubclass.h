@@ -13,9 +13,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @interface MCSResourcePartialContent (MCSPrivate)<MCSReadWrite>
-@property (nonatomic, readonly) NSInteger readWriteCount;
-- (void)readWrite_retain;
-- (void)readWrite_release;
+@property (nonatomic, readonly) NSInteger readwriteCount;
+- (void)readwriteRetain;
+- (void)readwriteRelease;
 - (void)didWriteDataWithLength:(NSUInteger)length;
 @end
 
@@ -26,9 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) MCSResourceUsageLog *log;
 
 #pragma mark -
-@property (nonatomic, readonly) NSInteger readWriteCount;
-- (void)readWrite_retain;
-- (void)readWrite_release;
+@property (nonatomic, readonly) NSInteger readwriteCount;
+- (void)readwriteRetain;
+- (void)readwriteRelease;
 
 #pragma mark -
 

@@ -17,7 +17,7 @@
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, strong) MCSResourceUsageLog *log;
-@property (nonatomic) NSInteger readWriteCount;
+@property (nonatomic) NSInteger readwriteCount;
 @property (nonatomic) BOOL isCacheFinished;
 @end
 
@@ -74,13 +74,13 @@
     });
 }
 
-- (void)willReadContent:(MCSResourcePartialContent *)content {
+- (void)willReadwriteContent:(MCSResourcePartialContent *)content {
     @throw [NSException exceptionWithName:NSInternalInconsistencyException
       reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
     userInfo:nil];
 }
 
-- (void)didEndReadContent:(MCSResourcePartialContent *)content {
+- (void)didEndReadwriteContent:(MCSResourcePartialContent *)content {
     @throw [NSException exceptionWithName:NSInternalInconsistencyException
       reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
     userInfo:nil];
@@ -102,27 +102,27 @@
     userInfo:nil];
 }
 
-@synthesize readWriteCount = _readWriteCount;
-- (void)setReadWriteCount:(NSInteger)readWriteCount {
+@synthesize readwriteCount = _readwriteCount;
+- (void)setReadwriteCount:(NSInteger)readwriteCount {
     dispatch_barrier_sync(MCSResourceQueue(), ^{
-        _readWriteCount = readWriteCount;
+        _readwriteCount = readwriteCount;
     });
 }
 
-- (NSInteger)readWriteCount {
-    __block NSInteger readWriteCount;
+- (NSInteger)readwriteCount {
+    __block NSInteger readwriteCount;
     dispatch_sync(MCSResourceQueue(), ^{
-        readWriteCount = _readWriteCount;
+        readwriteCount = _readwriteCount;
     });
-    return readWriteCount;
+    return readwriteCount;
 }
 
-- (void)readWrite_retain {
-    self.readWriteCount += 1;
+- (void)readwriteRetain {
+    self.readwriteCount += 1;
 }
 
-- (void)readWrite_release {
-    self.readWriteCount -= 1;
+- (void)readwriteRelease {
+    self.readwriteCount -= 1;
 }
 
 #pragma mark -

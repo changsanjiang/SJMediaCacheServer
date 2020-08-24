@@ -39,9 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable MCSResourcePartialContent *)partialContentForNetworkDataReaderWithProxyURL:(NSURL *)proxyURL response:(NSHTTPURLResponse *)response;
 - (NSString *)filePathOfContent:(MCSResourcePartialContent *)content;
 - (void)didWriteDataForContent:(MCSResourcePartialContent *)content length:(NSUInteger)length;
-- (void)willReadContent:(MCSResourcePartialContent *)content;
-- (void)didEndReadContent:(MCSResourcePartialContent *)content;
-
+- (void)willReadwriteContent:(MCSResourcePartialContent *)content;
+- (void)didEndReadwriteContent:(MCSResourcePartialContent *)content;
 @end
 
 NS_ASSUME_NONNULL_END

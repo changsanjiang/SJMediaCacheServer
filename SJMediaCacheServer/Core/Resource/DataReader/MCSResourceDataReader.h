@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
     @protected
     __weak __kindof MCSResource *_resource;
     __weak id<MCSResourceDataReaderDelegate>_Nullable _delegate;
-    NSFileHandle *_Nullable _reader;
+    id<MCSContentReader> _Nullable _reader;
     NSRange _range;
     NSUInteger _availableLength;
     NSUInteger _startOffsetInFile;
