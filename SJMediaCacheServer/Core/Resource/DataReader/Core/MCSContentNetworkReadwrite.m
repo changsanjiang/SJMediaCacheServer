@@ -51,7 +51,7 @@ static dispatch_queue_t serial_write_queue = nil;
     } @catch (__unused NSException *exception) { }
 }
 
-- (void)completeDownload {
+- (void)complete {
     dispatch_async(serial_write_queue, ^{
         if ( self.writeFinishedExecuteBlock ) self.writeFinishedExecuteBlock();
     });

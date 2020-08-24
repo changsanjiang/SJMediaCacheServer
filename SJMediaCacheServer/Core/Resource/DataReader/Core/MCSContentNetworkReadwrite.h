@@ -22,6 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)seekToFileOffset:(NSUInteger)offset error:(out NSError **)error;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 
-- (void)completeDownload;
+- (void)complete;
 @end
 NS_ASSUME_NONNULL_END

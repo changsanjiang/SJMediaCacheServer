@@ -66,6 +66,8 @@
     @try {
         [_task cancel];
         _task = nil;
+        MCSContentNetworkReadwrite *reader = self->_reader;
+        [reader complete];
         _reader = nil;
         _isClosed = YES;
         MCSDataReaderLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
@@ -171,9 +173,6 @@
         //    else {
         //        // finished download
         //    }
-        
-        MCSContentNetworkReadwrite *reader = self->_reader;
-        [reader completeDownload];
     });
 }
 
