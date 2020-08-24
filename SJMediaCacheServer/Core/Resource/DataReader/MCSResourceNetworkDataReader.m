@@ -15,7 +15,7 @@
 #import "MCSURLRecognizer.h"
 #import "MCSContentNetworkReadwrite.h"
 
-@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate, MCSContentNetworkReadwriteDelegate>
+@interface MCSResourceNetworkDataReader ()<MCSDownloadTaskDelegate>
 @property (nonatomic, strong, nullable) NSURLRequest *request;
 @property (nonatomic) float networkTaskPriority;
 @property (nonatomic, strong, nullable) NSURLSessionTask *task;
@@ -74,18 +74,6 @@
     }
 }
 
-#pragma mark - MCSContentNetworkReadwriteDelegate
-
-- (void)contentReader:(MCSContentNetworkReadwrite *)reader anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(MCSDataReaderQueue(), ^{
-        [self _onError:error];
-    });
-}
-
-- (void)contentReader:(MCSContentNetworkReadwrite *)reader didWriteDataWithLength:(NSUInteger)length {
-    [_resource didWriteDataForContent:_content length:length];
-}
-
 #pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
@@ -104,7 +92,7 @@
         if ( range.location == NSNotFound ) range.location = 0;
         range.length = (NSUInteger)response.expectedContentLength;
         
-        if ( range.length == NSNotFound ) {
+        if ( range.length == NSURLResponseUnknownLength ) {
             [self _onError:[NSError mcs_errorWithCode:MCSResponseUnavailableError userInfo:@{
                 MCSErrorUserInfoRequestKey : _request,
                 NSLocalizedDescriptionKey : [NSString stringWithFormat:@"请求 %@ 返回的 ContentLength 无效! ", _request],
@@ -114,13 +102,26 @@
         
         _range = range;
         NSString *filePath = [_resource filePathOfContent:_content];
-        MCSContentNetworkReadwrite *reader = [MCSContentNetworkReadwrite readerWithPath:filePath delegate:self];
+        MCSContentNetworkReadwrite *readwrite = [MCSContentNetworkReadwrite readerWithPath:filePath];
+        __weak typeof(self) _self = self;
+        readwrite.onErrorExecuteBlock = ^(NSError * _Nonnull error) {
+            __strong typeof(_self) self = _self;
+            if ( !self ) return;
+            dispatch_barrier_sync(MCSDataReaderQueue(), ^{
+                [self _onError:error];
+            });
+        };
+        
         __auto_type resource = _resource;
         __auto_type content = _content;
-        reader.writeFinishedExecuteBlock = ^{
+        readwrite.writeFinishedExecuteBlock = ^{
             [resource didEndReadwriteContent:content];
         };
-        _reader = reader;
+        readwrite.didWriteDataExecuteBlock = ^(NSUInteger length) {
+            [resource didWriteDataForContent:content length:length];
+        };
+        
+        _reader = readwrite;
         if ( _reader == nil ) {
             [self _onError:[NSError mcs_fileNotExistErrorWithUserInfo:@{
                 MCSErrorUserInfoResourceKey : _resource,

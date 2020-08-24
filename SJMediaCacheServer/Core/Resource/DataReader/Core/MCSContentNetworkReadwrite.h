@@ -6,16 +6,15 @@
 //
 
 #import "MCSResourceDefines.h"
-@protocol MCSContentNetworkReadwriteDelegate;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSContentNetworkReadwrite : NSObject<MCSContentReader>
 
-+ (nullable instancetype)readerWithPath:(NSString *)path delegate:(id<MCSContentNetworkReadwriteDelegate>)delegate;
++ (nullable instancetype)readerWithPath:(NSString *)path;
 
-@property (nonatomic, weak, nullable) id<MCSContentNetworkReadwriteDelegate> delegate;
-
+@property (nonatomic, copy, nullable) void(^onErrorExecuteBlock)(NSError *error);
+@property (nonatomic, copy, nullable) void(^didWriteDataExecuteBlock)(NSUInteger length);
 @property (nonatomic, copy, nullable) void(^writeFinishedExecuteBlock)(void);
 
 - (void)appendData:(NSData *)data;
@@ -25,10 +24,4 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)completeDownload;
 @end
-
-@protocol MCSContentNetworkReadwriteDelegate <NSObject>
-- (void)contentReader:(MCSContentNetworkReadwrite *)reader anErrorOccurred:(NSError *)error;
-- (void)contentReader:(MCSContentNetworkReadwrite *)reader didWriteDataWithLength:(NSUInteger)length;
-@end
-
 NS_ASSUME_NONNULL_END

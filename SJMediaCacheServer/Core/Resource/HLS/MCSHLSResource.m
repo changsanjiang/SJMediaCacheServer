@@ -128,6 +128,8 @@
 
 - (void)didEndReadwriteContent:(MCSResourcePartialContent *)content {
     dispatch_barrier_sync(MCSResourceQueue(), ^{
+        [content readwriteRelease];
+        
         if ( _isCacheFinished )
             return;
         

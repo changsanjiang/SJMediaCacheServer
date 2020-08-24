@@ -14,6 +14,7 @@
 @property (nonatomic, strong) NSFileHandle *writer;
 @property (nonatomic, strong) NSMutableData *memoryData;
 @property (nonatomic) NSUInteger readLength;
+@property (nonatomic, strong, nullable) NSError *error;
 @end
 
 @implementation MCSContentNetworkReadwrite
@@ -26,20 +27,19 @@ static dispatch_queue_t serial_write_queue = nil;
     });
 }
 
-+ (nullable instancetype)readerWithPath:(NSString *)path delegate:(id<MCSContentNetworkReadwriteDelegate>)delegate {
++ (nullable instancetype)readerWithPath:(NSString *)path {
     NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:path];
     if ( writer == nil )
         return nil;
     
-    return [MCSContentNetworkReadwrite.alloc initWithWriter:writer delegate:delegate];
+    return [MCSContentNetworkReadwrite.alloc initWithWriter:writer];
 }
 
-- (instancetype)initWithWriter:(NSFileHandle *)writer delegate:(id<MCSContentNetworkReadwriteDelegate>)delegate {
+- (instancetype)initWithWriter:(NSFileHandle *)writer {
     self = [super init];
     if ( self ) {
         _writer = writer;
         _memoryData = NSMutableData.data;
-        _delegate = delegate;
     }
     return self;
 }
@@ -65,18 +65,18 @@ static dispatch_queue_t serial_write_queue = nil;
     
     // `retain self` in queue until the end of writing
     dispatch_async(serial_write_queue, ^{
+        if ( self.error != nil )
+            return;
+        
         NSUInteger length = data.length;
         @try {
             [self.writer writeData:data];
         } @catch (NSException *exception) {
-            dispatch_async(MCSDelegateQueue(), ^{
-                [self.delegate contentReader:self anErrorOccurred:[NSError mcs_exception:exception]];
-            });
+            self.error = [NSError mcs_exception:exception];
+            if ( self.onErrorExecuteBlock ) self.onErrorExecuteBlock(self.error);
         }
         
-        dispatch_async(MCSDelegateQueue(), ^{
-            [self.delegate contentReader:self didWriteDataWithLength:length];
-        });
+        if ( self.didWriteDataExecuteBlock ) self.didWriteDataExecuteBlock(length);
     });
 }
 
