@@ -60,7 +60,7 @@
 //    url = @"http://vod.lanwuzhe.com/34bc457df21b44e9aaabef393d5c910f/bbbfabc5e6c744be9de4a3c87a65f71b-5287d2089db37e62345123a1be272f8b.mp4";
 //    url = @"https://xy2.v.netease.com/r/video/20200629/b03eeb99-6eef-407d-9055-079b22796fdd.mp4";
     
-//    url = @"http://videosy.soyoung.com/750ac763738bcde017ab1c2344c78402_cefb1453.m3u8";
+    url = @"http://videosy.soyoung.com/750ac763738bcde017ab1c2344c78402_cefb1453.m3u8";
     
     NSURL *URL = [NSURL URLWithString:url];
     
@@ -71,7 +71,7 @@
     
     // play
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
-    _player.muted = YES;
+//    _player.muted = YES;
     
     __auto_type time = MCSTimerStart();
     __block BOOL isStartedPlay = NO;

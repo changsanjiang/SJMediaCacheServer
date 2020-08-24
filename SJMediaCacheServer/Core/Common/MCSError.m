@@ -8,9 +8,7 @@
 
 #import "MCSError.h"
 
-NSString * const MCSErrorDomain = @"lib.changsanjiang.SJMediaCacheServer.error";
-NSString * const MCSErrorUserInfoURLKey = @"URL";
-
+NSString * const MCSErrorDomain = @"lib.SJMediaCacheServer.error";
 NSString * const MCSErrorUserInfoRequestKey = @"Request";
 NSString * const MCSErrorUserInfoRequestAllHeaderFieldsKey = @"RequestAllHeaderFields";
 NSString * const MCSErrorUserInfoExceptionKey = @"Exception";

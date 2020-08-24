@@ -34,8 +34,6 @@ typedef NS_ENUM(NSUInteger, MCSErrorCode) {
 };
 
 FOUNDATION_EXTERN NSString * const MCSErrorDomain;
-FOUNDATION_EXTERN NSString * const MCSErrorUserInfoURLKey;
-
 FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRequestKey;
 FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRequestAllHeaderFieldsKey;
 FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResponseKey;
