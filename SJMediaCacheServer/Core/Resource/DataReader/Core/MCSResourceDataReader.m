@@ -68,42 +68,43 @@
 - (nullable NSData *)readDataOfLength:(NSUInteger)param {
     __block NSData *data = nil;
     dispatch_barrier_sync(MCSDataReaderQueue(), ^{
-        @try {
-            if ( _readLength == _range.length || _isClosed || !_isPrepared )
+        if ( _readLength == _range.length || _isClosed || !_isPrepared )
+            return;
+        
+        if ( _availableLength <= _readLength )
+            return;
+        
+        if ( _isSought ) {
+            _isSought = NO;
+            NSError *error = nil;
+            NSUInteger offset = _startOffsetInFile + _readLength;
+            if ( ![_reader seekToFileOffset:offset error:&error] ) {
+                [self _onError:error];
                 return;
-            
-            if ( _availableLength <= _readLength )
-                return;
-            
-            if ( _isSought ) {
-                _isSought = NO;
-                NSError *error = nil;
-                NSUInteger offset = _startOffsetInFile + _readLength;
-                if ( ![_reader seekToFileOffset:offset error:&error] ) {
-                    [self _onError:error];
-                    return;
-                }
             }
-            
-            NSUInteger length = MIN(param, _availableLength - _readLength);
-            data = [_reader readDataOfLength:length];
-            
-            NSUInteger readLength = data.length;
-            if ( readLength == 0 )
-                return;
-            
-            MCSDataReaderLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
-            
-            _readLength += readLength;
-            
-#ifdef DEBUG
-            if ( _readLength == _range.length ) {
-                MCSDataReaderLog(@"%@: <%p>.done \n", NSStringFromClass(self.class), self);
-            }
-#endif
-        } @catch (NSException *exception) {
-            [self _onError:[NSError mcs_exception:exception]];
         }
+        
+        NSUInteger length = MIN(param, _availableLength - _readLength);
+        NSError *error = nil;
+        data = [_reader readDataOfLength:length error:&error];
+        if ( error != nil ) {
+            [self _onError:error];
+            return;
+        }
+        
+        NSUInteger readLength = data.length;
+        if ( readLength == 0 )
+            return;
+        
+        MCSDataReaderLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
+        
+        _readLength += readLength;
+        
+#ifdef DEBUG
+        if ( _readLength == _range.length ) {
+            MCSDataReaderLog(@"%@: <%p>.done \n", NSStringFromClass(self.class), self);
+        }
+#endif
     });
     return data;
 }

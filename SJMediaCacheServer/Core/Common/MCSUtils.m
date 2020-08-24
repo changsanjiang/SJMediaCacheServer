@@ -52,7 +52,7 @@ MCSGetResponseContentType(NSHTTPURLResponse *response) {
 
 NSUInteger
 MCSGetResponseContentLength(NSHTTPURLResponse *response) {
-    return MCSGetResponseContentRange(response).totalLength;
+    return response.expectedContentLength;
 }
 
 MCSRequestContentRange

@@ -80,7 +80,12 @@
         dispatch_barrier_sync(MCSReaderQueue(), ^{
             if ( _isClosed )
                 return;
-            [self _onError:[NSError mcs_removedResource:_request.URL]];
+            [self _onError:[NSError mcs_errorWithCode:MCSResourceHasBeenRemovedError userInfo:@{
+                MCSErrorUserInfoResourceKey : resource,
+                MCSErrorUserInfoRequestKey : _request,
+                MCSErrorUserInfoRequestAllHeaderFieldsKey : _request.allHTTPHeaderFields,
+                NSLocalizedDescriptionKey : @"资源已被删除, 无法继续读取!",
+            }]];
         });
     }
 }
@@ -91,7 +96,12 @@
         dispatch_barrier_sync(MCSReaderQueue(), ^{
             if ( _isClosed )
                 return;
-            [self _onError:[NSError mcs_removedResource:_request.URL]];
+            [self _onError:[NSError mcs_errorWithCode:MCSUserCancelledError userInfo:@{
+                MCSErrorUserInfoResourceKey : resource,
+                MCSErrorUserInfoRequestKey : _request,
+                MCSErrorUserInfoRequestAllHeaderFieldsKey : _request.allHTTPHeaderFields,
+                NSLocalizedDescriptionKey : @"操作已被取消!"
+            }]];
         });
     }
 }
@@ -250,7 +260,11 @@
     _range = current;
     
     if ( current.length == 0 ) {
-        [self _onError:[NSError mcs_invalidRangeErrorWithRequest:_request]];
+        [self _onError:[NSError mcs_errorWithCode:MCSInvalidRequestError userInfo:@{
+            MCSErrorUserInfoRequestKey : _request,
+            MCSErrorUserInfoRequestAllHeaderFieldsKey : _request.allHTTPHeaderFields,
+            NSLocalizedDescriptionKey : @"无效的请求! 请设置正确的range请求!"
+        }]];
         return;
     }
     

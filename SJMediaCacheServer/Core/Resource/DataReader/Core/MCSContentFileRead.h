@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)readerWithPath:(NSString *)path;
 
 - (BOOL)seekToFileOffset:(NSUInteger)offset error:(out NSError **)error;
-- (nullable NSData *)readDataOfLength:(NSUInteger)length;
+- (nullable NSData *)readDataOfLength:(NSUInteger)length error:(out NSError **)error;
 
 @end
 

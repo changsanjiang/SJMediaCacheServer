@@ -110,9 +110,11 @@
     _reader = [MCSContentFileRead readerWithPath:filePath];
     
     if ( _reader == nil ) {
-        [self _onError:[NSError mcs_fileNotExistErrorWithUserInfo:@{
+        [self _onError:[NSError mcs_errorWithCode:MCSFileNotExistError userInfo:@{
             MCSErrorUserInfoResourceKey : _resource,
-            MCSErrorUserInfoRequestKey : _request
+            MCSErrorUserInfoRequestKey : _request,
+            MCSErrorUserInfoRequestAllHeaderFieldsKey : _request.allHTTPHeaderFields,
+            NSLocalizedDescriptionKey : @"初始化 reader 失败, 文件可能不存在!"
         }]];
         return;
     }

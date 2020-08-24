@@ -7,6 +7,7 @@
 
 #import "MCSContentFileRead.h"
 #import "NSFileHandle+MCS.h"
+#import "MCSError.h"
 
 @interface MCSContentFileRead ()
 @property (nonatomic, strong) NSFileHandle *fileHandle;
@@ -33,8 +34,18 @@
     return [_fileHandle mcs_seekToFileOffset:offset error:error];
 }
 
-- (nullable NSData *)readDataOfLength:(NSUInteger)length {
-    return [_fileHandle readDataOfLength:length];
+- (nullable NSData *)readDataOfLength:(NSUInteger)length error:(out NSError **)error {
+    @try {
+        return [_fileHandle readDataOfLength:length];
+    } @catch (NSException *exception) {
+        if ( error != NULL ) {
+            *error = [NSError mcs_errorWithCode:MCSExceptionError userInfo:@{
+                MCSErrorUserInfoExceptionKey : exception,
+                NSLocalizedDescriptionKey : [NSString stringWithFormat:@"文件读取失败! exception: %@", exception],
+            }];
+        }
+      return nil;
+    }
 }
 
 - (void)dealloc {

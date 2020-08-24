@@ -12,56 +12,39 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSUInteger, MCSErrorCode) {
     MCSResponseUnavailableError    = 100000,
+    
     MCSResourceHasBeenRemovedError = 100001,
-    MCSNonsupportContentTypeError  = 100002,
-    MCSExceptionError              = 100003,
+    
+    MCSExceptionError              = 100002,
 
     // unused
-//    MCSOutOfDiskSpaceError        = 100004,
+//    MCSOutOfDiskSpaceError        = 100003,
     
-    MCSHLSFileParseError           = 100005,
+    MCSHLSFileParseError           = 100004,
     
-    MCSHLSAESKeyWriteFailedError   = 100006,
+    MCSFileNotExistError           = 100005,
     
-    MCSFileNotExistError           = 100007,
+    MCSUserCancelledError          = 100006,
     
-    MCSUserCancelledError          = 100008,
+    MCSInvalidRequestError         = 100007,
     
-    MCSInvalidRangeError           = 100009,
+    MCSInvalidResponseError        = 100008,
     
-    MCSInvalidParameterError       = 100010,
+    MCSInvalidParameterError       = 100009,
 };
 
 FOUNDATION_EXTERN NSString * const MCSErrorDomain;
 FOUNDATION_EXTERN NSString * const MCSErrorUserInfoURLKey;
-FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRequestKey;
-FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResponseKey;
 
+FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRequestKey;
+FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRequestAllHeaderFieldsKey;
+FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResponseKey;
+FOUNDATION_EXPORT NSString * const MCSErrorUserInfoExceptionKey;
 FOUNDATION_EXTERN NSString * const MCSErrorUserInfoResourceKey;
 FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRangeKey;
+FOUNDATION_EXTERN NSString * const MCSErrorUserInfoErrorKey;
 
 @interface NSError (MCSExtended)
-+ (NSError *)mcs_responseUnavailable:(NSURL *)URL request:(NSURLRequest *)request response:(NSURLResponse *)response;
-
-+ (NSError *)mcs_nonsupportContentType:(NSURL *)URL request:(NSURLRequest *)request response:(NSURLResponse *)response;
-
-+ (NSError *)mcs_exception:(NSException *)exception;
-
-+ (NSError *)mcs_removedResource:(NSURL *)URL;
-
-+ (NSError *)mcs_HLSFileParseError:(NSURL *)URL;
-
-+ (NSError *)mcs_HLSAESKeyWriteFailedError:(NSURL *)URL;
-
-+ (NSError *)mcs_fileNotExistErrorWithUserInfo:(NSDictionary *)userInfo;
-
-+ (NSError *)mcs_userCancelledError:(NSURL *)URL;
-
-+ (NSError *)mcs_invalidRangeErrorWithRequest:(NSURLRequest *)request;
-
-+ (NSError *)mcs_invalidParameterErrorWithUserInfo:(NSDictionary *)userInfo;
-
-
 + (NSError *)mcs_errorWithCode:(MCSErrorCode)code userInfo:(nullable NSDictionary *)userInfo;
 @end
 NS_ASSUME_NONNULL_END

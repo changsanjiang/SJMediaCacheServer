@@ -84,25 +84,23 @@
             [self _close];
             return;
         }
-
-        _content = [_resource partialContentForNetworkDataReaderWithProxyURL:_request.URL response:response];
-        if ( _content == nil ) {
-            [self _onError:[NSError mcs_responseUnavailable:task.currentRequest.URL request:_request response:response]];
-            return;
-        }
+        
         NSRange range = _request.mcs_range;
         if ( range.location == NSNotFound ) range.location = 0;
         range.length = (NSUInteger)response.expectedContentLength;
-        
-        if ( range.length == NSURLResponseUnknownLength ) {
-            [self _onError:[NSError mcs_errorWithCode:MCSResponseUnavailableError userInfo:@{
-                MCSErrorUserInfoRequestKey : _request,
-                NSLocalizedDescriptionKey : [NSString stringWithFormat:@"请求 %@ 返回的 ContentLength 无效! ", _request],
+        _range = range;
+
+        _content = [_resource partialContentForNetworkDataReaderWithProxyURL:_request.URL response:response];
+        if ( _content == nil ) {
+            [self _onError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
+                MCSErrorUserInfoRequestKey : task.currentRequest,
+                MCSErrorUserInfoRequestAllHeaderFieldsKey : task.currentRequest.allHTTPHeaderFields,
+                MCSErrorUserInfoResponseKey : response,
+                NSLocalizedDescriptionKey : [NSString stringWithFormat:@"获取content失败! 请检查请求响应数据是否正确!"]
             }]];
             return;
         }
-        
-        _range = range;
+
         NSString *filePath = [_resource filePathOfContent:_content];
         MCSContentNetworkReadwrite *readwrite = [MCSContentNetworkReadwrite readerWithPath:filePath];
         __weak typeof(self) _self = self;
@@ -125,10 +123,12 @@
         
         _reader = readwrite;
         if ( _reader == nil ) {
-            [self _onError:[NSError mcs_fileNotExistErrorWithUserInfo:@{
+            [NSError mcs_errorWithCode:MCSFileNotExistError userInfo:@{
                 MCSErrorUserInfoResourceKey : _resource,
-                MCSErrorUserInfoRangeKey : [NSValue valueWithRange:_range]
-            }]];
+                MCSErrorUserInfoRequestKey : _request,
+                MCSErrorUserInfoRequestAllHeaderFieldsKey : _request.allHTTPHeaderFields,
+                NSLocalizedDescriptionKey : @"初始化 reader 失败, 文件可能不存在!"
+            }];
             return;
         }
         
@@ -141,24 +141,20 @@
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
     dispatch_barrier_sync(MCSDataReaderQueue(), ^{
-        @try {
-            if ( _isClosed || _resource == nil ) {
-                [task cancel];
-                [self _close];
-                return;
-            }
-            
-            MCSContentNetworkReadwrite *reader = _reader;
-            [reader appendData:data];
-            
-            NSUInteger length = data.length;
-            _availableLength += length;
-            dispatch_async(MCSDelegateQueue(), ^{
-                [self->_delegate reader:self hasAvailableDataWithLength:length];
-            });
-        } @catch (NSException *exception) {
-            [self _onError:[NSError mcs_exception:exception]];
+        if ( _isClosed || _resource == nil ) {
+            [task cancel];
+            [self _close];
+            return;
         }
+        
+        MCSContentNetworkReadwrite *reader = _reader;
+        [reader appendData:data];
+        
+        NSUInteger length = data.length;
+        _availableLength += length;
+        dispatch_async(MCSDelegateQueue(), ^{
+            [self->_delegate reader:self hasAvailableDataWithLength:length];
+        });
     });
 }
 

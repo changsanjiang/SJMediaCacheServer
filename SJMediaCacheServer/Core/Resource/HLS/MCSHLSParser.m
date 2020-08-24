@@ -158,7 +158,10 @@
     } while ( true );
 
     if ( error != nil || contents == nil || ![contents hasPrefix:@"#"] ) {
-        [self _onError:error ?: [NSError mcs_HLSFileParseError:_request.URL]];
+        [self _onError:error ?: [NSError mcs_errorWithCode:MCSHLSFileParseError userInfo:@{
+            MCSErrorUserInfoRequestKey : request,
+            NSLocalizedDescriptionKey : [NSString stringWithFormat:@"索引文件内容无效, 解析失败!"],
+        }]];
         return;
     }
  
@@ -168,7 +171,10 @@
     ///
     NSArray<NSValue *> *TsURIRanges = [contents mcs_rangesByMatchingPattern:MCSURIMatchingPattern_Ts];
     if ( TsURIRanges.count == 0 ) {
-        [self _onError:[NSError mcs_HLSFileParseError:_request.URL]];
+        [self _onError:[NSError mcs_errorWithCode:MCSHLSFileParseError userInfo:@{
+            MCSErrorUserInfoRequestKey : request,
+            NSLocalizedDescriptionKey : [NSString stringWithFormat:@"索引文件解析失败! 未匹配到任何的 ts 项!"],
+        }]];
         return;
     }
     [TsURIRanges enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSValue * _Nonnull range, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -232,7 +238,11 @@
 #ifdef DEBUG
         NSLog(@"%@", error);
 #endif
-        error = [NSError mcs_HLSFileParseError:_request.URL];
+        error = [NSError mcs_errorWithCode:MCSHLSFileParseError userInfo:@{
+            MCSErrorUserInfoRequestKey : _request,
+            MCSErrorUserInfoErrorKey : error,
+            NSLocalizedDescriptionKey : [NSString stringWithFormat:@"索引文件解析失败! error: %@", error],
+        }];
     }
     
     dispatch_async(MCSDelegateQueue(), ^{

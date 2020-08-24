@@ -72,7 +72,10 @@ static dispatch_queue_t serial_write_queue = nil;
         @try {
             [self.writer writeData:data];
         } @catch (NSException *exception) {
-            self.error = [NSError mcs_exception:exception];
+            self.error = [NSError mcs_errorWithCode:MCSExceptionError userInfo:@{
+                MCSErrorUserInfoExceptionKey : exception,
+                NSLocalizedDescriptionKey : [NSString stringWithFormat:@"文件写入失败! exception: %@", exception],
+            }];
             if ( self.onErrorExecuteBlock ) self.onErrorExecuteBlock(self.error);
         }
         
@@ -84,7 +87,7 @@ static dispatch_queue_t serial_write_queue = nil;
     // 仅支持向后跳转
     if ( offset < _readLength ) {
         if ( error != NULL ) {
-            *error = [NSError mcs_invalidParameterErrorWithUserInfo:@{
+            *error = [NSError mcs_errorWithCode:MCSInvalidParameterError userInfo:@{
                 NSLocalizedDescriptionKey : [NSString stringWithFormat:@"<%@>.seek 操作无法完成! 由于对读取操作的处理依赖于内存缓存, 而读取过的数据会被立即移除(内存), 所以只能向后 seek, 无法回退!", NSStringFromClass(self.class)]
             }];
         }
@@ -96,7 +99,7 @@ static dispatch_queue_t serial_write_queue = nil;
         NSUInteger length = offset - _readLength;
         if ( length > availableLength ) {
             if ( error != NULL ) {
-                *error = [NSError mcs_invalidParameterErrorWithUserInfo:@{
+                *error = [NSError mcs_errorWithCode:MCSInvalidParameterError userInfo:@{
                     NSLocalizedDescriptionKey : [NSString stringWithFormat:@"<%@>.seek 操作无法完成! 将要跳转的偏移量不可超过当前可用长度!", NSStringFromClass(self.class)]
                 }];
             }
@@ -110,7 +113,7 @@ static dispatch_queue_t serial_write_queue = nil;
     return YES;
 }
 
-- (nullable NSData *)readDataOfLength:(NSUInteger)param {
+- (nullable NSData *)readDataOfLength:(NSUInteger)param error:(out NSError **)error {
     
     if ( _memoryData.length != 0 ) {
         NSUInteger availableLength = _memoryData.length;

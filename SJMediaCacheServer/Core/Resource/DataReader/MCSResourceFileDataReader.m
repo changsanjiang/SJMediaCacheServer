@@ -47,9 +47,10 @@
     }
     
     if ( _reader == nil ) {
-        [self _onError:[NSError mcs_fileNotExistErrorWithUserInfo:@{
+        [self _onError:[NSError mcs_errorWithCode:MCSFileNotExistError userInfo:@{
             MCSErrorUserInfoResourceKey : _resource,
-            MCSErrorUserInfoRangeKey : [NSValue valueWithRange:_range]
+            MCSErrorUserInfoRangeKey : [NSValue valueWithRange:_range],
+            NSLocalizedDescriptionKey : @"初始化 reader 失败, 文件可能不存在!"
         }]];
         return;
     }

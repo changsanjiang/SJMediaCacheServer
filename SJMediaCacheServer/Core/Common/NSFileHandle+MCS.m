@@ -30,7 +30,10 @@
             [self seekToFileOffset:offset];
             return YES;
         } @catch (NSException *exception) {
-            if ( error != nil ) *error = [NSError mcs_exception:exception];
+            if ( error != nil ) *error = [NSError mcs_errorWithCode:MCSExceptionError userInfo:@{
+                MCSErrorUserInfoExceptionKey : exception,
+                NSLocalizedDescriptionKey : [NSString stringWithFormat:@"%@.seek 操作失败!", NSStringFromClass(self.class)],
+            }];
             return NO;
         }
     }

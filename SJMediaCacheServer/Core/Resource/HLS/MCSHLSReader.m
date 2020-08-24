@@ -60,7 +60,12 @@
         dispatch_barrier_sync(MCSReaderQueue(), ^{
             if ( _isClosed )
                 return;
-            [self _onError:[NSError mcs_removedResource:_request.URL]];
+            [self _onError:[NSError mcs_errorWithCode:MCSResourceHasBeenRemovedError userInfo:@{
+                MCSErrorUserInfoResourceKey : resource,
+                MCSErrorUserInfoRequestKey : _request,
+                MCSErrorUserInfoRequestAllHeaderFieldsKey : _request.allHTTPHeaderFields,
+                NSLocalizedDescriptionKey : @"资源已被删除, 无法继续读取!",
+            }]];
         });
     }
 }
@@ -71,7 +76,12 @@
         dispatch_barrier_sync(MCSReaderQueue(), ^{
            if ( _isClosed )
                return;
-            [self _onError:[NSError mcs_userCancelledError:_request.URL]];
+            [self _onError:[NSError mcs_errorWithCode:MCSUserCancelledError userInfo:@{
+                MCSErrorUserInfoResourceKey : resource,
+                MCSErrorUserInfoRequestKey : _request,
+                MCSErrorUserInfoRequestAllHeaderFieldsKey : _request.allHTTPHeaderFields,
+                NSLocalizedDescriptionKey : @"操作已被取消!"
+            }]];
         });
     }
 }
@@ -96,7 +106,11 @@
             case MCSDataTypeHLSAESKey:
             case MCSDataTypeHLSTs: {
                 if ( _resource.parser == nil ) {
-                    [self _onError:[NSError mcs_HLSFileParseError:_request.URL]];
+                    [self _onError:[NSError mcs_errorWithCode:MCSHLSFileParseError userInfo:@{
+                        MCSErrorUserInfoRequestKey : _request,
+                        MCSErrorUserInfoRequestAllHeaderFieldsKey : _request.allHTTPHeaderFields,
+                        NSLocalizedDescriptionKey : @"请先解析索引文件!"
+                    }]];
                     return;
                 }
                 

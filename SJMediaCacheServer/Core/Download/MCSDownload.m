@@ -112,13 +112,23 @@
     
     NSError *error = nil;
     if ( ![response isKindOfClass:NSHTTPURLResponse.class] || response.statusCode > 400 || response.statusCode < 200 ) {
-        error = [NSError mcs_responseUnavailable:task.currentRequest.URL request:task.currentRequest response:task.response];
+        error = [NSError mcs_errorWithCode:MCSResponseUnavailableError userInfo:@{
+            MCSErrorUserInfoRequestKey : task.currentRequest,
+            MCSErrorUserInfoRequestAllHeaderFieldsKey : task.currentRequest.allHTTPHeaderFields,
+            MCSErrorUserInfoResponseKey : response,
+            NSLocalizedDescriptionKey : [NSString stringWithFormat:@"请求 %@ 响应的 statusCode 无效!", task.currentRequest]
+        }];
     }
     
     if ( error == nil && response.statusCode == 206 ) {
         NSUInteger contentLength = MCSGetResponseContentLength(response);
-        if ( contentLength == 0 ) {
-            error = [NSError mcs_responseUnavailable:task.currentRequest.URL request:task.currentRequest response:response];
+        if ( contentLength == 0 || contentLength == NSURLResponseUnknownLength ) {
+            error = [NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
+                MCSErrorUserInfoRequestKey : task.currentRequest,
+                MCSErrorUserInfoRequestAllHeaderFieldsKey : task.currentRequest.allHTTPHeaderFields,
+                MCSErrorUserInfoResponseKey : response,
+                NSLocalizedDescriptionKey : [NSString stringWithFormat:@"请求 %@ 响应的 range 无效!", task.currentRequest]
+            }];
         }
     }
     
@@ -128,7 +138,12 @@
         
         if ( !MCSNSRangeIsUndefined(requestRange) ) {
             if ( MCSNSRangeIsUndefined(responseRange) || !NSEqualRanges(requestRange, responseRange) ) {
-                error = [NSError mcs_nonsupportContentType:task.currentRequest.URL request:task.currentRequest response:task.response];
+                error = [NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
+                    MCSErrorUserInfoRequestKey : task.currentRequest,
+                    MCSErrorUserInfoRequestAllHeaderFieldsKey : task.currentRequest.allHTTPHeaderFields,
+                    MCSErrorUserInfoResponseKey : response,
+                    NSLocalizedDescriptionKey : [NSString stringWithFormat:@"请求 %@ 响应的 range 无效!", task.currentRequest]
+                }];
             }
         }
     }

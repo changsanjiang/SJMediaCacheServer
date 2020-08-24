@@ -43,7 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MCSContentReader <NSObject>
 - (BOOL)seekToFileOffset:(NSUInteger)offset error:(out NSError **)error;
-- (nullable NSData *)readDataOfLength:(NSUInteger)length;
+- (nullable NSData *)readDataOfLength:(NSUInteger)length error:(out NSError **)error;
 @end
 NS_ASSUME_NONNULL_END
 #endif /* MCSResourceDefines_h */
