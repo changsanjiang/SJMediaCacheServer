@@ -78,4 +78,8 @@ NSString * const MCSErrorUserInfoRangeKey = @"Range";
 + (NSError *)mcs_invalidParameterErrorWithUserInfo:(NSDictionary *)userInfo {
     return [NSError errorWithDomain:MCSErrorDomain code:MCSInvalidParameterError userInfo:userInfo];
 }
+
++ (NSError *)mcs_errorWithCode:(MCSErrorCode)code userInfo:(nullable NSDictionary *)userInfo {
+    return [NSError errorWithDomain:MCSErrorDomain code:code userInfo:userInfo];
+}
 @end

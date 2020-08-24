@@ -60,5 +60,8 @@ FOUNDATION_EXTERN NSString * const MCSErrorUserInfoRangeKey;
 + (NSError *)mcs_invalidRangeErrorWithRequest:(NSURLRequest *)request;
 
 + (NSError *)mcs_invalidParameterErrorWithUserInfo:(NSDictionary *)userInfo;
+
+
++ (NSError *)mcs_errorWithCode:(MCSErrorCode)code userInfo:(nullable NSDictionary *)userInfo;
 @end
 NS_ASSUME_NONNULL_END

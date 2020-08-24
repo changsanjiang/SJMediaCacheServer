@@ -102,7 +102,16 @@
         }
         NSRange range = _request.mcs_range;
         if ( range.location == NSNotFound ) range.location = 0;
-        range.length = MCSGetResponseContentLength(response);
+        range.length = (NSUInteger)response.expectedContentLength;
+        
+        if ( range.length == NSNotFound ) {
+            [self _onError:[NSError mcs_errorWithCode:MCSResponseUnavailableError userInfo:@{
+                MCSErrorUserInfoRequestKey : _request,
+                NSLocalizedDescriptionKey : [NSString stringWithFormat:@"请求 %@ 返回的 ContentLength 无效! ", _request],
+            }]];
+            return;
+        }
+        
         _range = range;
         NSString *filePath = [_resource filePathOfContent:_content];
         MCSContentNetworkReadwrite *reader = [MCSContentNetworkReadwrite readerWithPath:filePath delegate:self];
@@ -161,6 +170,9 @@
         //    else {
         //        // finished download
         //    }
+        
+        MCSContentNetworkReadwrite *reader = self->_reader;
+        [reader completeDownload];
     });
 }
 

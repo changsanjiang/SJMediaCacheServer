@@ -56,11 +56,11 @@
     url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
 //    url = @"http://video.youcheyihou.com/3240b282-6806-43c7-9c41-428d51a9fc1f.mp4";
     url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
-    url = @"https://videosy.soyoung.com/bf35d9c586c245e377ce86245fa51ed0.mp4";
+//    url = @"https://videosy.soyoung.com/bf35d9c586c245e377ce86245fa51ed0.mp4";
 //    url = @"http://vod.lanwuzhe.com/34bc457df21b44e9aaabef393d5c910f/bbbfabc5e6c744be9de4a3c87a65f71b-5287d2089db37e62345123a1be272f8b.mp4";
 //    url = @"https://xy2.v.netease.com/r/video/20200629/b03eeb99-6eef-407d-9055-079b22796fdd.mp4";
     
-    url = @"http://videosy.soyoung.com/750ac763738bcde017ab1c2344c78402_cefb1453.m3u8";
+//    url = @"http://videosy.soyoung.com/750ac763738bcde017ab1c2344c78402_cefb1453.m3u8";
     
     NSURL *URL = [NSURL URLWithString:url];
     

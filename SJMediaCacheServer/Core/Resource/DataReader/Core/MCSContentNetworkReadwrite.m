@@ -49,8 +49,12 @@ static dispatch_queue_t serial_write_queue = nil;
         [_writer synchronizeFile];
         [_writer closeFile];
     } @catch (__unused NSException *exception) { }
-    
-    if ( self.writeFinishedExecuteBlock ) self.writeFinishedExecuteBlock();
+}
+
+- (void)completeDownload {
+    dispatch_async(serial_write_queue, ^{
+        if ( self.writeFinishedExecuteBlock ) self.writeFinishedExecuteBlock();
+    });
 }
 
 /// 添加到内存缓存 & 写入本地

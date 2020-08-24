@@ -16,7 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, weak, nullable) id<MCSContentNetworkReadwriteDelegate> delegate;
 
-/// 该block将在dealloc时被调用
 @property (nonatomic, copy, nullable) void(^writeFinishedExecuteBlock)(void);
 
 - (void)appendData:(NSData *)data;
@@ -24,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)seekToFileOffset:(NSUInteger)offset error:(out NSError **)error;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
 
+- (void)completeDownload;
 @end
 
 @protocol MCSContentNetworkReadwriteDelegate <NSObject>
