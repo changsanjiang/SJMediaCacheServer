@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendData:(NSData *)data;
 
 - (BOOL)seekToFileOffset:(NSUInteger)offset error:(out NSError **)error;
-- (nullable NSData *)readDataOfLength:(NSUInteger)length;
+- (nullable NSData *)readDataOfLength:(NSUInteger)length error:(out NSError **)error;
 
 - (void)complete;
 @end
