@@ -27,6 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MCSPrefetcherDelegate <NSObject>
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher progressDidChange:(float)progress;
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error;
+- (void)prefetcher:(id<MCSPrefetcher>)prefetcher progressDidChangeWithFragmentIndex:(NSInteger)fragmentIndex tsCount:(NSInteger)tsCount;
+
 @end
 NS_ASSUME_NONNULL_END
 

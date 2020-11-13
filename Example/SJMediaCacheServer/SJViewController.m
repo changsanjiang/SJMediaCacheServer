@@ -14,7 +14,7 @@
 #import "MCSLogger.h"
 
 #import <SJMediaCacheServer/MCSUtils.h>
- 
+#import <SJMediaCacheServer/MCSDownload.h>
 //#import <SJBaseVideoPlayer/SJAliMediaPlaybackController.h>
 
 
@@ -36,8 +36,8 @@
     
 //    _player.playbackController = SJAliMediaPlaybackController.new;
 
-    SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionSessionTask | MCSLogOptionPrefetcher;
+//    SJMediaCacheServer.shared.enabledConsoleLog = YES;
+//    SJMediaCacheServer.shared.logOptions = MCSLogOptionSessionTask | MCSLogOptionPrefetcher;
     
 }
 
@@ -61,9 +61,22 @@
 //    url = @"https://xy2.v.netease.com/r/video/20200629/b03eeb99-6eef-407d-9055-079b22796fdd.mp4";
     
     url = @"http://videosy.soyoung.com/750ac763738bcde017ab1c2344c78402_cefb1453.m3u8";
-    
+
     NSURL *URL = [NSURL URLWithString:url];
     
+    id<MCSPrefetchTask> task = [SJMediaCacheServer.shared prefetchWithURL:URL progress:^(NSInteger fragmentIndex, NSInteger tsCount) {
+        NSLog(@"-----正在下载：%d, 总：%d", fragmentIndex, tsCount);
+
+    } completed:^(NSError * _Nullable error) {
+        NSLog(@"error:%@", error);
+
+    }];
+//    id<MCSPrefetchTask> task = [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:1000 * 1024 * 1024 progress:^(float progress) {
+//            NSLog(@"-----%lf", progress);
+//        } completed:^(NSError * _Nullable error) {
+//            NSLog(@"error:%@", error);
+//        }];
+    return;
     // playback URL
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
     

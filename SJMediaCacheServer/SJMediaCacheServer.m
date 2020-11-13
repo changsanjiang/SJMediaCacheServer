@@ -79,7 +79,11 @@
     
     return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize progress:progressBlock completed:completionBlock];
 }
-
+- (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL progress:(void(^_Nullable)(NSInteger fragmentIndex, NSInteger tsCount))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock  {
+    NSParameterAssert(URL);
+    
+    return [MCSPrefetcherManager.shared prefetchWithURL:URL progress:progressBlock completed:completionBlock];
+}
 - (void)cancelCurrentRequestsForURL:(NSURL *)URL {
     if ( URL == nil )
         return;

@@ -180,8 +180,12 @@
     __auto_type delegate = [self _delegateForTask:task];
     [delegate downloadTask:task didCompleteWithError:error];
     
-    [self _setDelegate:nil forTask:task];
-    [self _setError:nil forTask:task];
+    //可能是这里为nil
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self _setDelegate:nil forTask:task];
+        [self _setError:nil forTask:task];
+    });
+  
 }
 
 #pragma mark -

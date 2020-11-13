@@ -125,7 +125,13 @@
     });
     return count;
 }
-
+- (NSUInteger)urlCount {
+    __block NSUInteger count = 0;
+    dispatch_sync(_queue, ^{
+        count = _URIs.count;
+    });
+    return count;
+}
 - (NSString *)indexFilePath {
     return [MCSFileManager hls_indexFilePathInResource:_resourceName];
 }

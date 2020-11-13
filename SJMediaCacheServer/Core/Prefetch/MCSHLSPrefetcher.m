@@ -109,33 +109,59 @@
     dispatch_barrier_sync(MCSPrefetcherQueue(), ^{
         if ( _isClosed )
             return;
-        
+       
         if ( [reader seekToOffset:reader.offset + length] ) {
-            if ( _fragmentIndex != NSNotFound )
-                _loadedLength += length;
-            
-            CGFloat progress = _loadedLength * 1.0 / _preloadSize;
-            if ( progress >= 1 ) progress = 1;
-            _progress = progress;
-            
-            MCSPrefetcherLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, _progress);
-            
-            if ( _delegate != nil ) {
-                dispatch_async(_delegateQueue, ^{
-                    [self.delegate prefetcher:self progressDidChange:progress];
-                });
-            }
-            
-            if ( reader.isReadingEndOfData ) {
-                BOOL isLastFragment = _fragmentIndex == _resource.parser.TsCount - 1;
-                BOOL isFinished = progress >= 1 || isLastFragment;
-                if ( !isFinished ) {
-                    [self _prepareNextFragment];
-                    return;
+            if (self.preloadSize <= 0) {
+                if ([self.delegate respondsToSelector:@selector(prefetcher:progressDidChangeWithFragmentIndex:tsCount:)]) {
+                    
+                    
+                    if ( reader.isReadingEndOfData ) {
+                        
+                        if ( _delegate != nil ) {
+                            dispatch_async(_delegateQueue, ^{
+                                [self.delegate prefetcher:self progressDidChangeWithFragmentIndex:self->_fragmentIndex tsCount:self->_resource.parser.urlCount];
+                            });
+                        }
+                        
+                        BOOL isLastFragment = _fragmentIndex == _resource.parser.urlCount -1;
+                        BOOL isFinished = isLastFragment;
+                        if ( !isFinished ) {
+                            [self _prepareNextFragment];
+                            return;
+                        }
+                        
+                        [self _didCompleteWithError:nil];
+                    }
                 }
-                
-                [self _didCompleteWithError:nil];
+            }else{
+                if ([self.delegate respondsToSelector:@selector(prefetcher:progressDidChange:)]) {
+                    if ( _fragmentIndex != NSNotFound )
+                        _loadedLength += length;
+                    CGFloat progress = _loadedLength * 1.0 / _preloadSize;
+                    if ( progress >= 1 ) progress = 1;
+                    _progress = progress;
+                    
+                    MCSPrefetcherLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, _progress);
+                    
+                    if ( _delegate != nil ) {
+                        dispatch_async(_delegateQueue, ^{
+                            [self.delegate prefetcher:self progressDidChange:progress];
+                        });
+                    }
+                    
+                    if ( reader.isReadingEndOfData ) {
+                        BOOL isLastFragment = _fragmentIndex == _resource.parser.TsCount - 1;
+                        BOOL isFinished = progress >= 1 || isLastFragment;
+                        if ( !isFinished ) {
+                            [self _prepareNextFragment];
+                            return;
+                        }
+                        
+                        [self _didCompleteWithError:nil];
+                    }
+                }
             }
+            
         }
     });
 }

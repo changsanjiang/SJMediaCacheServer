@@ -12,10 +12,12 @@
 
 @interface MCSPrefetchOperation : NSOperation<MCSPrefetchTask>
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock;
+- (instancetype)initWithURL:(NSURL *)URL progress:(void(^_Nullable)(NSInteger fragmentIndex, NSInteger tsCount))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock;
 
 @property (nonatomic, readonly) NSUInteger preloadSize;
 @property (nonatomic, strong, readonly) NSURL *URL;
 @property (nonatomic, copy, readonly, nullable) void(^mcs_progressBlock)(float progress);
+@property (nonatomic, copy, readonly, nullable) void(^mcs_progressTSBlock)(NSInteger fragmentIndex, NSInteger tsCount);
 @property (nonatomic, copy, readonly, nullable) void(^mcs_completionBlock)(NSError *_Nullable error);
 
 - (void)cancel;
@@ -46,13 +48,27 @@
     }
     return self;
 }
-
+- (instancetype)initWithURL:(NSURL *)URL progress:(void(^_Nullable)(NSInteger fragmentIndex, NSInteger tsCount))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
+    self = [super init];
+    if ( self ) {
+        _URL = URL;
+        _preloadSize = 0;
+        _mcs_progressTSBlock = progressBlock;
+        _mcs_completionBlock = completionBlock;
+        _queue = dispatch_get_global_queue(0, 0);
+    }
+    return self;
+}
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher progressDidChange:(float)progress {
     if ( _mcs_progressBlock != nil ) {
         _mcs_progressBlock(progress);
     }
 }
-
+- (void)prefetcher:(id<MCSPrefetcher>)prefetcher progressDidChangeWithFragmentIndex:(NSInteger)fragmentIndex tsCount:(NSInteger)tsCount{
+    if ( _mcs_progressTSBlock != nil ) {
+        _mcs_progressTSBlock(fragmentIndex,tsCount);
+    }
+}
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error {
     dispatch_barrier_sync(_queue, ^{
         [self _completeOperationIfExecuting];
@@ -190,7 +206,11 @@
     [_operationQueue addOperation:operation];
     return operation;
 }
-
+- (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL progress:(void(^_Nullable)(NSInteger fragmentIndex, NSInteger tsCount))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
+    MCSPrefetchOperation *operation = [MCSPrefetchOperation.alloc initWithURL:URL progress:progressBlock completed:completionBlock];
+    [_operationQueue addOperation:operation];
+    return operation;
+}
 - (void)cancelAllPrefetchTasks {
     [_operationQueue cancelAllOperations];
 }
