@@ -11,6 +11,7 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import "SJVideoPlayerPlayStatusDefines.h"
+#import "SJPictureInPictureControllerDefines.h"
 
 @protocol SJVideoPlayerPlaybackControllerDelegate, SJMediaModelProtocol;
 
@@ -65,9 +66,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)seekToTime:(CMTime)time toleranceBefore:(CMTime)toleranceBefore toleranceAfter:(CMTime)toleranceAfter completionHandler:(void (^ __nullable)(BOOL))completionHandler;
 - (nullable UIImage *)screenshot;
 - (void)switchVideoDefinition:(id<SJMediaModelProtocol>)media;
+
+- (BOOL)isPictureInPictureSupported API_AVAILABLE(ios(14.0));
+@property (nonatomic) BOOL requiresLinearPlaybackInPictureInPicture API_AVAILABLE(ios(14.0));
+@property (nonatomic, readonly) SJPictureInPictureStatus pictureInPictureStatus API_AVAILABLE(ios(14.0));
+- (void)startPictureInPicture API_AVAILABLE(ios(14.0));
+- (void)stopPictureInPicture API_AVAILABLE(ios(14.0));
 @end
 
-/// screenshot
+/// screenshot`
 @protocol SJMediaPlaybackScreenshotController
 - (void)screenshotWithTime:(NSTimeInterval)time
                       size:(CGSize)size
@@ -118,6 +125,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)playbackControllerIsReadyForDisplay:(id<SJVideoPlayerPlaybackController>)controller;
 - (void)playbackController:(id<SJVideoPlayerPlaybackController>)controller switchingDefinitionStatusDidChange:(SJDefinitionSwitchStatus)status media:(id<SJMediaModelProtocol>)media;
 - (void)playbackController:(id<SJVideoPlayerPlaybackController>)controller didReplay:(id<SJMediaModelProtocol>)media;
+
+- (void)playbackController:(id<SJVideoPlayerPlaybackController>)controller pictureInPictureStatusDidChange:(SJPictureInPictureStatus)status API_AVAILABLE(ios(14.0));
+
+- (void)playbackController:(id<SJVideoPlayerPlaybackController>)controller willSeekToTime:(CMTime)time;
+- (void)playbackController:(id<SJVideoPlayerPlaybackController>)controller didSeekToTime:(CMTime)time;
 @end
 
 

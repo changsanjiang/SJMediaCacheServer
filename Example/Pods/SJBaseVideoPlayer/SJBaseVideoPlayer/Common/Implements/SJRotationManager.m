@@ -288,8 +288,8 @@ static NSNotificationName const SJRotationManagerTransitioningValueDidChangeNoti
     if (self) {
         _currentOrientation = SJOrientation_Portrait;
         _autorotationSupportedOrientations = SJOrientationMaskAll;
-        [self performSelectorOnMainThread:@selector(_setupWindow) withObject:nil waitUntilDone:YES];
         [self _observeNotifies];
+        [self performSelectorOnMainThread:@selector(_setupWindow) withObject:nil waitUntilDone:NO];
     }
     return self;
 }
@@ -422,15 +422,15 @@ static NSNotificationName const SJRotationManagerTransitioningValueDidChangeNoti
 }
 
 - (BOOL)prefersStatusBarHidden {
-    return self.viewControllerManager.prefersStatusBarHidden;
+    return self.delegate.prefersStatusBarHidden;
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
-    return self.viewControllerManager.preferredStatusBarStyle;
+    return self.delegate.preferredStatusBarStyle;
 }
 
 - (void)vc_forwardPushViewController:(UIViewController *)viewController animated:(BOOL)animated {
-    [self.viewControllerManager pushViewController:viewController animated:animated];
+    [self.delegate pushViewController:viewController animated:animated];
 }
 
 #pragma mark -

@@ -18,7 +18,7 @@
         instance = [[self alloc] init];
     });
     return instance;
-}
+} 
 
 - (instancetype)init {
     self = [super init];
@@ -33,9 +33,9 @@
     SJSQLite3Logger.shared.enabledConsoleLog = options & MCSLogOptionSQLite;
 }
 
-- (void)option:(MCSLogOptions)option addLog:(NSString *)format, ... NS_FORMAT_FUNCTION(2,3) {
-    if ( format == nil )
-        return;
+- (void)option:(MCSLogOptions)option level:(MCSLogLevel)level addLog:(NSString *)format, ... NS_FORMAT_FUNCTION(3,4) {
+    if ( format == nil ) return;
+    if ( level < _level ) return;
     
     if ( _enabledConsoleLog && (option & _options) ) {
         va_list ap;

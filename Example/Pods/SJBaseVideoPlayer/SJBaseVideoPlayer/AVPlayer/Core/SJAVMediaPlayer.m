@@ -97,6 +97,7 @@ NS_ASSUME_NONNULL_BEGIN
     [self seekToTime:kCMTimeZero completionHandler:^(BOOL finished) {
         __strong typeof(_self) self = _self;
         if ( !self ) return;
+        [self _postNotification:SJMediaPlayerDidReplayNotification];
         [self play];
     }];
 }
@@ -397,7 +398,7 @@ static NSString *kTimeControlStatus = @"timeControlStatus";
         
         if ( self.needSeekToStartPosition && !self.seekingInfo.isSeeking && assetStatus == SJAssetStatusReadyToPlay ) {
             __weak typeof(self) _self = self;
-            [self seekToTime:CMTimeMakeWithSeconds(self.startPosition, NSEC_PER_SEC) completionHandler:^(BOOL finished) {
+            [self seekToTime:CMTimeMakeWithSeconds(self.startPosition, NSEC_PER_SEC) toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero completionHandler:^(BOOL f) {
                 __strong typeof(_self) self = _self;
                 if ( !self ) return;
                 self.needSeekToStartPosition = NO;

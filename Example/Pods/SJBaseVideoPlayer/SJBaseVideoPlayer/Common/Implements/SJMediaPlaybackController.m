@@ -143,6 +143,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation SJMediaPlaybackController
+@synthesize requiresLinearPlaybackInPictureInPicture = _requiresLinearPlaybackInPictureInPicture;
 @synthesize pauseWhenAppDidEnterBackground = _pauseWhenAppDidEnterBackground;
 @synthesize periodicTimeInterval = _periodicTimeInterval;
 @synthesize minBufferedDuration = _minBufferedDuration;
@@ -207,6 +208,35 @@ NS_ASSUME_NONNULL_BEGIN
         self.currentPlayer = player;
         self.currentPlayerView = [self playerViewWithPlayer:player];
     }];
+}
+
+
+#pragma mark - PiP
+
+- (BOOL)isPictureInPictureSupported API_AVAILABLE(ios(14.0)) {
+#ifdef DEBUG
+    NSLog(@"%@ 暂不支持画中画", NSStringFromClass(self.class));
+#endif
+    return NO;
+}
+
+- (SJPictureInPictureStatus)pictureInPictureStatus API_AVAILABLE(ios(14.0)) {
+#ifdef DEBUG
+    NSLog(@"%@ 暂不支持画中画", NSStringFromClass(self.class));
+#endif
+    return SJPictureInPictureStatusUnknown;
+}
+
+- (void)startPictureInPicture API_AVAILABLE(ios(14.0)) {
+#ifdef DEBUG
+    NSLog(@"%@ 暂不支持画中画", NSStringFromClass(self.class));
+#endif
+}
+
+- (void)stopPictureInPicture API_AVAILABLE(ios(14.0)) {
+#ifdef DEBUG
+    NSLog(@"%@ 暂不支持画中画", NSStringFromClass(self.class));
+#endif
 }
 
 #pragma mark -
@@ -283,7 +313,18 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)seekToTime:(CMTime)time toleranceBefore:(CMTime)toleranceBefore toleranceAfter:(CMTime)toleranceAfter completionHandler:(void (^ _Nullable)(BOOL))completionHandler {
-    [self.currentPlayer seekToTime:time completionHandler:completionHandler];
+    if ( [self.delegate respondsToSelector:@selector(playbackController:willSeekToTime:)] ) {
+        [self.delegate playbackController:self willSeekToTime:time];
+    }
+    __weak typeof(self) _self = self;
+    [self.currentPlayer seekToTime:time completionHandler:^(BOOL finished) {
+        __strong typeof(_self) self = _self;
+        if ( !self ) return;
+        if ( completionHandler ) completionHandler(finished);
+        if ( [self.delegate respondsToSelector:@selector(playbackController:didSeekToTime:)] ) {
+            [self.delegate playbackController:self didSeekToTime:time];
+        }
+    }];
 }
 
 - (void)switchVideoDefinition:(SJVideoPlayerURLAsset *)media {
@@ -485,7 +526,7 @@ NS_ASSUME_NONNULL_BEGIN
         self.timeControlStatus = SJPlaybackTimeControlStatusPaused;
     }
     
-    if ( self.timeControlStatus == SJPlaybackTimeControlStatusPaused ) {
+    if ( self.timeControlStatus == SJPlaybackTimeControlStatusPaused && self.currentPlayer.timeControlStatus != SJPlaybackTimeControlStatusPlaying ) {
         return;
     }
     
@@ -498,10 +539,8 @@ NS_ASSUME_NONNULL_BEGIN
     
     if ( self.timeControlStatus != self.currentPlayer.timeControlStatus ||
          self.reasonForWaitingToPlay != self.currentPlayer.reasonForWaitingToPlay ) {
-        if ( self.currentPlayer.timeControlStatus != SJPlaybackTimeControlStatusPaused ) {
-            self.reasonForWaitingToPlay = self.currentPlayer.reasonForWaitingToPlay;
-            self.timeControlStatus = self.currentPlayer.timeControlStatus;
-        }
+        self.reasonForWaitingToPlay = self.currentPlayer.reasonForWaitingToPlay;
+        self.timeControlStatus = self.currentPlayer.timeControlStatus;
     }
 }
 

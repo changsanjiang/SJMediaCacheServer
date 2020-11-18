@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVTime.h>
 @class SJBaseVideoPlayer;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -37,6 +38,21 @@ NS_ASSUME_NONNULL_BEGIN
 /// 播放控制改变的回调
 ///
 @property (nonatomic, copy, nullable) void(^timeControlStatusDidChangeExeBlock)(__kindof SJBaseVideoPlayer *player);
+
+///
+/// 画中画状态改变的回调
+///
+@property (nonatomic, copy, nullable) void(^pictureInPictureStatusDidChangeExeBlock)(__kindof SJBaseVideoPlayer *player) API_AVAILABLE(ios(14.0));
+
+///
+/// 调用seek之前的回调
+///
+@property (nonatomic, copy, nullable) void(^willSeekToTimeExeBlock)(__kindof SJBaseVideoPlayer *player, CMTime time);
+
+///
+/// 调用seek之后的回调
+///
+@property (nonatomic, copy, nullable) void(^didSeekToTimeExeBlock)(__kindof SJBaseVideoPlayer *player, CMTime time);
 
 ///
 /// 调用了重播的回调

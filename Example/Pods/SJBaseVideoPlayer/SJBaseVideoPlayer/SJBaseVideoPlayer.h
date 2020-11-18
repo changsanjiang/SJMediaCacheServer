@@ -122,7 +122,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///         此模块将是对视频播放的控制, 例如播放, 暂停, 调速, 跳转等等...
 ///         了解更多请前往协议头文件查看
 ///
-@property (nonatomic, strong, null_resettable) id<SJVideoPlayerPlaybackController> playbackController;
+@property (nonatomic, strong, null_resettable) __kindof id<SJVideoPlayerPlaybackController> playbackController;
 
 ///
 /// 观察者
@@ -452,6 +452,12 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic) CGFloat rateWhenLongPressGestureTriggered;
 
+///
+/// 调整水平pan手势移动时的速率
+///
+///         default value is 667.0
+///
+@property (nonatomic) CGFloat offsetFactorForHorizontalPanGesture;
 @end
 
 
@@ -854,6 +860,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic, strong, nullable) UIView<SJWatermarkView> *watermarkView;
 
+- (void)updateWatermarkViewLayout;
 @end
 
 #pragma mark - 已弃用

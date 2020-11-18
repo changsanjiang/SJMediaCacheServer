@@ -32,12 +32,15 @@ extern NSNotificationName const SJVideoPlayerApplicationWillTerminateNotificatio
 extern NSNotificationName const SJVideoPlayerPlaybackControllerWillDeallocateNotification; ///< 注意: 发送对象变为了`SJMediaPlaybackController`(目前只此一个, 其他都为player对象)
 
 extern NSNotificationName const SJVideoPlayerPlaybackTimeControlStatusDidChangeNotification;
+extern NSNotificationName const SJVideoPlayerPictureInPictureStatusDidChangeNotification;
 extern NSNotificationName const SJVideoPlayerPlaybackDidFinishNotification;         // 播放完毕后发出的通知
-extern NSNotificationName const SJVideoPlayerPlaybackDidReplayNotification;         // 调用了replay发出的通知
-extern NSNotificationName const SJVideoPlayerPlaybackWillStopNotification;          // 调用了stop前发出的通知
-extern NSNotificationName const SJVideoPlayerPlaybackDidStopNotification;           // 调用了stop后发出的通知
-extern NSNotificationName const SJVideoPlayerPlaybackWillRefreshNotification;       // 调用了refresh前发出的通知
-extern NSNotificationName const SJVideoPlayerPlaybackDidRefreshNotification;        // 调用了refresh后发出的通知
+extern NSNotificationName const SJVideoPlayerPlaybackDidReplayNotification;         // 执行replay发出的通知
+extern NSNotificationName const SJVideoPlayerPlaybackWillStopNotification;          // 执行stop前发出的通知
+extern NSNotificationName const SJVideoPlayerPlaybackDidStopNotification;           // 执行stop后发出的通知
+extern NSNotificationName const SJVideoPlayerPlaybackWillRefreshNotification;       // 执行refresh前发出的通知
+extern NSNotificationName const SJVideoPlayerPlaybackDidRefreshNotification;        // 执行refresh后发出的通知
+extern NSNotificationName const SJVideoPlayerPlaybackWillSeekNotification;          // 执行seek前发出的通知
+extern NSNotificationName const SJVideoPlayerPlaybackDidSeekNotification;           // 执行seek后发出的通知
 
 extern NSNotificationName const SJVideoPlayerCurrentTimeDidChangeNotification;
 extern NSNotificationName const SJVideoPlayerDurationDidChangeNotification;
@@ -50,4 +53,5 @@ extern NSNotificationName const SJVideoPlayerMutedDidChangeNotification;
 extern NSNotificationName const SJVideoPlayerVolumeDidChangeNotification;
 extern NSNotificationName const SJVideoPlayerScreenLockStateDidChangeNotification;
 
+extern NSString *const SJVideoPlayerNotificationUserInfoKeySeekTime;
 NS_ASSUME_NONNULL_END

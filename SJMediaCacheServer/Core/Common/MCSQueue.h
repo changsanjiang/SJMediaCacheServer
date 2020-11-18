@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXPORT dispatch_queue_t
-MCSResourceQueue(void);
+MCSAssetQueue(void);
 
 FOUNDATION_EXPORT dispatch_queue_t
 MCSPrefetcherQueue(void);
@@ -18,13 +18,33 @@ MCSPrefetcherQueue(void);
 FOUNDATION_EXPORT dispatch_queue_t
 MCSReaderQueue(void);
 
+#pragma mark -
+
+FOUNDATION_EXPORT dispatch_queue_t
+MCSFileDataReaderQueue(void);
+
+#pragma mark -
+
+FOUNDATION_EXPORT dispatch_queue_t
+HLSAESDataReaderQueue(void);
+
+FOUNDATION_EXPORT dispatch_queue_t
+HLSContentIndexReaderQueue(void);
+
+FOUNDATION_EXPORT dispatch_queue_t
+HLSTsDataReaderQueue(void);
+
+#pragma mark -
+
+FOUNDATION_EXPORT dispatch_queue_t
+FILEReadwriteQueue(void);
+
+#pragma mark -
+
 FOUNDATION_EXPORT dispatch_queue_t
 MCSDownloadQueue(void);
 
 FOUNDATION_EXPORT dispatch_queue_t
 MCSDelegateQueue(void);
-
-FOUNDATION_EXPORT dispatch_queue_t
-MCSDataReaderQueue(void);
 
 NS_ASSUME_NONNULL_END

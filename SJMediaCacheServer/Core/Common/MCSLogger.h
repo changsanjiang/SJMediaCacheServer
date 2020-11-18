@@ -19,45 +19,68 @@ NS_ASSUME_NONNULL_BEGIN
 /// The default value is MCSLogOptionDefault.
 @property (nonatomic) MCSLogOptions options;
 
-- (void)option:(MCSLogOptions)option addLog:(NSString *)format, ... NS_FORMAT_FUNCTION(2,3);
+/// The default value is MCSLogLevelDebug.
+@property (nonatomic) MCSLogLevel level;
 
+- (void)option:(MCSLogOptions)option level:(MCSLogLevel)level addLog:(NSString *)format, ... NS_FORMAT_FUNCTION(3,4);
 @end
 
 #ifdef DEBUG
-#define MCSLog(__option__, format, arg...) \
-[MCSLogger.shared option:__option__ addLog:format, ##arg]
+#define MCSDebugLog(__option__, format, arg...) \
+    [MCSLogger.shared option:__option__ level:MCSLogLevelDebug addLog:format, ##arg]
+#define MCSErrorLog(__option__, format, arg...) \
+    [MCSLogger.shared option:__option__ level:MCSLogLevelError addLog:format, ##arg]
 
 // prefetcher
-#define MCSPrefetcherLog(format, arg...) \
-MCSLog(MCSLogOptionPrefetcher, format, ##arg)
+#define MCSPrefetcherDebugLog(format, arg...) \
+    MCSDebugLog(MCSLogOptionPrefetcher, format, ##arg)
+#define MCSPrefetcherErrorLog(format, arg...) \
+    MCSErrorLog(MCSLogOptionPrefetcher, format, ##arg)
 
-// resource reader
-#define MCSResourceReaderLog(format, arg...) \
-MCSLog(MCSLogOptionResourceReader, format, ##arg)
+// asset reader
+#define MCSAssetReaderDebugLog(format, arg...) \
+    MCSDebugLog(MCSLogOptionAssetReader, format, ##arg)
+#define MCSAssetReaderErrorLog(format, arg...) \
+    MCSErrorLog(MCSLogOptionAssetReader, format, ##arg)
 
-// data reader
-#define MCSDataReaderLog(format, arg...) \
-MCSLog(MCSLogOptionDataReader, format, ##arg)
+// content reader
+#define MCSContentReaderDebugLog(format, arg...) \
+    MCSDebugLog(MCSLogOptionContentReader, format, ##arg)
+#define MCSContentReaderErrorLog(format, arg...) \
+    MCSErrorLog(MCSLogOptionContentReader, format, ##arg)
 
-// download
-#define MCSDownloadLog(format, arg...) \
-MCSLog(MCSLogOptionDownload, format, ##arg)
+// downloader
+#define MCSDownloaderDebugLog(format, arg...) \
+    MCSDebugLog(MCSLogOptionDownloader, format, ##arg)
+#define MCSDownloaderErrorLog(format, arg...) \
+    MCSErrorLog(MCSLogOptionDownloader, format, ##arg)
 
 // HTTP connection
-#define MCSHTTPConnectionLog(format, arg...) \
-MCSLog(MCSLogOptionHTTPConnection, format, ##arg)
+#define MCSHTTPConnectionDebugLog(format, arg...) \
+    MCSDebugLog(MCSLogOptionHTTPConnection, format, ##arg)
+#define MCSHTTPConnectionErrorLog(format, arg...) \
+    MCSErrorLog(MCSLogOptionHTTPConnection, format, ##arg)
 
-// Session Task
-#define MCSSessionTaskLog(format, arg...) \
-MCSLog(MCSLogOptionSessionTask, format, ##arg)
+// proxy Task
+#define MCSProxyTaskDebugLog(format, arg...) \
+    MCSDebugLog(MCSLogOptionProxyTask, format, ##arg)
+#define MCSProxyTaskErrorLog(format, arg...) \
+    MCSErrorLog(MCSLogOptionProxyTask, format, ##arg)
 
 #else
-#define MCSLog(option, format, arg...)
-#define MCSPrefetcherLog(format, arg...)
-#define MCSResourceReaderLog(format, arg...)
-#define MCSDataReaderLog(format, arg...)
-#define MCSDownloadLog(format, arg...)
-#define MCSHTTPConnectionLog(format, arg...)
-#define MCSSessionTaskLog(format, arg...)
+#define MCSDebugLog(option, format, arg...)
+#define MCSErrorLog(option, format, arg...)
+#define MCSPrefetcherDebugLog(format, arg...)
+#define MCSPrefetcherErrorLog(format, arg...)
+#define MCSAssetReaderDebugLog(format, arg...)
+#define MCSAssetReaderErrorLog(format, arg...)
+#define MCSContentReaderDebugLog(format, arg...)
+#define MCSContentReaderErrorLog(format, arg...)
+#define MCSDownloaderDebugLog(format, arg...)
+#define MCSDownloaderErrorLog(format, arg...)
+#define MCSHTTPConnectionDebugLog(format, arg...)
+#define MCSHTTPConnectionErrorLog(format, arg...)
+#define MCSProxyTaskDebugLog(format, arg...)
+#define MCSProxyTaskErrorLog(format, arg...)
 #endif
 NS_ASSUME_NONNULL_END

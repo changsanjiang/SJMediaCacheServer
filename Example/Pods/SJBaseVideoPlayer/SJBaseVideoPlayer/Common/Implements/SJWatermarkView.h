@@ -7,11 +7,20 @@
 
 #import "SJWatermarkViewDefines.h"
 
+typedef NS_ENUM(NSUInteger, SJWatermarkLayoutPosition) {
+    SJWatermarkLayoutPositionTopLeft,
+    SJWatermarkLayoutPositionTopRight,
+    SJWatermarkLayoutPositionBottomLeft,
+    SJWatermarkLayoutPositionBottomRight
+};
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SJWatermarkView : UIImageView<SJWatermarkView>
 
-@property (nonatomic) CGFloat margin; // default value is 20.0
+@property (nonatomic) SJWatermarkLayoutPosition layoutPosition; // default value is SJWatermarkLayoutPositionTopRight.
+@property (nonatomic) UIEdgeInsets layoutInsets; // default value is (20, 20, 20, 20).
+@property (nonatomic) CGFloat layoutHeight; // default value is 0. If `0`, the height of the watermark image will be used for layout.
 
 - (void)layoutWatermarkInRect:(CGRect)rect videoPresentationSize:(CGSize)vSize videoGravity:(SJVideoGravity)videoGravity;
 

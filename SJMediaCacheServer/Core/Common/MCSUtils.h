@@ -57,13 +57,13 @@ MCSSuggestedFilePathExtension(NSHTTPURLResponse *response);
 
 #ifdef DEBUG
 FOUNDATION_EXPORT uint64_t
-MCSTimerStart(void);
+MCSStartTime(void);
 
 FOUNDATION_EXPORT NSTimeInterval
-MCSTimerMilePost(uint64_t elapsed_time);
-#else
-#define MCSTimerStart()
-#define MCSTimerMilePost(...)
-#endif
+MCSEndTime(uint64_t elapsed_time);
 
+#else
+#define MCSStartTime()
+#define MCSEndTime(...)
+#endif
 NS_ASSUME_NONNULL_END

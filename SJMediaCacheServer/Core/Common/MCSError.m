@@ -8,17 +8,16 @@
 
 #import "MCSError.h"
 
-NSString * const MCSErrorDomain = @"lib.SJMediaCacheServer.error";
-NSString * const MCSErrorUserInfoRequestKey = @"Request";
-NSString * const MCSErrorUserInfoRequestAllHeaderFieldsKey = @"RequestAllHeaderFields";
-NSString * const MCSErrorUserInfoExceptionKey = @"Exception";
-NSString * const MCSErrorUserInfoResponseKey = @"Response";
-NSString * const MCSErrorUserInfoResourceKey = @"Resource";
-NSString * const MCSErrorUserInfoRangeKey = @"Range";
-NSString * const MCSErrorUserInfoErrorKey = @"Error";
+NSString *const MCSErrorDomain = @"lib.changsanjiang.SJMediaCacheServer.error";
+NSString *const MCSErrorUserInfoObjectKey = @"object";
+NSString *const MCSErrorUserInfoReasonKey = @"reason";
+NSString *const MCSErrorUserInfoExceptionKey = @"exception";
+NSString *const MCSErrorUserInfoErrorKey = @"error";
 
 @implementation NSError(MCSExtended)
-+ (NSError *)mcs_errorWithCode:(MCSErrorCode)code userInfo:(nullable NSDictionary *)userInfo {
+
++ (NSError *)mcs_errorWithCode:(MCSErrorCode)code userInfo:(NSDictionary *)userInfo {
     return [NSError errorWithDomain:MCSErrorDomain code:code userInfo:userInfo];
 }
+
 @end

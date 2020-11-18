@@ -8,11 +8,12 @@
 #import "MCSQueue.h"
 
 dispatch_queue_t
-MCSResourceQueue(void) {
+MCSAssetQueue(void) {
     static dispatch_queue_t queue = NULL;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSResourceQueue", DISPATCH_QUEUE_CONCURRENT);
+//        queue = dispatch_queue_create("mcs.MCSAssetQueue", DISPATCH_QUEUE_CONCURRENT);
+        queue = dispatch_get_global_queue(0, 0);
     });
     return queue;
 }
@@ -40,6 +41,62 @@ MCSReaderQueue(void) {
 #pragma mark -
 
 dispatch_queue_t
+MCSFileDataReaderQueue(void) {
+    static dispatch_queue_t queue = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("mcs.MCSFileDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
+    });
+    return queue;
+}
+
+#pragma mark -
+
+dispatch_queue_t
+HLSAESDataReaderQueue(void) {
+    static dispatch_queue_t queue = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("mcs.HLSAESDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
+    });
+    return queue;
+}
+
+dispatch_queue_t
+HLSContentIndexReaderQueue(void) {
+    static dispatch_queue_t queue = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("mcs.HLSContentIndexReaderQueue", DISPATCH_QUEUE_CONCURRENT);
+    });
+    return queue;
+}
+
+dispatch_queue_t
+HLSTsDataReaderQueue(void) {
+    static dispatch_queue_t queue = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("mcs.HLSTsDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
+    });
+    return queue;
+}
+
+#pragma mark -
+
+dispatch_queue_t
+FILEReadwriteQueue(void) {
+    static dispatch_queue_t queue = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("mcs.FILEReadwriteQueue", DISPATCH_QUEUE_CONCURRENT);
+    });
+    return queue;
+}
+
+#pragma mark -
+
+dispatch_queue_t
 MCSDownloadQueue(void) {
     static dispatch_queue_t queue = NULL;
     static dispatch_once_t onceToken;
@@ -55,17 +112,6 @@ MCSDelegateQueue(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         queue = dispatch_queue_create("mcs.MCSDelegateQueue", DISPATCH_QUEUE_SERIAL);
-    });
-    return queue;
-}
-
-
-dispatch_queue_t
-MCSDataReaderQueue(void) {
-    static dispatch_queue_t queue = NULL;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.MCSDataReaderQueue", DISPATCH_QUEUE_CONCURRENT);
     });
     return queue;
 }
