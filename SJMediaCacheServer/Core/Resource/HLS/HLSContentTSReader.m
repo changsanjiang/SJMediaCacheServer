@@ -226,7 +226,7 @@
         if ( _isClosed )
             return;
         
-        if ( error != nil && error.code != NSURLErrorCancelled ) {
+        if ( error != nil ) {
             [self _onError:error];
         }
         else {
