@@ -11,12 +11,13 @@
 #import <Masonry/Masonry.h>
 
 #import "SJMediaCacheServer.h"
-#import "MCSLogger.h"
 
 #import <SJMediaCacheServer/NSURLRequest+MCS.h>
 #import <SJMediaCacheServer/MCSURLRecognizer.h>
 #import <SJMediaCacheServer/MCSPrefetcherManager.h>
 #import <SJBaseVideoPlayer/SJAVMediaPlaybackController.h>
+
+#import <MCSDownload.h>
 
 
 @interface SJViewController ()
@@ -49,6 +50,11 @@
     // url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     URL = [NSURL URLWithString:url];
     [self _prefetch:URL];
+    
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [MCSDownload.shared cancelAllDownloadTasks];
+    });
 }
 
 - (void)_play:(NSURL *)URL {

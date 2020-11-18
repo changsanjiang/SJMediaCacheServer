@@ -8,12 +8,17 @@
 
 #import "MCSProxyTask.h"
 #import "MCSAssetManager.h"
+#import "MCSUtils.h"
+#import "MCSLogger.h"
 
 @interface MCSProxyTask ()<MCSAssetReaderDelegate>
 @property (nonatomic, weak) id<MCSProxyTaskDelegate> delegate;
 @property (nonatomic, strong) NSURLRequest * request;
 @property (nonatomic, strong) id<MCSAsset> asset;
 @property (nonatomic, strong) id<MCSAssetReader> reader;
+#ifdef DEBUG
+@property (nonatomic) uint64_t startTime;
+#endif
 @end
 
 @implementation MCSProxyTask
@@ -27,6 +32,11 @@
 }
 
 - (void)prepare {
+#ifdef DEBUG
+    MCSProxyTaskDebugLog(@"%@: <%p>.prepare { request: %@ };\n", NSStringFromClass(self.class), self, _request);
+    _startTime = MCSStartTime();
+#endif
+
     _reader = [MCSAssetManager.shared readerWithRequest:_request];
     _reader.delegate = self;
     @autoreleasepool {
@@ -35,7 +45,15 @@
 }
  
 - (nullable NSData *)readDataOfLength:(NSUInteger)length {
-    return [_reader readDataOfLength:length];
+    NSData *data = [_reader readDataOfLength:length];
+#ifdef DEBUG
+    if ( data.length != 0 ) {
+        MCSProxyTaskDebugLog(@"%@: <%p>.read { length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)data.length);
+        if ( _reader.isReadingEndOfData )
+            MCSProxyTaskDebugLog(@"%@: <%p>.done { after (%lf) seconds };\n", NSStringFromClass(self.class), self, MCSEndTime(_startTime));
+    }
+#endif
+    return data;
 }
 
 - (NSUInteger)offset {
@@ -55,6 +73,9 @@
 }
 
 - (void)close {
+#ifdef DEBUG
+    MCSProxyTaskDebugLog(@"%@: <%p>.close { after (%lf) seconds };\n\n", NSStringFromClass(self.class), self, MCSEndTime(_startTime));
+#endif
     [_reader close];
 }
 
@@ -69,6 +90,9 @@
 }
 
 - (void)reader:(id<MCSAssetReader>)reader anErrorOccurred:(NSError *)error {
+#ifdef DEBUG
+    MCSProxyTaskErrorLog(@"%@: <%p>.error { error: %@ };\n\n", NSStringFromClass(self.class), self, error);
+#endif
     [reader close];
     [_delegate task:self anErrorOccurred:error];
 }
