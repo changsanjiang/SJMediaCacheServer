@@ -39,7 +39,7 @@
     // play
     NSString *url = nil;
     url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
-     url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+//     url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     NSURL *URL = [NSURL URLWithString:url];
     [self _play:URL];
     
@@ -47,14 +47,9 @@
     
     // prefetch
     url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
-    // url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+     url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
     URL = [NSURL URLWithString:url];
     [self _prefetch:URL];
-    
-    
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [MCSDownload.shared cancelAllDownloadTasks];
-    });
 }
 
 - (void)_play:(NSURL *)URL {
