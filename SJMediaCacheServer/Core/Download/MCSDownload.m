@@ -63,10 +63,9 @@
     if ( request == nil )
         return nil;
     
-    __block NSURLSessionDataTask *task = nil;
+    NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
+    task.priority = priority;
     dispatch_barrier_sync(MCSDownloadQueue(), ^{
-        task = [_session dataTaskWithRequest:request];
-        task.priority = priority;
         _taskCount += 1;
     });
     [self _setDelegate:delegate forTask:task];
@@ -76,9 +75,13 @@
 
 - (void)cancelAllDownloadTasks {
     dispatch_barrier_sync(MCSDownloadQueue(), ^{
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+        [_session getTasksWithCompletionHandler:^(NSArray<NSURLSessionDataTask *> * _Nonnull dataTasks, NSArray<NSURLSessionUploadTask *> * _Nonnull uploadTasks, NSArray<NSURLSessionDownloadTask *> * _Nonnull downloadTasks) {
+            [dataTasks makeObjectsPerformSelector:@selector(cancel)];
+            dispatch_semaphore_signal(semaphore);
+        }];
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
         _taskCount = 0;
-        [_session invalidateAndCancel];
-        _session = [NSURLSession sessionWithConfiguration:_sessionConfiguration delegate:self delegateQueue:_sessionDelegateQueue];
     });
 }
  
