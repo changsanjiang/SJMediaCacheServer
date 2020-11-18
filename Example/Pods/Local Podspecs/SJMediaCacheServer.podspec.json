@@ -1,7 +1,7 @@
 {
   "name": "SJMediaCacheServer",
   "version": "1.1.5",
-  "summary": "A HTTP Media Caching Framework. It can cache VOD or HLS media.",
+  "summary": "A HTTP Media Caching Framework. It can cache FILE or HLS media.",
   "description": "https://github.com/changsanjiang/SJMediaCacheServer/blob/master/README.md",
   "homepage": "https://github.com/changsanjiang/SJMediaCacheServer",
   "license": {

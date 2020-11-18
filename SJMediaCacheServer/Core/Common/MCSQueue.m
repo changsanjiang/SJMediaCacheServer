@@ -85,11 +85,11 @@ HLSTsDataReaderQueue(void) {
 #pragma mark -
 
 dispatch_queue_t
-FILEReadwriteQueue(void) {
+FILEContentReaderQueue(void) {
     static dispatch_queue_t queue = NULL;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("mcs.FILEReadwriteQueue", DISPATCH_QUEUE_CONCURRENT);
+        queue = dispatch_queue_create("mcs.FILEContentReaderQueue", DISPATCH_QUEUE_CONCURRENT);
     });
     return queue;
 }

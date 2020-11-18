@@ -1,5 +1,5 @@
 //
-//  FILEReadwrite.h
+//  FILEContentReader.h
 //  SJMediaCacheServer_Example
 //
 //  Created by 畅三江 on 2020/6/3.
@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface FILEReadwrite : NSObject<MCSAssetDataReader>
+@interface FILEContentReader : NSObject<MCSAssetDataReader>
 - (instancetype)initWithAsset:(__weak FILEAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSAssetDataReaderDelegate>)delegate;
 
 

@@ -37,7 +37,7 @@ HLSTsDataReaderQueue(void);
 #pragma mark -
 
 FOUNDATION_EXPORT dispatch_queue_t
-FILEReadwriteQueue(void);
+FILEContentReaderQueue(void);
 
 #pragma mark -
 

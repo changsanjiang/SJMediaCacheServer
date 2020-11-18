@@ -15,7 +15,7 @@
 #import "MCSLogger.h"
 #import "FILEAsset.h"
 #import "MCSAssetSubclass.h"
-#import "FILEReadwrite.h"
+#import "FILEContentReader.h"
 #import "MCSQueue.h"
 #import "MCSResponse.h"
 
@@ -266,7 +266,7 @@
             // undownloaded part
             NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
             if ( leftRange.length != 0 ) {
-                FILEReadwrite *reader = [self _networkDataReaderWithURL:URL range:leftRange];
+                FILEContentReader *reader = [self _networkDataReaderWithURL:URL range:leftRange];
                 [readers addObject:reader];
             }
             
@@ -290,7 +290,7 @@
     
     if ( current.length != 0 ) {
         // undownloaded part
-        FILEReadwrite *reader = [self _networkDataReaderWithURL:URL range:current];
+        FILEContentReader *reader = [self _networkDataReaderWithURL:URL range:current];
         [readers addObject:reader];
     }
      
@@ -375,8 +375,8 @@
     });
 }
 
-- (FILEReadwrite *)_networkDataReaderWithURL:(NSURL *)URL range:(NSRange)range {
+- (FILEContentReader *)_networkDataReaderWithURL:(NSURL *)URL range:(NSRange)range {
     NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL range:range];
-    return [FILEReadwrite.alloc initWithAsset:_asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
+    return [FILEContentReader.alloc initWithAsset:_asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
 }
 @end

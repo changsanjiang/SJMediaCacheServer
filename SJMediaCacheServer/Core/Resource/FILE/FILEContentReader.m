@@ -1,12 +1,12 @@
 //
-//  FILEReadwrite.m
+//  FILEContentReader.m
 //  SJMediaCacheServer_Example
 //
 //  Created by 畅三江 on 2020/6/3.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "FILEReadwrite.h"
+#import "FILEContentReader.h"
 #import "MCSError.h"
 #import "MCSDownload.h"
 #import "MCSAssetContent.h"
@@ -16,7 +16,7 @@
 #import "NSFileHandle+MCS.h"
 #import "MCSQueue.h"
 
-@interface FILEReadwrite ()<MCSDownloadTaskDelegate>
+@interface FILEContentReader ()<MCSDownloadTaskDelegate>
 @property (nonatomic, weak, nullable) FILEAsset *asset;
 @property (nonatomic, strong) NSURLRequest *request;
 @property (nonatomic) NSRange range;
@@ -39,7 +39,7 @@
 @property (nonatomic) float networkTaskPriority;
 @end
 
-@implementation FILEReadwrite
+@implementation FILEContentReader
 @synthesize delegate = _delegate;
 @synthesize isPrepared = _isPrepared;
 
@@ -59,7 +59,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(FILEReadwriteQueue(), ^{
+    dispatch_barrier_sync(FILEContentReaderQueue(), ^{
         if ( _isClosed || _isCalledPrepare )
             return;
         
@@ -73,7 +73,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_barrier_sync(FILEReadwriteQueue(), ^{
+    dispatch_barrier_sync(FILEContentReaderQueue(), ^{
         if ( _isClosed || _isDone || !_isPrepared )
             return;
         
@@ -111,7 +111,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_barrier_sync(FILEReadwriteQueue(), ^{
+    dispatch_barrier_sync(FILEContentReaderQueue(), ^{
         if ( _isClosed || !_isPrepared )
             return;
         
@@ -132,7 +132,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(FILEReadwriteQueue(), ^{
+    dispatch_barrier_sync(FILEContentReaderQueue(), ^{
         [self _close];
     });
 }
@@ -141,7 +141,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(FILEReadwriteQueue(), ^{
+    dispatch_sync(FILEContentReaderQueue(), ^{
         offset = _range.location + _readLength;
     });
     return offset;
@@ -149,7 +149,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(FILEReadwriteQueue(), ^{
+    dispatch_sync(FILEContentReaderQueue(), ^{
         isPrepared = _isPrepared;
     });
     return isPrepared;
@@ -157,7 +157,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(FILEReadwriteQueue(), ^{
+    dispatch_sync(FILEContentReaderQueue(), ^{
         isDone = _isDone;
     });
     return isDone;
@@ -166,7 +166,7 @@
 #pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    dispatch_barrier_sync(FILEReadwriteQueue(), ^{
+    dispatch_barrier_sync(FILEContentReaderQueue(), ^{
         if ( _isClosed )
             return;
         _range = MCSGetResponseNSRange(MCSGetResponseContentRange(response));
@@ -195,7 +195,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    dispatch_barrier_sync(FILEReadwriteQueue(), ^{
+    dispatch_barrier_sync(FILEContentReaderQueue(), ^{
         if ( _isClosed )
             return;
         
@@ -222,7 +222,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    dispatch_barrier_sync(FILEReadwriteQueue(), ^{
+    dispatch_barrier_sync(FILEContentReaderQueue(), ^{
         if ( _isClosed )
             return;
         
