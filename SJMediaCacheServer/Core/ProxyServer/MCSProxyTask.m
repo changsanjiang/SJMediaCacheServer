@@ -10,6 +10,7 @@
 #import "MCSAssetManager.h"
 #import "MCSUtils.h"
 #import "MCSLogger.h"
+#import "NSURLRequest+MCS.h"
 
 @interface MCSProxyTask ()<MCSAssetReaderDelegate>
 @property (nonatomic, weak) id<MCSProxyTaskDelegate> delegate;
@@ -33,7 +34,7 @@
 
 - (void)prepare {
 #ifdef DEBUG
-    MCSProxyTaskDebugLog(@"%@: <%p>.prepare { request: %@ };\n", NSStringFromClass(self.class), self, _request);
+    MCSProxyTaskDebugLog(@"%@: <%p>.prepare { request: %@ };\n", NSStringFromClass(self.class), self, _request.mcs_description);
     _startTime = MCSStartTime();
 #endif
 

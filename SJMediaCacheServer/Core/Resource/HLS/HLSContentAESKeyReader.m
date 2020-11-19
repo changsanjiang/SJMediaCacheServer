@@ -15,6 +15,7 @@
 #import "MCSURLRecognizer.h"
 #import "MCSAssetFileRead.h"
 #import "MCSQueue.h"
+#import "NSURLRequest+MCS.h"
 
 @interface HLSContentAESKeyReader ()<MCSAssetDataReaderDelegate>
 @property (nonatomic, weak) HLSAsset *asset;
@@ -42,7 +43,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, _request];
+    return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description];
 }
 
 - (void)prepare {
@@ -52,7 +53,7 @@
         
         _isCalledPrepare = YES;
         
-        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };", NSStringFromClass(self.class), self, _request);
+        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description);
         
         NSString *name = [MCSURLRecognizer.shared nameWithUrl:_request.URL.absoluteString extension:HLSFileExtensionAESKey];
         NSString *filePath = [MCSFileManager HLS_AESKeyFilePathInAsset:_asset.name AESKeyName:name];
@@ -63,7 +64,7 @@
             return;
         }
         
-        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };", NSStringFromClass(self.class), self, _request);
+        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description);
         
         // download the content
         [self _downloadToFile:filePath];

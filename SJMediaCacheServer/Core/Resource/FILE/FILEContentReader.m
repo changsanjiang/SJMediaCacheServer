@@ -55,7 +55,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@: <%p> { request: %@ };\n", NSStringFromClass(self.class), self, _request];
+    return [NSString stringWithFormat:@"%@: <%p> { request: %@ };\n", NSStringFromClass(self.class), self, _request.mcs_description];
 }
 
 - (void)prepare {
@@ -63,7 +63,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@ };\n", NSStringFromClass(self.class), self, _request);
+        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@ };\n", NSStringFromClass(self.class), self, _request.mcs_description);
         
         _isCalledPrepare = YES;
         

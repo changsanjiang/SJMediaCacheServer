@@ -16,5 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, readonly, nullable) NSString *pathExtension;
 @property (nonatomic, readonly) NSUInteger totalLength;
+@property (nonatomic, copy, readonly, nullable) NSString *contentType;
 @end
 NS_ASSUME_NONNULL_END

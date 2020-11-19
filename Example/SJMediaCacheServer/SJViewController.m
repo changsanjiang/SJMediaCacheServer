@@ -35,7 +35,8 @@
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-     
+//    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownloader;
+    
     // play
     NSString *url = nil;
     url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";

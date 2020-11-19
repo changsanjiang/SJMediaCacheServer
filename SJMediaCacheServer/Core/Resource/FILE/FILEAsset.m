@@ -20,6 +20,7 @@
 }
 @property (nonatomic) NSUInteger totalLength;
 @property (nonatomic, copy, nullable) NSString *pathExtension;
+@property (nonatomic, copy, nullable) NSString *contentType;
 @end
 
 @implementation FILEAsset
@@ -49,9 +50,10 @@
 - (MCSAssetContent *)createContentWithOffset:(NSUInteger)offset response:(NSHTTPURLResponse *)response {
     __block BOOL isUpdated = NO;
     dispatch_barrier_sync(MCSAssetQueue(), ^{
-        if ( _pathExtension == nil || _totalLength == 0 ) {
+        if ( _pathExtension == nil || _totalLength == 0 || _contentType.length == 0 ) {
             _pathExtension = MCSSuggestedFilePathExtension(response);
             _totalLength = MCSGetResponseContentRange(response).totalLength;
+            _contentType = MCSGetResponseContentType(response);
             isUpdated = YES;
         }
     });
@@ -68,6 +70,14 @@
         totalLength = _totalLength;
     });
     return totalLength;
+}
+
+- (NSString *)contentType {
+    __block NSString *contentType = nil;
+    dispatch_sync(MCSAssetQueue(), ^{
+        contentType = _contentType;
+    });
+    return contentType;
 }
  
 - (void)readWriteCountDidChangeForPartialContent:(MCSAssetContent *)content {

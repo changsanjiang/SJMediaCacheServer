@@ -12,12 +12,26 @@
     return [self initWithTotalLength:totalLength range:NSMakeRange(0, 0)];
 }
 
+- (instancetype)initWithTotalLength:(NSUInteger)totalLength contentType:(nullable NSString *)contentType {
+    return [self initWithTotalLength:totalLength range:NSMakeRange(0, 0) contentType:contentType];
+}
+
 - (instancetype)initWithTotalLength:(NSUInteger)totalLength range:(NSRange)range {
+    return [self initWithTotalLength:totalLength range:range contentType:nil];
+}
+
+- (instancetype)initWithTotalLength:(NSUInteger)totalLength range:(NSRange)range contentType:(nullable NSString *)contentType {
     self = [super init];
     if ( self ) {
         _totalLength = totalLength;
         _range = range;
+        _contentType = contentType;
     }
     return self;
+}
+
+@synthesize contentType = _contentType;
+- (NSString *)contentType {
+    return _contentType ?: @"application/octet-stream";
 }
 @end

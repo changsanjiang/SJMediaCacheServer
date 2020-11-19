@@ -44,11 +44,6 @@
 - (NSURL *)playbackURLWithURL:(NSURL *)URL {
     if ( URL.isFileURL )
         return URL;
-    MCSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
-    
-    // playback URL for cache
-    if ( asset.isCacheFinished )
-        return [asset playbackURLForCacheWithURL:URL];
     
     // proxy URL
     if ( _server.isRunning )
@@ -209,4 +204,8 @@
     return [MCSAssetManager.shared cachedSizeForAssets];
 }
 
+- (BOOL)isCacheFinishedForURL:(NSURL *)URL {
+    MCSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
+    return asset.isCacheFinished;
+}
 @end

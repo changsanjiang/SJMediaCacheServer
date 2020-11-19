@@ -12,12 +12,10 @@
 #import "HLSParser.h"
 #import "MCSFileManager.h"
 #import "MCSQueue.h"
-
-@interface HLSAsset ()
-@property (nonatomic) NSUInteger TsCount;
-@end
+#import "MCSUtils.h"
 
 @implementation HLSAsset
+@synthesize TsContentType = _TsContentType;
 
 - (MCSAssetType)type {
     return MCSAssetTypeHLS;
@@ -36,11 +34,22 @@
     [self addContents:[MCSFileManager getContentsInAsset:_name]];
 }
 
+- (NSString *)TsContentType {
+    __block NSString *TsContentType = nil;
+    dispatch_sync(MCSAssetQueue(), ^{
+        TsContentType = _TsContentType;
+    });
+    return TsContentType;
+}
+
+- (NSUInteger)TsCount {
+    return self.parser.TsCount;
+}
+
 @synthesize parser = _parser;
 - (void)setParser:(HLSParser *)parser {
     dispatch_barrier_sync(MCSAssetQueue(), ^{
         _parser = parser;
-        _TsCount = parser.TsCount;
     });
     [MCSAssetManager.shared saveMetadata:self];
 }
@@ -117,7 +126,15 @@
     return content;
 }
 
-- (MCSAssetContent *)createContentWithTsURL:(NSURL *)URL totalLength:(NSUInteger)totalLength {
+- (MCSAssetContent *)createContentWithTsURL:(NSURL *)URL response:(NSHTTPURLResponse *)response {
+    dispatch_barrier_sync(MCSAssetQueue(), ^{
+        if ( _TsContentType.length == 0 ) {
+            _TsContentType = MCSGetResponseContentType(response);
+            [MCSAssetManager.shared saveMetadata:self];
+        }
+    });
+
+    NSUInteger totalLength = response.expectedContentLength;
     MCSAssetContent *content = nil;
     NSString *TsName = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString extension:HLSFileExtensionTS];
     NSString *filename = [MCSFileManager HLS_createContentFileInAsset:self.name tsName:TsName tsTotalLength:totalLength];
@@ -137,6 +154,6 @@
         count += 1;
     }
     
-    _isCacheFinished = isContentsFinished && count == _TsCount;
+    _isCacheFinished = isContentsFinished && count == _parser.TsCount;
 }
 @end

@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MCSResponse <NSObject>
 @property (nonatomic, readonly) NSUInteger totalLength;
 @property (nonatomic, readonly) NSRange range; // 206请求时length不为0
+@property (nonatomic, copy, readonly) NSString *contentType; // default is "application/octet-stream"
 @end
 
 #pragma mark -

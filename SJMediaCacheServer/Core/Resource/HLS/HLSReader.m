@@ -205,7 +205,7 @@
 
 - (void)readerPrepareDidFinish:(id<MCSAssetDataReader>)reader {
     dispatch_barrier_sync(MCSReaderQueue(), ^{
-        _response = [MCSResponse.alloc initWithTotalLength:reader.range.length];
+        _response = [MCSResponse.alloc initWithTotalLength:reader.range.length contentType:[reader isKindOfClass:HLSContentTSReader.class] ? _asset.TsContentType : nil];
     });
     [_delegate reader:self prepareDidFinish:self.response];
 }

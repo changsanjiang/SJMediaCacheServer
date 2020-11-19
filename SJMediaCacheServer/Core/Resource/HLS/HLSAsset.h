@@ -11,6 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @interface HLSAsset : MCSAsset
+@property (nonatomic, copy, readonly, nullable) NSString *TsContentType;
 @property (nonatomic, readonly) NSUInteger TsCount;
 @property (nonatomic, strong, nullable) HLSParser *parser;
 
@@ -18,6 +19,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)filePathOfContent:(MCSAssetContent *)content;
 
 - (nullable MCSAssetContent *)contentForTsURL:(NSURL *)URL;
-- (MCSAssetContent *)createContentWithTsURL:(NSURL *)URL totalLength:(NSUInteger)totalLength;
+- (MCSAssetContent *)createContentWithTsURL:(NSURL *)URL response:(NSHTTPURLResponse *)response;
 @end
 NS_ASSUME_NONNULL_END

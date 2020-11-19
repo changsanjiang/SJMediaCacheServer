@@ -233,7 +233,7 @@
 - (NSDictionary *)httpHeaders {
     NSMutableDictionary *headers = NSMutableDictionary.dictionary;
     headers[@"Server"] = @"localhost";
-    headers[@"Content-Type"] = @"video/mp4";
+    headers[@"Content-Type"] = _task.response.contentType;
     headers[@"Accept-Ranges"] = @"bytes";
     headers[@"Connection"] = @"keep-alive";
     if ( _task.response.range.length != 0 ) {

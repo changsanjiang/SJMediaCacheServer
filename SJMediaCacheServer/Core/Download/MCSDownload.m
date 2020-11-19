@@ -10,6 +10,7 @@
 #import "MCSError.h"
 #import "MCSUtils.h"
 #import "MCSQueue.h"
+#import "MCSLogger.h"
 
 @interface MCSDownload () <NSURLSessionDataDelegate>
 @property (nonatomic, strong) NSURLSession *session;
@@ -70,6 +71,9 @@
     });
     [self _setDelegate:delegate forTask:task];
     [task resume];
+    
+    MCSDownloaderDebugLog(@"%@: <%p>.downloadWithRequest { task: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier);
+
     return task;
 }
 
@@ -101,6 +105,8 @@
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveResponse:(__kindof NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
+    MCSDownloaderDebugLog(@"%@: <%p>.didReceiveResponse { task: %lu, response: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier, response);
+
     NSError *error = nil;
     
     if ( [response isKindOfClass:NSURLResponse.class] ) {
@@ -146,6 +152,8 @@
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)dataParam {
+    MCSDownloaderDebugLog(@"%@: <%p>.didReceiveData { task: %lu, dataLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)dataTask.taskIdentifier, (unsigned long)dataParam.length);
+
     __auto_type delegate = [self _delegateForTask:dataTask];
     NSData *data = dataParam;
     if ( _dataEncoder != nil )
@@ -154,6 +162,9 @@
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)errorParam {
+    MCSDownloaderDebugLog(@"%@: <%p>.didCompleteWithError { task: %lu, error: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier, errorParam);
+
+    
     dispatch_barrier_sync(MCSDownloadQueue(), ^{
         if ( _taskCount > 0 ) _taskCount -= 1;
     });

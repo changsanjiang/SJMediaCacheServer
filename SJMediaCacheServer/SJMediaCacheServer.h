@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// @param URL      An instance of NSURL that references a media asset.
 ///
-/// @return         It may return the local cache playback URL or HTTP proxy URL, but when there is no cache file and the proxy service is not running, it will return the parameter URL.
+/// @return         It may return the HTTP proxy URL, but when there is the proxy service is not running, it will return the parameter URL.
 ///
 - (NSURL *)playbackURLWithURL:(NSURL *)URL; // 获取播放地址
  
@@ -181,5 +181,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// Returns the total cache size (in bytes).
 ///
 @property (nonatomic, readonly) NSUInteger cachedSize; // 返回已占用的缓存大小
-@end
+
+- (BOOL)isCacheFinishedForURL:(NSURL *)URL;
+
+@end 
 NS_ASSUME_NONNULL_END

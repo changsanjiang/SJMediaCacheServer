@@ -16,6 +16,7 @@
 #import "MCSFileManager.h"
 #import "NSFileHandle+MCS.h"
 #import "MCSQueue.h"
+#import "NSURLRequest+MCS.h"
 
 @interface HLSContentTSReader ()<MCSDownloadTaskDelegate>
 @property (nonatomic, weak, nullable) HLSAsset *asset;
@@ -53,7 +54,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, _request];
+    return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description];
 }
 
 - (void)prepare {
@@ -61,7 +62,7 @@
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };", NSStringFromClass(self.class), self, _request);
+        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description);
 
         _isCalledPrepare = YES;
         
@@ -73,7 +74,7 @@
             return;
         }
         
-        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };", NSStringFromClass(self.class), self, _request);
+        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description);
         
         // download the content
         _task = [MCSDownload.shared downloadWithRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSTs]] priority:_networkTaskPriority delegate:self];
@@ -191,7 +192,7 @@
         if ( _isClosed )
             return;
         
-        MCSAssetContent *content = [_asset createContentWithTsURL:_request.URL totalLength:response.expectedContentLength];
+        MCSAssetContent *content = [_asset createContentWithTsURL:_request.URL response:response];
         [self _prepareForContent:content];
     });
 }

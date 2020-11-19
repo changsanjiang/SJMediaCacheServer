@@ -345,7 +345,7 @@
     dispatch_barrier_sync(MCSReaderQueue(), ^{
         NSRange range = _range;
         if ( _readers.count == 1 ) range = reader.range;
-        _response = [MCSResponse.alloc initWithTotalLength:_asset.totalLength range:range];
+        _response = [MCSResponse.alloc initWithTotalLength:_asset.totalLength range:range contentType:_asset.contentType];
         _isPrepared = YES;
     });
     
