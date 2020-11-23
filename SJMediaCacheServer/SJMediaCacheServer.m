@@ -41,7 +41,10 @@
     return self;
 }
 
-- (NSURL *)playbackURLWithURL:(NSURL *)URL {
+- (nullable NSURL *)playbackURLWithURL:(NSURL *)URL {
+    if ( URL == nil )
+        return nil;
+    
     if ( URL.isFileURL )
         return URL;
     
@@ -62,10 +65,14 @@
 }
 
 - (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize {
+    if ( URL == nil )
+        return nil;
     return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize];
 }
 
 - (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
+    if ( URL == nil )
+        return nil;
     return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize progress:progressBlock completed:completionBlock];
 }
 
@@ -98,10 +105,14 @@
 }
 
 - (void)assetURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPAdditionalHeaderField:(NSString *)field ofType:(MCSDataType)type {
+    if ( URL == nil )
+        return;
     MCSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
     [asset.configuration setValue:value forHTTPAdditionalHeaderField:field ofType:type];
 }
 - (nullable NSDictionary *)assetURL:(NSURL *)URL HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type {
+    if ( URL == nil )
+        return nil;
     MCSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
     return [asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:type];
 }
@@ -197,6 +208,8 @@
 }
 
 - (void)removeCacheForURL:(NSURL *)URL {
+    if ( URL == nil )
+        return;
     [MCSAssetManager.shared removeAssetForURL:URL];
 }
 
@@ -205,6 +218,8 @@
 }
 
 - (BOOL)isCacheFinishedForURL:(NSURL *)URL {
+    if ( URL == nil )
+        return NO;
     MCSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
     return asset.isCacheFinished;
 }
