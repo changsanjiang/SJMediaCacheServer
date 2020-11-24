@@ -130,7 +130,8 @@
             
             CGFloat progress = 0;
             if ( _preloadSize != 0 ) {
-                progress = _loadedLength * 1.0 / _preloadSize;
+                NSUInteger size = _preloadSize < reader.response.totalLength ? reader.response.totalLength : _preloadSize;
+                progress = _loadedLength * 1.0 / size;
             }
             else {
                 CGFloat curr = reader.offset / reader.response.range.length;

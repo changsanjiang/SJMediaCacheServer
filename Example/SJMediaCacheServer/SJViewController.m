@@ -41,7 +41,29 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
      
 //    [self _demo1];
 //    [self _demo2];
-    [self _demo3];
+//    [self _demo3];
+//    [self _demo4];
+}
+
+- (void)_demo4 {
+    NSArray<NSString *> *urls = @[
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/1200/0303000a/3/default/e527064af1b146769cd7b62df1638143/1200.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/2000/0303000a/3/default/1016d7600ebe4add93b8dd5716a3c986/2000.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/2000/0303000a/3/default/3a611d7fcbf4404085ae825fc77e5699/2000.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/2000/0303000a/3/default/c7a74d6aeadc48e09adec19c87e8f089/2000.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/2000/0303000a/3/default/bab96a66577347249c458e5347b93c19/2000.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/1200/0303000a/3/default/bab96a66577347249c458e5347b93c19/1200.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/2000/0303000a/3/default/2cf5beba838d485b843e8228f5fb5bcc/2000.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/2000/0303000a/3/default/af817b45362f437997dd6e4f0e375a99/2000.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/1200/0303000a/3/default/769aedf0215c48b7982f1b8d21baa0fe/1200.m3u8",
+        @"https://dh5.cntv.lxdns.com/asp/h5e/hls/1200/0303000a/3/default/4312e767662946f481e674da64f411e1/1200.m3u8",
+    ];
+    
+    for ( NSString *url in urls ) {
+        [self _prefetch:[NSURL URLWithString:url]];
+    }
+    
+    SJMediaCacheServer.shared.maxConcurrentPrefetchCount = 15;
 }
 
 - (void)_demo3 {
