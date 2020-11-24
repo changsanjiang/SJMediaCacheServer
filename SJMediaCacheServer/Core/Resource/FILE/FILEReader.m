@@ -129,14 +129,7 @@
             data = _readDataDecoder(_request, _readers.firstObject.range.location + _readLength, data);
         _readLength += readLength;
         
-        if ( currentReader.isDone ) {
-            currentReader != _readers.lastObject ? [self _prepareNextReader] : [self _close];
-#ifdef DEBUG
-            if ( currentReader == _readers.lastObject ) {
-                MCSAssetReaderDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
-            }
-#endif
-        }
+        if ( currentReader.isDone ) [self _prepareNextReader];
     });
     return data;
 }
@@ -147,9 +140,12 @@
         if ( _isClosed || !_isPrepared  )
             return;
 
-        for ( id<MCSAssetDataReader> reader in _readers ) {
+        for ( NSInteger i = 0 ; i < _readers.count ; ++ i ) {
+            id<MCSAssetDataReader> reader = _readers[i];
             if ( NSLocationInRange(offset - 1, reader.range) ) {
+                _currentIndex = i;
                 result = [reader seekToOffset:offset];
+                if ( reader.isDone ) [self _prepareNextReader];
                 return;
             }
         }
@@ -302,14 +298,19 @@
 }
 
 - (void)_prepareNextReader {
-    if ( self.currentReader == _readers.lastObject )
+    if ( self.currentReader == _readers.lastObject ) {
+        MCSAssetReaderDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
+        [self _close];
         return;
+    }
     
     if ( _currentIndex == NSNotFound )
         _currentIndex = 0;
     else
         _currentIndex += 1;
     
+    MCSAssetReaderDebugLog(@"%@: <%p>.subreader.prepare { sub: %@, count: %lu };\n", NSStringFromClass(self.class), self, self.currentReader, (unsigned long)_readers.count);
+
     [self.currentReader prepare];
 }
 

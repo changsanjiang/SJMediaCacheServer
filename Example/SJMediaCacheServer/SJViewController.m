@@ -19,6 +19,8 @@
 
 #import <MCSDownload.h>
 
+static NSString *const DEMO_URL_HLS = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
+static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
 
 @interface SJViewController ()
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
@@ -35,23 +37,54 @@
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-//    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownloader;
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionPrefetcher;
+     
+//    [self _demo1];
+//    [self _demo2];
+    [self _demo3];
+}
+
+- (void)_demo3 {
+    NSArray<NSString *> *urls = @[
+        @"https://xy2.v.netease.com/2020/dhp/qkjoimclekw15.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/kijqolmhew14.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/qaoimkqoiwj13.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/kenjlmvkkh12.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/qokwiomlveo11.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/wlijwlmuewl10.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/wporkinkr9.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/wpolijorjlo8.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/wiojeoijw7.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/isjolemkli6.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/jolnksihg5.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/e4.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/e3.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/e2.mp4",
+        @"https://xy2.v.netease.com/2020/dhp/e1.mp4",
+    ];
     
-    // play
-    NSString *url = nil;
-    url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
-//     url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
-    NSURL *URL = [NSURL URLWithString:url];
-    [self _play:URL];
+    for ( NSString *url in urls ) {
+        [self _prefetch:[NSURL URLWithString:url]];
+    }
     
-#pragma mark -
-    
+    SJMediaCacheServer.shared.maxConcurrentPrefetchCount = 15;
+}
+
+- (void)_demo2 {
     // prefetch
-    url = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
-     url = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
-    URL = [NSURL URLWithString:url];
+    NSString *url = DEMO_URL_HLS;
+    NSURL *URL = [NSURL URLWithString:url];
     [self _prefetch:URL];
 }
+
+- (void)_demo1 {
+    // play
+    NSString *url = DEMO_URL_FILE;
+    NSURL *URL = [NSURL URLWithString:url];
+    [self _play:URL];
+}
+
+#pragma mark -
 
 - (void)_play:(NSURL *)URL {
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
@@ -67,7 +100,7 @@
     } completed:^(NSError * _Nullable error) {
         
         // complete ...
-        
+        NSLog(@"error: %@", error);
     }];
 }
 

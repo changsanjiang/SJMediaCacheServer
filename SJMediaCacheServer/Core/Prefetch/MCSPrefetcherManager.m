@@ -189,6 +189,10 @@
 - (BOOL)isCancelled {
     return NO;
 }
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { isExecuting: %d, isFinished: %d, isCancelled: %d };", NSStringFromClass(self.class), self, _op.isExecuting, _op.isFinished, _op.isCancelled];
+}
 @end
 
 

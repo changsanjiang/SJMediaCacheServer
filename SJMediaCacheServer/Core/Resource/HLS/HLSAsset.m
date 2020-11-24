@@ -134,7 +134,7 @@
         }
     });
 
-    NSUInteger totalLength = response.expectedContentLength;
+    NSUInteger totalLength = (NSUInteger)response.expectedContentLength;
     MCSAssetContent *content = nil;
     NSString *TsName = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString extension:HLSFileExtensionTS];
     NSString *filename = [MCSFileManager HLS_createContentFileInAsset:self.name tsName:TsName tsTotalLength:totalLength];

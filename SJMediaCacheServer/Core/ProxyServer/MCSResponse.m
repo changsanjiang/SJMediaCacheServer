@@ -25,7 +25,7 @@
     if ( self ) {
         _totalLength = totalLength;
         _range = range;
-        _contentType = contentType;
+        _contentType = contentType ?: @"application/octet-stream";
     }
     return self;
 }

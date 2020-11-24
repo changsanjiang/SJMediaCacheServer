@@ -135,17 +135,24 @@
             data = _readDataDecoder(_request, offset, data);
         }
         
-#ifdef DEBUG
         if ( _reader.isDone ) {
             MCSAssetReaderDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
+            [self _close];
         }
-#endif
     });
     return data;
 }
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
-    return [self.reader seekToOffset:offset];
+    __block BOOL result = NO;
+    dispatch_barrier_sync(MCSReaderQueue(), ^{
+        result = [_reader seekToOffset:offset];
+        if ( _reader.isDone ) {
+            MCSAssetReaderDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
+            [self _close];
+        }
+    });
+    return result;
 }
 
 - (void)close {

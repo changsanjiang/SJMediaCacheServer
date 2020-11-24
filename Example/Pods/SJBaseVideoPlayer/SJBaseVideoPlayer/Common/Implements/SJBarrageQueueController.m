@@ -559,7 +559,6 @@ static CGFloat SJScreenMaxWidth;
             _lines[i].last.delay += points * [self _pointDurationForLineAtIndex:i];
         }
     }
-    previousBounds = bounds;
 }
 
 #pragma mark -

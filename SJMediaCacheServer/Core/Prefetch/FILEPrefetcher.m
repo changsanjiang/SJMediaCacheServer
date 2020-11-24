@@ -109,6 +109,8 @@
         if ( _isDone || _isClosed )
             return;
         
+        NSLog(@"A: %p", reader);
+
         if ( [reader seekToOffset:reader.offset + length] ) {
             _loadedLength += length;
             
@@ -116,8 +118,8 @@
             if ( progress >= 1 ) progress = 1;
             _progress = progress;
             
-            MCSPrefetcherDebugLog(@"%@: <%p>.preload { preloadSize: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, progress);
-            
+            MCSPrefetcherDebugLog(@"%@: <%p>.preload { preloadSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)reader.response.totalLength, progress);
+                        
             if ( _delegate != nil ) {
                 dispatch_async(_delegateQueue, ^{
                     [self.delegate prefetcher:self progressDidChange:progress];
