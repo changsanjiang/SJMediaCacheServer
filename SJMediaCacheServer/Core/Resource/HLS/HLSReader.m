@@ -146,6 +146,9 @@
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
     dispatch_barrier_sync(MCSReaderQueue(), ^{
+        if ( _isClosed )
+            return;
+        
         result = [_reader seekToOffset:offset];
         if ( _reader.isDone ) {
             MCSAssetReaderDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
