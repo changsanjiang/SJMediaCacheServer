@@ -1,1 +1,1 @@
-../../../../../SJMediaCacheServer/Core/Resource/HLS/HLSContentIndexReader.h
+../../../../../SJMediaCacheServer/Core/Asset/HLS/HLSContentIndexReader.h

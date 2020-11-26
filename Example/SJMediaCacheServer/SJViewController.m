@@ -37,9 +37,9 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionPrefetcher;
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownloader | MCSLogOptionContentReader;
      
-//    [self _demo1];
+    [self _demo1];
 //    [self _demo2];
 //    [self _demo3];
 //    [self _demo4];
@@ -62,8 +62,6 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     for ( NSString *url in urls ) {
         [self _prefetch:[NSURL URLWithString:url]];
     }
-    
-    SJMediaCacheServer.shared.maxConcurrentPrefetchCount = 15;
 }
 
 - (void)_demo3 {
@@ -90,6 +88,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     }
     
     SJMediaCacheServer.shared.maxConcurrentPrefetchCount = 15;
+    SJMediaCacheServer.shared.cacheCountLimit = 4;
 }
 
 - (void)_demo2 {
@@ -101,7 +100,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 
 - (void)_demo1 {
     // play
-    NSString *url = DEMO_URL_FILE;
+    NSString *url = DEMO_URL_HLS;
     NSURL *URL = [NSURL URLWithString:url];
     [self _play:URL];
 }

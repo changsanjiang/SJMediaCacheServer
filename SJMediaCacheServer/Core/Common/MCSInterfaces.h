@@ -9,6 +9,7 @@
 #ifndef MCSInterfaces_h
 #define MCSInterfaces_h
 #import <Foundation/Foundation.h>
+#import <SJUIKit/SJSQLiteTableModelProtocol.h>
 #import "MCSDefines.h"
 #import "NSURLRequest+MCS.h"
 
@@ -44,11 +45,29 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark -
 
-@protocol MCSAsset <NSObject>
-@property (nonatomic, readonly) MCSAssetType type;
-@property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
+@protocol MCSSaveable <SJSQLiteTableModelProtocol>
 
+@end
+
+@protocol MCSReadwriteReference <NSObject>
+@property (nonatomic, readonly) NSInteger readwriteCount; // kvo
+
+- (void)readwriteRetain;
+- (void)readwriteRelease;
+@end
+
+#pragma mark -
+
+@protocol MCSAsset <MCSReadwriteReference, MCSSaveable>
+- (instancetype)initWithName:(NSString *)name;
+@property (nonatomic, readonly) NSInteger id;
+@property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, readonly) MCSAssetType type;
+@property (nonatomic, copy, readonly) NSString *path;
+@property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
+@property (nonatomic, readonly) BOOL isStored;
 - (id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request;
+- (void)prepare;
 @end
 
 #pragma mark -
@@ -85,6 +104,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)reader:(id<MCSAssetReader>)reader prepareDidFinish:(id<MCSResponse>)response;
 - (void)reader:(id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length;
 - (void)reader:(id<MCSAssetReader>)reader anErrorOccurred:(NSError *)error;
+@end
+
+@protocol MCSAssetContent <MCSReadwriteReference>
+@property (nonatomic, copy, readonly) NSString *filename;
+@property (nonatomic, readonly) long long length;
+- (void)didWriteDataWithLength:(NSUInteger)length;
 @end
 NS_ASSUME_NONNULL_END
 

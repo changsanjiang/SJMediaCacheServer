@@ -67,7 +67,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(MCSPrefetcherQueue(), ^{
+    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
         if ( _isClosed || _isCalledPrepare )
             return;
 
@@ -84,14 +84,14 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(MCSPrefetcherQueue(), ^{
+    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
         [self _close];
     });
 }
 
 - (float)progress {
     __block float progress = 0;
-    dispatch_sync(MCSPrefetcherQueue(), ^{
+    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
         progress = _progress;
     });
     return progress;
@@ -99,7 +99,7 @@
 
 - (BOOL)isClosed {
     __block BOOL isClosed = NO;
-    dispatch_sync(MCSPrefetcherQueue(), ^{
+    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
         isClosed = _isClosed;
     });
     return isClosed;
@@ -107,7 +107,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(MCSPrefetcherQueue(), ^{
+    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
         isDone = _isDone;
     });
     return isDone;
@@ -120,7 +120,7 @@
 }
 
 - (void)reader:(id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    dispatch_barrier_sync(MCSPrefetcherQueue(), ^{
+    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
         if ( _isClosed )
             return;
         
@@ -164,7 +164,7 @@
 }
   
 - (void)reader:(id<MCSAssetReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(MCSPrefetcherQueue(), ^{
+    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
         [self _didCompleteWithError:error];
     });
 }

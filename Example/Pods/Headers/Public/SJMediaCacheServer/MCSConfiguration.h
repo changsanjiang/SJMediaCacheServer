@@ -1,1 +1,1 @@
-../../../../../SJMediaCacheServer/Core/Resource/MCSConfiguration.h
+../../../../../SJMediaCacheServer/Core/Asset/MCSConfiguration.h
