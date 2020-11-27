@@ -205,23 +205,26 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
                 [self _syncAssetToDatabase:r]; // save asset
                 _count += 1;
             }
-            
-            MCSAssetUsageLog *log = _usageLogs[name];
-            if ( log == nil ) {
-                log = (id)[_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[[SJSQLite3Condition conditionWithColumn:@"asset" value:@(r.id)]] orderBy:nil error:NULL].firstObject;
-                
-                if ( log == nil ) {
-                    log = [MCSAssetUsageLog.alloc initWithAsset:r];
-                    [self _syncUsageLogToDatabase:log]; // save log
-                }
-                
-                _usageLogs[name] = log;
-            }
              
             [r prepare];
             _assets[name] = r;
         }
+        
         asset  = _assets[name];
+        
+        if ( _usageLogs[name] == nil ) {
+            MCSAssetUsageLog *log = (id)[_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
+                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
+                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
+            ] orderBy:nil error:NULL].firstObject;
+            
+            if ( log == nil ) {
+                log = [MCSAssetUsageLog.alloc initWithAsset:asset];
+                [self _syncUsageLogToDatabase:log]; // save log
+            }
+            
+            _usageLogs[name] = log;
+        }
     });
     return asset;
 }

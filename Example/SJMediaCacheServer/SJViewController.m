@@ -42,7 +42,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionAssetReader | MCSLogOptionContentReader;
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionSQLite;
 //    SJMediaCacheServer.shared.cacheCountLimit = 5;
     
     
@@ -95,7 +95,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     }
     
     SJMediaCacheServer.shared.maxConcurrentPrefetchCount = 15;
-    SJMediaCacheServer.shared.cacheCountLimit = 4;
+//    SJMediaCacheServer.shared.cacheCountLimit = 4;
 }
 
 - (void)_demo2 {
