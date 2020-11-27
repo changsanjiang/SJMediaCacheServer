@@ -24,49 +24,13 @@
 static NSString *const DEMO_URL_HLS = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
 static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
 
-@interface Person : NSObject
-@property (nonatomic, strong, nullable) NSString *name;
-@property (nonatomic) NSInteger age;
-@end
-
-@implementation Person
-- (void)setName:(NSString *)name {
-    _name = name;
-}
-
-- (void)setAge:(NSInteger)age {
-    _age = age;
-}
-@end
-
 @interface SJViewController ()
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
 @end
 
 @implementation SJViewController
 - (IBAction)test:(id)sender {
-    Person *p = Person.new;
-//    NSString *name = @"123";
-//    [p setName:name];
-//    [p setAge:20];
-    
-    for ( NSInteger i = 1 ; i < 0xFFFF; ++ i ) {
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            p.name = [NSString stringWithFormat:@"%ld", (long)arc4random() % i];
-        });
-
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            p.name = [NSString stringWithFormat:@"%ld", (long)arc4random() % i];
-        });
-
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            p.name = [NSString stringWithFormat:@"%ld", (long)arc4random() % i];
-        });
-
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            [p name];
-        });
-    }
+ 
 }
 
 - (BOOL)shouldAutorotate {
@@ -143,7 +107,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 
 - (void)_demo1 {
     // play
-    NSString *url = DEMO_URL_FILE;
+    NSString *url = DEMO_URL_HLS;
     NSURL *URL = [NSURL URLWithString:url];
     [self _play:URL];
 }
@@ -152,6 +116,10 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 
 - (void)_play:(NSURL *)URL {
 //    URL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"com.SJMediaCacheServer.cache/87d5ff79f295648c071555a12fb412cc/file_0_0.mp4"]];
+
+//    URL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"com.SJMediaCacheServer.cache/c53ec66c5af87540d9d0a789de4cb6cd/index.m3u8"]];
+    
+    URL = [NSURL URLWithString:[MCSURLRecognizer.shared.server.serverURL.absoluteString stringByAppendingString:@"/c53ec66c5af87540d9d0a789de4cb6cd/index.m3u8"]];
     
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
     // play

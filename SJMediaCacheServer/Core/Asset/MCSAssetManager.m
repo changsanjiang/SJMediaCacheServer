@@ -225,6 +225,23 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     });
     return asset;
 }
+
+- (BOOL)isAssetStoredForURL:(NSURL *)URL {
+    __block id<MCSAsset> asset = nil;
+    dispatch_barrier_sync(mcs_queue, ^{
+        NSString *name = [MCSURLRecognizer.shared assetNameForURL:URL];
+        asset = _assets[name];
+        if ( asset != nil ) return;
+        MCSAssetType type = [MCSURLRecognizer.shared assetTypeForURL:URL];
+        Class cls = [self _assetClassForType:type];
+        if ( cls == nil ) return;
+        asset = (id)[_sqlite3 objectsForClass:cls conditions:@[
+            [SJSQLite3Condition conditionWithColumn:@"name" value:name]
+        ] orderBy:nil error:NULL].firstObject;
+        if ( asset != nil ) _assets[name] = asset;
+    });
+    return asset.isStored;
+}
  
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
     id<MCSAsset> asset = [self assetWithURL:request.URL];

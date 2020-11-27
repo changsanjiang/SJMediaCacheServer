@@ -64,7 +64,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
 
 
-- (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL; 
+- (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL;
+
+- (BOOL)isAssetStoredForURL:(NSURL *)URL;
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
