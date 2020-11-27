@@ -35,7 +35,7 @@ target 'SJMediaCacheServer_Example' do
   pod 'SJVideoPlayer'
    
 #  pod 'SJBaseVideoPlayer/AliPlayer'
-  pod 'SJUIKit/SQLite3'
+  pod 'SJUIKit/SQLite3'#, :path => '/Users/bluedancer/Documents/GitHub/SJUIKit/SJUIKit.podspec'
   
 #  pod 'KTVHTTPCache'
 end

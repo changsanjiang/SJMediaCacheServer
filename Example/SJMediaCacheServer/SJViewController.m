@@ -43,7 +43,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
     SJMediaCacheServer.shared.logOptions = MCSLogOptionSQLite;
-//    SJMediaCacheServer.shared.cacheCountLimit = 5;
+    SJMediaCacheServer.shared.cacheCountLimit = 5;
     
     
     [self _demo1];

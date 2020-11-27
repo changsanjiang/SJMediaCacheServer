@@ -240,9 +240,6 @@
         headers[@"Content-Length"] = [NSString stringWithFormat:@"%lu", (unsigned long)_task.response.range.length];
         headers[@"Content-Range"] = [NSString stringWithFormat:@"bytes %lu-%lu/%lu", (unsigned long)_task.response.range.location, (unsigned long)NSMaxRange(_task.response.range) - 1, (unsigned long)_task.response.totalLength];
     }
-#ifdef DEBUG
-    printf("headers: %s\n", headers.description.UTF8String);
-#endif
     return headers;
 }
 

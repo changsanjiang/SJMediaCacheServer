@@ -11,6 +11,7 @@
 #import <SJUIKit/SJSQLite3.h>
 #import <SJUIKit/SJSQLite3+QueryExtended.h>
 #import <SJUIKit/SJSQLite3+RemoveExtended.h>
+#import <SJUIKit/SJSQLite3+Private.h>
 
 #import "MCSAssetUsageLog.h"
 #import "NSFileManager+MCS.h"
@@ -202,7 +203,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             // create
             if ( r == nil ) {
                 r = [cls.alloc initWithName:name];
-                [self _syncAssetToDatabase:r]; // save asset
+                [self _syncToDatabase:r]; // save asset
                 _count += 1;
             }
              
@@ -220,7 +221,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             
             if ( log == nil ) {
                 log = [MCSAssetUsageLog.alloc initWithAsset:asset];
-                [self _syncUsageLogToDatabase:log]; // save log
+                [self _syncToDatabase:log]; // save log
             }
             
             _usageLogs[name] = log;
@@ -288,12 +289,13 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (void)willReadAssetForURL:(NSURL *)URL {
     id<MCSAsset> asset = [self assetWithURL:URL];
     if ( asset != nil ) {
-        dispatch_barrier_sync(mcs_queue, ^{
-            MCSAssetUsageLog *log = _usageLogs[asset.name];
+        dispatch_barrier_async(mcs_queue, ^{
+            MCSAssetUsageLog *log = self->_usageLogs[asset.name];
             if ( log != nil ) {
                 log.usageCount += 1;
                 log.updatedTime = NSDate.date.timeIntervalSince1970;
             }
+            [self _syncToDatabase:log];
         });
     }
 }
@@ -310,7 +312,6 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             [self _removeAssetsForLimit:MCSLimitCacheDiskSpace];
             [self _removeAssetsForLimit:MCSLimitExpires];
             [self _removeAssetsForLimit:MCSLimitCount];
-            [self _syncUsageLogsToDatabase];
         });
         
         [self _checkRecursively];
@@ -329,19 +330,15 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     _cacheSize = [MCSRootDirectory size];
 }
 
-- (void)_syncAssetToDatabase:(id<MCSAsset>)asset {
-    [_sqlite3 save:asset error:NULL];
-}
-
-- (void)_syncUsageLogToDatabase:(MCSAssetUsageLog *)log {
-    [_sqlite3 save:log error:NULL];
+- (void)_syncToDatabase:(id<MCSSaveable>)saveable {
+    [_sqlite3 save:saveable error:NULL];
 }
 
 #pragma mark - mark
 
 - (void)_assetMetadataDidLoadWithNote:(NSNotification *)note {
     dispatch_barrier_async(mcs_queue, ^{
-        [self _syncAssetToDatabase:note.object];
+        [self _syncToDatabase:note.object];
     });
 }
 
@@ -350,7 +347,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (void)_removeAssetsForLimit:(MCSLimit)limit {
     switch ( limit ) {
         case MCSLimitNone:
-            break;
+            return;
         case MCSLimitCount: {
             if ( _cacheCountLimit == 0 )
                 return;
@@ -386,16 +383,27 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         }
             break;
     }
-    
-    NSMutableArray<NSNumber *> *usingAssets = NSMutableArray.alloc.init;
-    [_assets enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id<MCSAsset>  _Nonnull obj, BOOL * _Nonnull stop) {
-        if ( obj.readwriteCount > 0 )
-            [usingAssets addObject:@(obj.id)];
+     
+    // 过滤被使用中的资源
+    NSMutableArray<NSNumber *> *arr0 = NSMutableArray.array;
+    NSMutableArray<NSNumber *> *arr1 = NSMutableArray.array;
+    [_assets enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id<MCSAsset>  _Nonnull asset, BOOL * _Nonnull stop) {
+        if ( asset.readwriteCount > 0 ) {
+            NSMutableArray<NSNumber *> *m = (asset.type == MCSAssetTypeFILE ? arr0 : arr1);
+            [m addObject:@(asset.id)];
+        }
     }];
-
+    
     // 全部处于使用中
-    if ( usingAssets.count == _count )
+    NSInteger count = arr0.count + arr1.count;
+    if ( count == _count )
         return;
+    
+    [arr0 addObject:@(0)];
+    [arr1 addObject:@(0)];
+    
+    NSString *s0 = [arr0 componentsJoinedByString:@","];
+    NSString *s1 = [arr1 componentsJoinedByString:@","];
 
     NSArray<MCSAssetUsageLog *> *logs = nil;
     switch ( limit ) {
@@ -405,26 +413,25 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         case MCSLimitCacheDiskSpace:
         case MCSLimitFreeDiskSpace: {
             // 清理60s之前的
-            NSTimeInterval before = NSDate.date.timeIntervalSince1970 - 60;
             // 清理一半
-            NSInteger length = (NSInteger)ceil(_cacheCountLimit != 0 ? (_count - _cacheCountLimit * 0.5) : (_count - usingAssets.count) * 0.5);
-            logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                // 检索60s之前未被使用的资源
-                [SJSQLite3Condition conditionWithColumn:@"asset" notIn:usingAssets.count != 0 ? usingAssets : @[@(0)]],
-                [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(before)],
-            ] orderBy:@[
-                // 按照更新的时间与使用次数进行排序
-                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES],
-                [SJSQLite3ColumnOrder orderWithColumn:@"usageCount" ascending:YES],
-            ] range:NSMakeRange(0, length) error:NULL];
+            NSTimeInterval time = NSDate.date.timeIntervalSince1970 - 60;
+            NSInteger length = (NSInteger)ceil(_cacheCountLimit != 0 ? (_count - _cacheCountLimit * 0.5) : (_count - count) * 0.5);
+            NSArray<SJSQLite3RowData *> *rows = [_sqlite3 exec:[NSString stringWithFormat:
+                            @"SELECT * FROM MCSAssetUsageLog WHERE (asset NOT IN (%@) AND assetType = 0) \
+                                                                OR (asset NOT IN (%@) AND assetType = 1) \
+                                                               AND updatedTime <= %lf \
+                                                          ORDER BY updatedTime ASC, usageCount ASC \
+                                                             LIMIT 0, %ld;", s0, s1, time, (long)length] error:NULL];
+            logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class rowDatas:rows error:NULL];
         }
             break;
         case MCSLimitExpires: {
             NSTimeInterval time = NSDate.date.timeIntervalSince1970 - _maxDiskAgeForCache;
-            logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"asset" notIn:usingAssets.count != 0 ? usingAssets : @[@(0)]],
-                [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(time)],
-            ] orderBy:nil error:NULL];
+            NSArray<SJSQLite3RowData *> *rows = [_sqlite3 exec:[NSString stringWithFormat:
+                            @"SELECT * FROM MCSAssetUsageLog WHERE (asset NOT IN (%@) AND assetType = 0) \
+                                                                OR (asset NOT IN (%@) AND assetType = 1) \
+                                                               AND updatedTime <= %lf;", s0, s1, time] error:NULL];
+            logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class rowDatas:rows error:NULL];
         }
             break;
     }
