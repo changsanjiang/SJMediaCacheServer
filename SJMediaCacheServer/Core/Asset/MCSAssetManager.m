@@ -242,6 +242,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         asset = (id)[_sqlite3 objectsForClass:cls conditions:@[
             [SJSQLite3Condition conditionWithColumn:@"name" value:name]
         ] orderBy:nil error:NULL].firstObject;
+        [asset prepare];
         if ( asset != nil ) _assets[name] = asset;
     });
     return asset.isStored;
