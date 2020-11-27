@@ -17,16 +17,57 @@
 #import <SJMediaCacheServer/MCSPrefetcherManager.h>
 #import <SJBaseVideoPlayer/SJAVMediaPlaybackController.h>
 
+#import <SJBaseVideoPlayer/SJBaseVideoPlayerConst.h>
+
 #import <MCSDownload.h>
 
 static NSString *const DEMO_URL_HLS = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
 static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
+
+@interface Person : NSObject
+@property (nonatomic, strong, nullable) NSString *name;
+@property (nonatomic) NSInteger age;
+@end
+
+@implementation Person
+- (void)setName:(NSString *)name {
+    _name = name;
+}
+
+- (void)setAge:(NSInteger)age {
+    _age = age;
+}
+@end
 
 @interface SJViewController ()
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
 @end
 
 @implementation SJViewController
+- (IBAction)test:(id)sender {
+    Person *p = Person.new;
+//    NSString *name = @"123";
+//    [p setName:name];
+//    [p setAge:20];
+    
+    for ( NSInteger i = 1 ; i < 0xFFFF; ++ i ) {
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            p.name = [NSString stringWithFormat:@"%ld", (long)arc4random() % i];
+        });
+
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            p.name = [NSString stringWithFormat:@"%ld", (long)arc4random() % i];
+        });
+
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            p.name = [NSString stringWithFormat:@"%ld", (long)arc4random() % i];
+        });
+
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            [p name];
+        });
+    }
+}
 
 - (BOOL)shouldAutorotate {
     return NO;
@@ -39,10 +80,13 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
     SJMediaCacheServer.shared.logOptions = MCSLogOptionDownloader | MCSLogOptionContentReader;
      
+    
+    
+    
     [self _demo1];
-//    [self _demo2];
-//    [self _demo3];
-//    [self _demo4];
+    [self _demo2];
+    [self _demo3];
+    [self _demo4];
 }
 
 - (void)_demo4 {
@@ -100,7 +144,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 
 - (void)_demo1 {
     // play
-    NSString *url = DEMO_URL_HLS;
+    NSString *url = DEMO_URL_FILE;
     NSURL *URL = [NSURL URLWithString:url];
     [self _play:URL];
 }
@@ -114,7 +158,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 }
 
 - (void)_prefetch:(NSURL *)URL {
-    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
+    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:1 * 1024 * 1024 progress:^(float progress) {
         
         // progress ...
         

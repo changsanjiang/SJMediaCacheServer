@@ -38,8 +38,7 @@
     _startTime = MCSStartTime();
 #endif
 
-    _reader = [MCSAssetManager.shared readerWithRequest:_request];
-    _reader.delegate = self;
+    _reader = [MCSAssetManager.shared readerWithRequest:_request networkTaskPriority:1.0 delegate:self];
     @autoreleasepool {
         [_reader prepare];
     }

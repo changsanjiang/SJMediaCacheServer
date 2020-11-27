@@ -15,6 +15,8 @@
 #import "MCSUtils.h"
 #import "MCSQueue.h"
 
+static dispatch_queue_t mcs_queue;
+
 @interface FILEContentReader ()<MCSDownloadTaskDelegate>
 @property (nonatomic, weak, nullable) FILEAsset *asset;
 @property (nonatomic, strong) NSURLRequest *request;
@@ -42,6 +44,13 @@
 @synthesize delegate = _delegate;
 @synthesize isPrepared = _isPrepared;
 
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.FILEContentReader", DISPATCH_QUEUE_CONCURRENT);
+    });
+}
+
 - (instancetype)initWithAsset:(__weak FILEAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSAssetDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
@@ -64,7 +73,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || _isCalledPrepare )
             return;
         
@@ -78,7 +87,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || _isDone || !_isPrepared )
             return;
         
@@ -118,7 +127,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || !_isPrepared )
             return;
         
@@ -140,7 +149,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _close];
     });
 }
@@ -149,7 +158,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         offset = _range.location + _readLength;
     });
     return offset;
@@ -157,7 +166,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isPrepared = _isPrepared;
     });
     return isPrepared;
@@ -165,7 +174,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isDone = _isDone;
     });
     return isDone;
@@ -174,7 +183,7 @@
 #pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )
             return;
         _range = MCSGetResponseNSRange(MCSGetResponseContentRange(response));
@@ -205,7 +214,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )
             return;
         
@@ -232,7 +241,7 @@
 }
 
 - (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )
             return;
         

@@ -8,7 +8,6 @@
 
 #import "FILEAsset.h"
 #import "FILEContentProvider.h"
-#import "FILEReader.h"
 #import "MCSUtils.h"
 #import "MCSConsts.h"
 #import "MCSConfiguration.h"
@@ -16,6 +15,7 @@
 
 static NSString *kLength = @"length";
 static NSString *kReadwriteCount = @"readwriteCount";
+static dispatch_queue_t mcs_queue;
 
 @interface FILEAsset () {
     FILEContentProvider *_provider;
@@ -34,6 +34,13 @@ static NSString *kReadwriteCount = @"readwriteCount";
 @synthesize readwriteCount = _readwriteCount;
 @synthesize configuration = _configuration;
 @synthesize isStored = _isStored;
+
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.FILEAsset", DISPATCH_QUEUE_CONCURRENT);
+    });
+}
 
 + (NSString *)sql_primaryKey {
     return @"id";
@@ -69,21 +76,13 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 #pragma mark - mark
 
-- (id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request {
-    __block FILEReader *reader = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
-        reader = [FILEReader.alloc initWithAsset:self request:request];
-    });
-    return reader;
-}
-
 - (MCSAssetType)type {
     return MCSAssetTypeFILE;
 }
 
 - (nullable NSArray<FILEContent *> *)contents {
     __block NSArray<FILEContent *> *contents;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         contents = _contents;
     });
     return contents;
@@ -91,7 +90,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (BOOL)isStored {
     __block BOOL isStored = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isStored = _isStored;
     });
     return isStored;
@@ -99,7 +98,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (nullable NSString *)pathExtension {
     __block NSString *pathExtension = nil;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         pathExtension = _pathExtension;
     });
     return pathExtension;
@@ -107,7 +106,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (nullable NSString *)contentType {
     __block NSString *contentType = nil;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         contentType = _contentType;
     });
     return contentType;
@@ -115,7 +114,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (NSUInteger)totalLength {
     __block NSUInteger totalLength = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         totalLength = _totalLength;
     });
     return totalLength;
@@ -129,7 +128,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
     NSUInteger offset = range.start;
     __block FILEContent *content = nil;
     __block BOOL isUpdated = NO;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _totalLength != totalLength || ![_pathExtension isEqualToString:pathExtension] || ![_contentType isEqualToString:contentType] ) {
             _totalLength = totalLength;
             _pathExtension = pathExtension;
@@ -137,7 +136,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
             isUpdated = YES;
         }
         
-        content = [_provider createContentAtOffset:offset pathExtension:self.pathExtension];
+        content = [_provider createContentAtOffset:offset pathExtension:_pathExtension];
         [_contents addObject:content];
     });
     
@@ -154,7 +153,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (NSInteger)readwriteCount {
     __block NSInteger readwriteCount = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         readwriteCount = _readwriteCount;
     });
     return readwriteCount;
@@ -162,7 +161,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (void)readwriteRetain {
     [self willChangeValueForKey:kReadwriteCount];
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         _readwriteCount += 1;
     });
     [self didChangeValueForKey:kReadwriteCount];
@@ -170,7 +169,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (void)readwriteRelease {
     [self willChangeValueForKey:kReadwriteCount];
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _readwriteCount > 0 ) {
             _readwriteCount -= 1;
         }
@@ -181,7 +180,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 // 合并文件
 - (void)_mergeContents {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _readwriteCount != 0 ) return;
         if ( _isStored ) return;
         if ( _contents.count < 2 ) {

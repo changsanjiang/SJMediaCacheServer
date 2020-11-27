@@ -21,7 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) HLSParser *parser;
 
 - (void)lock:(void(^)(void))block;
-- (id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request;
 - (NSString *)indexFilePath;
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL;
 - (nullable id<MCSAssetContent>)createTsContentWithResponse:(NSHTTPURLResponse *)response;

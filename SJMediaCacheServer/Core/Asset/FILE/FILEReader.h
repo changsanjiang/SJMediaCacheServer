@@ -13,11 +13,14 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface FILEReader : NSObject<MCSAssetReader>
-- (instancetype)initWithAsset:(__weak FILEAsset *)asset request:(NSURLRequest *)request;
-
-@property (nonatomic, weak, nullable) id<MCSAssetReaderDelegate> delegate;
+- (instancetype)initWithAsset:(__weak FILEAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate;
 
 - (void)prepare;
+@property (nonatomic, copy, readonly, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+@property (nonatomic, weak, readonly, nullable) id<MCSAssetReaderDelegate> delegate;
+@property (nonatomic, weak, readonly, nullable) id<MCSAsset> asset;
+@property (nonatomic, readonly) float networkTaskPriority;
+@property (nonatomic, strong, readonly, nullable) id<MCSResponse> response;
 @property (nonatomic, readonly) NSUInteger availableLength;
 @property (nonatomic, readonly) NSUInteger offset;
 - (nullable NSData *)readDataOfLength:(NSUInteger)length;
@@ -26,8 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
 @property (nonatomic, readonly) BOOL isClosed;
 - (void)close;
-
-@property (nonatomic) float networkTaskPriority;
 @end
 
 NS_ASSUME_NONNULL_END

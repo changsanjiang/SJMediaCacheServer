@@ -14,6 +14,8 @@
 #import "NSURLRequest+MCS.h"
 #import "NSFileManager+MCS.h"
 
+static dispatch_queue_t mcs_queue;
+
 @interface HLSContentIndexReader ()<HLSParserDelegate, MCSAssetDataReaderDelegate>
 @property (nonatomic, strong) NSURLRequest *request;
 
@@ -27,6 +29,13 @@
 
 @implementation HLSContentIndexReader
 @synthesize delegate = _delegate;
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.HLSContentIndexReader", DISPATCH_QUEUE_CONCURRENT);
+    });
+}
+
 - (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSAssetDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
@@ -43,7 +52,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || _isCalledPrepare )
             return;
         
@@ -66,7 +75,7 @@
 
 - (nullable MCSAssetFileRead *)reader {
     __block MCSAssetFileRead *reader = nil;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         reader = _reader;
     });
     return reader;
@@ -81,7 +90,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _close];
     });
 }
@@ -111,13 +120,13 @@
 #pragma mark - HLSParserDelegate
 
 - (void)parserParseDidFinish:(HLSParser *)parser {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _prepareReaderForParser:parser];
     });
 }
 
 - (void)parser:(HLSParser *)parser anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _onError:error];
     });
 }
@@ -133,7 +142,7 @@
 }
 
 - (void)reader:(id<MCSAssetDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _onError:error];
     });
 }

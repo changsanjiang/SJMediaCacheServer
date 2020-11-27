@@ -17,6 +17,8 @@
 #import "MCSResponse.h"
 #import "MCSConsts.h"
 
+static dispatch_queue_t mcs_queue;
+
 @interface FILEReader ()<MCSAssetDataReaderDelegate>
 @property (nonatomic, weak, nullable) FILEAsset *asset;
 @property (nonatomic) BOOL isCalledPrepare;
@@ -35,17 +37,23 @@
 @implementation FILEReader
 @synthesize readDataDecoder = _readDataDecoder;
 @synthesize response = _response;
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.FILEReader", DISPATCH_QUEUE_CONCURRENT);
+    });
+}
 
-- (instancetype)initWithAsset:(__weak FILEAsset *)asset request:(NSURLRequest *)request {
+- (instancetype)initWithAsset:(__weak FILEAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
-        _networkTaskPriority = 1.0;
-        
-        _currentIndex = NSNotFound;
-
         _asset = asset;
         _request = request;
-        
+        _networkTaskPriority = networkTaskPriority;
+        _readDataDecoder = readDataDecoder;
+        _delegate = delegate;
+        _currentIndex = NSNotFound;
+
         [_asset readwriteRetain];
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(willRemoveAssetWithNote:) name:MCSAssetWillRemoveAssetNotification object:nil];
@@ -67,7 +75,7 @@
 - (void)willRemoveAssetWithNote:(NSNotification *)note {
     id<MCSAsset> asset = note.object;
     if ( asset == _asset )  {
-        dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+        dispatch_barrier_sync(mcs_queue, ^{
             if ( _isClosed )
                 return;
             [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
@@ -79,7 +87,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || _isCalledPrepare )
             return;
         
@@ -93,7 +101,7 @@
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
     __block NSData *data = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )
             return;
         
@@ -114,7 +122,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || !_isPrepared  )
             return;
 
@@ -135,7 +143,7 @@
 
 - (id<MCSResponse>)response {
     __block id<MCSResponse> response = nil;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         response = _response;
     });
     return response;
@@ -143,7 +151,7 @@
  
 - (NSUInteger)availableLength {
     __block NSUInteger availableLength;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         id<MCSAssetDataReader> current = self.current;
         availableLength = current.range.location + current.availableLength;
     });
@@ -152,7 +160,7 @@
  
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         offset = _subreaders.firstObject.range.location + _readLength;
     });
     return offset;
@@ -160,7 +168,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isPrepared = _isPrepared;
     });
     return isPrepared;
@@ -168,7 +176,7 @@
 
 - (BOOL)isReadingEndOfData {
     __block BOOL isDone = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isDone = _subreaders.lastObject.isDone;
     });
     return isDone;
@@ -176,14 +184,14 @@
 
 - (BOOL)isClosed {
     __block BOOL isClosed = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isClosed = _isClosed;
     });
     return isClosed;
 }
 
 - (void)close {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _close];
     });
 }
@@ -314,7 +322,7 @@
     if ( self.isPrepared || self.isClosed )
         return;
     
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         NSRange range = _range;
         if ( _subreaders.count == 1 ) range = reader.range;
         _response = [MCSResponse.alloc initWithTotalLength:_asset.totalLength range:range contentType:_asset.contentType];
@@ -329,7 +337,7 @@
 }
 
 - (void)reader:(id<MCSAssetDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _onError:error];
     });
 }

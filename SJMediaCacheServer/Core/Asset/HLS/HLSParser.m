@@ -19,6 +19,8 @@
 #define MCSURIMatchingPattern_AESKey    @"#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\""
 #define MCSURIMatchingPattern_URIs      @"(.*\\.ts[^\\s]*)|(#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\")"
 
+static dispatch_queue_t mcs_queue;
+
 @interface NSString (MCSRegexMatching)
 - (nullable NSArray<NSValue *> *)mcs_rangesByMatchingPattern:(NSString *)pattern;
 - (nullable NSArray<NSTextCheckingResult *> *)mcs_textCheckingResultsByMatchPattern:(NSString *)pattern;
@@ -31,10 +33,16 @@
 @property (nonatomic, strong) NSArray<NSString *> *TsURIArray;
 @property (nonatomic) float networkTaskPriority;
 @property (nonatomic, strong) NSArray<NSString *> *URIs;
-@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation HLSParser
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.HLSParser", DISPATCH_QUEUE_CONCURRENT);
+    });
+}
+
 + (nullable instancetype)parserInAsset:(HLSAsset *)asset {
     NSParameterAssert(asset);
     NSString *filePath = [asset indexFilePath];
@@ -60,24 +68,16 @@
     return self;
 }
 
-- (instancetype)init {
-    self = [super init];
-    if ( self ) {
-        _queue = dispatch_get_global_queue(0, 0);
-    }
-    return self;
-}
-
 - (nullable NSString *)URIAtIndex:(NSUInteger)index {
     __block NSString *URI = nil;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(mcs_queue, ^{
         URI = index < _URIs.count ? _URIs[index] : nil;
     });
     return URI;
 }
 
 - (void)prepare {
-    dispatch_barrier_async(_queue, ^{
+    dispatch_barrier_async(mcs_queue, ^{
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
@@ -90,7 +90,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(_queue, ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( self->_isClosed )
             return;
         
@@ -101,8 +101,8 @@
 @synthesize isDone = _isDone;
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(_queue, ^{
-        isDone = self->_isDone;
+    dispatch_sync(mcs_queue, ^{
+        isDone = _isDone;
     });
     return isDone;
 }
@@ -110,7 +110,7 @@
 @synthesize isClosed = _isClosed;
 - (BOOL)isClosed {
     __block BOOL isClosed = NO;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(mcs_queue, ^{
         isClosed = _isClosed;
     });
     return isClosed;
@@ -118,7 +118,7 @@
 
 - (NSUInteger)TsCount {
     __block NSUInteger count = 0;
-    dispatch_sync(_queue, ^{
+    dispatch_sync(mcs_queue, ^{
         count = _TsURIArray.count;
     });
     return count;
@@ -132,6 +132,13 @@
     // 已解析过, 将直接读取本地
     if ( [NSFileManager.defaultManager fileExistsAtPath:indexFilePath] ) {
         [self _finished];
+        return;
+    }
+    
+    HLSAsset *asset = _asset;
+    
+    if ( asset == nil ) {
+        [self close];
         return;
     }
     
@@ -184,7 +191,7 @@
         NSRange rangeValue = range.rangeValue;
         NSString *matched = [contents substringWithRange:rangeValue];
         NSString *url = [self _urlWithMatchedString:matched indexURL:currRequest.URL];
-        NSString *proxy = [MCSURLRecognizer.shared proxyTsURIWithUrl:url inAsset:self.asset.name];
+        NSString *proxy = [MCSURLRecognizer.shared proxyTsURIWithUrl:url inAsset:asset.name];
         [indexFileContents replaceCharactersInRange:rangeValue withString:proxy];
     }];
  
@@ -195,7 +202,7 @@
         NSRange URIRange = [result rangeAtIndex:1];
         NSString *URI = [indexFileContents substringWithRange:URIRange];
         NSString *url = [self _urlWithMatchedString:URI indexURL:currRequest.URL];
-        NSString *proxy = [MCSURLRecognizer.shared proxyAESKeyURIWithUrl:url inAsset:self.asset.name];
+        NSString *proxy = [MCSURLRecognizer.shared proxyAESKeyURIWithUrl:url inAsset:asset.name];
         [indexFileContents replaceCharactersInRange:URIRange withString:proxy];
     }];
     

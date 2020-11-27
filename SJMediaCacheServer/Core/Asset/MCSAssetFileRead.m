@@ -12,6 +12,8 @@
 #import "NSFileHandle+MCS.h"
 #import "MCSQueue.h"
 
+static dispatch_queue_t mcs_queue;
+
 @interface MCSAssetFileRead()
 @property (nonatomic) NSRange range;
 @property (nonatomic) NSRange readRange;
@@ -33,6 +35,13 @@
 
 @implementation MCSAssetFileRead
 @synthesize delegate = _delegate;
+
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.MCSAssetFileRead", DISPATCH_QUEUE_CONCURRENT);
+    });
+}
 
 - (instancetype)initWithAsset:(id<MCSAsset>)asset inRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSAssetDataReaderDelegate>)delegate {
     self = [super init];
@@ -73,7 +82,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || _isCalledPrepare )
             return;
         
@@ -103,7 +112,7 @@
 
 - (nullable NSData *)readDataOfLength:(NSUInteger)lengthParam {
     __block NSData *data = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || _isDone || !_isPrepared )
             return;
         
@@ -146,7 +155,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || !_isPrepared )
             return;
         if ( !NSLocationInRange(offset - 1, _range) )
@@ -167,7 +176,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _close];
     });
 }
@@ -176,7 +185,7 @@
 
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         offset = _range.location + _readLength;
     });
     return offset;
@@ -184,7 +193,7 @@
 
 - (BOOL)isPrepared {
     __block BOOL isPrepared = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isPrepared = _isPrepared;
     });
     return isPrepared;
@@ -192,7 +201,7 @@
 
 - (BOOL)isDone {
     __block BOOL isDone = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isDone = _isDone;
     });
     return isDone;

@@ -66,7 +66,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSString *path;
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
 @property (nonatomic, readonly) BOOL isStored;
-- (id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request;
 - (void)prepare;
 @end
 
@@ -82,9 +81,13 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark -
 
 @protocol MCSAssetReader <NSObject>
-@property (nonatomic, weak, nullable) id<MCSAssetReaderDelegate> delegate;
+- (instancetype)initWithAsset:(id<MCSAsset>)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate;
 
 - (void)prepare;
+@property (nonatomic, copy, readonly, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+@property (nonatomic, weak, readonly, nullable) id<MCSAssetReaderDelegate> delegate;
+@property (nonatomic, weak, readonly, nullable) id<MCSAsset> asset;
+@property (nonatomic, readonly) float networkTaskPriority;
 @property (nonatomic, strong, readonly, nullable) id<MCSResponse> response;
 @property (nonatomic, readonly) NSUInteger availableLength;
 @property (nonatomic, readonly) NSUInteger offset;
@@ -94,10 +97,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isReadingEndOfData;
 @property (nonatomic, readonly) BOOL isClosed;
 - (void)close;
-
-@property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
-
-@property (nonatomic) float networkTaskPriority;
 @end
 
 @protocol MCSAssetReaderDelegate <NSObject>

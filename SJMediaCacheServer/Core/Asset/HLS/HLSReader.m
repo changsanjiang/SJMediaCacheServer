@@ -18,6 +18,8 @@
 #import "MCSResponse.h"
 #import "MCSConsts.h"
 
+static dispatch_queue_t mcs_queue;
+
 @interface HLSReader ()<MCSAssetDataReaderDelegate>
 @property (nonatomic) BOOL isCalledPrepare;
 @property (nonatomic, weak, nullable) HLSAsset *asset;
@@ -30,12 +32,21 @@
 @synthesize isClosed = _isClosed;
 @synthesize response = _response;
 
-- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(NSURLRequest *)request {
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.HLSContentTSReader", DISPATCH_QUEUE_CONCURRENT);
+    });
+}
+
+- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
-        _networkTaskPriority = 1.0;
         _asset = asset;
         _request = request;
+        _networkTaskPriority = networkTaskPriority;
+        _readDataDecoder = readDataDecoder;
+        _delegate = delegate;
         
         [_asset readwriteRetain];
         
@@ -54,7 +65,7 @@
 - (void)willRemoveAssetWithNote:(NSNotification *)note {
     id<MCSAsset> asset = note.object;
     if ( asset == _asset )  {
-        dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+        dispatch_barrier_sync(mcs_queue, ^{
             if ( _isClosed )
                 return;
             [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
@@ -66,7 +77,7 @@
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || _isCalledPrepare )
             return;
         
@@ -103,7 +114,7 @@
 
 - (nullable id<MCSAssetDataReader>)reader {
     __block id<MCSAssetDataReader> reader = nil;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         reader = _reader;
     });
     return reader;
@@ -111,7 +122,7 @@
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
     __block NSData *data = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         NSUInteger offset = _reader.offset;
         data = [_reader readDataOfLength:length];
         
@@ -129,7 +140,7 @@
 
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed || !_reader.isPrepared )
             return;
         
@@ -143,7 +154,7 @@
 }
 
 - (void)close {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _close];
     });
 }
@@ -152,7 +163,7 @@
 
 - (id<MCSResponse>)response {
     __block id<MCSResponse> response = nil;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         response = _response;
     });
     return response;
@@ -176,7 +187,7 @@
 
 - (BOOL)isClosed {
     __block BOOL result = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         result = _isClosed;
     });
     return result;
@@ -198,7 +209,7 @@
 #pragma mark -
 
 - (void)readerPrepareDidFinish:(id<MCSAssetDataReader>)reader {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         _response = [MCSResponse.alloc initWithTotalLength:reader.range.length contentType:[reader isKindOfClass:HLSContentTSReader.class] ? _asset.TsContentType : nil];
     });
     [_delegate reader:self prepareDidFinish:self.response];
@@ -209,7 +220,7 @@
 }
 
 - (void)reader:(id<MCSAssetDataReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         [self _onError:error];
     });
 }

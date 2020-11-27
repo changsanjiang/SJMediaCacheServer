@@ -17,6 +17,7 @@
 
 static NSString *kLength = @"length";
 static NSString *kReadwriteCount = @"readwriteCount";
+static dispatch_queue_t mcs_queue;
 
 @interface HLSAsset () {
     HLSContentProvider *_provider;
@@ -35,6 +36,12 @@ static NSString *kReadwriteCount = @"readwriteCount";
 @synthesize readwriteCount = _readwriteCount;
 @synthesize parser = _parser;
 @synthesize isStored = _isStored;
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.HLSAsset", DISPATCH_QUEUE_CONCURRENT);
+    });
+}
 
 + (NSString *)sql_primaryKey {
     return @"id";
@@ -72,26 +79,18 @@ static NSString *kReadwriteCount = @"readwriteCount";
 #pragma mark - mark
 
 - (void)lock:(void (^)(void))block {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), block);
-}
-
-- (id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request {
-    __block HLSReader *reader = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
-        reader = [HLSReader.alloc initWithAsset:self request:request];
-    });
-    return reader;
+    dispatch_barrier_sync(mcs_queue, block);
 }
 
 - (void)setParser:(nullable HLSParser *)parser {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         _parser = parser;
     });
 }
 
 - (nullable HLSParser *)parser {
     __block HLSParser *parser = nil;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         parser = _parser;
     });
     return parser;
@@ -103,7 +102,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (nullable NSArray<id<MCSAssetContent>> *)TsContents {
     __block NSArray<id<MCSAssetContent>> *contents;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         contents = _contents;
     });
     return contents;
@@ -111,7 +110,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (BOOL)isStored {
     __block BOOL isStored = NO;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         isStored = _isStored;
     });
     return isStored;
@@ -127,7 +126,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (nullable NSString *)TsContentType {
     __block NSString *TsContentType = nil;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         TsContentType = _TsContentType;
     });
     return TsContentType;
@@ -141,7 +140,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
     NSString *TsContentType = MCSGetResponseContentType(response);
     __block BOOL isUpdated = NO;
     __block HLSContentTs *content = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( ![TsContentType isEqualToString:_TsContentType] ) {
             _TsContentType = TsContentType;
             isUpdated = YES;
@@ -165,7 +164,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 - (nullable id<MCSAssetContent>)TsContentForURL:(NSURL *)URL {
     NSString *name = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_TS];
     __block HLSContentTs *ts = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         for ( HLSContentTs *content in _contents ) {
             if ( [content.name isEqualToString:name] && content.length == content.totalLength ) {
                 ts = content;
@@ -180,7 +179,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (NSInteger)readwriteCount {
     __block NSInteger readwriteCount = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         readwriteCount = _readwriteCount;
     });
     return readwriteCount;
@@ -188,7 +187,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (void)readwriteRetain {
     [self willChangeValueForKey:kReadwriteCount];
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         _readwriteCount += 1;
     });
     [self didChangeValueForKey:kReadwriteCount];
@@ -196,7 +195,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 - (void)readwriteRelease {
     [self willChangeValueForKey:kReadwriteCount];
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _readwriteCount > 0 ) {
             _readwriteCount -= 1;
         }
@@ -209,7 +208,7 @@ static NSString *kReadwriteCount = @"readwriteCount";
 
 // 合并文件
 - (void)_mergeContents {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _readwriteCount != 0 ) return;
         if ( _isStored ) return;
         

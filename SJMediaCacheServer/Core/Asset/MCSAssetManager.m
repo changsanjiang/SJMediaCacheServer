@@ -26,6 +26,8 @@
 
 static NSString *kReadwriteCount = @"readwriteCount";
 
+static dispatch_queue_t mcs_queue;
+
 typedef NS_ENUM(NSUInteger, MCSLimit) {
     MCSLimitNone,
     MCSLimitCount,
@@ -62,6 +64,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     static id obj = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        mcs_queue = dispatch_queue_create("queue.MCSAssetManager", DISPATCH_QUEUE_CONCURRENT);
         obj = [[self alloc] init];
     });
     return obj;
@@ -86,7 +89,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 @synthesize cacheCountLimit = _cacheCountLimit;
 - (void)setCacheCountLimit:(NSUInteger)cacheCountLimit {
-    dispatch_barrier_async(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_async(mcs_queue, ^{
         if ( cacheCountLimit != self->_cacheCountLimit ) {
             self->_cacheCountLimit = cacheCountLimit;
             if ( cacheCountLimit != 0 ) {
@@ -98,7 +101,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 - (NSUInteger)cacheCountLimit {
     __block NSUInteger cacheCountLimit = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         cacheCountLimit = self->_cacheCountLimit;
     });
     return cacheCountLimit;
@@ -106,7 +109,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 @synthesize maxDiskAgeForCache = _maxDiskAgeForCache;
 - (void)setMaxDiskAgeForCache:(NSTimeInterval)maxDiskAgeForCache {
-    dispatch_barrier_async(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_async(mcs_queue, ^{
         if ( maxDiskAgeForCache != self->_maxDiskAgeForCache ) {
             self->_maxDiskAgeForCache = maxDiskAgeForCache;
             if ( maxDiskAgeForCache != 0 ) {
@@ -118,7 +121,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 - (NSTimeInterval)maxDiskAgeForCache {
     __block NSTimeInterval maxDiskAgeForCache = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         maxDiskAgeForCache = _maxDiskAgeForCache;
     });
     return maxDiskAgeForCache;
@@ -126,7 +129,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 @synthesize maxDiskSizeForCache = _maxDiskSizeForCache;
 - (void)setMaxDiskSizeForCache:(NSUInteger)maxDiskSizeForCache {
-    dispatch_barrier_async(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_async(mcs_queue, ^{
         if ( maxDiskSizeForCache != self->_maxDiskSizeForCache ) {
             self->_maxDiskSizeForCache = maxDiskSizeForCache;
             if ( maxDiskSizeForCache != 0 ) {
@@ -137,7 +140,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 - (NSUInteger)maxDiskSizeForCache {
     __block NSUInteger maxDiskSizeForCache = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         maxDiskSizeForCache = self->_maxDiskSizeForCache;
     });
     return maxDiskSizeForCache;
@@ -145,7 +148,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 @synthesize reservedFreeDiskSpace = _reservedFreeDiskSpace;
 - (void)setReservedFreeDiskSpace:(NSUInteger)reservedFreeDiskSpace {
-    dispatch_barrier_async(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_async(mcs_queue, ^{
         if ( reservedFreeDiskSpace != self->_reservedFreeDiskSpace ) {
             self->_reservedFreeDiskSpace = reservedFreeDiskSpace;
             if ( reservedFreeDiskSpace != 0 ) {
@@ -157,7 +160,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 - (NSUInteger)reservedFreeDiskSpace {
     __block NSUInteger reservedFreeDiskSpace = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         reservedFreeDiskSpace = self->_reservedFreeDiskSpace;
     });
     return reservedFreeDiskSpace;
@@ -165,7 +168,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 @synthesize checkInterval = _checkInterval;
 - (void)setCheckInterval:(NSTimeInterval)checkInterval {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( checkInterval != self->_checkInterval ) {
             self->_checkInterval = checkInterval;
         }
@@ -174,7 +177,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 - (NSTimeInterval)checkInterval {
     __block NSUInteger checkInterval = 0;
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_sync(mcs_queue, ^{
         checkInterval = self->_checkInterval;
     });
     return checkInterval;
@@ -182,13 +185,15 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 #pragma mark -
 
-- (__kindof id<MCSAsset> )assetWithURL:(NSURL *)URL {
+- (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL {
     __block id<MCSAsset> asset = nil;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         MCSAssetType type = [MCSURLRecognizer.shared assetTypeForURL:URL];
         NSString *name = [MCSURLRecognizer.shared assetNameForURL:URL];
         if ( _assets[name] == nil ) {
             Class cls = [self _assetClassForType:type];
+            if ( cls == nil ) return;
+            
             // query
             id<MCSAsset> r = (id)[_sqlite3 objectsForClass:cls conditions:@[
                 [SJSQLite3Condition conditionWithColumn:@"name" value:name]
@@ -212,10 +217,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
                 
                 _usageLogs[name] = log;
             }
-            
-            // contents
+             
             [r prepare];
-            [self _registerAsObserverForAsset:r];
             _assets[name] = r;
         }
         asset  = _assets[name];
@@ -223,17 +226,19 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     return asset;
 }
  
-- (id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request {
+- (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
     id<MCSAsset> asset = [self assetWithURL:request.URL];
-    id<MCSAssetReader> reader = [asset readerWithRequest:request];
-    reader.readDataDecoder = _readDataDecoder;
-    return reader;
+    switch ( asset.type ) {
+        case MCSAssetTypeFILE:
+            return [FILEReader.alloc initWithAsset:asset request:request networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
+        case MCSAssetTypeHLS:
+            return [HLSReader.alloc initWithAsset:asset request:request networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
+    }
+    return nil;
 }
 
 - (void)removeAllAssets {
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
-        [_assets removeAllObjects];
-        [_usageLogs removeAllObjects];
+    dispatch_barrier_sync(mcs_queue, ^{
         NSArray<FILEAsset *> *FILEAssets = [_sqlite3 objectsForClass:FILEAsset.class conditions:nil orderBy:nil error:NULL];
         [self _removeAssets:FILEAssets];
         NSArray<HLSAsset *> *HLSAssets = [_sqlite3 objectsForClass:HLSAsset.class conditions:nil orderBy:nil error:NULL];
@@ -244,7 +249,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (void)removeAssetForURL:(NSURL *)URL {
     if ( URL.absoluteString.length == 0 )
         return;
-    dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         MCSAssetType type = [MCSURLRecognizer.shared assetTypeForURL:URL];
         NSString *name = [MCSURLRecognizer.shared assetNameForURL:URL];
         Class cls = [self _assetClassForType:type];
@@ -260,13 +265,26 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     return MCSRootDirectory.size;
 }
 
+- (void)willReadAssetForURL:(NSURL *)URL {
+    id<MCSAsset> asset = [self assetWithURL:URL];
+    if ( asset != nil ) {
+        dispatch_barrier_sync(mcs_queue, ^{
+            MCSAssetUsageLog *log = _usageLogs[asset.name];
+            if ( log != nil ) {
+                log.usageCount += 1;
+                log.updatedTime = NSDate.date.timeIntervalSince1970;
+            }
+        });
+    }
+}
+
 #pragma mark - mark
 
 - (void)_checkRecursively {
     if ( _checkInterval == 0 ) return;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_checkInterval * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-        dispatch_barrier_async(dispatch_get_global_queue(0, 0), ^{
+        dispatch_barrier_sync(mcs_queue, ^{
             [self _syncDiskSpace];
             [self _removeAssetsForLimit:MCSLimitFreeDiskSpace];
             [self _removeAssetsForLimit:MCSLimitCacheDiskSpace];
@@ -300,44 +318,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 #pragma mark - mark
 
-- (void)_registerAsObserverForAsset:(id<MCSAsset>)asset {
-    [(id)asset addObserver:self forKeyPath:kReadwriteCount options:NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew context:&kReadwriteCount];
-}
-
-- (void)_unregisterAsObserverForAssets:(NSArray<id<MCSAsset>> *)assets {
-    for ( id<MCSAsset> asset in assets ) {
-        [(id)asset removeObserver:self forKeyPath:kReadwriteCount context:&kReadwriteCount];
-    }
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if ( context == &kReadwriteCount ) {
-        id oldValue = change[NSKeyValueChangeOldKey];
-        id newValue = change[NSKeyValueChangeNewKey];
-        NSInteger oldCount = [oldValue isKindOfClass:NSNumber.class] ? [oldValue integerValue] : 0;
-        NSInteger newCount = [newValue isKindOfClass:NSNumber.class] ? [newValue integerValue] : 0;
-        if      ( newCount > oldCount ) {
-            id<MCSAsset> asset = object;
-            dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
-                MCSAssetUsageLog *log = _usageLogs[asset.name];
-                log.usageCount += 1;
-                log.updatedTime = NSDate.date.timeIntervalSince1970;
-            });
-        }
-        else if ( oldCount == 0 ) {
-            dispatch_barrier_sync(dispatch_get_global_queue(0, 0), ^{
-                if ( _cacheCountLimit == 0 || _count < _cacheCountLimit )
-                    return;
-                [self _removeAssetsForLimit:MCSLimitCount];
-            });
-        }
-    }
-}
-
-#pragma mark - mark
-
 - (void)_assetMetadataDidLoadWithNote:(NSNotification *)note {
-    dispatch_barrier_async(dispatch_get_global_queue(0, 0), ^{
+    dispatch_barrier_async(mcs_queue, ^{
         [self _syncAssetToDatabase:note.object];
     });
 }
