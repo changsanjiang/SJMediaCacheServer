@@ -30,7 +30,7 @@ static dispatch_queue_t mcs_queue;
 @property (nonatomic) BOOL isSought;
 
 @property (nonatomic, weak, nullable) id<MCSAsset> asset;
-@property (nonatomic, strong) id<MCSReadwriteReference> reference;
+@property (nonatomic, strong, nullable) id<MCSReadwriteReference> reference;
 @end
 
 @implementation MCSAssetFileRead
@@ -43,20 +43,7 @@ static dispatch_queue_t mcs_queue;
     });
 }
 
-- (instancetype)initWithAsset:(id<MCSAsset>)asset inRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSAssetDataReaderDelegate>)delegate {
-    self = [super init];
-    if ( self ) {
-        _asset = asset;
-        _range = range;
-        _path = path.copy;
-        _readRange = readRange;
-        _delegate = delegate;
-        _availableLength = readRange.length;
-    }
-    return self;
-}
-
-- (instancetype)initWithAsset:(id<MCSAsset>)asset inRange:(NSRange)range reference:(id<MCSReadwriteReference>)reference path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSAssetDataReaderDelegate>)delegate {
+- (instancetype)initWithAsset:(id<MCSAsset>)asset inRange:(NSRange)range reference:(nullable id<MCSReadwriteReference>)reference path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSAssetDataReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _asset = asset;
@@ -142,7 +129,7 @@ static dispatch_queue_t mcs_queue;
         _isDone = (_readLength == _readRange.length);
         
 #ifdef DEBUG
-        MCSContentReaderDebugLog(@"%@: <%p>.read { offset: %lu, readLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location + _readLength), (unsigned long)readLength);
+        MCSContentReaderDebugLog(@"%@: <%p>.read { location: %lu, length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)(_range.location), (unsigned long)_readLength);
         if ( _isDone ) {
             MCSContentReaderDebugLog(@"%@: <%p>.done { range: %@ , file: %@.%@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), _path.lastPathComponent, NSStringFromRange(_readRange));
         }

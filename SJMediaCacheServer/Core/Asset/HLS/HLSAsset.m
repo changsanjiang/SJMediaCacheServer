@@ -70,6 +70,7 @@ static dispatch_queue_t mcs_queue;
     _provider = [HLSContentProvider.alloc initWithDirectory:directory];
     _parser = [HLSParser parserInAsset:self];
     _contents = [(_provider.TsContents ?: @[]) mutableCopy];
+    [self _mergeContents];
 }
 
 - (NSString *)path {

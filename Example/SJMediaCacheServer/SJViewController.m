@@ -78,15 +78,14 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownloader | MCSLogOptionContentReader;
-     
-    
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionAssetReader | MCSLogOptionContentReader;
+//    SJMediaCacheServer.shared.cacheCountLimit = 5;
     
     
     [self _demo1];
-    [self _demo2];
-    [self _demo3];
-    [self _demo4];
+//    [self _demo2];
+//    [self _demo3];
+//    [self _demo4];
 }
 
 - (void)_demo4 {
@@ -152,6 +151,8 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 #pragma mark -
 
 - (void)_play:(NSURL *)URL {
+//    URL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"com.SJMediaCacheServer.cache/87d5ff79f295648c071555a12fb412cc/file_0_0.mp4"]];
+    
     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
     // play
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];

@@ -100,6 +100,9 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
+    if ( self.isReadingEndOfData )
+        return nil;
+    
     __block NSData *data = nil;
     dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )

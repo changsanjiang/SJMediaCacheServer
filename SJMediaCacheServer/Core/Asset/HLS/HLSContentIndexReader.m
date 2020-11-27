@@ -184,7 +184,7 @@ static dispatch_queue_t mcs_queue;
     NSString *filePath = _asset.indexFilePath;
     NSUInteger fileSize = (NSUInteger)[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
     NSRange range = NSMakeRange(0, fileSize);
-    _reader = [MCSAssetFileRead.alloc initWithAsset:_asset inRange:range path:filePath readRange:range delegate:_delegate];
+    _reader = [MCSAssetFileRead.alloc initWithAsset:_asset inRange:range reference:nil path:filePath readRange:range delegate:_delegate];
     [_reader prepare];
 }
 @end

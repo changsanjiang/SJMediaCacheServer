@@ -189,7 +189,7 @@ static dispatch_queue_t mcs_queue;
 - (void)_prepareReaderForLocalFile:(NSString *)filePath {
     NSUInteger fileSize = (NSUInteger)[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
     NSRange range = NSMakeRange(0, fileSize);
-    _reader = [MCSAssetFileRead.alloc initWithAsset:_asset inRange:range path:filePath readRange:range delegate:self];
+    _reader = [MCSAssetFileRead.alloc initWithAsset:_asset inRange:range reference:nil path:filePath readRange:range delegate:self];
     [_reader prepare];
 }
 

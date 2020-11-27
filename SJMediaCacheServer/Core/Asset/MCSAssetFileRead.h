@@ -12,9 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSAssetFileRead : NSObject<MCSAssetDataReader>
-- (instancetype)initWithAsset:(id<MCSAsset>)asset inRange:(NSRange)range path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSAssetDataReaderDelegate>)delegate;
-
-- (instancetype)initWithAsset:(id<MCSAsset>)asset inRange:(NSRange)range reference:(id<MCSReadwriteReference>)reference path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSAssetDataReaderDelegate>)delegate;
+- (instancetype)initWithAsset:(id<MCSAsset>)asset inRange:(NSRange)range reference:(nullable id<MCSReadwriteReference>)reference path:(NSString *)path readRange:(NSRange)readRange delegate:(id<MCSAssetDataReaderDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) NSRange range;

@@ -289,6 +289,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             [self _removeAssetsForLimit:MCSLimitFreeDiskSpace];
             [self _removeAssetsForLimit:MCSLimitCacheDiskSpace];
             [self _removeAssetsForLimit:MCSLimitExpires];
+            [self _removeAssetsForLimit:MCSLimitCount];
             [self _syncUsageLogsToDatabase];
         });
         
@@ -386,10 +387,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             // 清理60s之前的
             NSTimeInterval before = NSDate.date.timeIntervalSince1970 - 60;
             // 清理一半
-            NSInteger length = (NSInteger)ceil((_count - usingAssets.count) * 0.5);
+            NSInteger length = (NSInteger)ceil(_cacheCountLimit != 0 ? (_count - _cacheCountLimit * 0.5) : (_count - usingAssets.count) * 0.5);
             logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
                 // 检索60s之前未被使用的资源
-                [SJSQLite3Condition conditionWithColumn:@"asset" notIn:usingAssets],
+                [SJSQLite3Condition conditionWithColumn:@"asset" notIn:usingAssets.count != 0 ? usingAssets : @[@(0)]],
                 [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(before)],
             ] orderBy:@[
                 // 按照更新的时间与使用次数进行排序
@@ -401,7 +402,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         case MCSLimitExpires: {
             NSTimeInterval time = NSDate.date.timeIntervalSince1970 - _maxDiskAgeForCache;
             logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"asset" notIn:usingAssets],
+                [SJSQLite3Condition conditionWithColumn:@"asset" notIn:usingAssets.count != 0 ? usingAssets : @[@(0)]],
                 [SJSQLite3Condition conditionWithColumn:@"updatedTime" relatedBy:SJSQLite3RelationLessThanOrEqual value:@(time)],
             ] orderBy:nil error:NULL];
         }

@@ -68,6 +68,7 @@ static dispatch_queue_t mcs_queue;
     _configuration = MCSConfiguration.alloc.init;
     _provider = [FILEContentProvider contentProviderWithDirectory:directory];
     _contents = [(_provider.contents ?: @[]) mutableCopy];
+    [self _mergeContents];
 }
 
 - (NSString *)path {
