@@ -236,13 +236,13 @@
     headers[@"Content-Type"] = _task.response.contentType;
     headers[@"Accept-Ranges"] = @"bytes";
     headers[@"Connection"] = @"keep-alive";
-    if ( _task.response.range.length != 0 ) {
-        headers[@"Content-Length"] = [NSString stringWithFormat:@"%lu", (unsigned long)_task.response.range.length];
-        headers[@"Content-Range"] = [NSString stringWithFormat:@"bytes %lu-%lu/%lu", (unsigned long)_task.response.range.location, (unsigned long)NSMaxRange(_task.response.range) - 1, (unsigned long)_task.response.totalLength];
-    }
-    else {
-        headers[@"Content-Length"] = [NSString stringWithFormat:@"%lu", (unsigned long)_task.response.totalLength];
-    }
+//    if ( _task.response.range.length != 0 ) {
+//        headers[@"Content-Length"] = [NSString stringWithFormat:@"%lu", (unsigned long)_task.response.range.length];
+//        headers[@"Content-Range"] = [NSString stringWithFormat:@"bytes %lu-%lu/%lu", (unsigned long)_task.response.range.location, (unsigned long)NSMaxRange(_task.response.range) - 1, (unsigned long)_task.response.totalLength];
+//    }
+//    else {
+//        headers[@"Content-Length"] = [NSString stringWithFormat:@"%lu", (unsigned long)_task.response.totalLength];
+//    }
     return headers;
 }
 
@@ -264,11 +264,14 @@
 
 #pragma mark - Chunked
 
-- (BOOL)isChunked {
-    return _task.response.range.length == 0;
-}
+//- (BOOL)isChunked {
+//    return _task.response.range.length == 0;
+//}
 
 - (UInt64)contentLength {
+    if ( _task.isPrepared ) {
+        NSParameterAssert(_task.response.totalLength != 0);
+    }
     return _task.response.totalLength;
 }
 

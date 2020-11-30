@@ -31,6 +31,7 @@ static dispatch_queue_t mcs_queue;
 @synthesize readDataDecoder = _readDataDecoder;
 @synthesize isClosed = _isClosed;
 @synthesize response = _response;
+@synthesize isPrepared = _isPrepared;
 
 + (void)initialize {
     static dispatch_once_t onceToken;
@@ -180,7 +181,11 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (BOOL)isPrepared {
-    return self.reader.isPrepared;
+    __block BOOL isPrepared = NO;
+    dispatch_sync(mcs_queue, ^{
+        isPrepared = _isPrepared;
+    });
+    return isPrepared;
 }
 
 - (BOOL)isReadingEndOfData {
@@ -213,6 +218,7 @@ static dispatch_queue_t mcs_queue;
 - (void)readerPrepareDidFinish:(id<MCSAssetDataReader>)reader {
     dispatch_barrier_sync(mcs_queue, ^{
         _response = [MCSResponse.alloc initWithTotalLength:reader.range.length contentType:[reader isKindOfClass:HLSContentTSReader.class] ? _asset.TsContentType : nil];
+        _isPrepared = YES;
     });
     [_delegate reader:self prepareDidFinish:self.response];
 }
