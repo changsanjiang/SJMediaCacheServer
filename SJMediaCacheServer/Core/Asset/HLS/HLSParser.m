@@ -231,17 +231,23 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (NSString *)_urlWithMatchedString:(NSString *)matched indexURL:(NSURL *)indexURL {
+    static NSString *const HLS_PREFIX_LOCALHOST = @"http://localhost";
+    static NSString *const HLS_PREFIX_PATH = @"/";
+    
     NSString *url = nil;
-    if ( [matched containsString:@"://"] ) {
-        url = matched;
-    }
-    else if ( [matched hasPrefix:@"/"] ) {
+    if ( [matched hasPrefix:HLS_PREFIX_PATH] ) {
         url = [NSString stringWithFormat:@"%@://%@%@", indexURL.scheme, indexURL.host, matched];
+    }
+    else if ( [matched hasPrefix:HLS_PREFIX_LOCALHOST] ) {
+        url = [NSString stringWithFormat:@"%@://%@%@", indexURL.scheme, indexURL.host, [matched substringFromIndex:HLS_PREFIX_LOCALHOST.length]];
+    }
+    else if ( [matched containsString:@"://"] ) {
+        url = matched;
     }
     else {
         url = [NSString stringWithFormat:@"%@/%@", indexURL.absoluteString.stringByDeletingLastPathComponent, matched];
     }
-    return url;
+    return url; 
 }
 
 - (void)_onError:(NSError *)error {

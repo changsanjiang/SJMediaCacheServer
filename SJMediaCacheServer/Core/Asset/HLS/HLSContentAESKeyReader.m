@@ -170,7 +170,7 @@ static dispatch_queue_t mcs_queue;
             }];
         }
 
-        dispatch_barrier_sync(mcs_queue, ^{
+        dispatch_barrier_async(mcs_queue, ^{
             if ( self->_isClosed ) return;
             NSError *error = downloadError ?: writeError;
             if ( error != nil ) {
