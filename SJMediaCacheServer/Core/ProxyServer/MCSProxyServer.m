@@ -259,14 +259,10 @@
     [_connection responseDidAbort:self];
 }
 
-- (BOOL)isChunked {
-    return YES;
-}
-
 #pragma mark - Chunked 不需要处理这些参数
 
 - (UInt64)contentLength {
-    return 0;
+    return _task.response.totalLength;
 }
 
 - (UInt64)offset {

@@ -107,7 +107,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 
 - (void)_demo1 {
     // play
-    NSString *url = DEMO_URL_HLS;
+    NSString *url = DEMO_URL_FILE;
     NSURL *URL = [NSURL URLWithString:url];
     [self _play:URL];
 }

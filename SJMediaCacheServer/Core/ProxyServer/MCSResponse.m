@@ -34,4 +34,8 @@
 - (NSString *)contentType {
     return _contentType ?: @"application/octet-stream";
 }
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { totalLength: %lu, range: %@, contentType: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_totalLength, NSStringFromRange(_range), _contentType];
+}
 @end
