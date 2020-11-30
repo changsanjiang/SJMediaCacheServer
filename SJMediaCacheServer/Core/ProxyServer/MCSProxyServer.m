@@ -264,6 +264,10 @@
 
 #pragma mark - Chunked 不需要处理这些参数
 
+- (BOOL)isChunked {
+    return _task.response.range.length == 0;
+}
+
 - (UInt64)contentLength {
     return _task.response.totalLength;
 }

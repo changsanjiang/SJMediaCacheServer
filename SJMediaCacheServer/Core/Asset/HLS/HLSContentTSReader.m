@@ -78,7 +78,7 @@ static dispatch_queue_t mcs_queue;
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description);
+        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };\n", NSStringFromClass(self.class), self, _request.mcs_description);
 
         _isCalledPrepare = YES;
         
@@ -90,7 +90,7 @@ static dispatch_queue_t mcs_queue;
             return;
         }
         
-        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description);
+        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };\n", NSStringFromClass(self.class), self, _request.mcs_description);
         
         // download the content
         _task = [MCSDownload.shared downloadWithRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSTs]] priority:_networkTaskPriority delegate:self];

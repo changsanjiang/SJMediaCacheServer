@@ -62,7 +62,7 @@ static dispatch_queue_t mcs_queue;
         
         _isCalledPrepare = YES;
         
-        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description);
+        MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };\n", NSStringFromClass(self.class), self, _request.mcs_description);
         
         NSString *filePath = [_asset AESKeyFilePathWithURL:_request.URL];
         
@@ -72,7 +72,7 @@ static dispatch_queue_t mcs_queue;
             return;
         }
         
-        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };", NSStringFromClass(self.class), self, _request.mcs_description);
+        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };\n", NSStringFromClass(self.class), self, _request.mcs_description);
         
         // download the content
         [self _downloadToFile:filePath];

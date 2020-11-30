@@ -91,10 +91,7 @@ static dispatch_queue_t mcs_queue;
 
 - (void)close {
     dispatch_barrier_sync(mcs_queue, ^{
-        if ( self->_isClosed )
-            return;
-        
-        self->_isClosed = YES;
+        [self _close];
     });
 }
 
@@ -138,7 +135,7 @@ static dispatch_queue_t mcs_queue;
     HLSAsset *asset = _asset;
     
     if ( asset == nil ) {
-        [self close];
+        [self _close];
         return;
     }
     
@@ -296,6 +293,11 @@ static dispatch_queue_t mcs_queue;
     dispatch_async(MCSDelegateQueue(), ^{
         [self->_delegate parserParseDidFinish:self];
     });
+}
+
+- (void)_close {
+    if ( _isClosed ) return;
+    _isClosed = YES;
 }
 @end
 

@@ -35,7 +35,7 @@ static dispatch_queue_t mcs_queue;
 + (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        mcs_queue = dispatch_queue_create("queue.HLSContentTSReader", DISPATCH_QUEUE_CONCURRENT);
+        mcs_queue = dispatch_queue_create("queue.HLSReader", DISPATCH_QUEUE_CONCURRENT);
     });
 }
 
@@ -123,6 +123,8 @@ static dispatch_queue_t mcs_queue;
 - (NSData *)readDataOfLength:(NSUInteger)length {
     __block NSData *data = nil;
     dispatch_barrier_sync(mcs_queue, ^{
+        if ( _reader.isDone || _isClosed ) return;
+        
         NSUInteger offset = _reader.offset;
         data = [_reader readDataOfLength:length];
         

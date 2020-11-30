@@ -24,6 +24,8 @@
 
 @implementation MCSProxyTask
 - (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
+    NSParameterAssert(request.URL.absoluteString.length != 0);
+    
     self = [super init];
     if ( self ) {
         _request = request;
