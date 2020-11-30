@@ -117,17 +117,21 @@
     [self willChangeValueForKey:@"isFinished"];
     [self willChangeValueForKey:@"isExecuting"];
 
+    BOOL isChanged = NO;
     dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
     if ( !_isFinished ) {
         [self->_prefetcher close];
         self->_prefetcher = nil;
         _isExecuting = NO;
         _isFinished = YES;
+        isChanged = YES;
     }
     dispatch_semaphore_signal(_semaphore);
     
-    [self didChangeValueForKey:@"isExecuting"];
-    [self didChangeValueForKey:@"isFinished"];
+    if ( isChanged ) {
+        [self didChangeValueForKey:@"isExecuting"];
+        [self didChangeValueForKey:@"isFinished"];
+    }
 }
 
 #pragma mark -
