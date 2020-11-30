@@ -322,17 +322,19 @@ static dispatch_queue_t mcs_queue;
 #pragma mark - MCSAssetDataReaderDelegate
 
 - (void)readerPrepareDidFinish:(__kindof id<MCSAssetDataReader>)reader {
-    if ( self.isPrepared || self.isClosed )
-        return;
-    
+    __block BOOL isChanged = NO;
     dispatch_barrier_sync(mcs_queue, ^{
-        NSRange range = _range;
-        if ( _subreaders.count == 1 ) range = reader.range;
-        _response = [MCSResponse.alloc initWithTotalLength:_asset.totalLength range:range contentType:_asset.contentType];
-        _isPrepared = YES;
+        if ( !_isPrepared || !_isClosed ) {
+            NSRange range = _range;
+            if ( _subreaders.count == 1 ) range = reader.range;
+            _response = [MCSResponse.alloc initWithTotalLength:_asset.totalLength range:range contentType:_asset.contentType];
+            _isPrepared = YES;
+            isChanged = YES;
+        }
     });
     
-    [_delegate reader:self prepareDidFinish:self.response];
+    if ( isChanged )
+        [_delegate reader:self prepareDidFinish:self.response];
 }
 
 - (void)reader:(id<MCSAssetDataReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
