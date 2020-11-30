@@ -213,21 +213,23 @@ static dispatch_queue_t mcs_queue;
         
         if ( deletes.count != 0 ) [contents removeObjectsInArray:deletes];
         
-        @try {
-            // merge
-            for ( NSInteger i = 0 ; i < contents.count - 1; i += 2 ) {
-                FILEContent *write = contents[i];
-                FILEContent *read  = contents[i + 1];
-                
-                NSUInteger maxRange1 = write.offset + write.length;
-                NSUInteger maxRange2 = read.offset + read.length;
-                NSRange readRange = NSMakeRange(0, 0);
-                if ( maxRange1 >= read.offset && maxRange1 < maxRange2 ) // 有交集
-                    readRange = NSMakeRange(maxRange1 - read.offset, maxRange2 - maxRange1); // 读取read中未相交的部分
-                
-                if ( readRange.length != 0 ) {
-                    NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:[self contentFilePathForFilename:write.filename]];
-                    NSFileHandle *reader = [NSFileHandle fileHandleForReadingAtPath:[self contentFilePathForFilename:read.filename]];
+        // merge
+        for ( NSInteger i = 0 ; i < contents.count - 1; i += 2 ) {
+            FILEContent *write = contents[i];
+            FILEContent *read  = contents[i + 1];
+            
+            NSUInteger maxRange1 = write.offset + write.length;
+            NSUInteger maxRange2 = read.offset + read.length;
+            NSRange readRange = NSMakeRange(0, 0);
+            if ( maxRange1 >= read.offset && maxRange1 < maxRange2 ) // 有交集
+                readRange = NSMakeRange(maxRange1 - read.offset, maxRange2 - maxRange1); // 读取read中未相交的部分
+            
+            if ( readRange.length != 0 ) {
+                NSFileHandle *writer = nil;
+                NSFileHandle *reader = nil;
+                @try {
+                    writer = [NSFileHandle fileHandleForWritingAtPath:[self contentFilePathForFilename:write.filename]];
+                    reader = [NSFileHandle fileHandleForReadingAtPath:[self contentFilePathForFilename:read.filename]];
                     [writer seekToEndOfFile];
                     [reader seekToFileOffset:readRange.location];
                     while (true) {
@@ -238,21 +240,30 @@ static dispatch_queue_t mcs_queue;
                             [writer writeData:data];
                         }
                     }
-                    [reader closeFile];
-                    [writer synchronizeFile];
-                    [writer closeFile];
                     [write didWriteDataWithLength:readRange.length];
                     [deletes addObject:read];
+                } @catch (__unused NSException *exception) {
+                    
+                }
+                @finally {
+                    if ( reader != nil ) {
+                        [reader closeFile];
+                    }
+                    
+                    if ( writer != nil ) {
+                        [writer synchronizeFile];
+                        [writer closeFile];
+                    }
                 }
             }
-            
-            if ( deletes.count != 0 ) {
-                for ( FILEContent *content in deletes ) { [_provider removeContentForFilename:content.filename]; }
-                [_contents removeObjectsInArray:deletes];
-            }
-
-            _isStored = _contents.count == 1 && _contents.lastObject.length == _totalLength;
-        } @catch (__unused NSException *exception) { }
+        }
+        
+        if ( deletes.count != 0 ) {
+            for ( FILEContent *content in deletes ) { [_provider removeContentForFilename:content.filename]; }
+            [_contents removeObjectsInArray:deletes];
+        }
+        
+        _isStored = _contents.count == 1 && _contents.lastObject.length == _totalLength;
     });
 }
 @end

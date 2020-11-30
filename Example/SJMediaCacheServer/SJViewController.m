@@ -21,7 +21,7 @@
 
 #import <MCSDownload.h>
 
-static NSString *const DEMO_URL_HLS = @"http://192.168.1.112/hls/index.m3u8";
+static NSString *const DEMO_URL_HLS = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
 static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
 
 @interface SJViewController ()
@@ -47,9 +47,9 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     
     
     [self _demo1];
-//    [self _demo2];
-//    [self _demo3];
-//    [self _demo4];
+    [self _demo2];
+    [self _demo3];
+    [self _demo4];
 }
 
 - (void)_demo4 {

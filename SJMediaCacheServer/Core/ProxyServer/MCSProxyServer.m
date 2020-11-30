@@ -262,7 +262,7 @@
     [_connection responseDidAbort:self];
 }
 
-#pragma mark - Chunked 不需要处理这些参数
+#pragma mark - Chunked
 
 - (BOOL)isChunked {
     return _task.response.range.length == 0;
