@@ -44,7 +44,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionAssetReader;
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionProxyTask;
     SJMediaCacheServer.shared.cacheCountLimit = 5;
     
     
