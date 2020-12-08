@@ -324,6 +324,7 @@ static dispatch_queue_t mcs_queue;
         [reader close];
     }
     
+    _subreaders = nil;
     _isClosed = YES;
 
     MCSAssetReaderDebugLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
