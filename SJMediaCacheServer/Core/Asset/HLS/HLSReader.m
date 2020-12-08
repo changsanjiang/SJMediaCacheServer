@@ -207,6 +207,8 @@ static dispatch_queue_t mcs_queue;
         return;
     
     [_reader close];
+    
+    _reader = nil;
      
     _isClosed = YES;
     
