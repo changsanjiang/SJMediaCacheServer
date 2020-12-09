@@ -48,6 +48,10 @@ static dispatch_queue_t mcs_queue;
 - (instancetype)initWithAsset:(__weak FILEAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
+#ifdef DEBUG
+        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, [MCSURLRecognizer.shared URLWithProxyURL:request.URL], asset, request.URL, request.allHTTPHeaderFields);
+#endif
+
         _asset = asset;
         _request = request;
         _networkTaskPriority = networkTaskPriority;
@@ -92,7 +96,7 @@ static dispatch_queue_t mcs_queue;
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSAssetReaderDebugLog(@"%@: <%p>.prepare { assetName: %@, request: %@ };\n", NSStringFromClass(self.class), self, _asset.name, _request.mcs_description);
+        MCSAssetReaderDebugLog(@"%@: <%p>.prepare;\n", NSStringFromClass(self.class), self);
         
         _isCalledPrepare = YES;
         
@@ -287,7 +291,7 @@ static dispatch_queue_t mcs_queue;
         _subreaders = subreaders.copy;
     }
      
-    MCSAssetReaderDebugLog(@"%@: <%p>.createSubreaders { range: %@, count: %lu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_range), (unsigned long)_subreaders.count);
+    MCSAssetReaderDebugLog(@"%@: <%p>.createSubreaders { count: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_subreaders.count);
 
     [self _prepareNextReader];
 }
@@ -304,7 +308,7 @@ static dispatch_queue_t mcs_queue;
     else
         _currentIndex += 1;
     
-    MCSAssetReaderDebugLog(@"%@: <%p>.subreader.prepare { sub: %@, count: %lu };\n", NSStringFromClass(self.class), self, self.current, (unsigned long)_subreaders.count);
+    MCSAssetReaderDebugLog(@"%@: <%p>.subreader.prepare { index: %ld, sub: %@, count: %lu };\n", NSStringFromClass(self.class), self, (long)_currentIndex, self.current, (unsigned long)_subreaders.count);
 
     [self.current prepare];
 }
