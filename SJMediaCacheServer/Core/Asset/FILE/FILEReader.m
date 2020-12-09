@@ -38,6 +38,8 @@ static dispatch_queue_t mcs_queue;
 @implementation FILEReader
 @synthesize readDataDecoder = _readDataDecoder;
 @synthesize response = _response;
+@synthesize isReadingEndOfData = _isReadingEndOfData;
+
 + (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -105,12 +107,9 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (NSData *)readDataOfLength:(NSUInteger)length {
-    if ( self.isReadingEndOfData )
-        return nil;
-    
     __block NSData *data = nil;
     dispatch_barrier_sync(mcs_queue, ^{
-        if ( _isClosed )
+        if ( _isClosed || _isReadingEndOfData )
             return;
         
         id<MCSAssetDataReader> current = self.current;
@@ -169,7 +168,7 @@ static dispatch_queue_t mcs_queue;
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
     dispatch_sync(mcs_queue, ^{
-        offset = _subreaders.firstObject.range.location + _readLength;
+        offset = _range.location + _readLength;
     });
     return offset;
 }
@@ -183,11 +182,11 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (BOOL)isReadingEndOfData {
-    __block BOOL isDone = NO;
+    __block BOOL isReadingEndOfData = NO;
     dispatch_sync(mcs_queue, ^{
-        isDone = _subreaders.lastObject.isDone;
+        isReadingEndOfData = _isReadingEndOfData;
     });
-    return isDone;
+    return isReadingEndOfData;
 }
 
 - (BOOL)isClosed {
@@ -298,6 +297,7 @@ static dispatch_queue_t mcs_queue;
 
 - (void)_prepareNextReader {
     if ( self.current == _subreaders.lastObject ) {
+        _isReadingEndOfData = YES;
         MCSAssetReaderDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
         [self _close];
         return;
