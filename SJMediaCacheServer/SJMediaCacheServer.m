@@ -207,7 +207,7 @@
     [MCSAssetManager.shared removeAssetForURL:URL];
 }
 
-- (NSUInteger)cachedSize {
+- (unsigned long long)cachedSize {
     return [MCSAssetManager.shared cachedSizeForAssets];
 }
 

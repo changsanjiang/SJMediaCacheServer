@@ -180,7 +180,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Returns the total cache size (in bytes).
 ///
-@property (nonatomic, readonly) NSUInteger cachedSize; // 返回已占用的缓存大小
+@property (nonatomic, readonly) unsigned long long cachedSize; // 返回已占用的缓存大小
 
 - (BOOL)isStoredForURL:(NSURL *)URL;
 
