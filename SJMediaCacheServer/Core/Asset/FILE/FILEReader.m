@@ -225,8 +225,12 @@ static dispatch_queue_t mcs_queue;
     else {
         MCSRequestContentRange requestRange = MCSGetRequestContentRange(_request.mcs_headers);
         NSRange current = NSMakeRange(0, 0);
+        // 200
+        if      ( requestRange.start == NSNotFound && requestRange.end == NSNotFound ) {
+            current = NSMakeRange(0, totalLength);
+        }
         // bytes=100-500
-        if      ( requestRange.start != NSNotFound && requestRange.end != NSNotFound ) {
+        else if ( requestRange.start != NSNotFound && requestRange.end != NSNotFound ) {
             NSUInteger location = requestRange.start;
             NSUInteger length = totalLength > requestRange.end ? ((requestRange.end + 1) - location) : 0;
             current = NSMakeRange(location, length);
