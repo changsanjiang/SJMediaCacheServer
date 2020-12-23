@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SJMediaCacheServer'
-  s.version          = '1.3.2'
+  s.version          = '1.3.3'
   s.summary          = 'A HTTP Media Caching Framework. It can cache FILE or HLS media.'
 
 # This description is used to generate tags and improve search results.
@@ -31,8 +31,13 @@ Pod::Spec.new do |s|
   s.source_files = 'SJMediaCacheServer/*.{h,m}'
   s.subspec 'Core' do |ss|
     ss.source_files = 'SJMediaCacheServer/Core/**/*.{h,m}'
+    ss.dependency 'SJMediaCacheServer/KTVCocoaHTTPServer'
   end
   
-  s.dependency 'KTVCocoaHTTPServer'
+  s.subspec 'KTVCocoaHTTPServer' do |ss|
+    ss.source_files = 'SJMediaCacheServer/KTVCocoaHTTPServer/**/*.{h,m}'
+    ss.dependency 'CocoaAsyncSocket'
+  end
+  
   s.dependency 'SJUIKit/SQLite3'
 end
