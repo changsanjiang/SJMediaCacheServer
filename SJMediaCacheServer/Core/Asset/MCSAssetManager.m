@@ -82,6 +82,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         [self _checkRecursively];
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_assetMetadataDidLoadWithNote:) name:MCSAssetMetadataDidLoadNotification object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_fileWriteOutOfSpaceErrorWithNote:) name:MCSFileWriteOutOfSpaceErrorNotification object:nil];
     }
     return self;
 }
@@ -320,6 +321,41 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (void)_assetMetadataDidLoadWithNote:(NSNotification *)note {
     dispatch_barrier_async(mcs_queue, ^{
         [self _syncToDatabase:note.object];
+    });
+}
+
+// 空间不足
+// 删除部分缓存, 优先保留`_reservedFreeDiskSpace`, 否则将删除大于500M的数据
+// 当前使用的资源也可能会删除
+- (void)_fileWriteOutOfSpaceErrorWithNote:(NSNotification *)note {
+    dispatch_barrier_async(mcs_queue, ^{
+        [self _syncDiskSpace];
+        unsigned long long reservedFreeDiskSpace = self->_reservedFreeDiskSpace != 0 ? self->_reservedFreeDiskSpace : 500 * 1024 * 1024;
+        if ( self->_freeSize > reservedFreeDiskSpace ) return;
+        
+        NSInteger curIdx = 0;
+        unsigned long long length = 0;
+        NSMutableArray<id<MCSAsset>> *assets = NSMutableArray.array;
+        do {
+            NSRange range = NSMakeRange(curIdx * 10, 10);
+            NSArray<MCSAssetUsageLog *> *logs = [self->_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:nil orderBy:@[
+                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES]
+            ] range:range error:NULL];
+            
+            if ( logs.count == 0 ) break;
+            
+            for ( MCSAssetUsageLog *log in logs ) {
+                id<MCSAsset> asset = [self->_sqlite3 objectForClass:[self _assetClassForType:log.assetType] primaryKeyValue:@(log.asset) error:NULL];
+                if ( asset != nil ) {
+                    length += [NSFileManager.defaultManager mcs_directorySizeAtPath:asset.path];
+                    [assets addObject:asset];
+                }
+                if ( length > reservedFreeDiskSpace ) break;
+            }
+            
+            curIdx += 1;
+        } while ( YES );
+        [self _removeAssets:assets];
     });
 }
 

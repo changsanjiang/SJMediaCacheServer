@@ -88,7 +88,7 @@ static dispatch_queue_t mcs_queue;
         if ( _isClosed || _isCalledPrepare )
             return;
         
-        MCSAssetReaderDebugLog(@"%@: <%p>.prepare { name: %@, request: %@ };\n", NSStringFromClass(self.class), self, _asset.name, _request);
+        MCSAssetReaderDebugLog(@"%@: <%p>.prepare { asset: %@, request: %@ };\n", NSStringFromClass(self.class), self, _asset.name, _request);
 
         NSParameterAssert(_asset);
          

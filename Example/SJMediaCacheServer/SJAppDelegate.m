@@ -13,7 +13,23 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     NSLog(@"%@", NSTemporaryDirectory());
-    // Override point for customization after application launch.
+    
+//    NSString *path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingString:@"/t.txt"];
+//    if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
+//        [NSFileManager.defaultManager createFileAtPath:path contents:nil attributes:nil];
+//    }
+//    NSFileHandle *writer = [NSFileHandle fileHandleForWritingAtPath:path];
+//
+//    NSUInteger length = 100 * 1024 * 1024;
+//    void *bytes = calloc(length, 1);
+//    NSData *data = [NSData dataWithBytes:bytes length:length];
+//    free(bytes);
+    
+//    while ( YES ) {
+//        @autoreleasepool {
+//            [writer writeData:data];
+//        }
+//    }
     return YES;
 }
 

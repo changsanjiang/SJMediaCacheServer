@@ -12,6 +12,7 @@
 #import "MCSConsts.h"
 #import "MCSConfiguration.h"
 #import "MCSRootDirectory.h"
+#import "NSFileHandle+MCS.h"
 
 static NSString *kLength = @"length";
 static NSString *kReadwriteCount = @"readwriteCount";
@@ -237,7 +238,7 @@ static dispatch_queue_t mcs_queue;
                             NSData *data = [reader readDataOfLength:1024 * 1024 * 1];
                             if ( data.length == 0 )
                                 break;
-                            [writer writeData:data];
+                            if ( ![writer mcs_writeData:data error:NULL] ) break;
                         }
                     }
                     [write didWriteDataWithLength:readRange.length];

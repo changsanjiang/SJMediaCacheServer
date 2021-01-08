@@ -11,7 +11,9 @@ NSNotificationName const MCSAssetMetadataDidLoadNotification = @"MCSAssetMetadat
 
 NSNotificationName const MCSAssetWillRemoveAssetNotification = @"MCSAssetWillRemoveAssetNotification";
 NSNotificationName const MCSAssetDidRemoveAssetNotification = @"MCSAssetDidRemoveAssetNotification";
-   
+
+NSNotificationName const MCSFileWriteOutOfSpaceErrorNotification = @"MCSFileWriteOutOfSpaceErrorNotification";
+
 NSString *const HLS_SUFFIX_INDEX   = @".m3u8";
 NSString *const HLS_SUFFIX_TS      = @".ts";
 NSString *const HLS_SUFFIX_AES_KEY = @".key";
