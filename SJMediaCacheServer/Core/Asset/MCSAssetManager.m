@@ -331,10 +331,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     dispatch_barrier_async(mcs_queue, ^{
         [self _syncDiskSpace];
         unsigned long long reservedFreeDiskSpace = self->_reservedFreeDiskSpace != 0 ? self->_reservedFreeDiskSpace : 500 * 1024 * 1024;
-        if ( self->_freeSize > reservedFreeDiskSpace ) return;
+        if ( self->_freeSize >= reservedFreeDiskSpace ) return;
         
         NSInteger curIdx = 0;
-        unsigned long long length = 0;
+        unsigned long long length = self->_freeSize;
         NSMutableArray<id<MCSAsset>> *assets = NSMutableArray.array;
         do {
             NSRange range = NSMakeRange(curIdx * 10, 10);
