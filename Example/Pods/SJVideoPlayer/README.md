@@ -23,11 +23,12 @@ $ pod update --no-repo-update   (不要用 pod install 了, 用这个命令安�
 ```
 
 ##  Wiki
-[Welcome to the SJVideoPlayer wiki!](https://github.com/changsanjiang/SJVideoPlayer/wiki)
+Welcome to the SJVideoPlayer wiki!
 
 - [Getting Started](https://github.com/changsanjiang/SJVideoPlayer/wiki/Getting-Started)
 - [快速开始](https://github.com/changsanjiang/SJVideoPlayer/wiki/%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B)
 - [旋转和直接全屏](https://github.com/changsanjiang/SJVideoPlayer/wiki/旋转和直接全屏)
+- [14.0 画中画 ꫛꫀꪝ](https://github.com/changsanjiang/SJVideoPlayer/wiki/iOS-14-%E7%94%BB%E4%B8%AD%E7%94%BB)
 - [播放记录](https://github.com/changsanjiang/SJVideoPlayer/wiki/%E6%92%AD%E6%94%BE%E8%AE%B0%E5%BD%95)
 - [长按快进](https://github.com/changsanjiang/SJVideoPlayer/wiki/%E9%95%BF%E6%8C%89%E5%BF%AB%E8%BF%9B)
 - [弹幕](https://github.com/changsanjiang/SJVideoPlayer/wiki/%E5%BC%B9%E5%B9%95)
@@ -968,7 +969,7 @@ ___
 ///
 ///         了解更多请前往协议头文件查看
 ///
-@property (nonatomic, strong, null_resettable) id<SJPopPromptController> popPromptController;
+@property (nonatomic, strong, null_resettable) id<SJPromptPopupController> promptPopupController;
 ```
 
 <h3 id="12.1">12.2 配置提示文本</h3>
@@ -1291,10 +1292,10 @@ _player.defaultEdgeControlLayer.hiddenBackButtonWhenOrientationIsPortrait = YES;
 _player.defaultEdgeControlLayer.disabledPromptWhenNetworkStatusChanges = YES;
 ```
 
-<h3 id="20.3">20.3 是否使返回按钮常驻</h3>
+<h3 id="20.3">20.3 是否将返回按钮固定</h3>
 
 ```Objective-C
-_player.defaultEdgeControlLayer.showResidentBackButton = YES;
+_player.defaultEdgeControlLayer.fixesBackItem = YES;
 ```
 
 <h3 id="20.4">20.4 是否隐藏底部进度条</h3>
@@ -1306,7 +1307,7 @@ _player.defaultEdgeControlLayer.hiddenBottomProgressIndicator = YES;
 <h3 id="20.5">20.5 是否在loadingView上显示网速</h3>
 
 ```Objective-C
-_player.defaultEdgeControlLayer.showNetworkSpeedToLoadingView = YES;
+_player.defaultEdgeControlLayer.showsNetworkSpeedToLoadingView = YES;
 ```
 
 <h3 id="20.6">20.6 自定义loadingView</h3>

@@ -111,6 +111,8 @@ static dispatch_queue_t mcs_queue;
 #pragma mark - mark
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
+    __auto_type delegate = [self _delegateForTask:task];
+    [delegate downloadTask:task willPerformHTTPRedirection:response newRequest:request];
     completionHandler(request);
 }
 

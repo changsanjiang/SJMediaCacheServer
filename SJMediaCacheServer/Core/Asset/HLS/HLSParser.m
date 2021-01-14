@@ -14,8 +14,10 @@
 #import "MCSQueue.h"
 #import "HLSAsset.h"
 
+// https://tools.ietf.org/html/rfc8216
+
 #define MCSURIMatchingPattern_Index     @".*\\.m3u8[^\\s]*"
-#define MCSURIMatchingPattern_Ts        @".*\\.ts[^\\s]*"
+#define MCSURIMatchingPattern_Ts        @"#EXTINF.+\\s(.+)\\s"
 #define MCSURIMatchingPattern_AESKey    @"#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\""
 #define MCSURIMatchingPattern_URIs      @"(.*\\.ts[^\\s]*)|(#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\")"
 
@@ -139,11 +141,13 @@ static dispatch_queue_t mcs_queue;
         return;
     }
     
-    NSURLRequest *currRequest = _request;
+    __block NSURLRequest *currRequest = _request;
     NSString *_Nullable contents = nil;
     do {
         NSError *downloadError = nil;
-        NSData *data = [MCSData dataWithContentsOfRequest:currRequest networkTaskPriority:_networkTaskPriority error:&downloadError];
+        NSData *data = [MCSData dataWithContentsOfRequest:currRequest networkTaskPriority:_networkTaskPriority error:&downloadError willPerformHTTPRedirection:^(NSHTTPURLResponse * _Nonnull response, NSURLRequest * _Nonnull newRequest) {
+            currRequest = newRequest;
+        }];
         if ( downloadError != nil ) {
             [self _onError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
                 MCSErrorUserInfoObjectKey : currRequest,
@@ -174,22 +178,23 @@ static dispatch_queue_t mcs_queue;
  
     NSMutableString *indexFileContents = contents.mutableCopy;
     ///
+    /// #EXTINF:10,
     /// 000000.ts
     ///
-    NSArray<NSValue *> *TsURIRanges = [contents mcs_rangesByMatchingPattern:MCSURIMatchingPattern_Ts];
-    if ( TsURIRanges.count == 0 ) {
+    NSArray<NSTextCheckingResult *> *TsResults =[contents mcs_textCheckingResultsByMatchPattern:MCSURIMatchingPattern_Ts];
+    if ( TsResults.count == 0 ) {
         [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
             MCSErrorUserInfoObjectKey : contents,
             MCSErrorUserInfoReasonKey : @"数据格式不正确, 未匹配到ts文件!"
         }]];
         return;
     }
-    [TsURIRanges enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSValue * _Nonnull range, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRange rangeValue = range.rangeValue;
-        NSString *matched = [contents substringWithRange:rangeValue];
+    [TsResults enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSRange range = [result rangeAtIndex:1];
+        NSString *matched = [contents substringWithRange:range];
         NSString *url = [self _urlWithMatchedString:matched indexURL:currRequest.URL];
         NSString *proxy = [MCSURLRecognizer.shared proxyTsURIWithUrl:url inAsset:asset.name];
-        [indexFileContents replaceCharactersInRange:rangeValue withString:proxy];
+        [indexFileContents replaceCharactersInRange:range withString:proxy];
     }];
  
     ///

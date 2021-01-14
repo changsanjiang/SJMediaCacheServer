@@ -158,7 +158,7 @@ static dispatch_queue_t mcs_queue;
     dispatch_async(mcs_queue, ^{
         NSError *downloadError = nil;
         // Wait until the download is complete
-        NSData *contentData = [MCSData dataWithContentsOfRequest:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:self->_networkTaskPriority error:&downloadError];
+        NSData *contentData = [MCSData dataWithContentsOfRequest:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:self->_networkTaskPriority error:&downloadError willPerformHTTPRedirection:nil];
         
         // write to file
         __block NSError *writeError = nil;

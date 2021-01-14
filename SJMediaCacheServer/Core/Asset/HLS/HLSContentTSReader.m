@@ -206,6 +206,10 @@ static dispatch_queue_t mcs_queue;
  
 #pragma mark - MCSDownloadTaskDelegate
 
+- (void)downloadTask:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request {
+    
+}
+
 - (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
     dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )

@@ -6,16 +6,56 @@
 //
 
 #import "SJVideoPlayerResourceLoader.h"
-
+ 
 NS_ASSUME_NONNULL_BEGIN
 @implementation SJVideoPlayerResourceLoader
-+ (NSBundle *)bundle {
-    static NSBundle *bundle = nil;
+static NSBundle *bundle = nil;
+static NSBundle *preferredLanguageBundle = nil;
+static NSBundle *enBundle = nil;
+static NSBundle *zhHansBundle = nil;
+static NSBundle *zhHantBundle = nil;
+
++ (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-       bundle = [NSBundle bundleWithPath:[[NSBundle bundleForClass:[self class]] pathForResource:@"SJVideoPlayer" ofType:@"bundle"]];
+        bundle = [NSBundle bundleWithPath:[[NSBundle bundleForClass:[self class]] pathForResource:@"SJVideoPlayer" ofType:@"bundle"]];
+        NSString *preferredLanguage = [NSLocale preferredLanguages].firstObject;
+        if      ( [preferredLanguage hasPrefix:@"en"] ) {
+            preferredLanguage = @"en";
+        }
+        else if ( [preferredLanguage hasPrefix:@"zh"] ) {
+            preferredLanguage = [preferredLanguage rangeOfString:@"Hans"].location != NSNotFound ? @"zh-Hans" : @"zh-Hant";
+        }
+        else {
+            preferredLanguage = @"en";
+        }
+        preferredLanguageBundle = [NSBundle bundleWithPath:[bundle pathForResource:preferredLanguage ofType:@"lproj"]];
+        enBundle = [NSBundle bundleWithPath:[bundle pathForResource:@"en" ofType:@"lproj"]];
+        zhHansBundle = [NSBundle bundleWithPath:[bundle pathForResource:@"zh-Hans" ofType:@"lproj"]];
+        zhHantBundle = [NSBundle bundleWithPath:[bundle pathForResource:@"zh-Hant" ofType:@"lproj"]];
     });
+}
+
++ (NSBundle *)bundle {
     return bundle;
+}
+
++ (NSBundle *)preferredLanguageBundle {
+    return preferredLanguageBundle;
+}
+
++ (NSBundle *)enBundle {
+    return enBundle;
+}
+ 
+/// 简体中文
++ (NSBundle *)zhHansBundle {
+    return zhHansBundle;
+}
+
+/// 繁體中文
++ (NSBundle *)zhHantBundle {
+    return zhHantBundle;
 }
 
 + (nullable UIImage *)imageNamed:(NSString *)name {
@@ -25,31 +65,6 @@ NS_ASSUME_NONNULL_BEGIN
     NSData *data = [NSData dataWithContentsOfFile:path];
     UIImage *image = [UIImage imageWithData:data scale:3.0];
     return image;
-}
-
-+ (nullable NSString *)localizedStringForKey:(NSString *)key {
-    static NSBundle *bundle = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSString *language = [NSLocale preferredLanguages].firstObject;
-        if ( [language hasPrefix:@"en"] ) {
-            language = @"en";
-        }
-        else if ( [language hasPrefix:@"zh"] ) {
-            if ( [language containsString:@"Hans"] ) {
-                language = @"zh-Hans";
-            }
-            else {
-                language = @"zh-Hant";
-            }
-        }
-        else {
-            language = @"en";
-        }
-        bundle = [NSBundle bundleWithPath:[[self bundle] pathForResource:language ofType:@"lproj"]];
-    });
-    NSString *value = [bundle localizedStringForKey:key value:nil table:nil];
-    return [[NSBundle mainBundle] localizedStringForKey:key value:value table:nil];
 }
 @end
 NS_ASSUME_NONNULL_END
