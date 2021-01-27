@@ -138,8 +138,11 @@ static dispatch_queue_t mcs_queue;
             if ( NSLocationInRange(offset - 1, reader.range) ) {
                 _currentIndex = i;
                 result = [reader seekToOffset:offset];
-                if ( reader.isDone ) [self _prepareNextReader];
-                return;
+                if ( result ) {
+                    _readLength = offset - _range.location;
+                    if ( reader.isDone ) [self _prepareNextReader];
+                }
+                break;
             }
         }
     });
@@ -232,7 +235,7 @@ static dispatch_queue_t mcs_queue;
         // bytes=100-500
         else if ( requestRange.start != NSNotFound && requestRange.end != NSNotFound ) {
             NSUInteger location = requestRange.start;
-            NSUInteger length = totalLength > requestRange.end ? ((requestRange.end + 1) - location) : 0;
+            NSUInteger length = (totalLength > requestRange.end ? (requestRange.end + 1) : totalLength) - location;
             current = NSMakeRange(location, length);
         }
         // bytes=-500

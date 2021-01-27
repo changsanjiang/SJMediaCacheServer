@@ -16,16 +16,29 @@
 
 // https://tools.ietf.org/html/rfc8216
 
-#define MCSURIMatchingPattern_Index     @".*\\.m3u8[^\\s]*"
-#define MCSURIMatchingPattern_Ts        @"#EXTINF.+\\s(.+)\\s"
-#define MCSURIMatchingPattern_AESKey    @"#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\""
-#define MCSURIMatchingPattern_URIs      @"(.*\\.ts[^\\s]*)|(#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\")"
+#define HLS_FORMAT_FIRST_LINE_TAG           @"#EXTM3U"
+     
+#define HLS_REGEX_INDEX                     @".*\\.m3u8[^\\s]*"
+#define HLS_REGEX_INDEX_2                   @"#EXT-X-STREAM-INF.+\\s(.+)\\s"
+#define HLS_REGEX_TS                        @"#EXTINF.+\\s(.+)\\s"
+#define HLS_REGEX_AESKEY                    @"#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\""
+#define HLS_REGEX_LOCAL_URIs                @"(.*\\.ts[^\\s]*)|(#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\")"
+
+#define HLS_INDEX_TS        1
+#define HLS_INDEX_AESKEY    1
+#define HLS_INDEX_INDEX_2   1
 
 static dispatch_queue_t mcs_queue;
 
 @interface NSString (MCSRegexMatching)
 - (nullable NSArray<NSValue *> *)mcs_rangesByMatchingPattern:(NSString *)pattern;
 - (nullable NSArray<NSTextCheckingResult *> *)mcs_textCheckingResultsByMatchPattern:(NSString *)pattern;
+@end
+
+@interface NSString (MCSHLSContents)
+- (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern contentsURL:(NSURL *)contentsURL;
+- (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern atIndex:(NSInteger)index contentsURL:(NSURL *)contentsURL;
+- (NSString *)mcs_convertToUrlByContentsURL:(NSURL *)contentsURL;
 @end
 
 @interface HLSParser ()
@@ -160,15 +173,15 @@ static dispatch_queue_t mcs_queue;
         contents = [NSString.alloc initWithData:data encoding:0];
         if ( contents == nil )
             break;
-
-        // 是否重定向
-        NSString *redirectUrl = [self _urlsWithPattern:MCSURIMatchingPattern_Index indexURL:currRequest.URL source:contents].firstObject;
-        if ( redirectUrl == nil ) break;
         
-        currRequest = [currRequest mcs_requestWithRedirectURL:[NSURL URLWithString:redirectUrl]];
+        // 是否重定向
+        NSString *next = [self _indexUrlForContents:contents contentsURL:currRequest.URL];
+        if ( next == nil ) break;
+        
+        currRequest = [currRequest mcs_requestWithRedirectURL:[NSURL URLWithString:next]];
     } while ( true );
     
-    if ( contents == nil || ![contents hasPrefix:@"#"] ) {
+    if ( contents == nil || ![contents hasPrefix:HLS_FORMAT_FIRST_LINE_TAG] ) {
         [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
             MCSErrorUserInfoObjectKey : contents ?: @"",
             MCSErrorUserInfoReasonKey : @"数据为空或格式不正确!"
@@ -181,7 +194,7 @@ static dispatch_queue_t mcs_queue;
     /// #EXTINF:10,
     /// 000000.ts
     ///
-    NSArray<NSTextCheckingResult *> *TsResults =[contents mcs_textCheckingResultsByMatchPattern:MCSURIMatchingPattern_Ts];
+    NSArray<NSTextCheckingResult *> *TsResults =[contents mcs_textCheckingResultsByMatchPattern:HLS_REGEX_TS];
     if ( TsResults.count == 0 ) {
         [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
             MCSErrorUserInfoObjectKey : contents,
@@ -190,9 +203,9 @@ static dispatch_queue_t mcs_queue;
         return;
     }
     [TsResults enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRange range = [result rangeAtIndex:1];
+        NSRange range = [result rangeAtIndex:HLS_INDEX_TS];
         NSString *matched = [contents substringWithRange:range];
-        NSString *url = [self _urlWithMatchedString:matched indexURL:currRequest.URL];
+        NSString *url = [matched mcs_convertToUrlByContentsURL:currRequest.URL];
         NSString *proxy = [MCSURLRecognizer.shared proxyTsURIWithUrl:url inAsset:asset.name];
         [indexFileContents replaceCharactersInRange:range withString:proxy];
     }];
@@ -200,10 +213,10 @@ static dispatch_queue_t mcs_queue;
     ///
     /// #EXT-X-KEY:METHOD=AES-128,URI="...",IV=...
     ///
-    [[indexFileContents mcs_textCheckingResultsByMatchPattern:@"#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\""] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRange URIRange = [result rangeAtIndex:1];
+    [[indexFileContents mcs_textCheckingResultsByMatchPattern:HLS_REGEX_AESKEY] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSRange URIRange = [result rangeAtIndex:HLS_INDEX_AESKEY];
         NSString *URI = [indexFileContents substringWithRange:URIRange];
-        NSString *url = [self _urlWithMatchedString:URI indexURL:currRequest.URL];
+        NSString *url = [URI mcs_convertToUrlByContentsURL:currRequest.URL];
         NSString *proxy = [MCSURLRecognizer.shared proxyAESKeyURIWithUrl:url inAsset:asset.name];
         [indexFileContents replaceCharactersInRange:URIRange withString:proxy];
     }];
@@ -221,35 +234,15 @@ static dispatch_queue_t mcs_queue;
     [self _finished];
 }
 
-- (nullable NSArray<NSString *> *)_urlsWithPattern:(NSString *)pattern indexURL:(NSURL *)indexURL source:(NSString *)source {
-    NSMutableArray<NSString *> *m = NSMutableArray.array;
-    [[source mcs_rangesByMatchingPattern:pattern] enumerateObjectsUsingBlock:^(NSValue * _Nonnull range, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSString *matched = [source substringWithRange:[range rangeValue]];
-        NSString *matchedUrl = [self _urlWithMatchedString:matched indexURL:indexURL];
-        [m addObject:matchedUrl];
-    }];
-    
-    return m.count != 0 ? m.copy : nil;
-}
-
-- (NSString *)_urlWithMatchedString:(NSString *)matched indexURL:(NSURL *)indexURL {
-    static NSString *const HLS_PREFIX_LOCALHOST = @"http://localhost";
-    static NSString *const HLS_PREFIX_PATH = @"/";
-    
-    NSString *url = nil;
-    if ( [matched hasPrefix:HLS_PREFIX_PATH] ) {
-        url = [NSString stringWithFormat:@"%@://%@%@", indexURL.scheme, indexURL.host, matched];
+- (nullable NSString *)_indexUrlForContents:(NSString *)contents contentsURL:(NSURL *)contentsURL {
+    // 是否重定向
+    // 1
+    NSString *redirectUrl = [contents mcs_urlsByMatchingPattern:HLS_REGEX_INDEX contentsURL:contentsURL].firstObject;
+    // 2
+    if ( redirectUrl == nil ) {
+        redirectUrl = [contents mcs_urlsByMatchingPattern:HLS_REGEX_INDEX_2 atIndex:HLS_INDEX_INDEX_2 contentsURL:contentsURL].firstObject;
     }
-    else if ( [matched hasPrefix:HLS_PREFIX_LOCALHOST] ) {
-        url = [NSString stringWithFormat:@"%@://%@%@", indexURL.scheme, indexURL.host, [matched substringFromIndex:HLS_PREFIX_LOCALHOST.length]];
-    }
-    else if ( [matched containsString:@"://"] ) {
-        url = matched;
-    }
-    else {
-        url = [NSString stringWithFormat:@"%@/%@", indexURL.absoluteString.stringByDeletingLastPathComponent, matched];
-    }
-    return url; 
+    return redirectUrl;
 }
 
 - (void)_onError:(NSError *)error {
@@ -277,7 +270,7 @@ static dispatch_queue_t mcs_queue;
     
     NSMutableArray<NSString *> *TsURIArray = NSMutableArray.array;
     NSMutableArray<NSString *> *URIs = NSMutableArray.array;
-    [[content mcs_textCheckingResultsByMatchPattern:MCSURIMatchingPattern_URIs] enumerateObjectsUsingBlock:^(NSTextCheckingResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    [[content mcs_textCheckingResultsByMatchPattern:HLS_REGEX_LOCAL_URIs] enumerateObjectsUsingBlock:^(NSTextCheckingResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange range1 = [obj rangeAtIndex:1];
         NSRange range3 = [obj rangeAtIndex:3];
         if      ( range1.location != NSNotFound ) {
@@ -324,5 +317,44 @@ static dispatch_queue_t mcs_queue;
         }
     }];
     return m.count != 0 ? m.copy : nil;
+}
+@end
+
+@implementation NSString (MCSHLSContents)
+- (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern contentsURL:(NSURL *)contentsURL {
+    return [self mcs_urlsByMatchingPattern:pattern atIndex:0 contentsURL:contentsURL];
+}
+
+- (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern atIndex:(NSInteger)index contentsURL:(NSURL *)contentsURL {
+    NSMutableArray<NSString *> *m = NSMutableArray.array;
+    [[self mcs_textCheckingResultsByMatchPattern:pattern] enumerateObjectsUsingBlock:^(NSTextCheckingResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//        The range at index 0 always matches the range property.  Additional ranges, if any, will have indexes from 1 to numberOfRanges-1. rangeWithName: can be used with named regular expression capture groups
+        NSRange range = [obj rangeAtIndex:index];
+        NSString *matched = [self substringWithRange:range];
+        NSString *url = [matched mcs_convertToUrlByContentsURL:contentsURL];
+        [m addObject:url];
+    }];
+    return m.count != 0 ? m.copy : nil;
+}
+
+/// 将路径转换为url
+- (NSString *)mcs_convertToUrlByContentsURL:(NSURL *)URL {
+    static NSString *const HLS_PREFIX_LOCALHOST = @"http://localhost";
+    static NSString *const HLS_PREFIX_PATH = @"/";
+    
+    NSString *url = nil;
+    if ( [self hasPrefix:HLS_PREFIX_PATH] ) {
+        url = [NSString stringWithFormat:@"%@://%@%@", URL.scheme, URL.host, self];
+    }
+    else if ( [self hasPrefix:HLS_PREFIX_LOCALHOST] ) {
+        url = [NSString stringWithFormat:@"%@://%@%@", URL.scheme, URL.host, [self substringFromIndex:HLS_PREFIX_LOCALHOST.length]];
+    }
+    else if ( [self containsString:@"://"] ) {
+        url = self;
+    }
+    else {
+        url = [NSString stringWithFormat:@"%@/%@", URL.absoluteString.stringByDeletingLastPathComponent, self];
+    }
+    return url;
 }
 @end

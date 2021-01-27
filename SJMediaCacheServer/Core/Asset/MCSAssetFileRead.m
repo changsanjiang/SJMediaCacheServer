@@ -143,7 +143,7 @@ static dispatch_queue_t mcs_queue;
 - (BOOL)seekToOffset:(NSUInteger)offset {
     __block BOOL result = NO;
     dispatch_barrier_sync(mcs_queue, ^{
-        if ( _isClosed || !_isPrepared )
+        if ( _isClosed || !_isPrepared || _isDone )
             return;
         if ( !NSLocationInRange(offset - 1, _range) )
             return;

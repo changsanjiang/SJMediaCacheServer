@@ -11,6 +11,7 @@
 #import "MCSUtils.h"
 #import "MCSQueue.h"
 #import "MCSLogger.h"
+#import "NSURLRequest+MCS.h"
 
 static dispatch_queue_t mcs_queue;
 
@@ -82,7 +83,7 @@ static dispatch_queue_t mcs_queue;
     [self _setDelegate:delegate forTask:task];
     [task resume];
     
-    MCSDownloaderDebugLog(@"%@: <%p>.downloadWithRequest { task: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier);
+    MCSDownloaderDebugLog(@"%@: <%p>.downloadWithRequest { task: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier, [request mcs_description]);
 
     return task;
 }
