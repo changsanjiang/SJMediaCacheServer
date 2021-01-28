@@ -1,12 +1,12 @@
 //
-//  MCSURLRecognizer.m
+//  MCSURL.m
 //  SJMediaCacheServer_Example
 //
 //  Created by 畅三江 on 2020/6/2.
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import "MCSURLRecognizer.h"
+#import "MCSURL.h"
 #import "MCSConsts.h"
 #include <CommonCrypto/CommonCrypto.h>
 
@@ -51,7 +51,7 @@ MCSMD5(NSString *str) {
 @end
 
 
-@implementation MCSURLRecognizer
+@implementation MCSURL
 + (instancetype)shared {
     static id instance = nil;
     static dispatch_once_t onceToken;
@@ -62,9 +62,9 @@ MCSMD5(NSString *str) {
 }
 
 - (NSURL *)proxyURLWithURL:(NSURL *)URL {
-    NSParameterAssert(_server);
+    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
     
-    NSURL *serverURL = _server.serverURL;
+    NSURL *serverURL = _serverURL;
     if ( [URL.host isEqualToString:serverURL.host] )
         return URL;
     
@@ -88,12 +88,14 @@ MCSMD5(NSString *str) {
 
 // 此处的URL参数可能为代理URL也可能为原始URL
 - (NSString *)assetNameForURL:(NSURL *)URL {
+    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
+
     NSParameterAssert(URL.host);
     
     NSString *url = URL.absoluteString;
     
     // 判断是否为代理URL
-    if ( [URL.host isEqualToString:_server.serverURL.host] ) {
+    if ( [URL.host isEqualToString:_serverURL.host] ) {
         // 包含 mcsproxy 为 HLS 内部资源的请求, 此处返回path后面资源的名字
         NSRange range = [url rangeOfString:mcsproxy];
         if ( range.location != NSNotFound ) {
@@ -140,9 +142,11 @@ MCSMD5(NSString *str) {
 
 @end
 
-@implementation MCSURLRecognizer (HLS)
+@implementation MCSURL (HLS)
 - (NSURL *)proxyURLWithTsURI:(NSString *)TsURI {
-    return [NSURL URLWithString:[_server.serverURL.absoluteString stringByAppendingFormat:@"/%@", TsURI]];
+    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
+
+    return [NSURL URLWithString:[_serverURL.absoluteString stringByAppendingFormat:@"/%@", TsURI]];
 }
 
 - (NSString *)proxyTsURIWithUrl:(NSString *)url inAsset:(NSString *)asset {

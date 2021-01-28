@@ -1,5 +1,5 @@
 //
-//  MCSURLRecognizer.h
+//  MCSURL.h
 //  SJMediaCacheServer_Example
 //
 //  Created by 畅三江 on 2020/6/2.
@@ -7,14 +7,13 @@
 //
 
 #import "MCSInterfaces.h"
-#import "MCSProxyServer.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MCSURLRecognizer : NSObject
+@interface MCSURL : NSObject
 + (instancetype)shared;
 
-@property (nonatomic, strong, nullable) MCSProxyServer *server;
+@property (nonatomic, strong, nullable) NSURL *serverURL;
 
 @property (nonatomic, copy, nullable) NSString *(^resolveAssetIdentifier)(NSURL *URL);
 
@@ -29,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@interface MCSURLRecognizer (HLS)
+@interface MCSURL (HLS)
 - (NSURL *)proxyURLWithTsURI:(NSString *)TsURI;
 - (NSString *)proxyTsURIWithUrl:(NSString *)url inAsset:(NSString *)asset;
 - (NSString *)proxyAESKeyURIWithUrl:(NSString *)url inAsset:(NSString *)asset;

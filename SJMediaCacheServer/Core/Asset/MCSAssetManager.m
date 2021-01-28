@@ -170,8 +170,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL {
     __block id<MCSAsset> asset = nil;
     dispatch_barrier_sync(mcs_queue, ^{
-        MCSAssetType type = [MCSURLRecognizer.shared assetTypeForURL:URL];
-        NSString *name = [MCSURLRecognizer.shared assetNameForURL:URL];
+        MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
+        NSString *name = [MCSURL.shared assetNameForURL:URL];
         if ( _assets[name] == nil ) {
             Class cls = [self _assetClassForType:type];
             if ( cls == nil ) return;
@@ -214,10 +214,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (BOOL)isAssetStoredForURL:(NSURL *)URL {
     __block id<MCSAsset> asset = nil;
     dispatch_barrier_sync(mcs_queue, ^{
-        NSString *name = [MCSURLRecognizer.shared assetNameForURL:URL];
+        NSString *name = [MCSURL.shared assetNameForURL:URL];
         asset = _assets[name];
         if ( asset != nil ) return;
-        MCSAssetType type = [MCSURLRecognizer.shared assetTypeForURL:URL];
+        MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
         Class cls = [self _assetClassForType:type];
         if ( cls == nil ) return;
         asset = (id)[_sqlite3 objectsForClass:cls conditions:@[
@@ -253,8 +253,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     if ( URL.absoluteString.length == 0 )
         return;
     dispatch_barrier_sync(mcs_queue, ^{
-        MCSAssetType type = [MCSURLRecognizer.shared assetTypeForURL:URL];
-        NSString *name = [MCSURLRecognizer.shared assetNameForURL:URL];
+        MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
+        NSString *name = [MCSURL.shared assetNameForURL:URL];
         Class cls = [self _assetClassForType:type];
         if ( cls == nil ) return;
         id<MCSAsset> asset = (id)[_sqlite3 objectsForClass:cls conditions:@[

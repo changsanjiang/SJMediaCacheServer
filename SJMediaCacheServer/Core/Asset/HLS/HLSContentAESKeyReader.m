@@ -11,7 +11,7 @@
 #import "MCSLogger.h"
 #import "MCSData.h"
 #import "MCSUtils.h"
-#import "MCSURLRecognizer.h"
+#import "MCSURL.h"
 #import "MCSAssetFileRead.h"
 #import "MCSQueue.h"
 #import "NSURLRequest+MCS.h"

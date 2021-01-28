@@ -8,7 +8,7 @@
 
 #import "HLSAsset.h"
 #import "MCSConfiguration.h"
-#import "MCSURLRecognizer.h"
+#import "MCSURL.h"
 #import "MCSUtils.h"
 #import "MCSConsts.h"
 #import "HLSContentProvider.h"
@@ -122,7 +122,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL {
-    return [_provider AESKeyFilePathWithName:[MCSURLRecognizer.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_AES_KEY]];
+    return [_provider AESKeyFilePathWithName:[MCSURL.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_AES_KEY]];
 }
 
 - (nullable NSString *)TsContentType {
@@ -147,7 +147,7 @@ static dispatch_queue_t mcs_queue;
             isUpdated = YES;
         }
         
-        NSString *name = [MCSURLRecognizer.shared nameWithUrl:response.URL.absoluteString suffix:HLS_SUFFIX_TS];
+        NSString *name = [MCSURL.shared nameWithUrl:response.URL.absoluteString suffix:HLS_SUFFIX_TS];
         NSUInteger totalLength = response.expectedContentLength;
         content = [_provider createTsContentWithName:name totalLength:totalLength];
         [_contents addObject:content];
@@ -163,7 +163,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (nullable id<MCSAssetContent>)TsContentForURL:(NSURL *)URL {
-    NSString *name = [MCSURLRecognizer.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_TS];
+    NSString *name = [MCSURL.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_TS];
     __block HLSContentTs *ts = nil;
     dispatch_barrier_sync(mcs_queue, ^{
         for ( HLSContentTs *content in _contents ) {

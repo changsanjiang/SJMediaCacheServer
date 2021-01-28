@@ -8,7 +8,7 @@
 #import "MCSPrefetcherManager.h"
 #import "HLSPrefetcher.h"
 #import "FILEPrefetcher.h"
-#import "MCSURLRecognizer.h"
+#import "MCSURL.h"
 
 @interface MCSPrefetchOperation : NSOperation<MCSPrefetchTask>
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock;
@@ -102,7 +102,7 @@
     }
     dispatch_semaphore_signal(_semaphore);
     
-    MCSAssetType type = [MCSURLRecognizer.shared assetTypeForURL:_URL];
+    MCSAssetType type = [MCSURL.shared assetTypeForURL:_URL];
     switch ( type ) {
         case MCSAssetTypeFILE: {
             _prefetcher = _isPrefetchAllMode ?

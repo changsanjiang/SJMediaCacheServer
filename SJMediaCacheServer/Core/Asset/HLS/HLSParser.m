@@ -9,7 +9,7 @@
 #import "HLSParser.h"
 #import "MCSError.h"
 #import "MCSData.h"
-#import "MCSURLRecognizer.h"
+#import "MCSURL.h"
 #import "NSURLRequest+MCS.h"
 #import "MCSQueue.h"
 #import "HLSAsset.h"
@@ -206,7 +206,7 @@ static dispatch_queue_t mcs_queue;
         NSRange range = [result rangeAtIndex:HLS_INDEX_TS];
         NSString *matched = [contents substringWithRange:range];
         NSString *url = [matched mcs_convertToUrlByContentsURL:currRequest.URL];
-        NSString *proxy = [MCSURLRecognizer.shared proxyTsURIWithUrl:url inAsset:asset.name];
+        NSString *proxy = [MCSURL.shared proxyTsURIWithUrl:url inAsset:asset.name];
         [indexFileContents replaceCharactersInRange:range withString:proxy];
     }];
  
@@ -217,7 +217,7 @@ static dispatch_queue_t mcs_queue;
         NSRange URIRange = [result rangeAtIndex:HLS_INDEX_AESKEY];
         NSString *URI = [indexFileContents substringWithRange:URIRange];
         NSString *url = [URI mcs_convertToUrlByContentsURL:currRequest.URL];
-        NSString *proxy = [MCSURLRecognizer.shared proxyAESKeyURIWithUrl:url inAsset:asset.name];
+        NSString *proxy = [MCSURL.shared proxyAESKeyURIWithUrl:url inAsset:asset.name];
         [indexFileContents replaceCharactersInRange:URIRange withString:proxy];
     }];
     

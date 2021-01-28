@@ -46,7 +46,7 @@ static dispatch_queue_t mcs_queue;
     self = [super init];
     if ( self ) {
 #ifdef DEBUG
-        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, [MCSURLRecognizer.shared URLWithProxyURL:request.URL], asset, request.URL, request.allHTTPHeaderFields);
+        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, [MCSURL.shared URLWithProxyURL:request.URL], asset, request.URL, request.allHTTPHeaderFields);
 #endif
 
         _asset = asset;
@@ -93,7 +93,7 @@ static dispatch_queue_t mcs_queue;
         NSParameterAssert(_asset);
          
         _isCalledPrepare = YES;
-        NSURL *URL = [MCSURLRecognizer.shared URLWithProxyURL:_request.URL];
+        NSURL *URL = [MCSURL.shared URLWithProxyURL:_request.URL];
         NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL];
         if      ( [_request.URL.absoluteString containsString:HLS_SUFFIX_INDEX] ) {
             _reader = [HLSContentIndexReader.alloc initWithAsset:_asset request:request networkTaskPriority:_networkTaskPriority delegate:self];

@@ -13,7 +13,7 @@
 #import "SJMediaCacheServer.h"
 
 #import <SJMediaCacheServer/NSURLRequest+MCS.h>
-#import <SJMediaCacheServer/MCSURLRecognizer.h>
+#import <SJMediaCacheServer/MCSURL.h>
 #import <SJMediaCacheServer/MCSPrefetcherManager.h>
 #import <SJBaseVideoPlayer/SJAVMediaPlaybackController.h>
 
