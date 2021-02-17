@@ -238,7 +238,13 @@ static dispatch_queue_t mcs_queue;
 
 - (void)readerPrepareDidFinish:(id<MCSAssetDataReader>)reader {
     dispatch_barrier_sync(mcs_queue, ^{
-        _response = [MCSResponse.alloc initWithTotalLength:reader.range.length contentType:[reader isKindOfClass:HLSContentTSReader.class] ? _asset.TsContentType : nil];
+        if ( [reader isKindOfClass:HLSContentTSReader.class] ) {
+            HLSContentTSReader *r = reader;
+            _response = [MCSResponse.alloc initWithTotalLength:r.totalLength range:r.range contentType:_asset.TsContentType];
+        }
+        else {
+            _response = [MCSResponse.alloc initWithTotalLength:reader.range.length];
+        }
         _isPrepared = YES;
     });
     [_delegate reader:self prepareDidFinish:self.response];

@@ -124,8 +124,8 @@ static dispatch_queue_t mcs_queue;
 
 - (nullable FILEContent *)createContentWithResponse:(NSHTTPURLResponse *)response {
     NSString *pathExtension = MCSSuggestedFilePathExtension(response);
-    NSString *contentType = MCSGetResponseContentType(response);
-    MCSResponseContentRange range = MCSGetResponseContentRange(response);
+    NSString *contentType = MCSResponseGetContentType(response);
+    MCSResponseContentRange range = MCSResponseGetContentRange(response);
     NSUInteger totalLength = range.totalLength;
     NSUInteger offset = range.start;
     __block FILEContent *content = nil;

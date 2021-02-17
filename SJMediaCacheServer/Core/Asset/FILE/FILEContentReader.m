@@ -190,7 +190,7 @@ static dispatch_queue_t mcs_queue;
     dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )
             return;
-        _range = MCSGetResponseNSRange(MCSGetResponseContentRange(response));
+        _range = MCSResponseRange(MCSResponseGetContentRange(response));
         _content = [_asset createContentWithResponse:response];
         [_content readwriteRetain];
         

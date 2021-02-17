@@ -138,7 +138,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (nullable id<MCSAssetContent>)createTsContentWithResponse:(NSHTTPURLResponse *)response {
-    NSString *TsContentType = MCSGetResponseContentType(response);
+    NSString *TsContentType = MCSResponseGetContentType(response);
     __block BOOL isUpdated = NO;
     __block HLSContentTs *content = nil;
     dispatch_barrier_sync(mcs_queue, ^{
@@ -148,8 +148,19 @@ static dispatch_queue_t mcs_queue;
         }
         
         NSString *name = [MCSURL.shared nameWithUrl:response.URL.absoluteString suffix:HLS_SUFFIX_TS];
-        NSUInteger totalLength = response.expectedContentLength;
-        content = [_provider createTsContentWithName:name totalLength:totalLength];
+        MCSResponseContentRange range = MCSResponseContentRangeUndefined;
+        if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
+            range = MCSResponseGetContentRange(response);
+        }
+        
+        if ( MCSResponseRangeIsUndefined(range) ) {
+            NSUInteger totalLength = response.expectedContentLength;
+            content = [_provider createTsContentWithName:name totalLength:totalLength];
+        }
+        else {
+            content = [_provider createTsContentWithName:name totalLength:range.totalLength inRange:MCSResponseRange(range)];
+        }
+        
         [_contents addObject:content];
     });
     
@@ -162,12 +173,24 @@ static dispatch_queue_t mcs_queue;
     return [_provider TsContentFilePathForFilename:filename];
 }
 
-- (nullable id<MCSAssetContent>)TsContentForURL:(NSURL *)URL {
-    NSString *name = [MCSURL.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_TS];
+- (nullable id<MCSAssetContent>)TsContentForRequest:(NSURLRequest *)request {
+    NSString *name = [MCSURL.shared nameWithUrl:request.URL.absoluteString suffix:HLS_SUFFIX_TS];
     __block HLSContentTs *ts = nil;
     dispatch_barrier_sync(mcs_queue, ^{
+        // range
+        NSRange r = NSMakeRange(0, 0);
+        BOOL isRangeRequest = MCSRequestIsRangeRequest(request);
+        MCSRequestContentRange range = MCSRequestContentRangeUndefined;
+        if ( isRangeRequest ) {
+            range = MCSRequestGetContentRange(request.allHTTPHeaderFields);
+            r = MCSRequestRange(range);
+        }
+        
         for ( HLSContentTs *content in _contents ) {
-            if ( [content.name isEqualToString:name] && content.length == content.totalLength ) {
+            if ( ![content.name isEqualToString:name] ) continue;
+            if ( isRangeRequest && !NSEqualRanges(r, content.range) ) continue;
+            
+            if ( content.length == content.range.length ) {
                 ts = content;
                 break;
             }
@@ -223,7 +246,7 @@ static dispatch_queue_t mcs_queue;
             HLSContentTs *obj1 = contents[i];
             for ( NSInteger j = i + 1 ; j < contents.count ; ++ j ) {
                 HLSContentTs *obj2 = contents[j];
-                if ( [obj1.name isEqualToString:obj2.name] ) {
+                if ( [obj1.name isEqualToString:obj2.name] && NSEqualRanges(obj1.range, obj2.range) ) {
                     [deletes addObject:obj1.length >= obj2.length ? obj2 : obj1];
                 }
             }

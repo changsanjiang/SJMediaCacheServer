@@ -9,27 +9,35 @@
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
+
+FOUNDATION_EXTERN BOOL
+MCSRequestIsRangeRequest(NSURLRequest *request);
+
 typedef struct response_content_range {
     NSUInteger start; // `NSNotFound` means undefined
     NSUInteger end;
     NSUInteger totalLength;
 } MCSResponseContentRange;
 
-
 FOUNDATION_EXTERN MCSResponseContentRange
-MCSGetResponseContentRange(NSHTTPURLResponse *response);
+MCSResponseGetContentRange(NSHTTPURLResponse *response);
 
 FOUNDATION_EXTERN NSRange
-MCSGetResponseNSRange(MCSResponseContentRange responseRange);
+MCSResponseRange(MCSResponseContentRange range);
 
 FOUNDATION_EXTERN NSString *
-MCSGetResponseServer(NSHTTPURLResponse *response);
+MCSResponseGetServer(NSHTTPURLResponse *response);
 
 FOUNDATION_EXTERN NSString *
-MCSGetResponseContentType(NSHTTPURLResponse *response);
+MCSResponseGetContentType(NSHTTPURLResponse *response);
 
 FOUNDATION_EXPORT NSUInteger
-MCSGetResponseContentLength(NSHTTPURLResponse *response);
+MCSResponseGetContentLength(NSHTTPURLResponse *response);
+
+FOUNDATION_EXTERN MCSResponseContentRange const MCSResponseContentRangeUndefined;
+
+FOUNDATION_EXPORT BOOL
+MCSResponseRangeIsUndefined(MCSResponseContentRange range);
 
 #pragma mark -
 
@@ -39,10 +47,15 @@ typedef struct request_content_range {
 } MCSRequestContentRange;
 
 FOUNDATION_EXTERN MCSRequestContentRange
-MCSGetRequestContentRange(NSDictionary *requestHeaders);
+MCSRequestGetContentRange(NSDictionary *requestHeaders);
 
 FOUNDATION_EXTERN NSRange
-MCSGetRequestNSRange(MCSRequestContentRange requestRange);
+MCSRequestRange(MCSRequestContentRange range);
+
+FOUNDATION_EXTERN MCSRequestContentRange const MCSRequestContentRangeUndefined;
+
+FOUNDATION_EXPORT BOOL
+MCSRequestRangeIsUndefined(MCSRequestContentRange range);
 
 #pragma mark -
 

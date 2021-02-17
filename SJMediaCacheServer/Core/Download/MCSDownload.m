@@ -7,6 +7,7 @@
 //
 
 #import "MCSDownload.h"
+#import "MCSConsts.h"
 #import "MCSError.h"
 #import "MCSUtils.h"
 #import "MCSQueue.h"
@@ -125,21 +126,21 @@ static dispatch_queue_t mcs_queue;
     if ( [response isKindOfClass:NSURLResponse.class] ) {
         NSHTTPURLResponse *res = response;
         
-        if      ( res.statusCode < 200 || res.statusCode > 400 ) {
+        if      ( res.statusCode < MCS_RESPONSE_CODE_OK || res.statusCode > MCS_RESPONSE_CODE_BAD ) {
             error = [NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
                 MCSErrorUserInfoObjectKey : response,
                 MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"响应无效: statusCode(%ld)!", (long)res.statusCode]
             }];
         }
-        else if ( res.statusCode == 206 && 0 == MCSGetResponseContentLength(res) ) {
+        else if ( res.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT && 0 == MCSResponseGetContentLength(res) ) {
             error = [NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
                 MCSErrorUserInfoObjectKey : response,
                 MCSErrorUserInfoReasonKey : @"响应无效: contentLength 为 0!"
             }];
         }
-        else if ( res.statusCode == 206 ) {
-            NSRange range1 = MCSGetRequestNSRange(MCSGetRequestContentRange(task.currentRequest.allHTTPHeaderFields));
-            NSRange range2 = MCSGetResponseNSRange(MCSGetResponseContentRange(res));
+        else if ( res.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
+            NSRange range1 = MCSRequestRange(MCSRequestGetContentRange(task.currentRequest.allHTTPHeaderFields));
+            NSRange range2 = MCSResponseRange(MCSResponseGetContentRange(res));
             if ( !MCSNSRangeIsUndefined(range1) && !NSEqualRanges(range1, range2)) {
                 if ( !MCSNSRangeIsUndefined(range2) && NSMaxRange(range1) <= NSMaxRange(range2) ) {
                     error = [NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{

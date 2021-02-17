@@ -226,7 +226,7 @@ static dispatch_queue_t mcs_queue;
         ];
     }
     else {
-        MCSRequestContentRange requestRange = MCSGetRequestContentRange(_request.mcs_headers);
+        MCSRequestContentRange requestRange = MCSRequestGetContentRange(_request.mcs_headers);
         NSRange current = NSMakeRange(0, 0);
         // 200
         if      ( requestRange.start == NSNotFound && requestRange.end == NSNotFound ) {

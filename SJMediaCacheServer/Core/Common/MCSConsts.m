@@ -17,3 +17,7 @@ NSNotificationName const MCSFileWriteOutOfSpaceErrorNotification = @"MCSFileWrit
 NSString *const HLS_SUFFIX_INDEX   = @".m3u8";
 NSString *const HLS_SUFFIX_TS      = @".ts";
 NSString *const HLS_SUFFIX_AES_KEY = @".key";
+
+NSInteger const MCS_RESPONSE_CODE_OK = 200;
+NSInteger const MCS_RESPONSE_CODE_PARTIAL_CONTENT = 206;
+NSInteger const MCS_RESPONSE_CODE_BAD = 400;

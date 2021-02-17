@@ -26,6 +26,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSAssetContent>)createTsContentWithResponse:(NSHTTPURLResponse *)response;
 - (nullable NSArray<id<MCSAssetContent>> *)TsContents;
 - (nullable NSString *)TsContentFilePathForFilename:(NSString *)filename;
-- (nullable id<MCSAssetContent>)TsContentForURL:(NSURL *)URL;
+- (nullable id<MCSAssetContent>)TsContentForRequest:(NSURLRequest *)request;
 @end
 NS_ASSUME_NONNULL_END

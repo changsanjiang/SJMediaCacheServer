@@ -188,9 +188,9 @@ static dispatch_queue_t mcs_queue;
 - (void)_prepareNextFragment {
     _fragmentIndex = (_fragmentIndex == NSNotFound) ? 0 : (_fragmentIndex + 1);
     
-    NSString *TsURI = [_asset.parser URIAtIndex:_fragmentIndex];
-    NSURL *proxyURL = [MCSURL.shared proxyURLWithTsURI:TsURI];
-    NSURLRequest *request = [NSURLRequest requestWithURL:proxyURL];
+    NSString *URI = [_asset.parser URIAtIndex:_fragmentIndex];
+    NSURL *proxyURL = [MCSURL.shared proxyURLWithTsURI:URI];
+    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:[_asset.parser HTTPAdditionalHeadersAtIndex:_fragmentIndex]];
     _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
     [_reader prepare];
     
