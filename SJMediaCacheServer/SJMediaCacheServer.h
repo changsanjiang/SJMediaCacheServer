@@ -111,7 +111,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Resolve the identifier of the asset referenced by the URL.
 ///
-///     The asset identifier represents a unique asset. When different URLs references the same asset, you can set the block to resolve the identifier.
+///     The asset identifier represents a unique asset. When different URLs references the same asset, you can return the same identifier in the block.
 ///
 ///     This identifier will be used to identify the local cache. The same identifier will references the same cache.
 ///
