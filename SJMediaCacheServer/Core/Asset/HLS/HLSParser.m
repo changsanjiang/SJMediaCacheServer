@@ -13,28 +13,44 @@
 #import "NSURLRequest+MCS.h"
 #import "MCSQueue.h"
 #import "HLSAsset.h"
+#import "MCSConsts.h"
 
 // https://tools.ietf.org/html/rfc8216
 
 #define HLS_PREFIX_TAG                  @"#"
+#define HLS_SUFFIX_CONTINUE             @"\\"
 
 #define HLS_PREFIX_FILE_FIRST_LINE      @"#EXTM3U"
 #define HLS_PREFIX_TS_DURATION          @"#EXTINF"
 #define HLS_PREFIX_TS_BYTERANGE         @"#EXT-X-BYTERANGE"
 #define HLS_PREFIX_AESKEY               @"#EXT-X-KEY:METHOD=AES-128"
+#define HLS_PREFIX_MEDIA                @"#EXT-X-MEDIA"
+#define HLS_PREFIX_VARIANT_STREAM       @"#EXT-X-STREAM-INF"
+#define HLS_PREFIX_I_FRAME_STREAM       @"#EXT-X-I-FRAME-STREAM-INF"
 
-#define HLS_REGEX_INDEX                 @"^[^#]*\\.m3u8[^\\s]*"
-#define HLS_REGEX_INDEX_2               @"#EXT-X-STREAM-INF.+\\s(.+)\\s"
-#define HLS_INDEX_INDEX_2   1
+// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English stereo",LANGUAGE="en",AUTOSELECT=YES,URI="audio.m3u8"
+#define HLS_REGEX_MEDIA                 @"#EXT-X-MEDIA:.+URI=\"(.*)\"[^\\s]*"
+#define HLS_INDEX_MEDIA_URI             1
 
+// #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="audio"
+// video.m3u8
+#define HLS_REGEX_VARIANT_STREAM        @"#EXT-X-STREAM-INF.+\\s(.+)\\s"
+#define HLS_INDEX_VARIANT_STREAM        1
+
+// #EXT-X-I-FRAME-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=42029000,CODECS="avc1.4d001f",URI="iframe.m3u8"
+#define HLS_REGEX_I_FRAME_STREAM        @"#EXT-X-I-FRAME-STREAM-INF:.+URI=\"(.*)\"[^\\s]*"
+#define HLS_INDEX_I_FRAME_STREAM        1
+
+// #EXT-X-KEY:METHOD=AES-128,URI="...",IV=...
 #define HLS_REGEX_AESKEY                @"#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\""
-#define HLS_INDEX_AESKEY    1
+#define HLS_INDEX_AESKEY_URI            1
 
+// #EXTINF:10,
+// #EXT-X-BYTERANGE:1007868@0
+// 000000.ts
 #define HLS_REGEX_TS_BYTERANGE          @"#EXT-X-BYTERANGE:(.+)@(.+)"
-#define HLS_INDEX_TS_BYTERANGE_LOCATION  2
-#define HLS_INDEX_TS_BYTERANGE_LENGTH    1
-
-#define HLS_REGEX_LOCAL_URIs            @"(.*\\.ts[^\\s]*)|(#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\")"
+#define HLS_INDEX_TS_BYTERANGE_LOCATION 2
+#define HLS_INDEX_TS_BYTERANGE_LENGTH   1
 
 static dispatch_queue_t mcs_queue;
 
@@ -64,7 +80,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { type: %d, URI: %@, HTTPAdditionalHeaders: %@\n };", NSStringFromClass(self.class), self, _type, _URI, _HTTPAdditionalHeaders];
+    return [NSString stringWithFormat:@"%@:<%p> { type: %lu, URI: %@, HTTPAdditionalHeaders: %@\n };", NSStringFromClass(self.class), self, (unsigned long)_type, _URI, _HTTPAdditionalHeaders];
 }
 @end
 
@@ -75,6 +91,8 @@ static dispatch_queue_t mcs_queue;
 
 - (nullable NSArray<NSValue *> *)mcs_TsURIRanges;
 - (nullable NSArray<MCSHLSURIItem *> *)mcs_URIItems;
+
+@property (nonatomic, readonly) BOOL mcs_hasVariantStream;
 @end
 
 @interface HLSParser ()
@@ -199,31 +217,20 @@ static dispatch_queue_t mcs_queue;
     }
     
     __block NSURLRequest *currRequest = _request;
-    NSString *_Nullable contents = nil;
-    do {
-        NSError *downloadError = nil;
-        NSData *data = [MCSData dataWithContentsOfRequest:currRequest networkTaskPriority:_networkTaskPriority error:&downloadError willPerformHTTPRedirection:^(NSHTTPURLResponse * _Nonnull response, NSURLRequest * _Nonnull newRequest) {
-            currRequest = newRequest;
-        }];
-        if ( downloadError != nil ) {
-            [self _onError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
-                MCSErrorUserInfoObjectKey : currRequest,
-                MCSErrorUserInfoErrorKey : downloadError,
-                MCSErrorUserInfoReasonKey : @"下载数据失败!"
-            }]];
-            return;
-        }
-        
-        contents = [NSString.alloc initWithData:data encoding:0];
-        if ( contents == nil )
-            break;
-        
-        // 是否重定向
-        NSString *next = [self _indexUrlForContents:contents contentsURL:currRequest.URL];
-        if ( next == nil ) break;
-        
-        currRequest = [currRequest mcs_requestWithRedirectURL:[NSURL URLWithString:next]];
-    } while ( true );
+    NSError *downloadError = nil;
+    NSData *data = [MCSData dataWithContentsOfRequest:currRequest networkTaskPriority:_networkTaskPriority error:&downloadError willPerformHTTPRedirection:^(NSHTTPURLResponse * _Nonnull response, NSURLRequest * _Nonnull newRequest) {
+        currRequest = newRequest;
+    }];
+    if ( downloadError != nil ) {
+        [self _onError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
+            MCSErrorUserInfoObjectKey : currRequest,
+            MCSErrorUserInfoErrorKey : downloadError,
+            MCSErrorUserInfoReasonKey : @"下载数据失败!"
+        }]];
+        return;
+    }
+    
+    NSString *_Nullable contents = [NSString.alloc initWithData:data encoding:1];
     
     if ( contents == nil || ![contents hasPrefix:HLS_PREFIX_FILE_FIRST_LINE] ) {
         [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
@@ -232,40 +239,35 @@ static dispatch_queue_t mcs_queue;
         }]];
         return;
     }
- 
-    NSMutableString *indexFileContents = contents.mutableCopy;
-    ///
-    /// #EXTINF:10,
-    /// #EXT-X-BYTERANGE:1007868@0
-    /// 000000.ts
-    ///
-    NSArray<NSValue *> *TsURIRanges = [contents mcs_TsURIRanges];
-    if ( TsURIRanges.count == 0 ) {
-        [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
-            MCSErrorUserInfoObjectKey : contents,
-            MCSErrorUserInfoReasonKey : @"数据格式不正确, 未匹配到ts文件!"
-        }]];
-        return;
-    }
     
-    [TsURIRanges enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSValue * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRange range = [obj rangeValue];
-        NSString *matched = [contents substringWithRange:range];
-        NSString *url = [matched mcs_convertToUrlByContentsURL:currRequest.URL];
-        NSString *proxy = [MCSURL.shared proxyTsURIWithUrl:url inAsset:asset.name];
-        [indexFileContents replaceCharactersInRange:range withString:proxy];
-    }];
- 
-    ///
-    /// #EXT-X-KEY:METHOD=AES-128,URI="...",IV=...
-    ///
-    [[indexFileContents mcs_textCheckingResultsByMatchPattern:HLS_REGEX_AESKEY options:kNilOptions] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRange URIRange = [result rangeAtIndex:HLS_INDEX_AESKEY];
-        NSString *URI = [indexFileContents substringWithRange:URIRange];
-        NSString *url = [URI mcs_convertToUrlByContentsURL:currRequest.URL];
-        NSString *proxy = [MCSURL.shared proxyAESKeyURIWithUrl:url inAsset:asset.name];
-        [indexFileContents replaceCharactersInRange:URIRange withString:proxy];
-    }];
+    NSMutableString *indexFileContents = contents.mutableCopy;
+    
+    // #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English stereo",LANGUAGE="en",AUTOSELECT=YES,URI="audio.m3u8"
+    [self _contents:indexFileContents replaceURIsToProxyURIsByMatchingPattern:HLS_REGEX_MEDIA atIndex:HLS_INDEX_MEDIA_URI suffix:HLS_SUFFIX_INDEX contentsURL:currRequest.URL options:kNilOptions];
+    
+    // #EXT-X-I-FRAME-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=42029000,CODECS="avc1.4d001f",URI="iframe.m3u8"
+    [self _contents:indexFileContents replaceURIsToProxyURIsByMatchingPattern:HLS_REGEX_I_FRAME_STREAM atIndex:HLS_INDEX_I_FRAME_STREAM suffix:HLS_SUFFIX_INDEX contentsURL:currRequest.URL options:kNilOptions];
+    
+    // #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="audio"
+    // video.m3u8
+    [self _contents:indexFileContents replaceURIsToProxyURIsByMatchingPattern:HLS_REGEX_VARIANT_STREAM atIndex:HLS_INDEX_VARIANT_STREAM suffix:HLS_SUFFIX_INDEX contentsURL:currRequest.URL options:kNilOptions];
+    
+    // #EXT-X-KEY:METHOD=AES-128,URI="...",IV=...
+    [self _contents:indexFileContents replaceURIsToProxyURIsByMatchingPattern:HLS_REGEX_AESKEY atIndex:HLS_INDEX_AESKEY_URI suffix:HLS_SUFFIX_AES_KEY contentsURL:currRequest.URL options:kNilOptions];
+    
+    // #EXTINF:10,
+    // #EXT-X-BYTERANGE:1007868@0
+    // 000000.ts
+    NSArray<NSValue *> *TsURIRanges = [contents mcs_TsURIRanges];
+    if ( TsURIRanges.count != 0 ) {
+        [TsURIRanges enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSValue * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSRange range = [obj rangeValue];
+            NSString *matched = [contents substringWithRange:range];
+            NSString *url = [matched mcs_convertToUrlByContentsURL:currRequest.URL];
+            NSString *proxy = [MCSURL.shared proxyURIWithUrl:url suffix:HLS_SUFFIX_TS inAsset:asset.name];
+            [indexFileContents replaceCharactersInRange:range withString:proxy];
+        }];
+    }
     
     [_asset lock:^{
         if ( ![NSFileManager.defaultManager fileExistsAtPath:indexFilePath] ) {
@@ -280,15 +282,14 @@ static dispatch_queue_t mcs_queue;
     [self _finished];
 }
 
-- (nullable NSString *)_indexUrlForContents:(NSString *)contents contentsURL:(NSURL *)contentsURL {
-    // 是否重定向
-    // 1
-    NSString *redirectUrl = [contents mcs_urlsByMatchingPattern:HLS_REGEX_INDEX contentsURL:contentsURL options:NSRegularExpressionAnchorsMatchLines].firstObject;
-    // 2
-    if ( redirectUrl == nil ) {
-        redirectUrl = [contents mcs_urlsByMatchingPattern:HLS_REGEX_INDEX_2 atIndex:HLS_INDEX_INDEX_2 contentsURL:contentsURL options:kNilOptions].firstObject;
-    }
-    return redirectUrl;
+- (void)_contents:(NSMutableString *)contents replaceURIsToProxyURIsByMatchingPattern:(NSString *)pattern atIndex:(NSInteger)index suffix:(NSString *)suffix contentsURL:(NSURL *)contentsURL options:(NSRegularExpressionOptions)options {
+    [[contents mcs_textCheckingResultsByMatchPattern:pattern options:kNilOptions] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSRange URIRange = [result rangeAtIndex:index];
+        NSString *URI = [contents substringWithRange:URIRange];
+        NSString *url = [URI mcs_convertToUrlByContentsURL:contentsURL];
+        NSString *proxy = [MCSURL.shared proxyURIWithUrl:url suffix:suffix inAsset:_asset.name];
+        [contents replaceCharactersInRange:URIRange withString:proxy];
+    }];
 }
 
 - (void)_onError:(NSError *)error {
@@ -319,7 +320,7 @@ static dispatch_queue_t mcs_queue;
     for ( MCSHLSURIItem *item in _URIItems ) {
         if ( item.type == MCSDataTypeHLSTs ) TsCount += 1;
     }
-    
+    _TsCount = TsCount;
     _isDone = YES;
     
     dispatch_async(MCSDelegateQueue(), ^{
@@ -373,20 +374,39 @@ static dispatch_queue_t mcs_queue;
 /// 将路径转换为url
 - (NSString *)mcs_convertToUrlByContentsURL:(NSURL *)URL {
     static NSString *const HLS_PREFIX_LOCALHOST = @"http://localhost";
-    static NSString *const HLS_PREFIX_PATH = @"/";
-    
+    static NSString *const HLS_PREFIX_DIR_ROOT = @"/";
+    static NSString *const HLS_PREFIX_DIR_PARENT = @"../";
+    static NSString *const HLS_PREFIX_DIR_CURRENT = @"./";
+     
     NSString *url = nil;
-    if ( [self hasPrefix:HLS_PREFIX_PATH] ) {
-        url = [NSString stringWithFormat:@"%@://%@%@", URL.scheme, URL.host, self];
+    if      ( [self hasPrefix:HLS_PREFIX_DIR_ROOT] ) {
+        NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", URL.scheme, URL.host]];
+        NSString *subpath = self;
+        url = [rootDir URLByAppendingPathComponent:subpath].absoluteString;
+    }
+    else if ( [self hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
+        NSURL *curDir = URL.URLByDeletingLastPathComponent;
+        NSURL *parentDir = curDir.URLByDeletingLastPathComponent;
+        NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_PARENT.length];
+        url = [parentDir URLByAppendingPathComponent:subpath].absoluteString;
+    }
+    else if ( [self hasPrefix:HLS_PREFIX_DIR_CURRENT] ) {
+        NSURL *curDir = URL.URLByDeletingLastPathComponent;
+        NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_CURRENT.length];
+        url = [curDir URLByAppendingPathComponent:subpath].absoluteString;
     }
     else if ( [self hasPrefix:HLS_PREFIX_LOCALHOST] ) {
-        url = [NSString stringWithFormat:@"%@://%@%@", URL.scheme, URL.host, [self substringFromIndex:HLS_PREFIX_LOCALHOST.length]];
+        NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", URL.scheme, URL.host]];
+        NSString *subpath = [self substringFromIndex:HLS_PREFIX_LOCALHOST.length];
+        url = [rootDir URLByAppendingPathComponent:subpath].absoluteString;
     }
     else if ( [self containsString:@"://"] ) {
         url = self;
     }
     else {
-        url = [NSString stringWithFormat:@"%@/%@", URL.absoluteString.stringByDeletingLastPathComponent, self];
+        NSURL *curDir = URL.URLByDeletingLastPathComponent;
+        NSString *subpath = self;
+        url = [curDir URLByAppendingPathComponent:subpath].absoluteString;
     }
     return url;
 }
@@ -397,14 +417,14 @@ static dispatch_queue_t mcs_queue;
     BOOL tsFlag = NO;
     NSInteger length = 0;
     for ( NSString *line in lines ) {
-        if ( tsFlag && ![line hasPrefix:HLS_PREFIX_TAG] ) {
+        if      ( [line hasPrefix:HLS_PREFIX_TS_DURATION] ) {
+            tsFlag = YES;
+        }
+        else if ( tsFlag && ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
             if ( m == nil ) m = NSMutableArray.array;
             [m addObject:[NSValue valueWithRange:NSMakeRange(length, line.length)]];
             tsFlag = NO;
         }
-        
-        if ( [line hasPrefix:HLS_PREFIX_TS_DURATION] )
-            tsFlag = YES;
         
         length += line.length + 1;
     }
@@ -443,7 +463,7 @@ static dispatch_queue_t mcs_queue;
                 long long length = [[line substringWithRange:[result rangeAtIndex:HLS_INDEX_TS_BYTERANGE_LENGTH]] longLongValue];
                 byteRange = NSMakeRange(location, length);
             }
-            else if ( ![line hasPrefix:HLS_PREFIX_TAG] ) {
+            else if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
                 NSString *URI = line;
                 NSDictionary *headers = nil;
                 if ( byteRange.length != 0 )
@@ -456,5 +476,9 @@ static dispatch_queue_t mcs_queue;
         }
     }
     return m.count != 0 ? m.copy : nil;
+}
+
+- (BOOL)mcs_hasVariantStream {
+    return [self mcs_textCheckingResultsByMatchPattern:HLS_PREFIX_VARIANT_STREAM options:kNilOptions] != nil;
 }
 @end

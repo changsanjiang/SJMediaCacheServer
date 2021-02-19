@@ -91,15 +91,26 @@ static dispatch_queue_t mcs_queue;
         MCSAssetReaderDebugLog(@"%@: <%p>.prepare { asset: %@, request: %@ };\n", NSStringFromClass(self.class), self, _asset.name, _request);
 
         NSParameterAssert(_asset);
+        
+        /**
+         
+         创建subAsset, 读取其内容
+         
+         当请求为 ts 时, 需要获取对应的asset
+         
+         */
          
         _isCalledPrepare = YES;
         NSURL *URL = [MCSURL.shared URLWithProxyURL:_request.URL];
         NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL];
-        if      ( [_request.URL.absoluteString containsString:HLS_SUFFIX_INDEX] ) {
-            _reader = [HLSContentIndexReader.alloc initWithAsset:_asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
+        
+        HLSAsset *asset = [MCSAssetManager.shared assetWithURL:[_request.URL.lastPathComponent hasSuffix:HLS_SUFFIX_INDEX] ? URL : _request.URL];
+        
+        if      ( [_request.URL.lastPathComponent containsString:HLS_SUFFIX_INDEX] ) {
+            _reader = [HLSContentIndexReader.alloc initWithAsset:asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
         }
         else {
-            if ( _asset.parser == nil ) {
+            if ( asset.parser == nil ) {
                 [self _onError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
                     MCSErrorUserInfoObjectKey : _request,
                     MCSErrorUserInfoReasonKey : @"解析器为空, 索引文件可能未解析!"
@@ -107,11 +118,11 @@ static dispatch_queue_t mcs_queue;
                 return;
             }
             
-            if ( [_request.URL.absoluteString containsString:HLS_SUFFIX_AES_KEY] ) {
-                _reader = [HLSContentAESKeyReader.alloc initWithAsset:_asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
+            if ( [_request.URL.lastPathComponent containsString:HLS_SUFFIX_AES_KEY] ) {
+                _reader = [HLSContentAESKeyReader.alloc initWithAsset:asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
             }
             else {
-                _reader = [HLSContentTSReader.alloc initWithAsset:_asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
+                _reader = [HLSContentTSReader.alloc initWithAsset:asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
             }
         }
         
@@ -240,7 +251,7 @@ static dispatch_queue_t mcs_queue;
     dispatch_barrier_sync(mcs_queue, ^{
         if ( [reader isKindOfClass:HLSContentTSReader.class] ) {
             HLSContentTSReader *r = reader;
-            _response = [MCSResponse.alloc initWithTotalLength:r.totalLength range:r.range contentType:_asset.TsContentType];
+            _response = [MCSResponse.alloc initWithTotalLength:r.totalLength range:r.range contentType:r.asset.TsContentType];
         }
         else {
             _response = [MCSResponse.alloc initWithTotalLength:reader.range.length];
