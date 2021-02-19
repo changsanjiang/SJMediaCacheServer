@@ -435,14 +435,19 @@ static dispatch_queue_t mcs_queue;
     NSArray<NSString *> *lines = [self componentsSeparatedByString:@"\n"];
     NSMutableArray<MCSHLSURIItem *> *m = NSMutableArray.array;
     BOOL tsFlag = NO;
+    BOOL vsFlag = NO;
     NSRange byteRange = NSMakeRange(0, 0);
     for ( NSString *line in lines ) {
         // #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="audio"
         if      ( [line hasPrefix:HLS_PREFIX_VARIANT_STREAM] ) {
-            NSTextCheckingResult *result = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_VARIANT_STREAM options:kNilOptions].firstObject;
-            NSRange range = [result rangeAtIndex:HLS_INDEX_VARIANT_STREAM];
-            NSString *URI = [line substringWithRange:range];
-            [m addObject:[MCSHLSURIItem.alloc initWithType:MCSDataTypeHLSPlaylist URI:URI HTTPAdditionalHeaders:nil]];
+            vsFlag = YES;
+        }
+        else if ( vsFlag ) {
+            if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
+                NSString *URI = line;
+                [m addObject:[MCSHLSURIItem.alloc initWithType:MCSDataTypeHLSPlaylist URI:URI HTTPAdditionalHeaders:nil]];
+                vsFlag = NO;
+            }
         }
         //    #EXT-X-KEY:METHOD=AES-128,URI="key1.php"
         //

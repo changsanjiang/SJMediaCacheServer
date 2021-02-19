@@ -19,7 +19,7 @@ static dispatch_queue_t mcs_queue;
 @interface HLSPrefetcher ()<MCSAssetReaderDelegate> {
     id<MCSAssetReader>_Nullable _reader;
     NSUInteger _TsLoadedLength;
-    NSUInteger _TsIndex;
+    NSUInteger _index;
     float _progress;
     NSURL *_URL;
     NSUInteger _preloadSize;
@@ -48,7 +48,7 @@ static dispatch_queue_t mcs_queue;
         _preloadSize = bytes;
         _delegate = delegate;
         _delegateQueue = delegateQueue;
-        _TsIndex = NSNotFound;
+        _index = NSNotFound;
     }
     return self;
 }
@@ -60,7 +60,7 @@ static dispatch_queue_t mcs_queue;
         _numberOfPreloadFiles = num;
         _delegate = delegate;
         _delegateQueue = delegateQueue;
-        _TsIndex = NSNotFound;
+        _index = NSNotFound;
     }
     return self;
 }
@@ -137,7 +137,7 @@ static dispatch_queue_t mcs_queue;
         if ( [reader seekToOffset:reader.offset + length] ) {
             HLSAsset *asset = reader.asset;
             
-            if ( _TsIndex != NSNotFound )
+            if ( _index != NSNotFound )
                 _TsLoadedLength += length;
             
             CGFloat progress = 0;
@@ -148,7 +148,7 @@ static dispatch_queue_t mcs_queue;
             else {
                 CGFloat curr = (reader.offset * 1.0) / reader.response.totalLength;
                 NSUInteger files = asset.TsCount > _numberOfPreloadFiles ? _numberOfPreloadFiles : asset.TsCount;
-                progress = ((_TsIndex != NSNotFound ? _TsIndex : 0) + curr) / files;
+                progress = ((_index != NSNotFound ? _index : 0) + curr) / files;
             }
             
             if ( progress >= 1 ) progress = 1;
@@ -166,7 +166,7 @@ static dispatch_queue_t mcs_queue;
                 
 #warning next .... 加载 `subAsset`
                 
-                BOOL isLastFragment = asset.parser.TsCount == 0 || (_TsIndex == asset.parser.TsCount - 1);
+                BOOL isLastFragment = asset.parser.TsCount == 0 || (_index == asset.parser.TsCount - 1);
                 BOOL isFinished = progress >= 1 || isLastFragment;
                 if ( !isFinished ) {
                     [self _prepareNextFragment];
@@ -188,16 +188,16 @@ static dispatch_queue_t mcs_queue;
 #pragma mark -
 
 - (void)_prepareNextFragment {
-    _TsIndex = (_TsIndex == NSNotFound) ? 0 : (_TsIndex + 1);
+    _index = (_index == NSNotFound) ? 0 : (_index + 1);
     
     HLSAsset *asset = _reader.asset;
-    NSString *URI = [asset.parser URIAtIndex:_TsIndex];
+    NSString *URI = [asset.parser URIAtIndex:_index];
     NSURL *proxyURL = [MCSURL.shared proxyURLWithTsURI:URI];
-    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:[asset.parser HTTPAdditionalHeadersAtIndex:_TsIndex]];
+    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:[asset.parser HTTPAdditionalHeadersAtIndex:_index]];
     _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
     [_reader prepare];
     
-    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_TsIndex, request);
+    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_index, request);
 }
 
 - (void)_didCompleteWithError:(nullable NSError *)error {
