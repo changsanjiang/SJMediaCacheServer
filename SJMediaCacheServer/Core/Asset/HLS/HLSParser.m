@@ -258,11 +258,11 @@ static dispatch_queue_t mcs_queue;
     // #EXTINF:10,
     // #EXT-X-BYTERANGE:1007868@0
     // 000000.ts
-    NSArray<NSValue *> *TsURIRanges = [contents mcs_TsURIRanges];
+    NSArray<NSValue *> *TsURIRanges = [indexFileContents mcs_TsURIRanges];
     if ( TsURIRanges.count != 0 ) {
         [TsURIRanges enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSValue * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             NSRange range = [obj rangeValue];
-            NSString *matched = [contents substringWithRange:range];
+            NSString *matched = [indexFileContents substringWithRange:range];
             NSString *url = [matched mcs_convertToUrlByContentsURL:currRequest.URL];
             NSString *proxy = [MCSURL.shared proxyURIWithUrl:url suffix:HLS_SUFFIX_TS inAsset:asset.name];
             [indexFileContents replaceCharactersInRange:range withString:proxy];
