@@ -68,7 +68,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)isAssetStoredForURL:(NSURL *)URL;
 
-- (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
+- (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
 - (void)willReadAssetForURL:(NSURL *)URL;
 @end

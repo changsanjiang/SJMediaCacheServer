@@ -48,6 +48,12 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 @property (nonatomic) MCSAssetType assetType;
 @end
 
+#pragma mark - HLS
+
+@interface HLSAsset (HLSPrivate)
+@property (nonatomic, weak, nullable) HLSAsset *root;
+@end
+
 #pragma mark -
 
 @interface MCSAssetManager () {
@@ -168,47 +174,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 #pragma mark -
 
 - (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL {
-    __block id<MCSAsset> asset = nil;
-    dispatch_barrier_sync(mcs_queue, ^{
-        MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
-        NSString *name = [MCSURL.shared assetNameForURL:URL];
-        if ( _assets[name] == nil ) {
-            Class cls = [self _assetClassForType:type];
-            if ( cls == nil ) return;
-            
-            // query
-            id<MCSAsset> r = (id)[_sqlite3 objectsForClass:cls conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"name" value:name]
-            ] orderBy:nil error:NULL].firstObject;
-            
-            // create
-            if ( r == nil ) {
-                r = [cls.alloc initWithName:name];
-                [self _syncToDatabase:r]; // save asset
-                _count += 1;
-            }
-             
-            [r prepare];
-            _assets[name] = r;
-        }
-        
-        asset  = _assets[name];
-        
-        if ( _usageLogs[name] == nil ) {
-            MCSAssetUsageLog *log = (id)[_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
-                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
-            ] orderBy:nil error:NULL].firstObject;
-            
-            if ( log == nil ) {
-                log = [MCSAssetUsageLog.alloc initWithAsset:asset];
-                [self _syncToDatabase:log]; // save log
-            }
-            
-            _usageLogs[name] = log;
-        }
-    });
-    return asset;
+    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
+    NSString *name = [MCSURL.shared assetNameForURL:URL];
+    return [self _assetWithName:name type:type];
 }
 
 - (BOOL)isAssetStoredForURL:(NSURL *)URL {
@@ -229,13 +197,27 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     return asset.isStored;
 }
  
-- (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
-    id<MCSAsset> asset = [self assetWithURL:request.URL];
-    switch ( asset.type ) {
-        case MCSAssetTypeFILE:
+- (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
+    NSURL *proxyURL = proxyRequest.URL;
+    NSURL *URL = [MCSURL.shared URLWithProxyURL:proxyURL];
+    MCSAssetType type = [MCSURL.shared assetTypeForURL:proxyURL];
+    NSMutableURLRequest *request = [proxyRequest mcs_requestWithRedirectURL:URL];
+    switch ( type ) {
+        case MCSAssetTypeFILE: {
+            FILEAsset *asset = [self assetWithURL:proxyURL];
             return [FILEReader.alloc initWithAsset:asset request:request networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
-        case MCSAssetTypeHLS:
+        }
+        case MCSAssetTypeHLS: {
+            // If proxyURL has a playlist suffix, the proxyRequest may be requesting a sub-asset
+            BOOL isPlaylistRequest = [proxyURL.lastPathComponent hasSuffix:HLS_SUFFIX_INDEX];
+            HLSAsset *asset = [self assetWithURL:isPlaylistRequest ? URL : proxyURL];
+            if ( isPlaylistRequest ) {
+                HLSAsset *root = [self assetWithURL:proxyURL];
+                BOOL isRootAsset = root != asset;
+                if ( isRootAsset ) asset.root = root;
+            }
             return [HLSReader.alloc initWithAsset:asset request:request networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
+        }
     }
     return nil;
 }
@@ -317,6 +299,48 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 #pragma mark - mark
+
+- (nullable __kindof id<MCSAsset> )_assetWithName:(NSString *)name type:(MCSAssetType)type {
+    __block id<MCSAsset> asset = nil;
+    dispatch_barrier_sync(mcs_queue, ^{
+        if ( _assets[name] == nil ) {
+            Class cls = [self _assetClassForType:type];
+            if ( cls == nil ) return;
+            
+            // query
+            id<MCSAsset> r = (id)[_sqlite3 objectsForClass:cls conditions:@[
+                [SJSQLite3Condition conditionWithColumn:@"name" value:name]
+            ] orderBy:nil error:NULL].firstObject;
+            
+            // create
+            if ( r == nil ) {
+                r = [cls.alloc initWithName:name];
+                [self _syncToDatabase:r]; // save asset
+                _count += 1;
+            }
+             
+            [r prepare];
+            _assets[name] = r;
+        }
+        
+        asset  = _assets[name];
+        
+        if ( _usageLogs[name] == nil ) {
+            MCSAssetUsageLog *log = (id)[_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
+                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
+                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
+            ] orderBy:nil error:NULL].firstObject;
+            
+            if ( log == nil ) {
+                log = [MCSAssetUsageLog.alloc initWithAsset:asset];
+                [self _syncToDatabase:log]; // save log
+            }
+            
+            _usageLogs[name] = log;
+        }
+    });
+    return asset;
+}
 
 - (void)_assetMetadataDidLoadWithNote:(NSNotification *)note {
     dispatch_barrier_async(mcs_queue, ^{

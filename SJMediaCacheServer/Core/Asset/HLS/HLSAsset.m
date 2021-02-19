@@ -28,6 +28,7 @@ static dispatch_queue_t mcs_queue;
 @property (nonatomic) NSInteger id;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy, nullable) NSString *TsContentType;
+@property (nonatomic, weak, nullable) HLSAsset *root;
 @end
 
 @implementation HLSAsset
@@ -52,7 +53,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 + (NSArray<NSString *> *)sql_blacklist {
-    return @[@"readwriteCount", @"isStored", @"configuration", @"contents", @"parser"];
+    return @[@"readwriteCount", @"isStored", @"configuration", @"contents", @"parser", @"root"];
 }
 
 - (instancetype)initWithName:(NSString *)name {
@@ -137,6 +138,21 @@ static dispatch_queue_t mcs_queue;
     return self.parser.TsCount;
 }
 
+@synthesize root = _root;
+- (void)setRoot:(nullable HLSAsset *)root {
+    dispatch_barrier_sync(mcs_queue, ^{
+        _root = root;
+    });
+}
+
+- (nullable HLSAsset *)root {
+    __block HLSAsset *root = nil;
+    dispatch_sync(mcs_queue, ^{
+        root = _root;
+    });
+    return root;
+}
+
 - (nullable id<MCSAssetContent>)createTsContentWithResponse:(NSHTTPURLResponse *)response {
     NSString *TsContentType = MCSResponseGetContentType(response);
     __block BOOL isUpdated = NO;
@@ -204,7 +220,7 @@ static dispatch_queue_t mcs_queue;
 - (NSInteger)readwriteCount {
     __block NSInteger readwriteCount = 0;
     dispatch_sync(mcs_queue, ^{
-        readwriteCount = _readwriteCount;
+        readwriteCount = _root != nil ? _root->_readwriteCount : _readwriteCount;
     });
     return readwriteCount;
 }
@@ -212,7 +228,10 @@ static dispatch_queue_t mcs_queue;
 - (void)readwriteRetain {
     [self willChangeValueForKey:kReadwriteCount];
     dispatch_barrier_sync(mcs_queue, ^{
-        _readwriteCount += 1;
+        if ( _root != nil )
+            _root->_readwriteCount += 1;
+        else
+            _readwriteCount += 1;
     });
     [self didChangeValueForKey:kReadwriteCount];
 }
@@ -220,7 +239,11 @@ static dispatch_queue_t mcs_queue;
 - (void)readwriteRelease {
     [self willChangeValueForKey:kReadwriteCount];
     dispatch_barrier_sync(mcs_queue, ^{
-        if ( _readwriteCount > 0 ) {
+        if ( _root != nil) {
+            if ( _root->_readwriteCount > 0 )
+                _root->_readwriteCount -= 1;
+        }
+        else if ( _readwriteCount > 0 ) {
             _readwriteCount -= 1;
         }
     });
@@ -233,6 +256,7 @@ static dispatch_queue_t mcs_queue;
 // 合并文件
 - (void)_mergeContents {
     dispatch_barrier_sync(mcs_queue, ^{
+        if ( _root != nil && _root->_readwriteCount != 0 ) return;
         if ( _readwriteCount != 0 ) return;
         if ( _isStored ) return;
         
@@ -257,7 +281,7 @@ static dispatch_queue_t mcs_queue;
             [_contents removeObjectsInArray:deletes];
         }
 
-        if ( _contents.count != 0 && _contents.count == _parser.TsCount ) {
+        if ( _contents.count == _parser.TsCount ) {
             BOOL isStoredAllContents = YES;
             for ( HLSContentTs *content in _contents ) {
                 if ( content.length != content.totalLength ) {

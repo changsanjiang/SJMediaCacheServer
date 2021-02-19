@@ -12,7 +12,6 @@
 #import "HLSContentTSReader.h" 
 #import "MCSLogger.h"
 #import "HLSAsset.h"
-#import "MCSAssetManager.h"
 #import "MCSError.h"
 #import "MCSQueue.h"
 #import "MCSResponse.h"
@@ -46,7 +45,7 @@ static dispatch_queue_t mcs_queue;
     self = [super init];
     if ( self ) {
 #ifdef DEBUG
-        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, [MCSURL.shared URLWithProxyURL:request.URL], asset, request.URL, request.allHTTPHeaderFields);
+        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, request.URL, asset, request.URL, request.allHTTPHeaderFields);
 #endif
 
         _asset = asset;
@@ -91,26 +90,14 @@ static dispatch_queue_t mcs_queue;
         MCSAssetReaderDebugLog(@"%@: <%p>.prepare { asset: %@, request: %@ };\n", NSStringFromClass(self.class), self, _asset.name, _request);
 
         NSParameterAssert(_asset);
-        
-        /**
-         
-         创建subAsset, 读取其内容
-         
-         当请求为 ts 时, 需要获取对应的asset
-         
-         */
          
         _isCalledPrepare = YES;
-        NSURL *URL = [MCSURL.shared URLWithProxyURL:_request.URL];
-        NSMutableURLRequest *request = [_request mcs_requestWithRedirectURL:URL];
-        
-        HLSAsset *asset = [MCSAssetManager.shared assetWithURL:[_request.URL.lastPathComponent hasSuffix:HLS_SUFFIX_INDEX] ? URL : _request.URL];
         
         if      ( [_request.URL.lastPathComponent containsString:HLS_SUFFIX_INDEX] ) {
-            _reader = [HLSContentIndexReader.alloc initWithAsset:asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
+            _reader = [HLSContentIndexReader.alloc initWithAsset:_asset request:_request networkTaskPriority:_networkTaskPriority delegate:self];
         }
         else {
-            if ( asset.parser == nil ) {
+            if ( _asset.parser == nil ) {
                 [self _onError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
                     MCSErrorUserInfoObjectKey : _request,
                     MCSErrorUserInfoReasonKey : @"解析器为空, 索引文件可能未解析!"
@@ -119,10 +106,10 @@ static dispatch_queue_t mcs_queue;
             }
             
             if ( [_request.URL.lastPathComponent containsString:HLS_SUFFIX_AES_KEY] ) {
-                _reader = [HLSContentAESKeyReader.alloc initWithAsset:asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
+                _reader = [HLSContentAESKeyReader.alloc initWithAsset:_asset request:_request networkTaskPriority:_networkTaskPriority delegate:self];
             }
             else {
-                _reader = [HLSContentTSReader.alloc initWithAsset:asset request:request networkTaskPriority:_networkTaskPriority delegate:self];
+                _reader = [HLSContentTSReader.alloc initWithAsset:_asset request:_request networkTaskPriority:_networkTaskPriority delegate:self];
             }
         }
         

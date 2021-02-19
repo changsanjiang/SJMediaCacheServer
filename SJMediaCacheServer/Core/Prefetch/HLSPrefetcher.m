@@ -25,7 +25,6 @@ static dispatch_queue_t mcs_queue;
 @property (nonatomic) NSUInteger loadedLength;
 @property (nonatomic) float progress;
 
-@property (nonatomic, weak, nullable) HLSAsset *asset;
 @property (nonatomic) NSUInteger fragmentIndex;
 
 @property (nonatomic, strong) NSURL *URL;
@@ -88,10 +87,10 @@ static dispatch_queue_t mcs_queue;
         MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu, numberOfPreloadFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)_numberOfPreloadFiles);
         
         _isCalledPrepare = YES;
-        _asset = [MCSAssetManager.shared assetWithURL:_URL];
 
-        NSURLRequest *request = [NSURLRequest.alloc initWithURL:_URL];
-        _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
+        NSURL *proxyURL = [MCSURL.shared proxyURLWithURL:_URL];
+        NSURLRequest *proxyRequest = [NSURLRequest.alloc initWithURL:proxyURL];
+        _reader = [MCSAssetManager.shared readerWithRequest:proxyRequest networkTaskPriority:0 delegate:self];
         [_reader prepare];
     });
 }
@@ -138,6 +137,8 @@ static dispatch_queue_t mcs_queue;
             return;
         
         if ( [reader seekToOffset:reader.offset + length] ) {
+            HLSAsset *asset = reader.asset;
+            
             if ( _fragmentIndex != NSNotFound )
                 _loadedLength += length;
             
@@ -148,7 +149,7 @@ static dispatch_queue_t mcs_queue;
             }
             else {
                 CGFloat curr = (reader.offset * 1.0) / reader.response.totalLength;
-                NSUInteger files = _numberOfPreloadFiles < _asset.TsCount ? _numberOfPreloadFiles : _asset.TsCount;
+                NSUInteger files = _numberOfPreloadFiles < asset.TsCount ? _numberOfPreloadFiles : asset.TsCount;
                 progress = ((_fragmentIndex != NSNotFound ? _fragmentIndex : 0) + curr) / files;
             }
             
@@ -164,7 +165,7 @@ static dispatch_queue_t mcs_queue;
             }
             
             if ( reader.isReadingEndOfData ) {
-                BOOL isLastFragment = _fragmentIndex == _asset.parser.TsCount - 1;
+                BOOL isLastFragment = asset.parser.TsCount == 0 || (_fragmentIndex == asset.parser.TsCount - 1);
                 BOOL isFinished = progress >= 1 || isLastFragment;
                 if ( !isFinished ) {
                     [self _prepareNextFragment];
@@ -188,9 +189,10 @@ static dispatch_queue_t mcs_queue;
 - (void)_prepareNextFragment {
     _fragmentIndex = (_fragmentIndex == NSNotFound) ? 0 : (_fragmentIndex + 1);
     
-    NSString *URI = [_asset.parser URIAtIndex:_fragmentIndex];
+    HLSAsset *asset = _reader.asset;
+    NSString *URI = [asset.parser URIAtIndex:_fragmentIndex];
     NSURL *proxyURL = [MCSURL.shared proxyURLWithTsURI:URI];
-    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:[_asset.parser HTTPAdditionalHeadersAtIndex:_fragmentIndex]];
+    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:[asset.parser HTTPAdditionalHeadersAtIndex:_fragmentIndex]];
     _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
     [_reader prepare];
     
