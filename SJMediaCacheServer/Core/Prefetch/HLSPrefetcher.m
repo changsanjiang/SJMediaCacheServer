@@ -18,8 +18,10 @@ static dispatch_queue_t mcs_queue;
 
 @interface HLSPrefetcher ()<MCSAssetReaderDelegate> {
     id<MCSAssetReader>_Nullable _reader;
+    id<HLSURIItem> _Nullable _cur;
     NSUInteger _TsLoadedLength;
-    NSUInteger _index;
+    NSUInteger _TsIndex;
+    NSUInteger _fragmentIndex;
     float _progress;
     NSURL *_URL;
     NSUInteger _preloadSize;
@@ -48,7 +50,8 @@ static dispatch_queue_t mcs_queue;
         _preloadSize = bytes;
         _delegate = delegate;
         _delegateQueue = delegateQueue;
-        _index = NSNotFound;
+        _fragmentIndex = NSNotFound;
+        _TsIndex = NSNotFound;
     }
     return self;
 }
@@ -60,7 +63,8 @@ static dispatch_queue_t mcs_queue;
         _numberOfPreloadedFiles = num;
         _delegate = delegate;
         _delegateQueue = delegateQueue;
-        _index = NSNotFound;
+        _fragmentIndex = NSNotFound;
+        _TsIndex = NSNotFound;
     }
     return self;
 }
@@ -131,49 +135,45 @@ static dispatch_queue_t mcs_queue;
 
 - (void)reader:(id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
     dispatch_barrier_sync(mcs_queue, ^{
-        if ( _isClosed )
+        if ( _isClosed ) {
+            [reader close];
             return;
+        }
         
         if ( [reader seekToOffset:reader.offset + length] ) {
             HLSAsset *asset = reader.asset;
-            
-            if ( _index != NSNotFound )
-                _TsLoadedLength += length;
-            
             CGFloat progress = 0;
-            if ( _preloadSize != 0 ) {
-                NSUInteger size = reader.response.totalLength > _preloadSize ? reader.response.totalLength : _preloadSize;
-                progress = _TsLoadedLength * 1.0 / size;
-            }
-            else {
-                CGFloat curr = (reader.offset * 1.0) / reader.response.totalLength;
-                NSUInteger files = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
-                progress = ((_index != NSNotFound ? _index : 0) + curr) / files;
-            }
             
-            if ( progress >= 1 ) progress = 1;
-            _progress = progress;
-            
-            MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, _progress);
-            
-            if ( _delegate != nil ) {
-                dispatch_async(_delegateQueue, ^{
-                    [self.delegate prefetcher:self progressDidChange:progress];
-                });
+            // `Ts reader`
+            if ( _cur.type == MCSDataTypeHLSTs ) {
+                _TsLoadedLength += length;
+
+                // size mode
+                if ( _preloadSize != 0 ) {
+                    NSUInteger all = reader.response.totalLength > _preloadSize ? reader.response.totalLength : _preloadSize;
+                    progress = _TsLoadedLength * 1.0 / all;
+                }
+                // num mode
+                else {
+                    CGFloat curProgress = reader.offset * 1.0 / reader.response.totalLength;
+                    NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
+                    progress = (_TsIndex + curProgress) / all;
+                }
+    
+                if ( progress >= 1 ) progress = 1;
+                _progress = progress;
+                
+                MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, _progress);
+                
+                if ( _delegate != nil ) {
+                    dispatch_async(_delegateQueue, ^{
+                        [self.delegate prefetcher:self progressDidChange:progress];
+                    });
+                }
             }
             
             if ( reader.isReadingEndOfData ) {
-                
-#warning next .... 加载 `subAsset`
-                
-                BOOL isLastFragment = asset.parser.tsCount == 0 || (_index == asset.parser.tsCount - 1);
-                BOOL isFinished = progress >= 1 || isLastFragment;
-                if ( !isFinished ) {
-                    [self _prepareNextFragment];
-                    return;
-                }
-                
-                [self _didCompleteWithError:nil];
+                _progress == 1 ? [self _didCompleteWithError:nil] : [self _prepareNextFragment];
             }
         }
     });
@@ -188,16 +188,36 @@ static dispatch_queue_t mcs_queue;
 #pragma mark -
 
 - (void)_prepareNextFragment {
-    _index = (_index == NSNotFound) ? 0 : (_index + 1);
+    NSUInteger nextIndex = NSNotFound;
+    id<HLSURIItem> item = nil;
+    while ( YES ) {
+        nextIndex = _fragmentIndex == NSNotFound ? 0 : _fragmentIndex + 1;
+        HLSAsset *asset = _reader.asset;
+        HLSParser *parser = asset.parser;
+        item = [parser itemAtIndex:nextIndex];
+        if ( item.type == MCSDataTypeHLSPlaylist && !item.isVariantStream )
+            continue;
+        break;
+    }
     
-    HLSAsset *asset = _reader.asset;
-    id<HLSURIItem> item = [asset.parser itemAtIndex:_index];
-    NSURL *proxyURL = [MCSURL.shared proxyURLWithTsURI:item.URI];
+    // loaded all items
+    if ( item == nil ) {
+        _progress = 1.0;
+        [self _didCompleteWithError:nil];
+        return;
+    }
+    
+    if ( item.type == MCSDataTypeHLSTs )
+        _TsIndex = _TsIndex != NSNotFound ? _TsIndex + 1 : 0;
+    _fragmentIndex = nextIndex;
+    _cur = item;
+    
+    NSURL *proxyURL = [MCSURL.shared HLS_proxyURLWithProxyURI:item.URI];
     NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:item.HTTPAdditionalHeaders];
     _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
     [_reader prepare];
     
-    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_index, request);
+    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, TsIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_fragmentIndex, _TsIndex, request);
 }
 
 - (void)_didCompleteWithError:(nullable NSError *)error {

@@ -142,17 +142,30 @@ MCSMD5(NSString *str) {
 @end
 
 @implementation MCSURL (HLS)
-- (NSURL *)proxyURLWithTsURI:(NSString *)TsURI {
-    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
-    
-    return [_serverURL URLByAppendingPathComponent:TsURI];
-}
-
 // format: mcsproxy/asset/name.extension?url=base64EncodedUrl
-- (NSString *)proxyURIWithUrl:(NSString *)url suffix:(NSString *)suffix inAsset:(NSString *)asset {
+- (NSString *)HLS_proxyURIWithURL:(NSString *)url suffix:(NSString *)suffix inAsset:(NSString *)asset {
     NSString *fname = [self nameWithUrl:url suffix:suffix];
     NSURLQueryItem *query = [self encodedURLQueryItemWithUrl:url];
     NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?%@=%@", mcsproxy, asset, fname, query.name, query.value];
     return URI;
+}
+
+- (NSURL *)HLS_proxyURLWithProxyURI:(NSString *)uri {
+    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
+    
+    return [_serverURL mcs_URLByAppendingPathComponent:uri];
+}
+@end
+
+
+@implementation NSURL (MCSExtended)
+- (NSURL *)mcs_URLByAppendingPathComponent:(NSString *)pathComponent {
+    if ( [pathComponent isEqualToString:@"/"] )
+        return self;
+    NSString *url = self.absoluteString;
+    while ( [url hasSuffix:@"/"] ) url = [url substringToIndex:url.length - 1];
+    NSString *path = pathComponent;
+    while ( [path hasSuffix:@"/"] ) path = [path substringFromIndex:1];
+    return [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@", url, path]];
 }
 @end

@@ -291,7 +291,7 @@ static dispatch_queue_t mcs_queue;
             NSRange range = [obj rangeValue];
             NSString *matched = [indexFileContents substringWithRange:range];
             NSString *url = [matched mcs_convertToUrlByContentsURL:currRequest.URL];
-            NSString *proxy = [MCSURL.shared proxyURIWithUrl:url suffix:HLS_SUFFIX_TS inAsset:asset.name];
+            NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:url suffix:HLS_SUFFIX_TS inAsset:asset.name];
             [indexFileContents replaceCharactersInRange:range withString:proxy];
         }];
     }
@@ -314,7 +314,7 @@ static dispatch_queue_t mcs_queue;
         NSRange URIRange = [result rangeAtIndex:index];
         NSString *URI = [contents substringWithRange:URIRange];
         NSString *url = [URI mcs_convertToUrlByContentsURL:contentsURL];
-        NSString *proxy = [MCSURL.shared proxyURIWithUrl:url suffix:suffix inAsset:_asset.name];
+        NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:url suffix:suffix inAsset:_asset.name];
         [contents replaceCharactersInRange:URIRange withString:proxy];
     }];
 }
@@ -412,23 +412,23 @@ static dispatch_queue_t mcs_queue;
     if      ( [self hasPrefix:HLS_PREFIX_DIR_ROOT] ) {
         NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", URL.scheme, URL.host]];
         NSString *subpath = self;
-        url = [rootDir URLByAppendingPathComponent:subpath].absoluteString;
+        url = [rootDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     else if ( [self hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
         NSURL *curDir = URL.URLByDeletingLastPathComponent;
         NSURL *parentDir = curDir.URLByDeletingLastPathComponent;
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_PARENT.length];
-        url = [parentDir URLByAppendingPathComponent:subpath].absoluteString;
+        url = [parentDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     else if ( [self hasPrefix:HLS_PREFIX_DIR_CURRENT] ) {
         NSURL *curDir = URL.URLByDeletingLastPathComponent;
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_CURRENT.length];
-        url = [curDir URLByAppendingPathComponent:subpath].absoluteString;
+        url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     else if ( [self hasPrefix:HLS_PREFIX_LOCALHOST] ) {
         NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", URL.scheme, URL.host]];
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_LOCALHOST.length];
-        url = [rootDir URLByAppendingPathComponent:subpath].absoluteString;
+        url = [rootDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     else if ( [self containsString:@"://"] ) {
         url = self;
@@ -436,7 +436,7 @@ static dispatch_queue_t mcs_queue;
     else {
         NSURL *curDir = URL.URLByDeletingLastPathComponent;
         NSString *subpath = self;
-        url = [curDir URLByAppendingPathComponent:subpath].absoluteString;
+        url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     return url;
 }
