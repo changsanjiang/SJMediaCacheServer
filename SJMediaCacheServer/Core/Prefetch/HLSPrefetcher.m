@@ -161,7 +161,7 @@ static dispatch_queue_t mcs_queue;
                     progress = (_TsIndex + curProgress) / all;
                 }
     
-                if ( progress >= 1 ) progress = 1;
+                if ( progress > 1 ) progress = 1;
                 _progress = progress;
                 
                 MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, _progress);
@@ -201,18 +201,20 @@ static dispatch_queue_t mcs_queue;
         break;
     }
     
-    // loaded all items
+    // All items loaded
     if ( item == nil ) {
         _progress = 1.0;
         [self _didCompleteWithError:nil];
         return;
     }
     
+    // update indexes
     if ( item.type == MCSDataTypeHLSTs )
         _TsIndex = _TsIndex != NSNotFound ? _TsIndex + 1 : 0;
     _fragmentIndex = nextIndex;
     _cur = item;
     
+    // prepare for reader
     NSURL *proxyURL = [MCSURL.shared HLS_proxyURLWithProxyURI:item.URI];
     NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:item.HTTPAdditionalHeaders];
     _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
