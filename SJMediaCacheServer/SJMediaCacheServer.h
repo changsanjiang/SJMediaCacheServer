@@ -73,6 +73,22 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 - (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock; // 预加载指定大小的数据
 
+/// Prefetch some assets in the cache for future use. assets are downloaded in low priority.
+///
+/// @param URL      An instance of NSURL that references a media asset.
+///
+/// @param num      The number of preloaded files. HLS media usually contains multiple ts files, you can specify the number of files to be preloaded.
+///
+/// @param progressBlock   This block will be invoked when progress updates.
+///
+/// @param completionBlock This block will be invoked when the current prefetching is completed. If an error occurred, an error object indicating how the prefetch failed, otherwise nil.
+///
+/// @return The task to cancel the current prefetching.
+///
+/// @note return nil if URL is nil.
+///
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock;
+
 /// Cancels all queued and executing prefetch tasks.
 ///
 - (void)cancelAllPrefetchTasks; // 取消所有的预加载任务

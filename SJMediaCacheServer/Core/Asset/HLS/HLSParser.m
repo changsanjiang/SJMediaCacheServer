@@ -493,3 +493,38 @@ static dispatch_queue_t mcs_queue;
     return [self mcs_textCheckingResultsByMatchPattern:HLS_PREFIX_VARIANT_STREAM options:kNilOptions] != nil;
 }
 @end
+
+
+/**
+
+ https://www.toptal.com/apple/introduction-to-http-live-streaming-hls
+ 
+ Here is an example of such an M3U8 file:
+
+ ```
+     #EXTM3U
+     #EXT-X-STREAM-INF:BANDWIDTH=1296,RESOLUTION=640x360
+     https://.../640x360_1200.m3u8
+     #EXT-X-STREAM-INF:BANDWIDTH=264,RESOLUTION=416x234
+     https://.../416x234_200.m3u8
+     #EXT-X-STREAM-INF:BANDWIDTH=464,RESOLUTION=480x270
+     https://.../480x270_400.m3u8
+     #EXT-X-STREAM-INF:BANDWIDTH=1628,RESOLUTION=960x540
+     https://.../960x540_1500.m3u8
+     #EXT-X-STREAM-INF:BANDWIDTH=2628,RESOLUTION=1280x720
+     https://.../1280x720_2500.m3u8
+ ```
+ 
+ ```
+ #EXT-X-STREAM-INF:BANDWIDTH=1296,RESOLUTION=640x360
+ https://.../640x360_1200.m3u8
+ ```
+    These are called variants of the same video prepared for different network speeds and screen resolutions. This specific M3U8 file (640x360_1200.m3u8) contains the video file chunks of the video resized to 640x360 pixels and prepared for bitrates of 1296kbps. Note that the reported bitrate must take into account both the video and audio streams in the video.
+
+    The video player will usually start playing from the first stream variant (in the previous example this is 640x360_1200.m3u8). For that reason, you must take special care to decide which variant will be the first in the list. The order of the other variants isn’t important.
+
+    If the first .ts file takes too long to download (causing “buffering”, i.e. waiting for the next chunk) the video player will switch to a to a stream with a smaller bitrate. And, of course, if it’s loaded fast enough it means that it can switch to a better quality variant, but only if it makes sense for the resolution of the display.
+ 
+    If the first stream in the index M3U8 list isn’t the best one, the client will need one or two cycles until it settles with the right variant.
+
+ */

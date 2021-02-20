@@ -23,7 +23,7 @@ static dispatch_queue_t mcs_queue;
     float _progress;
     NSURL *_URL;
     NSUInteger _preloadSize;
-    NSUInteger _numberOfPreloadFiles;
+    NSUInteger _numberOfPreloadedFiles;
     BOOL _isCalledPrepare;
     BOOL _isClosed;
     BOOL _isDone;
@@ -53,11 +53,11 @@ static dispatch_queue_t mcs_queue;
     return self;
 }
 
-- (instancetype)initWithURL:(NSURL *)URL numberOfPreloadFiles:(NSUInteger)num delegate:(nullable id<MCSPrefetcherDelegate>)delegate delegateQueue:(dispatch_queue_t)delegateQueue {
+- (instancetype)initWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num delegate:(nullable id<MCSPrefetcherDelegate>)delegate delegateQueue:(dispatch_queue_t)delegateQueue {
     self = [super init];
     if ( self ) {
         _URL = URL;
-        _numberOfPreloadFiles = num;
+        _numberOfPreloadedFiles = num;
         _delegate = delegate;
         _delegateQueue = delegateQueue;
         _index = NSNotFound;
@@ -66,11 +66,11 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (instancetype)initWithURL:(NSURL *)URL delegate:(nullable id<MCSPrefetcherDelegate>)delegate delegateQueue:(dispatch_queue_t)delegateQueue {
-    return [self initWithURL:URL numberOfPreloadFiles:NSUIntegerMax delegate:delegate delegateQueue:delegateQueue];
+    return [self initWithURL:URL numberOfPreloadedFiles:NSUIntegerMax delegate:delegate delegateQueue:delegateQueue];
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { preloadSize: %lu, numberOfPreloadFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)_numberOfPreloadFiles];
+    return [NSString stringWithFormat:@"%@:<%p> { preloadSize: %lu, numberOfPreloadedFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)_numberOfPreloadedFiles];
 }
 
 - (void)dealloc {
@@ -82,7 +82,7 @@ static dispatch_queue_t mcs_queue;
         if ( _isClosed || _isCalledPrepare )
             return;
 
-        MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu, numberOfPreloadFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)_numberOfPreloadFiles);
+        MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu, numberOfPreloadedFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)_numberOfPreloadedFiles);
         
         _isCalledPrepare = YES;
 
@@ -147,7 +147,7 @@ static dispatch_queue_t mcs_queue;
             }
             else {
                 CGFloat curr = (reader.offset * 1.0) / reader.response.totalLength;
-                NSUInteger files = asset.TsCount > _numberOfPreloadFiles ? _numberOfPreloadFiles : asset.TsCount;
+                NSUInteger files = asset.TsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.TsCount;
                 progress = ((_index != NSNotFound ? _index : 0) + curr) / files;
             }
             

@@ -83,6 +83,12 @@
     return [MCSPrefetcherManager.shared prefetchWithURL:URL progress:progressBlock completed:completionBlock];
 }
 
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
+    if ( URL == nil )
+        return nil;
+    return [MCSPrefetcherManager.shared prefetchWithURL:URL numberOfPreloadedFiles:num progress:progressBlock completed:completionBlock];
+}
+
 - (void)cancelAllPrefetchTasks {
     [MCSPrefetcherManager.shared cancelAllPrefetchTasks];
 }
