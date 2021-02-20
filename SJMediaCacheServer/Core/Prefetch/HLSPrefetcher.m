@@ -148,14 +148,15 @@ static dispatch_queue_t mcs_queue;
             if ( _cur.type == MCSDataTypeHLSTs ) {
                 _TsLoadedLength += length;
 
+                NSInteger totalLength = reader.response.range.length;
                 // size mode
                 if ( _preloadSize != 0 ) {
-                    NSUInteger all = reader.response.totalLength > _preloadSize ? reader.response.totalLength : _preloadSize;
+                    NSUInteger all = (_TsIndex == 0 && totalLength > _preloadSize) ? totalLength : _preloadSize;
                     progress = _TsLoadedLength * 1.0 / all;
                 }
                 // num mode
                 else {
-                    CGFloat curProgress = reader.offset * 1.0 / reader.response.totalLength;
+                    CGFloat curProgress = reader.offset * 1.0 / totalLength;
                     NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
                     progress = (_TsIndex + curProgress) / all;
                 }
@@ -164,12 +165,12 @@ static dispatch_queue_t mcs_queue;
                 _progress = progress;
                 
                 MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, _progress);
-                
-                if ( _delegate != nil ) {
-                    dispatch_async(_delegateQueue, ^{
-                        [self.delegate prefetcher:self progressDidChange:progress];
-                    });
-                }
+            }
+            
+            if ( _delegate != nil ) {
+                dispatch_async(_delegateQueue, ^{
+                    [self.delegate prefetcher:self progressDidChange:progress];
+                });
             }
             
             if ( reader.isReadingEndOfData ) {
