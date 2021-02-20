@@ -156,7 +156,7 @@ static dispatch_queue_t mcs_queue;
                 }
                 // num mode
                 else {
-                    CGFloat curProgress = reader.offset * 1.0 / totalLength;
+                    CGFloat curProgress = (reader.offset - reader.response.range.location) * 1.0 / totalLength;
                     NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
                     progress = (_TsIndex + curProgress) / all;
                 }
