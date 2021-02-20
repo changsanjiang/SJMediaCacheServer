@@ -147,7 +147,7 @@ static dispatch_queue_t mcs_queue;
             }
             else {
                 CGFloat curr = (reader.offset * 1.0) / reader.response.totalLength;
-                NSUInteger files = asset.TsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.TsCount;
+                NSUInteger files = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
                 progress = ((_index != NSNotFound ? _index : 0) + curr) / files;
             }
             
@@ -166,7 +166,7 @@ static dispatch_queue_t mcs_queue;
                 
 #warning next .... 加载 `subAsset`
                 
-                BOOL isLastFragment = asset.parser.TsCount == 0 || (_index == asset.parser.TsCount - 1);
+                BOOL isLastFragment = asset.parser.tsCount == 0 || (_index == asset.parser.tsCount - 1);
                 BOOL isFinished = progress >= 1 || isLastFragment;
                 if ( !isFinished ) {
                     [self _prepareNextFragment];
@@ -191,9 +191,9 @@ static dispatch_queue_t mcs_queue;
     _index = (_index == NSNotFound) ? 0 : (_index + 1);
     
     HLSAsset *asset = _reader.asset;
-    NSString *URI = [asset.parser URIAtIndex:_index];
-    NSURL *proxyURL = [MCSURL.shared proxyURLWithTsURI:URI];
-    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:[asset.parser HTTPAdditionalHeadersAtIndex:_index]];
+    id<HLSURIItem> item = [asset.parser itemAtIndex:_index];
+    NSURL *proxyURL = [MCSURL.shared proxyURLWithTsURI:item.URI];
+    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:item.HTTPAdditionalHeaders];
     _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
     [_reader prepare];
     

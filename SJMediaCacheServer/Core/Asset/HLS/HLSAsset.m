@@ -134,8 +134,8 @@ static dispatch_queue_t mcs_queue;
     return TsContentType;
 }
 
-- (NSUInteger)TsCount {
-    return self.parser.TsCount;
+- (NSUInteger)tsCount {
+    return self.parser.tsCount;
 }
 
 @synthesize root = _root;
@@ -281,7 +281,7 @@ static dispatch_queue_t mcs_queue;
             [_contents removeObjectsInArray:deletes];
         }
 
-        if ( _contents.count == _parser.TsCount ) {
+        if ( _contents.count == _parser.tsCount ) {
             BOOL isStoredAllContents = YES;
             for ( HLSContentTs *content in _contents ) {
                 if ( content.length != content.totalLength ) {

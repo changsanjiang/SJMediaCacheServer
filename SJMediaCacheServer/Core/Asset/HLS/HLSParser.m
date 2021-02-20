@@ -59,16 +59,17 @@ static dispatch_queue_t mcs_queue;
 - (nullable NSArray<NSTextCheckingResult *> *)mcs_textCheckingResultsByMatchPattern:(NSString *)pattern options:(NSRegularExpressionOptions)options;
 @end
 
-@interface MCSHLSURIItem : NSObject
+@interface HLSURIItem : NSObject<HLSURIItem>
 - (instancetype)initWithType:(MCSDataType)type URI:(NSString *)URI HTTPAdditionalHeaders:(nullable NSDictionary *)HTTPAdditionalHeaders;
 /// MCSDataTypeHLSAESKey    = 2,
 /// MCSDataTypeHLSTs        = 3,
-@property (nonatomic, readonly) MCSDataType type;
-@property (nonatomic, copy, readonly) NSString *URI;
-@property (nonatomic, copy, readonly, nullable) NSDictionary *HTTPAdditionalHeaders;
+@property (nonatomic) MCSDataType type;
+@property (nonatomic) BOOL isVariantStream;
+@property (nonatomic, copy) NSString *URI;
+@property (nonatomic, copy, nullable) NSDictionary *HTTPAdditionalHeaders;
 @end
 
-@implementation MCSHLSURIItem
+@implementation HLSURIItem
 - (instancetype)initWithType:(MCSDataType)type URI:(NSString *)URI HTTPAdditionalHeaders:(nullable NSDictionary *)HTTPAdditionalHeaders {
     self = [super init];
     if ( self ) {
@@ -90,18 +91,20 @@ static dispatch_queue_t mcs_queue;
 - (NSString *)mcs_convertToUrlByContentsURL:(NSURL *)contentsURL;
 
 - (nullable NSArray<NSValue *> *)mcs_TsURIRanges;
-- (nullable NSArray<MCSHLSURIItem *> *)mcs_URIItems;
+- (nullable NSArray<HLSURIItem *> *)mcs_URIItems;
 
 @property (nonatomic, readonly) BOOL mcs_hasVariantStream;
 @end
 
-@interface HLSParser ()
-@property (nonatomic) BOOL isCalledPrepare;
-@property (nonatomic, strong) NSURLRequest *request;
-@property (nonatomic, weak, nullable) id<HLSParserDelegate> delegate;
-@property (nonatomic) float networkTaskPriority;
-@property (nonatomic, strong) NSArray<MCSHLSURIItem *> *URIItems;
-@property (nonatomic) NSUInteger TsCount;
+@interface HLSParser () {
+    float _networkTaskPriority;
+    BOOL _isCalledPrepare;
+    NSURLRequest *_request;
+    NSArray<HLSURIItem *> *_Nullable _URIItems;
+    NSArray<HLSURIItem *> *_Nullable _streamArray;
+    NSArray<HLSURIItem *> *_Nullable _TsArray;
+    id<HLSParserDelegate> _Nullable _delegate;
+}
 @end
 
 @implementation HLSParser
@@ -137,20 +140,52 @@ static dispatch_queue_t mcs_queue;
     return self;
 }
 
-- (nullable NSString *)URIAtIndex:(NSUInteger)index {
-    __block NSString *URI = nil;
+- (NSUInteger)allItemsCount {
+    __block NSUInteger count = 0;
     dispatch_sync(mcs_queue, ^{
-        URI = index < _URIItems.count ? _URIItems[index].URI : nil;
+        count = _URIItems.count;
     });
-    return URI;
+    return count;
 }
 
-- (nullable NSDictionary *)HTTPAdditionalHeadersAtIndex:(NSUInteger)index {
-    __block NSDictionary *headers = nil;
+- (NSUInteger)tsCount {
+    __block NSUInteger count = 0;
     dispatch_sync(mcs_queue, ^{
-        headers = index < _URIItems.count ? _URIItems[index].HTTPAdditionalHeaders : nil;
+        count = _TsArray.count;
     });
-    return headers;
+    return count;
+}
+
+- (NSUInteger)streamCount {
+    __block NSUInteger count = 0;
+    dispatch_sync(mcs_queue, ^{
+        count = _streamArray.count;
+    });
+    return count;
+}
+
+- (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index {
+    __block HLSURIItem *item = nil;
+    dispatch_sync(mcs_queue, ^{
+        item = index < _URIItems.count ? _URIItems[index] : nil;
+    });
+    return item;
+}
+
+- (nullable id<HLSURIItem>)tsAtIndex:(NSUInteger)index {
+    __block HLSURIItem *item = nil;
+    dispatch_sync(mcs_queue, ^{
+        item = index < _TsArray.count ? _TsArray[index] : nil;
+    });
+    return item;
+}
+
+- (nullable id<HLSURIItem>)streamAtIndex:(NSUInteger)index {
+    __block HLSURIItem *item = nil;
+    dispatch_sync(mcs_queue, ^{
+        item = index < _streamArray.count ? _streamArray[index] : nil;
+    });
+    return item;
 }
 
 - (void)prepare {
@@ -188,14 +223,6 @@ static dispatch_queue_t mcs_queue;
         isClosed = _isClosed;
     });
     return isClosed;
-}
-
-- (NSUInteger)TsCount {
-    __block NSUInteger count = 0;
-    dispatch_sync(mcs_queue, ^{
-        count = _TsCount;
-    });
-    return count;
 }
 
 #pragma mark -
@@ -316,11 +343,14 @@ static dispatch_queue_t mcs_queue;
     }
     
     _URIItems = [content mcs_URIItems];
-    NSInteger TsCount = 0;
-    for ( MCSHLSURIItem *item in _URIItems ) {
-        if ( item.type == MCSDataTypeHLSTs ) TsCount += 1;
+    NSMutableArray<HLSURIItem *> *_Nullable streamItems = NSMutableArray.array;
+    NSMutableArray<HLSURIItem *> *_Nullable TsItems = NSMutableArray.array;
+    for ( HLSURIItem *item in _URIItems ) {
+        if ( item.type == MCSDataTypeHLSTs ) [TsItems addObject:item];
+        else if ( item.isVariantStream ) [streamItems addObject:item];
     }
-    _TsCount = TsCount;
+    _TsArray = TsItems.count != 0 ? TsItems.copy : nil;
+    _streamArray = streamItems.count != 0 ? streamItems.copy : nil;
     _isDone = YES;
     
     dispatch_async(MCSDelegateQueue(), ^{
@@ -431,9 +461,9 @@ static dispatch_queue_t mcs_queue;
     return m.copy;
 }
 
-- (nullable NSArray<MCSHLSURIItem *> *)mcs_URIItems {
+- (nullable NSArray<HLSURIItem *> *)mcs_URIItems {
     NSArray<NSString *> *lines = [self componentsSeparatedByString:@"\n"];
-    NSMutableArray<MCSHLSURIItem *> *m = NSMutableArray.array;
+    NSMutableArray<HLSURIItem *> *m = NSMutableArray.array;
     BOOL tsFlag = NO;
     BOOL vsFlag = NO;
     NSRange byteRange = NSMakeRange(0, 0);
@@ -445,7 +475,9 @@ static dispatch_queue_t mcs_queue;
         else if ( vsFlag ) {
             if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
                 NSString *URI = line;
-                [m addObject:[MCSHLSURIItem.alloc initWithType:MCSDataTypeHLSPlaylist URI:URI HTTPAdditionalHeaders:nil]];
+                HLSURIItem *item = [HLSURIItem.alloc initWithType:MCSDataTypeHLSPlaylist URI:URI HTTPAdditionalHeaders:nil];
+                item.isVariantStream = YES;
+                [m addObject:item];
                 vsFlag = NO;
             }
         }
@@ -462,7 +494,7 @@ static dispatch_queue_t mcs_queue;
             NSTextCheckingResult *result = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_AESKEY options:kNilOptions].firstObject;
             NSRange range = [result rangeAtIndex:HLS_INDEX_AESKEY_URI];
             NSString *URI = [line substringWithRange:range];
-            [m addObject:[MCSHLSURIItem.alloc initWithType:MCSDataTypeHLSAESKey URI:URI HTTPAdditionalHeaders:nil]];
+            [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSAESKey URI:URI HTTPAdditionalHeaders:nil]];
         }
         else if ( [line hasPrefix:HLS_PREFIX_TS_DURATION] ) {
             tsFlag = YES;
@@ -481,7 +513,7 @@ static dispatch_queue_t mcs_queue;
                     headers = @{
                         @"Range" : [NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)byteRange.location, NSMaxRange(byteRange) - 1]
                     };
-                [m addObject:[MCSHLSURIItem.alloc initWithType:MCSDataTypeHLSTs URI:URI HTTPAdditionalHeaders:headers]];
+                [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSTs URI:URI HTTPAdditionalHeaders:headers]];
                 tsFlag = NO;
             }
         }

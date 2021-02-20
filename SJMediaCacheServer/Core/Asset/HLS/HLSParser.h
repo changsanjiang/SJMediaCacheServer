@@ -11,6 +11,10 @@
 @class HLSAsset;
 
 NS_ASSUME_NONNULL_BEGIN
+@protocol HLSURIItem <NSObject>
+@property (nonatomic, copy, readonly) NSString *URI;
+@property (nonatomic, copy, readonly, nullable) NSDictionary *HTTPAdditionalHeaders;
+@end
 
 @interface HLSParser : NSObject
 + (nullable instancetype)parserInAsset:(HLSAsset *)asset;
@@ -22,12 +26,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)close;
 
 @property (nonatomic, weak, readonly, nullable) HLSAsset *asset;
-@property (nonatomic, readonly) NSUInteger TsCount;
+@property (nonatomic, readonly) NSUInteger allItemsCount;
+@property (nonatomic, readonly) NSUInteger tsCount;
+@property (nonatomic, readonly) NSUInteger streamCount;
+
+- (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index;
+- (nullable id<HLSURIItem>)tsAtIndex:(NSUInteger)index;
+- (nullable id<HLSURIItem>)streamAtIndex:(NSUInteger)index;
+
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;
-
-- (nullable NSString *)URIAtIndex:(NSUInteger)index;
-- (nullable NSDictionary *)HTTPAdditionalHeadersAtIndex:(NSUInteger)index;
 @end
 
 
