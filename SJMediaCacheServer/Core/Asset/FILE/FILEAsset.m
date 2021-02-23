@@ -13,6 +13,7 @@
 #import "MCSConfiguration.h"
 #import "MCSRootDirectory.h"
 #import "NSFileHandle+MCS.h"
+#import "MCSUtils.h"
 
 static NSString *kLength = @"length";
 static NSString *kReadwriteCount = @"readwriteCount";
@@ -39,7 +40,7 @@ static dispatch_queue_t mcs_queue;
 + (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        mcs_queue = dispatch_queue_create("queue.FILEAsset", DISPATCH_QUEUE_CONCURRENT);
+        mcs_queue = mcs_dispatch_queue_create("queue.FILEAsset", DISPATCH_QUEUE_CONCURRENT);
     });
 }
 

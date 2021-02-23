@@ -13,6 +13,7 @@
 #import "HLSContentTSReader.h"
 #import "HLSContentIndexReader.h"
 #import "MCSQueue.h"
+#import "MCSUtils.h"
 
 static dispatch_queue_t mcs_queue;
 
@@ -39,7 +40,7 @@ static dispatch_queue_t mcs_queue;
 + (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        mcs_queue = dispatch_queue_create("queue.HLSPrefetcher", DISPATCH_QUEUE_CONCURRENT);
+        mcs_queue = mcs_dispatch_queue_create("queue.HLSPrefetcher", DISPATCH_QUEUE_CONCURRENT);
     });
 }
 

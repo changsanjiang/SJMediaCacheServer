@@ -79,4 +79,14 @@ MCSEndTime(uint64_t elapsed_time);
 #define MCSStartTime()
 #define MCSEndTime(...)
 #endif
+
+#pragma mark - DEBUG
+
+#ifdef DEBUG
+#define mcs_dispatch_queue_create(__label__, __attr__) __mcs_dispatch_queue_create(__label__, __attr__)
+FOUNDATION_EXPORT dispatch_queue_t
+__mcs_dispatch_queue_create(const char *_Nullable label, dispatch_queue_attr_t _Nullable attr);
+#else
+#define mcs_dispatch_queue_create(__label__, __attr__) dispatch_queue_create(__label__, __attr__)
+#endif
 NS_ASSUME_NONNULL_END

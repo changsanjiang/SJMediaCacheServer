@@ -13,6 +13,7 @@
 #import <SJUIKit/SJSQLite3+RemoveExtended.h>
 #import <SJUIKit/SJSQLite3+Private.h>
 
+#import "MCSUtils.h"
 #import "MCSAssetUsageLog.h"
 #import "NSFileManager+MCS.h"
  
@@ -71,7 +72,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     static id obj = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        mcs_queue = dispatch_queue_create("queue.MCSAssetManager", DISPATCH_QUEUE_CONCURRENT);
+        mcs_queue = mcs_dispatch_queue_create("queue.MCSAssetManager", DISPATCH_QUEUE_CONCURRENT);
         obj = [[self alloc] init];
     });
     return obj;

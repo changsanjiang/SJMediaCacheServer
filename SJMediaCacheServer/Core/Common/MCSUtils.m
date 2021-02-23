@@ -250,3 +250,48 @@ MCSEndTime(uint64_t elapsed_time) {
     return fTotalT;
 }
 #endif
+
+#pragma mark -
+
+#ifdef DEBUG
+static NSHashTable<dispatch_queue_t> *queues = nil;
+static dispatch_queue_t checkQueue;
+static dispatch_queue_t serialQueue;
+void
+_checkRecursively() {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), serialQueue, ^{
+        NSArray *array = NSAllHashTableObjects(queues);
+        if ( array.count == 0 ) return;
+        dispatch_apply(array.count, checkQueue, ^(size_t idx) {
+            dispatch_queue_t cur = array[idx];
+            const char *label = dispatch_queue_get_label(cur);
+            printf("mcs_debug: will check <%s>.\n", label);
+            printf("mcs_debug: will add sync task for <%s>.\n", label);
+            dispatch_sync(cur, ^{
+                printf("mcs_debug: did perform sync task in <%s>.\n",label);
+            });
+            printf("mcs_debug: sync task finished in <%s>.\n", label);
+        });
+        _checkRecursively();
+    });
+}
+
+dispatch_queue_t
+__mcs_dispatch_queue_create(const char *_Nullable label, dispatch_queue_attr_t _Nullable attr) {
+    dispatch_queue_t queue = dispatch_queue_create(label, attr);
+    // 死锁检测
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queues = NSHashTable.weakObjectsHashTable;
+        checkQueue = dispatch_queue_create("mcs.debug.queue.check", DISPATCH_QUEUE_CONCURRENT);
+        serialQueue = dispatch_queue_create("mcs.debug.queue.serial", DISPATCH_QUEUE_SERIAL);
+        _checkRecursively();
+    });
+    
+    dispatch_sync(serialQueue, ^{
+        [queues addObject:queue];
+    });
+    return queue;
+}
+#endif
+

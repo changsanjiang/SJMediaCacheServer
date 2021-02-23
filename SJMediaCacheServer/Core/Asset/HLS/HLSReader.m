@@ -16,6 +16,7 @@
 #import "MCSQueue.h"
 #import "MCSResponse.h"
 #import "MCSConsts.h"
+#import "MCSUtils.h"
 
 static dispatch_queue_t mcs_queue;
 
@@ -37,7 +38,7 @@ static dispatch_queue_t mcs_queue;
 + (void)initialize {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        mcs_queue = dispatch_queue_create("queue.HLSReader", DISPATCH_QUEUE_CONCURRENT);
+        mcs_queue = mcs_dispatch_queue_create("queue.HLSReader", DISPATCH_QUEUE_CONCURRENT);
     });
 }
 
