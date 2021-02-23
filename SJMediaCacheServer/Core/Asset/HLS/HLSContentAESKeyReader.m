@@ -160,18 +160,14 @@ static dispatch_queue_t mcs_queue;
         // Wait until the download is complete
         NSData *contentData = [MCSData dataWithContentsOfRequest:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:self->_networkTaskPriority error:&downloadError willPerformHTTPRedirection:nil];
         
-        // write to file
-        __block NSError *writeError = nil;
-        if ( contentData != nil ) {
-            [self->_asset lock:^{
-                if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
-                    [contentData writeToFile:filePath options:NSDataWritingAtomic error:&writeError];
-                }
-            }];
-        }
-
         dispatch_barrier_async(mcs_queue, ^{
             if ( self->_isClosed ) return;
+            NSError *writeError = nil;
+            // write to file
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                [contentData writeToFile:filePath options:NSDataWritingAtomic error:&writeError];
+            }
+            
             NSError *error = downloadError ?: writeError;
             if ( error != nil ) {
                 [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{

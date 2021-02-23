@@ -253,7 +253,7 @@ MCSEndTime(uint64_t elapsed_time) {
 
 #pragma mark -
 
-#ifdef DEBUG
+#ifdef MCS_QUEUE_ENABLE_DEBUG
 static NSHashTable<dispatch_queue_t> *queues = nil;
 static dispatch_queue_t checkQueue;
 static dispatch_queue_t serialQueue;
@@ -262,17 +262,18 @@ _checkRecursively() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), serialQueue, ^{
         NSArray *array = NSAllHashTableObjects(queues);
         if ( array.count == 0 ) return;
-        dispatch_apply(array.count, checkQueue, ^(size_t idx) {
-            dispatch_queue_t cur = array[idx];
-            const char *label = dispatch_queue_get_label(cur);
-            printf("mcs_debug: will check <%s>.\n", label);
-            printf("mcs_debug: will add sync task for <%s>.\n", label);
-            dispatch_sync(cur, ^{
-                printf("mcs_debug: did perform sync task in <%s>.\n",label);
-            });
-            printf("mcs_debug: sync task finished in <%s>.\n", label);
-        });
         _checkRecursively();
+
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            dispatch_apply(array.count, checkQueue, ^(size_t idx) {
+                dispatch_queue_t cur = array[idx];
+                const char *label = dispatch_queue_get_label(cur);
+                printf("mcs_debug: will check <%s>.\n", label);
+                dispatch_sync(cur, ^{
+                    printf("mcs_debug: did perform sync task in <%s>.\n",label);
+                });
+            });
+        });
     });
 }
 
@@ -294,4 +295,14 @@ __mcs_dispatch_queue_create(const char *_Nullable label, dispatch_queue_attr_t _
     return queue;
 }
 #endif
+
+
+/**
+   
+
+ mcs_debug: will check <HTTPConnection>.
+ mcs_debug: will check <queue.HLSAsset>.
+ mcs_debug: will check <queue.HLSParser>.
+ 
+ */
 

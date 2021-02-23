@@ -297,15 +297,13 @@ static dispatch_queue_t mcs_queue;
         }];
     }
     
-    [_asset lock:^{
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:indexFilePath] ) {
-            NSError *_Nullable error = nil;
-            if ( ![indexFileContents writeToFile:indexFilePath atomically:YES encoding:NSUTF8StringEncoding error:&error] ) {
-                [self _onError:error];
-                return;
-            }
+    if ( ![NSFileManager.defaultManager fileExistsAtPath:indexFilePath] ) {
+        NSError *_Nullable error = nil;
+        if ( ![indexFileContents writeToFile:indexFilePath atomically:YES encoding:NSUTF8StringEncoding error:&error] ) {
+            [self _onError:error];
+            return;
         }
-    }];
+    }
     
     [self _finished];
 }

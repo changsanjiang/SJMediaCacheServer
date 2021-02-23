@@ -80,10 +80,6 @@ static dispatch_queue_t mcs_queue;
 
 #pragma mark - mark
 
-- (void)lock:(void (^)(void))block {
-    dispatch_barrier_sync(mcs_queue, block);
-}
-
 - (void)setParser:(nullable HLSParser *)parser {
     dispatch_barrier_sync(mcs_queue, ^{
         _parser = parser;
@@ -255,7 +251,7 @@ static dispatch_queue_t mcs_queue;
 
 // 合并文件
 - (void)_mergeContents {
-    dispatch_barrier_sync(mcs_queue, ^{
+    dispatch_barrier_async(mcs_queue, ^{
         if ( _root != nil && _root->_readwriteCount != 0 ) return;
         if ( _readwriteCount != 0 ) return;
         if ( _isStored ) return;
