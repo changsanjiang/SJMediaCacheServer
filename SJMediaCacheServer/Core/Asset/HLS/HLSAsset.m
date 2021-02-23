@@ -251,7 +251,7 @@ static dispatch_queue_t mcs_queue;
 
 // 合并文件
 - (void)_mergeContents {
-    dispatch_barrier_async(mcs_queue, ^{
+    dispatch_barrier_sync(mcs_queue, ^{
         if ( _root != nil && _root->_readwriteCount != 0 ) return;
         if ( _readwriteCount != 0 ) return;
         if ( _isStored ) return;
