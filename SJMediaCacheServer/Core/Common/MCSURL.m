@@ -150,6 +150,10 @@ MCSMD5(NSString *str) {
     return URI;
 }
 
+- (NSURL *)HLS_URLWithProxyURI:(NSString *)proxyURI {
+    return [self URLWithProxyURL:[NSURL URLWithString:proxyURI]];
+}
+
 - (NSURL *)HLS_proxyURLWithProxyURI:(NSString *)uri {
     NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
     

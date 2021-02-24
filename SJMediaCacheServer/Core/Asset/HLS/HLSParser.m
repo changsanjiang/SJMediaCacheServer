@@ -22,12 +22,12 @@
 #define HLS_SUFFIX_CONTINUE             @"\\"
 
 #define HLS_PREFIX_FILE_FIRST_LINE      @"#EXTM3U"
-#define HLS_PREFIX_TS_DURATION          @"#EXTINF"
+#define HLS_PREFIX_TS_DURATION          @"#EXTINF:"
 #define HLS_PREFIX_TS_BYTERANGE         @"#EXT-X-BYTERANGE"
 #define HLS_PREFIX_AESKEY               @"#EXT-X-KEY:METHOD=AES-128"
-#define HLS_PREFIX_MEDIA                @"#EXT-X-MEDIA"
-#define HLS_PREFIX_VARIANT_STREAM       @"#EXT-X-STREAM-INF"
-#define HLS_PREFIX_I_FRAME_STREAM       @"#EXT-X-I-FRAME-STREAM-INF"
+#define HLS_PREFIX_MEDIA                @"#EXT-X-MEDIA:"
+#define HLS_PREFIX_VARIANT_STREAM       @"#EXT-X-STREAM-INF:"
+#define HLS_PREFIX_I_FRAME_STREAM       @"#EXT-X-I-FRAME-STREAM-INF:"
 
 // #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English stereo",LANGUAGE="en",AUTOSELECT=YES,URI="audio.m3u8"
 #define HLS_MEDIA_TYPE_AUDIO            @"AUDIO"

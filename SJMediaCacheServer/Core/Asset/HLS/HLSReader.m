@@ -46,7 +46,7 @@ static dispatch_queue_t mcs_queue;
     self = [super init];
     if ( self ) {
 #ifdef DEBUG
-        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, request.URL, asset, request.URL, request.allHTTPHeaderFields);
+        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, request.URL, asset, request.allHTTPHeaderFields);
 #endif
 
         _asset = asset;

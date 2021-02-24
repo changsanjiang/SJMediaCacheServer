@@ -241,7 +241,7 @@
 				ORGANIZATIONNAME = "changsanjiang@gmail.com";
 				TargetAttributes = {
 					6003F589195388D20070C39A = {
-						DevelopmentTeam = DVCY355DY9;
+						DevelopmentTeam = Q6TTFXGP8Q;
 					};
 					6003F5AD195388D20070C39A = {
 						TestTargetID = 6003F589195388D20070C39A;
@@ -499,7 +499,7 @@
 			baseConfigurationReference = A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = DVCY355DY9;
+				DEVELOPMENT_TEAM = Q6TTFXGP8Q;
 				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SJMediaCacheServer/SJMediaCacheServer-Prefix.pch";

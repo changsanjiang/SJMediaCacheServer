@@ -20,16 +20,65 @@ static dispatch_queue_t mcs_queue;
 @interface HLSPrefetcher ()<MCSAssetReaderDelegate> {
     id<MCSAssetReader>_Nullable _reader;
     id<HLSURIItem> _Nullable _cur;
+    NSArray<id<HLSURIItem>> *_Nullable _renditionsItems;
     NSUInteger _TsLoadedLength;
+    NSUInteger _TsResponsedSize;
     NSUInteger _TsIndex;
     NSUInteger _fragmentIndex;
-    float _progress;
+    float _TsProgress;
+    float _renditionsProgress;
     NSURL *_URL;
     NSUInteger _preloadSize;
     NSUInteger _numberOfPreloadedFiles;
     BOOL _isCalledPrepare;
     BOOL _isClosed;
     BOOL _isDone;
+}
+@property (nonatomic) float renditionsProgress;
+@end
+
+@interface HLSRenditionsPrefetcher : NSObject<MCSPrefetcherDelegate>
+- (instancetype)initWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock;
+@property (nonatomic, readonly) float progress;
+- (void)prepare;
+- (void)close;
+@end
+
+@implementation HLSRenditionsPrefetcher {
+    HLSPrefetcher *_prefetcher;
+    void(^_Nullable _progressBlock)(float progress);
+    void(^_Nullable _completionBlock)(NSError *_Nullable error);
+}
+- (instancetype)initWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
+    self = [super init];
+    if ( self ) {
+        _progressBlock = progressBlock;
+        _completionBlock = completionBlock;
+        _prefetcher = [HLSPrefetcher.alloc initWithURL:URL numberOfPreloadedFiles:num delegate:self delegateQueue:dispatch_get_main_queue()];
+    }
+    return self;
+}
+
+- (float)progress {
+    return _prefetcher.progress;
+}
+
+- (void)prepare {
+    [_prefetcher prepare];
+}
+
+- (void)close {
+    [_prefetcher close];
+}
+
+#pragma mark - MCSPrefetcherDelegate
+
+- (void)prefetcher:(id<MCSPrefetcher>)prefetcher progressDidChange:(float)progress {
+    if ( _progressBlock != nil ) _progressBlock(progress);
+}
+
+- (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error {
+    if ( _completionBlock != nil ) _completionBlock(error);
 }
 @end
 
@@ -83,18 +132,18 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(mcs_queue, ^{
-        if ( _isClosed || _isCalledPrepare )
+    dispatch_barrier_async(mcs_queue, ^{
+        if ( self->_isClosed || self->_isCalledPrepare )
             return;
 
-        MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu, numberOfPreloadedFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)_numberOfPreloadedFiles);
+        MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu, numberOfPreloadedFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)self->_preloadSize, (unsigned long)self->_numberOfPreloadedFiles);
         
-        _isCalledPrepare = YES;
+        self->_isCalledPrepare = YES;
 
-        NSURL *proxyURL = [MCSURL.shared proxyURLWithURL:_URL];
+        NSURL *proxyURL = [MCSURL.shared proxyURLWithURL:self->_URL];
         NSURLRequest *proxyRequest = [NSURLRequest.alloc initWithURL:proxyURL];
-        _reader = [MCSAssetManager.shared readerWithRequest:proxyRequest networkTaskPriority:0 delegate:self];
-        [_reader prepare];
+        self->_reader = [MCSAssetManager.shared readerWithRequest:proxyRequest networkTaskPriority:0 delegate:self];
+        [self->_reader prepare];
     });
 }
 
@@ -107,7 +156,7 @@ static dispatch_queue_t mcs_queue;
 - (float)progress {
     __block float progress = 0;
     dispatch_sync(mcs_queue, ^{
-        progress = _progress;
+        progress = (_TsProgress + _renditionsProgress) / (1 + (_renditionsItems.count != 0 ? 1 : 0));
     });
     return progress;
 }
@@ -128,10 +177,28 @@ static dispatch_queue_t mcs_queue;
     return isDone;
 }
 
+- (void)setRenditionsProgress:(float)renditionsProgress {
+    dispatch_barrier_sync(mcs_queue, ^{
+        _renditionsProgress = renditionsProgress;
+    });
+}
+
+- (float)renditionsProgress {
+    __block float progress = 0;
+    dispatch_sync(mcs_queue, ^{
+        progress = _renditionsProgress;
+    });
+    return progress;
+}
+
 #pragma mark - MCSAssetReaderDelegate
 
 - (void)reader:(id<MCSAssetReader>)reader prepareDidFinish:(id<MCSResponse>)response {
-    /* nothing */
+    dispatch_barrier_sync(mcs_queue, ^{
+        if ( _cur.type == MCSDataTypeHLSTs ) {
+            _TsResponsedSize += response.range.length;
+        }
+    });
 }
 
 - (void)reader:(id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
@@ -152,7 +219,7 @@ static dispatch_queue_t mcs_queue;
                 NSInteger totalLength = reader.response.range.length;
                 // size mode
                 if ( _preloadSize != 0 ) {
-                    NSUInteger all = (_TsIndex == 0 && totalLength > _preloadSize) ? totalLength : _preloadSize;
+                    NSUInteger all = _preloadSize > _TsResponsedSize ? _preloadSize : _TsResponsedSize;
                     progress = _TsLoadedLength * 1.0 / all;
                 }
                 // num mode
@@ -163,19 +230,20 @@ static dispatch_queue_t mcs_queue;
                 }
     
                 if ( progress > 1 ) progress = 1;
-                _progress = progress;
-                
-                MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, _progress);
+                _TsProgress = progress;
             }
             
             if ( _delegate != nil ) {
                 dispatch_async(_delegateQueue, ^{
+                    CGFloat progress = self.progress;
+                    MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
+
                     [self.delegate prefetcher:self progressDidChange:progress];
                 });
             }
             
             if ( reader.isReadingEndOfData ) {
-                _progress == 1 ? [self _didCompleteWithError:nil] : [self _prepareNextFragment];
+                _TsProgress == 1 ? [self _prefetchRenditionsItems] : [self _prepareNextFragment];
             }
         }
     });
@@ -192,20 +260,20 @@ static dispatch_queue_t mcs_queue;
 - (void)_prepareNextFragment {
     NSUInteger nextIndex = NSNotFound;
     id<HLSURIItem> item = nil;
+    HLSAsset *asset = _reader.asset;
+    HLSParser *parser = asset.parser;
     while ( YES ) {
         nextIndex = _fragmentIndex == NSNotFound ? 0 : _fragmentIndex + 1;
-        HLSAsset *asset = _reader.asset;
-        HLSParser *parser = asset.parser;
         item = [parser itemAtIndex:nextIndex];
-        if ( item.type == MCSDataTypeHLSPlaylist && !item.isVariantStream )
+        if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantItem:item] )
             continue;
         break;
     }
     
     // All items loaded
     if ( item == nil ) {
-        _progress = 1.0;
-        [self _didCompleteWithError:nil];
+        _TsProgress = 1.0;
+        [self _prefetchRenditionsItems];
         return;
     }
     
@@ -215,6 +283,10 @@ static dispatch_queue_t mcs_queue;
     _fragmentIndex = nextIndex;
     _cur = item;
     
+    if ( [parser isVariantItem:item] ) {
+        _renditionsItems = [parser renditionsItemsForVariantItem:item];
+    }
+    
     // prepare for reader
     NSURL *proxyURL = [MCSURL.shared HLS_proxyURLWithProxyURI:item.URI];
     NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:item.HTTPAdditionalHeaders];
@@ -222,6 +294,58 @@ static dispatch_queue_t mcs_queue;
     [_reader prepare];
     
     MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, TsIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_fragmentIndex, _TsIndex, request);
+}
+
+- (void)_prefetchRenditionsItems {
+    if ( _renditionsItems.count == 0 ) {
+        [self _didCompleteWithError:nil];
+        return;
+    }
+    
+    dispatch_group_t group = dispatch_group_create();
+    NSMutableArray<HLSRenditionsPrefetcher *> *prefetchers = [NSMutableArray arrayWithCapacity:_renditionsItems.count];
+    __weak typeof(self) _self = self;
+    __weak NSMutableArray<HLSRenditionsPrefetcher *> *weakPrefetchers = prefetchers;
+    __block NSError *error = nil;
+    for ( id<HLSURIItem> item in _renditionsItems ) {
+        dispatch_group_enter(group);
+        NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
+        HLSRenditionsPrefetcher *prefetcher = [HLSRenditionsPrefetcher.alloc initWithURL:URL numberOfPreloadedFiles:_TsIndex progress:^(float progress) {
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return;
+            float allProgress = 0;
+            for ( HLSRenditionsPrefetcher *prefetcher in weakPrefetchers ) {
+                allProgress += prefetcher.progress;
+            }
+            self.renditionsProgress = allProgress;
+            if ( self.delegate != nil ) {
+                dispatch_async(self.delegateQueue, ^{
+                    CGFloat progress = self.progress;
+                    MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
+
+                    [self.delegate prefetcher:self progressDidChange:progress];
+                });
+            }
+        } completed:^(NSError * _Nullable err) {
+            if ( err != nil && error == nil ) {
+                error = err;
+                for ( HLSRenditionsPrefetcher *cur in prefetchers ) {
+                    [cur close];
+                }
+            }
+            dispatch_group_leave(group);
+        }];
+        [prefetcher prepare];
+        [prefetchers addObject:prefetcher];
+    }
+    
+    dispatch_group_notify(group, dispatch_get_global_queue(0, 0), ^{
+        dispatch_barrier_sync(mcs_queue, ^{
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return;
+            [self _didCompleteWithError:error];
+        });
+    });
 }
 
 - (void)_didCompleteWithError:(nullable NSError *)error {

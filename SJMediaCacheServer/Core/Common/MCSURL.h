@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSURL (HLS)
 - (NSString *)HLS_proxyURIWithURL:(NSString *)url suffix:(NSString *)suffix inAsset:(NSString *)asset;
+- (NSURL *)HLS_URLWithProxyURI:(NSString *)proxyURI;
 - (NSURL *)HLS_proxyURLWithProxyURI:(NSString *)uri;
 @end
 
