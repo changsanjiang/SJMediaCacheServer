@@ -24,11 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, readonly, nullable) HLSAsset *asset;
 @property (nonatomic, readonly) NSUInteger allItemsCount;
 @property (nonatomic, readonly) NSUInteger tsCount;
-@property (nonatomic, readonly) NSUInteger streamCount;
 
 - (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index;
-- (nullable id<HLSURIItem>)tsAtIndex:(NSUInteger)index;
-- (nullable id<HLSURIItem>)streamAtIndex:(NSUInteger)index;
+- (BOOL)isVariantItem:(id<HLSURIItem>)item;
+- (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item;
 
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;
@@ -41,7 +40,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol HLSURIItem <NSObject>
 @property (nonatomic, readonly) MCSDataType type;
-@property (nonatomic, readonly) BOOL isVariantStream;
 @property (nonatomic, copy, readonly) NSString *URI;
 @property (nonatomic, copy, readonly, nullable) NSDictionary *HTTPAdditionalHeaders;
 @end
