@@ -23,7 +23,7 @@
 
 #define HLS_PREFIX_FILE_FIRST_LINE      @"#EXTM3U"
 #define HLS_PREFIX_TS_DURATION          @"#EXTINF:"
-#define HLS_PREFIX_TS_BYTERANGE         @"#EXT-X-BYTERANGE"
+#define HLS_PREFIX_TS_BYTERANGE         @"#EXT-X-BYTERANGE:"
 #define HLS_PREFIX_AESKEY               @"#EXT-X-KEY:METHOD=AES-128"
 #define HLS_PREFIX_MEDIA                @"#EXT-X-MEDIA:"
 #define HLS_PREFIX_VARIANT_STREAM       @"#EXT-X-STREAM-INF:"
@@ -62,8 +62,10 @@
 // #EXTINF:10,
 // #EXT-X-BYTERANGE:1007868@0
 // 000000.ts
-#define HLS_REGEX_TS_BYTERANGE          @"#EXT-X-BYTERANGE:(.+)@(.+)"
-#define HLS_INDEX_TS_BYTERANGE_LOCATION 2
+// #EXT-X-BYTERANGE:1234567
+#define HLS_REGEX_TS_BYTERANGE_START    @"#EXT-X-BYTERANGE:.+@(.+)"
+#define HLS_REGEX_TS_BYTERANGE_LENGTH   @"#EXT-X-BYTERANGE:([^@]+)"
+#define HLS_INDEX_TS_BYTERANGE_START    1
 #define HLS_INDEX_TS_BYTERANGE_LENGTH   1
 
 typedef NS_ENUM(NSUInteger, HLSMatchedContentsOperation) {
@@ -522,7 +524,8 @@ static dispatch_queue_t mcs_queue;
     NSString *videoGroupId = nil;
     NSString *subtitleGroupId = nil;
     NSString *closedCaptionsGroupId = nil;
-    NSRange byteRange = NSMakeRange(0, 0);
+    NSRange bytesRange = NSMakeRange(0, 0);
+    NSUInteger bytesNextPosition = 0;
     for ( NSString *line in lines ) {
         // #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English stereo",LANGUAGE="en",AUTOSELECT=YES,URI="audio.m3u8"
         if      ( [line hasPrefix:HLS_PREFIX_MEDIA] ) {
@@ -618,17 +621,23 @@ static dispatch_queue_t mcs_queue;
         }
         else if ( tsFlag ) {
             if      ( [line hasPrefix:HLS_PREFIX_TS_BYTERANGE] ) {
-                NSTextCheckingResult *result = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_TS_BYTERANGE options:kNilOptions].firstObject;
-                long long location = [[line substringWithRange:[result rangeAtIndex:HLS_INDEX_TS_BYTERANGE_LOCATION]] longLongValue];
-                long long length = [[line substringWithRange:[result rangeAtIndex:HLS_INDEX_TS_BYTERANGE_LENGTH]] longLongValue];
-                byteRange = NSMakeRange(location, length);
+                NSTextCheckingResult *startCheckingResult = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_TS_BYTERANGE_START options:kNilOptions].firstObject;
+                NSRange startRange = [startCheckingResult rangeAtIndex:HLS_INDEX_TS_BYTERANGE_START];
+                long long start = startRange.length != 0 ? [line substringWithRange:startRange].longLongValue : bytesNextPosition;
+                
+                NSTextCheckingResult *lengthCheckingResult = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_TS_BYTERANGE_LENGTH options:kNilOptions].firstObject;
+                NSRange lengthRange = [lengthCheckingResult rangeAtIndex:HLS_INDEX_TS_BYTERANGE_LENGTH];
+                long long length = [line substringWithRange:lengthRange].longLongValue;
+                
+                bytesRange = NSMakeRange(start, length);
+                bytesNextPosition = start + length;
             }
             else if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
                 NSString *URI = line;
                 NSDictionary *headers = nil;
-                if ( byteRange.length != 0 )
+                if ( bytesRange.length != 0 )
                     headers = @{
-                        @"Range" : [NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)byteRange.location, NSMaxRange(byteRange) - 1]
+                        @"Range" : [NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)bytesRange.location, NSMaxRange(bytesRange) - 1]
                     };
                 [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSTs URI:URI HTTPAdditionalHeaders:headers]];
                 tsFlag = NO;

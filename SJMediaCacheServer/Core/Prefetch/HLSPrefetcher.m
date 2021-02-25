@@ -17,14 +17,61 @@
 
 static dispatch_queue_t mcs_queue;
 
+@interface HLSURIItemProvider : NSObject
+@property (nonatomic, weak, nullable) HLSAsset *asset;
+@property (nonatomic, readonly, nullable) id<HLSURIItem> next;
+@property (nonatomic, readonly) NSUInteger curTsIndex;
+@property (nonatomic, readonly) NSUInteger curFragmentIndex;
+- (BOOL)isVariantItem:(id<HLSURIItem>)item;
+- (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item;
+@end
+
+@implementation HLSURIItemProvider
+
+- (void)setAsset:(nullable HLSAsset *)asset {
+    if ( asset != _asset ) {
+        _asset = asset;
+        _curFragmentIndex = NSNotFound;
+        _curTsIndex = NSNotFound;
+    }
+}
+
+- (nullable id<HLSURIItem>)next {
+    if ( _asset == nil )
+        return nil;
+
+    NSUInteger nextIndex = NSNotFound;
+    id<HLSURIItem> item = nil;
+    HLSParser *parser = _asset.parser;
+    while ( YES ) {
+        nextIndex = (_curFragmentIndex == NSNotFound) ? 0 : (_curFragmentIndex + 1);
+        item = [parser itemAtIndex:nextIndex];
+        if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantItem:item] )
+            continue;
+        if ( item.type == MCSDataTypeHLSTs )
+            _curTsIndex = (_curTsIndex == NSNotFound) ? 0 : (_curTsIndex + 1);
+        _curFragmentIndex = nextIndex;
+        break;
+    }
+    return item;
+}
+
+- (BOOL)isVariantItem:(id<HLSURIItem>)item {
+    return [_asset.parser isVariantItem:item];
+}
+
+- (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item {
+    return [_asset.parser renditionsItemsForVariantItem:item];
+}
+@end
+
 @interface HLSPrefetcher ()<MCSAssetReaderDelegate> {
     id<MCSAssetReader>_Nullable _reader;
     id<HLSURIItem> _Nullable _cur;
     NSArray<id<HLSURIItem>> *_Nullable _renditionsItems;
+    HLSURIItemProvider *_itemProvider;
     NSUInteger _TsLoadedLength;
     NSUInteger _TsResponsedSize;
-    NSUInteger _TsIndex;
-    NSUInteger _fragmentIndex;
     float _TsProgress;
     float _renditionsProgress;
     NSURL *_URL;
@@ -100,8 +147,7 @@ static dispatch_queue_t mcs_queue;
         _preloadSize = bytes;
         _delegate = delegate;
         _delegateQueue = delegateQueue;
-        _fragmentIndex = NSNotFound;
-        _TsIndex = NSNotFound;
+        _itemProvider = HLSURIItemProvider.alloc.init;
     }
     return self;
 }
@@ -113,8 +159,7 @@ static dispatch_queue_t mcs_queue;
         _numberOfPreloadedFiles = num;
         _delegate = delegate;
         _delegateQueue = delegateQueue;
-        _fragmentIndex = NSNotFound;
-        _TsIndex = NSNotFound;
+        _itemProvider = HLSURIItemProvider.alloc.init;
     }
     return self;
 }
@@ -226,7 +271,7 @@ static dispatch_queue_t mcs_queue;
                 else {
                     CGFloat curProgress = (reader.offset - reader.response.range.location) * 1.0 / totalLength;
                     NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
-                    progress = (_TsIndex + curProgress) / all;
+                    progress = (_itemProvider.curTsIndex + curProgress) / all;
                 }
     
                 if ( progress > 1 ) progress = 1;
@@ -258,42 +303,30 @@ static dispatch_queue_t mcs_queue;
 #pragma mark -
 
 - (void)_prepareNextFragment {
-    NSUInteger nextIndex = NSNotFound;
-    id<HLSURIItem> item = nil;
-    HLSAsset *asset = _reader.asset;
-    HLSParser *parser = asset.parser;
-    while ( YES ) {
-        nextIndex = _fragmentIndex == NSNotFound ? 0 : _fragmentIndex + 1;
-        item = [parser itemAtIndex:nextIndex];
-        if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantItem:item] )
-            continue;
-        break;
-    }
+    // update asset
+    _itemProvider.asset = _reader.asset;
+    
+    // next item
+    _cur = _itemProvider.next;
     
     // All items loaded
-    if ( item == nil ) {
+    if ( _cur == nil ) {
         _TsProgress = 1.0;
         [self _prefetchRenditionsItems];
         return;
     }
     
-    // update indexes
-    if ( item.type == MCSDataTypeHLSTs )
-        _TsIndex = _TsIndex != NSNotFound ? _TsIndex + 1 : 0;
-    _fragmentIndex = nextIndex;
-    _cur = item;
-    
-    if ( [parser isVariantItem:item] ) {
-        _renditionsItems = [parser renditionsItemsForVariantItem:item];
+    if ( [_itemProvider isVariantItem:_cur] ) {
+        _renditionsItems = [_itemProvider renditionsItemsForVariantItem:_cur];
     }
     
     // prepare for reader
-    NSURL *proxyURL = [MCSURL.shared HLS_proxyURLWithProxyURI:item.URI];
-    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:item.HTTPAdditionalHeaders];
+    NSURL *proxyURL = [MCSURL.shared HLS_proxyURLWithProxyURI:_cur.URI];
+    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:_cur.HTTPAdditionalHeaders];
     _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
     [_reader prepare];
     
-    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, TsIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_fragmentIndex, _TsIndex, request);
+    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, TsIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_itemProvider.curFragmentIndex, _itemProvider.curTsIndex, request);
 }
 
 - (void)_prefetchRenditionsItems {
@@ -310,7 +343,7 @@ static dispatch_queue_t mcs_queue;
     for ( id<HLSURIItem> item in _renditionsItems ) {
         dispatch_group_enter(group);
         NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
-        HLSRenditionsPrefetcher *prefetcher = [HLSRenditionsPrefetcher.alloc initWithURL:URL numberOfPreloadedFiles:_TsIndex progress:^(float progress) {
+        HLSRenditionsPrefetcher *prefetcher = [HLSRenditionsPrefetcher.alloc initWithURL:URL numberOfPreloadedFiles:_itemProvider.curTsIndex + 1 progress:^(float progress) {
             __strong typeof(_self) self = _self;
             if ( self == nil ) return;
             float allProgress = 0;
