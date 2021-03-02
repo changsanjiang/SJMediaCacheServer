@@ -259,7 +259,7 @@ static dispatch_queue_t checkQueue;
 static dispatch_queue_t serialQueue;
 void
 _checkRecursively() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), serialQueue, ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(MCS_QUEUE_CHECK_INTERVAL * NSEC_PER_SEC)), serialQueue, ^{
         NSArray *array = NSAllHashTableObjects(queues);
         if ( array.count == 0 ) return;
         _checkRecursively();
@@ -295,14 +295,3 @@ __mcs_dispatch_queue_create(const char *_Nullable label, dispatch_queue_attr_t _
     return queue;
 }
 #endif
-
-
-/**
-   
-
- mcs_debug: will check <HTTPConnection>.
- mcs_debug: will check <queue.HLSAsset>.
- mcs_debug: will check <queue.HLSParser>.
- 
- */
-

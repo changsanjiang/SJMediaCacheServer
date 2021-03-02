@@ -85,6 +85,7 @@ MCSEndTime(uint64_t elapsed_time);
 //#define MCS_QUEUE_ENABLE_DEBUG
 
 #ifdef MCS_QUEUE_ENABLE_DEBUG
+#define MCS_QUEUE_CHECK_INTERVAL 5
 #define mcs_dispatch_queue_create(__label__, __attr__) __mcs_dispatch_queue_create(__label__, __attr__)
 FOUNDATION_EXPORT dispatch_queue_t
 __mcs_dispatch_queue_create(const char *_Nullable label, dispatch_queue_attr_t _Nullable attr);
