@@ -17,7 +17,10 @@
 
 static dispatch_queue_t mcs_queue;
 
-@interface HLSContentIndexReader ()<HLSParserDelegate, MCSAssetDataReaderDelegate>
+@interface HLSContentIndexReader ()<HLSParserDelegate, MCSAssetDataReaderDelegate> {
+    HLSParser *_tmp;
+}
+
 @property (nonatomic, strong) NSURLRequest *request;
 
 @property (nonatomic) BOOL isCalledPrepare;
@@ -68,8 +71,8 @@ static dispatch_queue_t mcs_queue;
             [self _prepareReaderForParser:parser];
         }
         else {
-            parser = [HLSParser.alloc initWithAsset:_asset request:[_request mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:_networkTaskPriority delegate:self];
-            [parser prepare];
+            _tmp = [HLSParser.alloc initWithAsset:_asset request:[_request mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:_networkTaskPriority delegate:self];
+            [_tmp prepare];
         }
     });
 }

@@ -14,6 +14,16 @@
     void(^_willPerformHTTPRedirection)(NSHTTPURLResponse *response, NSURLRequest *newRequest);
 }
 
++ (void)requestContents:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority willPerformHTTPRedirection:(void(^_Nullable)(NSHTTPURLResponse *response, NSURLRequest *newRequest))block completed:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler {
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        @autoreleasepool {
+            NSError *error = nil;
+            NSData *data = [self dataWithContentsOfRequest:request networkTaskPriority:networkTaskPriority error:&error willPerformHTTPRedirection:block];
+            if ( completionHandler ) completionHandler(data, error);
+        }
+    });
+}
+
 + (NSData *)dataWithContentsOfRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority error:(NSError **)error willPerformHTTPRedirection:(void(^_Nullable)(NSHTTPURLResponse *response, NSURLRequest *newRequest))block {
     MCSData *data = [MCSData.alloc initWithContentsOfRequest:request networkTaskPriority:networkTaskPriority error:error willPerformHTTPRedirection:block];
     return data != nil ? data->_m : nil;

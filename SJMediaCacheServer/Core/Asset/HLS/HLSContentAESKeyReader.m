@@ -155,17 +155,13 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (void)_downloadToFile:(NSString *)filePath {
-    dispatch_async(mcs_queue, ^{
-        NSError *downloadError = nil;
-        // Wait until the download is complete
-        NSData *contentData = [MCSData dataWithContentsOfRequest:[self->_request mcs_requestWithHTTPAdditionalHeaders:[self->_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:self->_networkTaskPriority error:&downloadError willPerformHTTPRedirection:nil];
-        
-        dispatch_barrier_async(mcs_queue, ^{
+    [MCSData requestContents:[_request mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:_networkTaskPriority willPerformHTTPRedirection:nil completed:^(NSData * _Nullable data, NSError * _Nullable downloadError) {
+        dispatch_barrier_sync(mcs_queue, ^{
             if ( self->_isClosed ) return;
             NSError *writeError = nil;
             // write to file
-            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
-                [contentData writeToFile:filePath options:NSDataWritingAtomic error:&writeError];
+            if ( downloadError == nil && ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                [data writeToFile:filePath options:NSDataWritingAtomic error:&writeError];
             }
             
             NSError *error = downloadError ?: writeError;
@@ -179,7 +175,7 @@ static dispatch_queue_t mcs_queue;
             
             [self _prepareReaderForLocalFile:filePath];
         });
-    });
+    }];
 }
 
 - (void)_prepareReaderForLocalFile:(NSString *)filePath {

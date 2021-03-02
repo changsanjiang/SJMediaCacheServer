@@ -232,9 +232,7 @@ static dispatch_queue_t mcs_queue;
         
         self->_isCalledPrepare = YES;
         
-        @autoreleasepool {
-            [self _parse];
-        }
+        [self _start];
     });
 }
 
@@ -264,7 +262,7 @@ static dispatch_queue_t mcs_queue;
 
 #pragma mark -
 
-- (void)_parse {
+- (void)_start {
     
     NSString *indexFilePath = [_asset indexFilePath];
     // 已解析过, 将直接读取本地
@@ -281,14 +279,33 @@ static dispatch_queue_t mcs_queue;
     }
     
     __block NSURLRequest *currRequest = _request;
-    NSError *downloadError = nil;
-    NSData *data = [MCSData dataWithContentsOfRequest:currRequest networkTaskPriority:_networkTaskPriority error:&downloadError willPerformHTTPRedirection:^(NSHTTPURLResponse * _Nonnull response, NSURLRequest * _Nonnull newRequest) {
+    __weak typeof(self) _self = self;
+    [MCSData requestContents:currRequest networkTaskPriority:_networkTaskPriority willPerformHTTPRedirection:^(NSHTTPURLResponse * _Nonnull response, NSURLRequest * _Nonnull newRequest) {
         currRequest = newRequest;
+    } completed:^(NSData * _Nullable data, NSError * _Nullable error) {
+        dispatch_barrier_sync(mcs_queue, ^{
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return;
+            [self _parseContentsWithRequest:currRequest data:data error:error];
+        });
     }];
-    if ( downloadError != nil ) {
+}
+
+- (void)_parseContentsWithRequest:(NSURLRequest *)currRequest data:(NSData *)data error:(NSError *)error {
+    if ( _isClosed ) {
+        return;
+    }
+    
+    HLSAsset *asset = _asset;
+    if ( asset == nil ) {
+        [self _close];
+        return;
+    }
+    
+    if ( error != nil ) {
         [self _onError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
             MCSErrorUserInfoObjectKey : currRequest,
-            MCSErrorUserInfoErrorKey : downloadError,
+            MCSErrorUserInfoErrorKey : error,
             MCSErrorUserInfoReasonKey : @"下载数据失败!"
         }]];
         return;
@@ -341,6 +358,7 @@ static dispatch_queue_t mcs_queue;
         }];
     }
     
+    NSString *indexFilePath = [asset indexFilePath];
     if ( ![NSFileManager.defaultManager fileExistsAtPath:indexFilePath] ) {
         NSError *_Nullable error = nil;
         if ( ![indexFileContents writeToFile:indexFilePath atomically:YES encoding:NSUTF8StringEncoding error:&error] ) {
