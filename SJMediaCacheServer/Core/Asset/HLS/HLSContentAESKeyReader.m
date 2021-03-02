@@ -9,7 +9,7 @@
 #import "HLSAsset.h"
 #import "MCSError.h" 
 #import "MCSLogger.h"
-#import "MCSData.h"
+#import "MCSContents.h"
 #import "MCSUtils.h"
 #import "MCSURL.h"
 #import "MCSAssetFileRead.h"
@@ -155,7 +155,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (void)_downloadToFile:(NSString *)filePath {
-    [MCSData requestContents:[_request mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:_networkTaskPriority willPerformHTTPRedirection:nil completed:^(NSData * _Nullable data, NSError * _Nullable downloadError) {
+    [MCSContents request:[_request mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:_networkTaskPriority willPerformHTTPRedirection:nil completed:^(NSData * _Nullable data, NSError * _Nullable downloadError) {
         dispatch_barrier_sync(mcs_queue, ^{
             if ( self->_isClosed ) return;
             NSError *writeError = nil;

@@ -5,16 +5,16 @@
 //  Created by BlueDancer on 2020/7/7.
 //
 
-#import "MCSData.h"
+#import "MCSContents.h"
 
-@implementation MCSData {
+@implementation MCSContents {
     dispatch_semaphore_t _semaphore;
     NSMutableData *_m;
     NSError *_error;
     void(^_willPerformHTTPRedirection)(NSHTTPURLResponse *response, NSURLRequest *newRequest);
 }
 
-+ (void)requestContents:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority willPerformHTTPRedirection:(void(^_Nullable)(NSHTTPURLResponse *response, NSURLRequest *newRequest))block completed:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler {
++ (void)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority willPerformHTTPRedirection:(void(^_Nullable)(NSHTTPURLResponse *response, NSURLRequest *newRequest))block completed:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler {
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         @autoreleasepool {
             NSError *error = nil;
@@ -25,8 +25,8 @@
 }
 
 + (NSData *)dataWithContentsOfRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority error:(NSError **)error willPerformHTTPRedirection:(void(^_Nullable)(NSHTTPURLResponse *response, NSURLRequest *newRequest))block {
-    MCSData *data = [MCSData.alloc initWithContentsOfRequest:request networkTaskPriority:networkTaskPriority error:error willPerformHTTPRedirection:block];
-    return data != nil ? data->_m : nil;
+    MCSContents *contents = [MCSContents.alloc initWithContentsOfRequest:request networkTaskPriority:networkTaskPriority error:error willPerformHTTPRedirection:block];
+    return contents != nil ? contents->_m : nil;
 }
 
 - (instancetype)initWithContentsOfRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority error:(NSError **)error willPerformHTTPRedirection:(void(^)(NSHTTPURLResponse *response, NSURLRequest *newRequest))block {
