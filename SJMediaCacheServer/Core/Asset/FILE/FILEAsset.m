@@ -94,7 +94,7 @@ static dispatch_queue_t mcs_queue;
 - (BOOL)isStored {
     __block BOOL isStored = NO;
     dispatch_sync(mcs_queue, ^{
-        isStored = _isStored;
+        isStored = _isStored || (_totalLength != 0 && _contents.firstObject.length == _totalLength);
     });
     return isStored;
 }
@@ -184,6 +184,10 @@ static dispatch_queue_t mcs_queue;
 // 合并文件
 - (void)_mergeContents {
     dispatch_barrier_sync(mcs_queue, ^{
+#ifdef DEBUG
+        NSLog(@"%d \t %s %@", (int)__LINE__, __func__, _contents);
+#endif
+        
         if ( _readwriteCount != 0 ) return;
         if ( _isStored ) return;
         if ( _contents.count < 2 ) {
