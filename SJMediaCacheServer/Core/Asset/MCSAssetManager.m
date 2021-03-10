@@ -86,7 +86,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         _assets = NSMutableDictionary.dictionary;
         _usageLogs = NSMutableDictionary.dictionary;
         _checkInterval = 30;
-        [self _checkRecursively];
+        _lastTimeLimit = 60;
+        [self _checkCachesRecursively];
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_assetMetadataDidLoadWithNote:) name:MCSAssetMetadataDidLoadNotification object:nil];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_fileWriteOutOfSpaceErrorWithNote:) name:MCSFileWriteOutOfSpaceErrorNotification object:nil];
@@ -267,19 +268,15 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 #pragma mark - mark
 
-- (void)_checkRecursively {
+- (void)_checkCachesRecursively {
     if ( _checkInterval == 0 ) return;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_checkInterval * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
         dispatch_barrier_sync(mcs_queue, ^{
-            [self _syncDiskSpace];
-            [self _removeAssetsForLimit:MCSLimitFreeDiskSpace];
-            [self _removeAssetsForLimit:MCSLimitCacheDiskSpace];
-            [self _removeAssetsForLimit:MCSLimitExpires];
-            [self _removeAssetsForLimit:MCSLimitCount];
+            [self _trim];
         });
         
-        [self _checkRecursively];
+        [self _checkCachesRecursively];
     });
 }
 
@@ -297,6 +294,14 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 - (void)_syncToDatabase:(id<MCSSaveable>)saveable {
     [_sqlite3 save:saveable error:NULL];
+}
+
+- (void)_trim {
+    [self _syncDiskSpace];
+    [self _removeAssetsForLimit:MCSLimitFreeDiskSpace];
+    [self _removeAssetsForLimit:MCSLimitCacheDiskSpace];
+    [self _removeAssetsForLimit:MCSLimitExpires];
+    [self _removeAssetsForLimit:MCSLimitCount];
 }
 
 #pragma mark - mark
@@ -350,37 +355,37 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 // 空间不足
-// 删除部分缓存, 优先保留`_reservedFreeDiskSpace`, 否则将删除大于500M的数据
-// 当前使用的资源也可能会删除
 - (void)_fileWriteOutOfSpaceErrorWithNote:(NSNotification *)note {
     dispatch_barrier_async(mcs_queue, ^{
-        [self _syncDiskSpace];
-        unsigned long long reservedFreeDiskSpace = self->_reservedFreeDiskSpace != 0 ? self->_reservedFreeDiskSpace : 500 * 1024 * 1024;
-        if ( self->_freeSize >= reservedFreeDiskSpace ) return;
+        [self _trim];
         
-        NSInteger curIdx = 0;
-        unsigned long long length = self->_freeSize;
-        NSMutableArray<id<MCSAsset>> *assets = NSMutableArray.array;
-        do {
-            NSRange range = NSMakeRange(curIdx * 10, 10);
-            NSArray<MCSAssetUsageLog *> *logs = [self->_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:nil orderBy:@[
-                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES]
-            ] range:range error:NULL];
-            
-            if ( logs.count == 0 ) break;
-            
-            for ( MCSAssetUsageLog *log in logs ) {
-                id<MCSAsset> asset = [self->_sqlite3 objectForClass:[self _assetClassForType:log.assetType] primaryKeyValue:@(log.asset) error:NULL];
-                if ( asset != nil ) {
-                    length += [NSFileManager.defaultManager mcs_directorySizeAtPath:asset.path];
-                    [assets addObject:asset];
-                }
-                if ( length > reservedFreeDiskSpace ) break;
-            }
-            
-            curIdx += 1;
-        } while ( YES );
-        [self _removeAssets:assets];
+//        [self _syncDiskSpace];
+//        unsigned long long reservedFreeDiskSpace = self->_reservedFreeDiskSpace != 0 ? self->_reservedFreeDiskSpace : 500 * 1024 * 1024;
+//        if ( self->_freeSize >= reservedFreeDiskSpace ) return;
+//
+//        NSInteger curIdx = 0;
+//        unsigned long long length = self->_freeSize;
+//        NSMutableArray<id<MCSAsset>> *assets = NSMutableArray.array;
+//        do {
+//            NSRange range = NSMakeRange(curIdx * 10, 10);
+//            NSArray<MCSAssetUsageLog *> *logs = [self->_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:nil orderBy:@[
+//                [SJSQLite3ColumnOrder orderWithColumn:@"updatedTime" ascending:YES]
+//            ] range:range error:NULL];
+//
+//            if ( logs.count == 0 ) break;
+//
+//            for ( MCSAssetUsageLog *log in logs ) {
+//                id<MCSAsset> asset = [self->_sqlite3 objectForClass:[self _assetClassForType:log.assetType] primaryKeyValue:@(log.asset) error:NULL];
+//                if ( asset != nil ) {
+//                    length += [NSFileManager.defaultManager mcs_directorySizeAtPath:asset.path];
+//                    [assets addObject:asset];
+//                }
+//                if ( length > reservedFreeDiskSpace ) break;
+//            }
+//
+//            curIdx += 1;
+//        } while ( YES );
+//        [self _removeAssets:assets];
     });
 }
 
@@ -454,9 +459,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         case MCSLimitCount:
         case MCSLimitCacheDiskSpace:
         case MCSLimitFreeDiskSpace: {
-            // 清理60s之前的
+            // 清理`lastTimeLimit`之前的
             // 清理一半
-            NSTimeInterval time = NSDate.date.timeIntervalSince1970 - 60;
+            NSTimeInterval time = NSDate.date.timeIntervalSince1970 - _lastTimeLimit;
             NSInteger length = (NSInteger)ceil(_cacheCountLimit != 0 ? (_count - _cacheCountLimit * 0.5) : (_count - count) * 0.5);
             NSArray<SJSQLite3RowData *> *rows = [_sqlite3 exec:[NSString stringWithFormat:
                             @"SELECT * FROM MCSAssetUsageLog WHERE (asset NOT IN (%@) AND assetType = 0) \

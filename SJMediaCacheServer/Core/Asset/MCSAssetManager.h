@@ -43,6 +43,12 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic) NSUInteger reservedFreeDiskSpace; // 剩余磁盘空间限制
 
+/// When checking the cache for asset removing, filters out assets that are read within a specified time.
+///
+///     The default value is 60s.
+///
+@property (nonatomic) NSTimeInterval lastTimeLimit; // 在删除资源时, 过滤掉指定的时间内读取过的资源
+
 /// Empties the cache. This method may blocks the calling thread until file delete finished.
 ///
 - (void)removeAllAssets;
