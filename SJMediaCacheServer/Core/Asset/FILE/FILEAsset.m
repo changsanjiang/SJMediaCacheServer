@@ -92,9 +92,10 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (BOOL)isStored {
+    [self _mergeContents];
     __block BOOL isStored = NO;
     dispatch_sync(mcs_queue, ^{
-        isStored = _isStored || (_totalLength != 0 && _contents.firstObject.length == _totalLength);
+        isStored = _isStored;
     });
     return isStored;
 }
