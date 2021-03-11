@@ -92,7 +92,6 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (BOOL)isStored {
-    [self _mergeContents];
     __block BOOL isStored = NO;
     dispatch_sync(mcs_queue, ^{
         isStored = _isStored;

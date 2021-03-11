@@ -64,7 +64,6 @@ static dispatch_queue_t mcs_queue;
 
 - (void)dealloc {
     if ( !_isClosed ) [self _close];
-    if ( _content != nil ) [_content readwriteRelease];
     MCSContentReaderDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
@@ -288,6 +287,8 @@ static dispatch_queue_t mcs_queue;
     _reader = nil;
     _isClosed = YES;
 
+    if ( _content != nil ) [_content readwriteRelease];
+    
     MCSContentReaderDebugLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
 @end
