@@ -5,7 +5,7 @@
 //  Created by BlueDancer on 2020/11/26.
 //
 
-#import "NSFileManager+MCS.h"
+#import "NSFileManager+MCS.h" 
 
 @implementation NSFileManager (MCS)
 
@@ -26,4 +26,13 @@
     return [[self attributesOfFileSystemForPath:NSHomeDirectory() error:NULL][NSFileSystemFreeSize] unsignedLongLongValue];
 }
 
+- (void)mcs_createDirectoryAtPath:(NSString *)path backupable:(BOOL)backupable {
+    if ( ![NSFileManager.defaultManager fileExistsAtPath:path] ) {
+        [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
+        if ( !backupable ) {
+            NSURL *fileURL = [NSURL fileURLWithPath:path];
+            [fileURL setResourceValue:@(YES) forKey:NSURLIsExcludedFromBackupKey error:NULL];
+        }
+    }
+}
 @end
