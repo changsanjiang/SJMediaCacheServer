@@ -169,7 +169,7 @@ MCSMD5(NSString *str) {
     NSString *url = self.absoluteString;
     while ( [url hasSuffix:@"/"] ) url = [url substringToIndex:url.length - 1];
     NSString *path = pathComponent;
-    while ( [path hasSuffix:@"/"] ) path = [path substringFromIndex:1];
+    while ( [path hasPrefix:@"/"] ) path = [path substringFromIndex:1];
     return [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@", url, path]];
 }
 @end
