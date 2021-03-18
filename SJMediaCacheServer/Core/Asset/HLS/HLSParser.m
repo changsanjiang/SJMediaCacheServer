@@ -280,7 +280,7 @@ static dispatch_queue_t mcs_queue;
     
     __block NSURLRequest *currRequest = _request;
     __weak typeof(self) _self = self;
-    [MCSContents request:currRequest networkTaskPriority:_networkTaskPriority willPerformHTTPRedirection:^(NSHTTPURLResponse * _Nonnull response, NSURLRequest * _Nonnull newRequest) {
+    [MCSContents request:currRequest networkTaskPriority:_networkTaskPriority willPerformHTTPRedirection:^(NSURLRequest * _Nonnull newRequest) {
         currRequest = newRequest;
     } completed:^(NSData * _Nullable data, NSError * _Nullable error) {
         dispatch_barrier_sync(mcs_queue, ^{

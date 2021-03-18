@@ -110,6 +110,32 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) long long length;
 - (void)didWriteDataWithLength:(NSUInteger)length;
 @end
+
+
+#pragma mark - Download
+
+@protocol MCSDownloadResponse <MCSResponse>
+@property (nonatomic, readonly) NSInteger statusCode;
+@property (nonatomic, copy, readonly) NSString *pathExtension;
+@property (nonatomic, copy, readonly) NSURL *URL;
+@end
+
+@protocol MCSDownloadTask <NSObject>
+- (void)cancel;
+@end
+
+@protocol MCSDownloadTaskDelegate <NSObject>
+- (void)downloadTask:(id<MCSDownloadTask>)task didReceiveResponse:(id<MCSDownloadResponse>)response;
+- (void)downloadTask:(id<MCSDownloadTask>)task didReceiveData:(NSData *)data;
+- (void)downloadTask:(id<MCSDownloadTask>)task didCompleteWithError:(NSError *)error;
+- (void)downloadTask:(id<MCSDownloadTask>)task willPerformHTTPRedirectionWithNewRequest:(NSURLRequest *)request;
+@end
+
+@protocol MCSDownloader <NSObject>
+- (nullable id<MCSDownloadTask>)downloadWithRequest:(NSURLRequest *)request priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate;
+- (void)cancelAllDownloadTasks;
+@end
+
 NS_ASSUME_NONNULL_END
 
 #endif /* MCSInterfaces_h */

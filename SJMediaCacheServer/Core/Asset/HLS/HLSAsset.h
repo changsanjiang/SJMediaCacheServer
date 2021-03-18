@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)indexFilePath;
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL;
-- (nullable id<MCSAssetContent>)createTsContentWithResponse:(NSHTTPURLResponse *)response;
+- (nullable id<MCSAssetContent>)createTsContentWithResponse:(id<MCSDownloadResponse>)response;
 - (nullable NSArray<id<MCSAssetContent>> *)TsContents;
 - (nullable NSString *)TsContentFilePathForFilename:(NSString *)filename;
 - (nullable id<MCSAssetContent>)TsContentForRequest:(NSURLRequest *)request;

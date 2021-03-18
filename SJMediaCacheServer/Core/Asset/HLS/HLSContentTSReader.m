@@ -36,7 +36,7 @@ static dispatch_queue_t mcs_queue;
 @property (nonatomic) NSUInteger availableLength;
 @property (nonatomic) NSUInteger readLength;
 
-@property (nonatomic, strong, nullable) NSURLSessionTask *task;
+@property (nonatomic, strong, nullable) id<MCSDownloadTask> task;
 @property (nonatomic, strong, nullable) NSFileHandle *reader;
 @property (nonatomic, strong, nullable) NSFileHandle *writer;
 @property (nonatomic) float networkTaskPriority;
@@ -219,11 +219,9 @@ static dispatch_queue_t mcs_queue;
  
 #pragma mark - MCSDownloadTaskDelegate
 
-- (void)downloadTask:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request {
-    
-}
+- (void)downloadTask:(id<MCSDownloadTask>)task willPerformHTTPRedirectionWithNewRequest:(NSURLRequest *)request { }
 
-- (void)downloadTask:(NSURLSessionTask *)task didReceiveResponse:(NSHTTPURLResponse *)response {
+- (void)downloadTask:(id<MCSDownloadTask>)task didReceiveResponse:(id<MCSDownloadResponse>)response {
     dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )
             return;
@@ -233,7 +231,7 @@ static dispatch_queue_t mcs_queue;
     });
 }
 
-- (void)downloadTask:(NSURLSessionTask *)task didReceiveData:(NSData *)data {
+- (void)downloadTask:(id<MCSDownloadTask>)task didReceiveData:(NSData *)data {
     dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )
             return;
@@ -258,7 +256,7 @@ static dispatch_queue_t mcs_queue;
     });
 }
 
-- (void)downloadTask:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+- (void)downloadTask:(id<MCSDownloadTask>)task didCompleteWithError:(NSError *)error {
     dispatch_barrier_sync(mcs_queue, ^{
         if ( _isClosed )
             return;

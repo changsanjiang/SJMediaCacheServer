@@ -123,12 +123,11 @@ static dispatch_queue_t mcs_queue;
     return totalLength;
 }
 
-- (nullable FILEContent *)createContentWithResponse:(NSHTTPURLResponse *)response {
-    NSString *pathExtension = MCSSuggestedFilePathExtension(response);
-    NSString *contentType = MCSResponseGetContentType(response);
-    MCSResponseContentRange range = MCSResponseGetContentRange(response);
-    NSUInteger totalLength = range.totalLength;
-    NSUInteger offset = range.start;
+- (nullable FILEContent *)createContentWithResponse:(id<MCSDownloadResponse>)response {
+    NSString *pathExtension = response.pathExtension;
+    NSString *contentType = response.contentType;
+    NSUInteger totalLength = response.totalLength;
+    NSUInteger offset = response.range.location;
     __block FILEContent *content = nil;
     __block BOOL isUpdated = NO;
     dispatch_barrier_sync(mcs_queue, ^{

@@ -149,8 +149,8 @@ static dispatch_queue_t mcs_queue;
     return root;
 }
 
-- (nullable id<MCSAssetContent>)createTsContentWithResponse:(NSHTTPURLResponse *)response {
-    NSString *TsContentType = MCSResponseGetContentType(response);
+- (nullable id<MCSAssetContent>)createTsContentWithResponse:(id<MCSDownloadResponse>)response {
+    NSString *TsContentType = response.contentType;
     __block BOOL isUpdated = NO;
     __block HLSContentTs *content = nil;
     dispatch_barrier_sync(mcs_queue, ^{
@@ -160,17 +160,12 @@ static dispatch_queue_t mcs_queue;
         }
         
         NSString *name = [MCSURL.shared nameWithUrl:response.URL.absoluteString suffix:HLS_SUFFIX_TS];
-        MCSResponseContentRange range = MCSResponseContentRangeUndefined;
-        if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
-            range = MCSResponseGetContentRange(response);
-        }
         
-        if ( MCSResponseRangeIsUndefined(range) ) {
-            NSUInteger totalLength = response.expectedContentLength;
-            content = [_provider createTsContentWithName:name totalLength:totalLength];
+        if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
+            content = [_provider createTsContentWithName:name totalLength:response.totalLength inRange:response.range];
         }
         else {
-            content = [_provider createTsContentWithName:name totalLength:range.totalLength inRange:MCSResponseRange(range)];
+            content = [_provider createTsContentWithName:name totalLength:response.totalLength];
         }
         
         [_contents addObject:content];
