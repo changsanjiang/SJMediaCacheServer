@@ -9,6 +9,8 @@
 #import "MCSInterfaces.h"
 @protocol MCSAssetExportTask;
 
+#warning next ...
+
 NS_ASSUME_NONNULL_BEGIN
 /// 将资源导出到`documentRootPath`目录下
 @interface MCSAssetExportSession : NSObject
