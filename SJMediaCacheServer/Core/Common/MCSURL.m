@@ -172,4 +172,14 @@ MCSMD5(NSString *str) {
     while ( [path hasPrefix:@"/"] ) path = [path substringFromIndex:1];
     return [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@", url, path]];
 }
+
+- (NSURL *)mcs_URLByDeletingLastPathComponentAndQuery {
+    NSString *query = self.query;
+    if ( query.length != 0 ) {
+        NSString *absoluteString = self.absoluteString;
+        NSString *url = [absoluteString substringToIndex:absoluteString.length - query.length - 1];
+        return [NSURL URLWithString:url].URLByDeletingLastPathComponent;
+    }
+    return self.URLByDeletingLastPathComponent;
+}
 @end

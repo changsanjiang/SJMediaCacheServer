@@ -37,5 +37,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSURL (MCSExtended)
 - (NSURL *)mcs_URLByAppendingPathComponent:(NSString *)pathComponent;
+- (NSURL *)mcs_URLByDeletingLastPathComponentAndQuery;
 @end
 NS_ASSUME_NONNULL_END

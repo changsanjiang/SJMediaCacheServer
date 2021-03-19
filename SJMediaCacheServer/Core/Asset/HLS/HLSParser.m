@@ -483,13 +483,13 @@ static dispatch_queue_t mcs_queue;
         url = [rootDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     else if ( [self hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
-        NSURL *curDir = URL.URLByDeletingLastPathComponent;
-        NSURL *parentDir = curDir.URLByDeletingLastPathComponent;
+        NSURL *curDir = URL.mcs_URLByDeletingLastPathComponentAndQuery;
+        NSURL *parentDir = curDir.mcs_URLByDeletingLastPathComponentAndQuery;
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_PARENT.length];
         url = [parentDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     else if ( [self hasPrefix:HLS_PREFIX_DIR_CURRENT] ) {
-        NSURL *curDir = URL.URLByDeletingLastPathComponent;
+        NSURL *curDir = URL.mcs_URLByDeletingLastPathComponentAndQuery;
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_CURRENT.length];
         url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
@@ -502,7 +502,7 @@ static dispatch_queue_t mcs_queue;
         url = self;
     }
     else {
-        NSURL *curDir = URL.URLByDeletingLastPathComponent;
+        NSURL *curDir = URL.mcs_URLByDeletingLastPathComponentAndQuery;
         NSString *subpath = self;
         url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
