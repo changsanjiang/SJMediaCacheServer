@@ -8,11 +8,8 @@
 
 #import "MCSAssetManager.h"
 #import <objc/message.h>
-#import <SJUIKit/SJSQLite3.h>
-#import <SJUIKit/SJSQLite3+QueryExtended.h>
-#import <SJUIKit/SJSQLite3+RemoveExtended.h>
-#import <SJUIKit/SJSQLite3+Private.h>
 
+#import "MCSDatabase.h"
 #import "MCSUtils.h"
 #import "MCSAssetUsageLog.h"
 #import "NSFileManager+MCS.h"
@@ -81,7 +78,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        _sqlite3 = [SJSQLite3.alloc initWithDatabasePath:[MCSRootDirectory databasePath]];
+        _sqlite3 = MCSDatabase();
         _count = [_sqlite3 countOfObjectsForClass:MCSAssetUsageLog.class conditions:nil error:NULL];
         _assets = NSMutableDictionary.dictionary;
         _usageLogs = NSMutableDictionary.dictionary;
