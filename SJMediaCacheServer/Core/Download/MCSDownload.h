@@ -21,6 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, nullable) NSData *(^dataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
 
+@property (nonatomic, copy, nullable) void(^errorCallback)(NSURLRequest *request, NSError *error);
+
 - (void)cancelAllDownloadTasks;
 
 @property (nonatomic, readonly) NSInteger taskCount;

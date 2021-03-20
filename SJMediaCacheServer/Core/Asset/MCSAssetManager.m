@@ -524,6 +524,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         return;
 
     [assets enumerateObjectsUsingBlock:^(id<MCSAsset>  _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ( r.shouldHoldCache )
+            return;
         [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetWillRemoveAssetNotification object:r];
         [NSFileManager.defaultManager removeItemAtPath:r.path error:NULL];
         [self.sqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];

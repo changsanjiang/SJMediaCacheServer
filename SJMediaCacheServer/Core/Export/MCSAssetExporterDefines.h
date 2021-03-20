@@ -50,6 +50,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)resume;      // 恢复
 - (void)suspend;     // 暂停, 缓存文件不会被删除
 - (void)cancel;      // 取消, 缓存可能会被资源管理器删除
+
+@property (nonatomic, copy, nullable) void(^progressDidChangeExecuteBlock)(id<MCSAssetExporter> exporter);
+@property (nonatomic, copy, nullable) void(^statusDidChangeExecuteBlock)(id<MCSAssetExporter> exporter);
 @end
 
 @protocol MCSAssetExportObserver <NSObject>

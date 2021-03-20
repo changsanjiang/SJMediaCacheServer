@@ -43,6 +43,8 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
 @synthesize URL = _URL;
 @synthesize status = _status;
 @synthesize progress = _progress;
+@synthesize progressDidChangeExecuteBlock = _progressDidChangeExecuteBlock;
+@synthesize statusDidChangeExecuteBlock = _statusDidChangeExecuteBlock;
 
 - (instancetype)initWithURLString:(NSString *)URLStr name:(NSString *)name type:(MCSAssetType)type {
     self = [self init];
@@ -681,6 +683,10 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
         [_sqlite3 updateObjects:@[exporter] forKeys:@[@"status"] error:NULL];
     }
     dispatch_async(dispatch_get_main_queue(), ^{
+        if ( exporter.statusDidChangeExecuteBlock != nil ) {
+            exporter.statusDidChangeExecuteBlock(exporter);
+        }
+        
         for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(self->_observers) ) {
             if ( [observer respondsToSelector:@selector(exporter:statusDidChange:)] ) {
                 [observer exporter:exporter statusDidChange:status];
@@ -691,6 +697,10 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
 
 - (void)_progressDidChange:(MCSAssetExporter *)exporter {
     dispatch_async(dispatch_get_main_queue(), ^{
+        if ( exporter.progressDidChangeExecuteBlock != nil ) {
+            exporter.progressDidChangeExecuteBlock(exporter);
+        }
+        
         for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(self->_observers) ) {
             if ( [observer respondsToSelector:@selector(exporter:progressDidChange:)] ) {
                 [observer exporter:exporter progressDidChange:exporter.progress];

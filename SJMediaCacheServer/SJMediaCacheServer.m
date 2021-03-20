@@ -215,7 +215,6 @@
 }
 
 - (void)removeAllCaches {
-    [MCSDownload.shared cancelAllDownloadTasks];
     [MCSPrefetcherManager.shared cancelAllPrefetchTasks];
     [MCSAssetManager.shared removeAllAssets];
 }

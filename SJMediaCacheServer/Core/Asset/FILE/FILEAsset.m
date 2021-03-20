@@ -188,10 +188,6 @@ static dispatch_queue_t mcs_queue;
 // 合并文件
 - (void)_mergeContents {
     dispatch_barrier_sync(mcs_queue, ^{
-#ifdef DEBUG
-        NSLog(@"%d \t %s %@", (int)__LINE__, __func__, _contents);
-#endif
-        
         if ( _readwriteCount != 0 ) return;
         if ( _isStored ) return;
         if ( _contents.count < 2 ) {

@@ -191,6 +191,10 @@ static dispatch_queue_t mcs_queue;
     __auto_type delegate = [self _delegateForTask:task];
     [delegate downloadTask:task didCompleteWithError:error];
     
+    if ( error != nil && error.code != NSUserCancelledError ) {
+        if ( _errorCallback != nil ) _errorCallback(task.originalRequest, error);
+    }
+    
     [self _setDelegate:nil forTask:task];
     [self _setError:nil forTask:task];
 }
