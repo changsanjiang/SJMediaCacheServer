@@ -334,18 +334,18 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
             return NSOrderedSame;
         }];
         
-        NSInteger all = 0;
-        NSInteger cur = 0;
+        float progress = 0;
         HLSContentTs *pre = nil;
         for ( HLSContentTs *content in contents ) {
             if ( pre == nil || ![content.name isEqualToString:pre.name] ) {
-                all += content.range.length;
-                cur += content.length;
+                progress += content.length * 1.0 / content.range.length;
             }
             pre = content;
         }
+        // all的基数会变大
+        // cur递增
         
-        return cur * 1.0 / all / asset.tsCount;
+        return progress / asset.tsCount;
     }
     return 0.0f;
 }
