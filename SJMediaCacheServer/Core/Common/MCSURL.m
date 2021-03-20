@@ -61,6 +61,10 @@ MCSMD5(NSString *str) {
     return instance;
 }
 
+- (NSString *)proxyPath {
+    return mcsproxy;
+}
+
 - (NSURL *)proxyURLWithURL:(NSURL *)URL {
     NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
     
@@ -125,6 +129,11 @@ MCSMD5(NSString *str) {
     if ( ![filename hasSuffix:suffix] )
         filename = [filename stringByAppendingString:suffix];
     return filename;
+}
+
+- (NSURL *)proxyURLWithRelativePath:(NSString *)path inAsset:(NSString *)assetName {
+    // format: mcsproxy/asset/path
+    return [_serverURL URLByAppendingPathComponent:[NSString stringWithFormat:@"%@/%@/%@", mcsproxy, assetName, path]];
 }
 
 - (NSString *)encodeUrl:(NSString *)url {

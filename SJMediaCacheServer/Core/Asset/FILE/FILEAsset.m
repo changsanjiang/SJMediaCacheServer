@@ -152,6 +152,10 @@ static dispatch_queue_t mcs_queue;
     return [_provider contentFilePathForFilename:filename];
 }
 
+- (nullable NSString *)contentFileRelativePathForFilename:(NSString *)filename {
+    return [_provider contentFileRelativePathForFilename:filename];
+}
+
 #pragma mark - readwrite
 
 - (NSInteger)readwriteCount {

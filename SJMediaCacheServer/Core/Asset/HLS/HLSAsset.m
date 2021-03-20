@@ -119,6 +119,10 @@ static dispatch_queue_t mcs_queue;
     return [_provider indexFilePath];
 }
 
+- (NSString *)indexFileRelativePath {
+    return [_provider indexFileRelativePath];
+}
+
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL {
     return [_provider AESKeyFilePathWithName:[MCSURL.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_AES_KEY]];
 }

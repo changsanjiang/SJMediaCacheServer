@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL shouldHoldCache;
 
 - (NSString *)indexFilePath;
+- (NSString *)indexFileRelativePath;
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL;
 - (nullable id<MCSAssetContent>)createTsContentWithResponse:(id<MCSDownloadResponse>)response;
 - (nullable NSArray<id<MCSAssetContent>> *)TsContents;

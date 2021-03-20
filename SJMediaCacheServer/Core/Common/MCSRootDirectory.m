@@ -23,8 +23,11 @@ static NSString *mcs_path;
 }
 
 + (unsigned long long)size {
-#warning next .. 需要减去数据库的大小
     return [NSFileManager.defaultManager mcs_directorySizeAtPath:mcs_path];
+}
+
++ (unsigned long long)databaseSize {
+    return [NSFileManager.defaultManager mcs_fileSizeAtPath:self.databasePath];
 }
 
 + (NSString *)assetPathForFilename:(NSString *)filename {

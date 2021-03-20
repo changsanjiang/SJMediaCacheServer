@@ -299,9 +299,12 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
             for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
                 id<HLSURIItem> item = [parser itemAtIndex:i];
                 if ( [parser isVariantItem:item] ) {
-                    NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
-                    HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
-                    if ( asset != nil ) [allAssets addObject:asset];
+                    NSArray<id<HLSURIItem>> *renditionsItems = [parser renditionsItemsForVariantItem:item];
+                    for ( id<HLSURIItem> item in renditionsItems ) {
+                        NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
+                        HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
+                        if ( asset != nil ) [allAssets addObject:asset];
+                    }
                 }
             }
             
@@ -571,9 +574,29 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
 - (nullable NSURL *)playbackURLForExportedAssetWithURL:(NSURL *)URL {
     if ( URL.absoluteString.length == 0 )
         return nil;
-
-#warning next ...
-    return nil;
+ 
+    __block NSURL *playbackURL = nil;
+    [self _lockInBlock:^{
+        NSString *name = [MCSURL.shared assetNameForURL:URL];
+        MCSAssetExporter *exporter = [self _exporterInMemoryForName:name];
+        if ( exporter.status == MCSAssetExportStatusFinished ) {
+            __kindof id<MCSAsset> a = [MCSAssetManager.shared assetWithName:exporter.name type:exporter.type];
+            switch ( a.type ) {
+                case MCSAssetTypeFILE: {
+                    FILEAsset *asset = a;
+                    FILEContent *content = asset.contents.firstObject;
+                    playbackURL = [MCSURL.shared proxyURLWithRelativePath:[asset contentFileRelativePathForFilename:content.filename] inAsset:asset.name];
+                }
+                    break;
+                case MCSAssetTypeHLS: {
+                    HLSAsset *asset = a;
+                    playbackURL = [MCSURL.shared proxyURLWithRelativePath:asset.indexFileRelativePath inAsset:asset.name];
+                }
+                    break;
+            }
+        }
+    }];
+    return playbackURL;
 }
 
 /// 同步缓存, 更新缓存进度

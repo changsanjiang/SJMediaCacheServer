@@ -49,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly, nullable) NSArray<id<MCSAssetExporter>> *allExporters;
  
-- (id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL;
+- (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL;
 - (void)removeAssetWithURL:(NSURL *)URL;
 - (void)removeAllAssets;
  

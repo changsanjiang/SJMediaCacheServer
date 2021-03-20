@@ -23,5 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable FILEContent *)createContentWithResponse:(id<MCSDownloadResponse>)response;
 - (nullable NSArray<FILEContent *> *)contents;
 - (nullable NSString *)contentFilePathForFilename:(NSString *)filename;
+- (nullable NSString *)contentFileRelativePathForFilename:(NSString *)filename;
 @end
 NS_ASSUME_NONNULL_END
