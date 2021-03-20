@@ -9,7 +9,7 @@
 #define MCSAssetExporterDefines_h
 
 #import <Foundation/Foundation.h>
-@protocol MCSAssetExporter, MCSAssetExportObserver;
+@protocol MCSAssetExporter, MCSAssetExportObserver, MCSAssetExporterManager;
 
 typedef NS_ENUM(NSUInteger, MCSAssetExportStatus) {
     MCSAssetExportStatusUnknown,
@@ -36,8 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 @optional
 - (void)exporter:(id<MCSAssetExporter>)exporter statusDidChange:(MCSAssetExportStatus)status;
 - (void)exporter:(id<MCSAssetExporter>)exporter progressDidChange:(float)progress;
-- (void)exporterManagerDidRemoveAssetWithURL:(NSURL *)URL;
-- (void)exporterManagerDidRemoveAllAssets;
+- (void)exporterManager:(id<MCSAssetExporterManager>)manager didRemoveAssetWithURL:(NSURL *)URL;
+- (void)exporterManagerDidRemoveAllAssets:(id<MCSAssetExporterManager>)manager;
 @end
 
 

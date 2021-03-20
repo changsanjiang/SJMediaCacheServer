@@ -345,8 +345,6 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
             }
             pre = content;
         }
-        // all的基数会变大
-        // cur递增
         
         return progress / asset.tsCount;
     }
@@ -507,8 +505,8 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
     
     if ( isRemoved ) {
         for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(_observers) ) {
-            if ( [observer respondsToSelector:@selector(exporterManagerDidRemoveAssetWithURL:)] ) {
-                [observer exporterManagerDidRemoveAssetWithURL:URL];
+            if ( [observer respondsToSelector:@selector(exporterManager:didRemoveAssetWithURL:)] ) {
+                [observer exporterManager:self didRemoveAssetWithURL:URL];
             }
         }
     }
@@ -534,8 +532,8 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
     
     if ( isRemoved ) {
         for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(_observers) ) {
-            if ( [observer respondsToSelector:@selector(exporterManagerDidRemoveAllAssets)] ) {
-                [observer exporterManagerDidRemoveAllAssets];
+            if ( [observer respondsToSelector:@selector(exporterManagerDidRemoveAllAssets:)] ) {
+                [observer exporterManagerDidRemoveAllAssets:self];
             }
         }
     }
