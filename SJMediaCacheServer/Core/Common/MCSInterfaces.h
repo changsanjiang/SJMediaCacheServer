@@ -49,6 +49,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@protocol MCSExportable <NSObject>
+@property (nonatomic, readonly) BOOL shouldHoldCache;
+@end
+
 @protocol MCSReadwriteReference <NSObject>
 @property (nonatomic, readonly) NSInteger readwriteCount; // kvo
 
@@ -58,7 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark -
 
-@protocol MCSAsset <MCSReadwriteReference, MCSSaveable>
+@protocol MCSAsset <MCSReadwriteReference, MCSSaveable, MCSExportable>
 - (instancetype)initWithName:(NSString *)name;
 @property (nonatomic, readonly) NSInteger id;
 @property (nonatomic, copy, readonly) NSString *name;

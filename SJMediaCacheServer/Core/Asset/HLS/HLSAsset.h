@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSUInteger tsCount;
 @property (nonatomic, readonly) BOOL isStored;
 @property (nonatomic, strong, nullable) HLSParser *parser;
+@property (nonatomic, readonly) BOOL shouldHoldCache;
 
 - (NSString *)indexFilePath;
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL;

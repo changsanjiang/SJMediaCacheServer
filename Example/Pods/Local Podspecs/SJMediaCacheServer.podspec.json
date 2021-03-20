@@ -16,8 +16,7 @@
     "tag": "1.5.3"
   },
   "platforms": {
-    "ios": "8.0",
-    "tvos": "8.0"
+    "ios": "8.0"
   },
   "source_files": "SJMediaCacheServer/*.{h,m}",
   "dependencies": {

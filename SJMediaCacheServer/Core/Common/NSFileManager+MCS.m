@@ -31,7 +31,13 @@
         [NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
         if ( !backupable ) {
             NSURL *fileURL = [NSURL fileURLWithPath:path];
-            [fileURL setResourceValue:@(YES) forKey:NSURLIsExcludedFromBackupKey error:NULL];
+            NSError *error = nil;
+            [fileURL setResourceValue:@(YES) forKey:NSURLIsExcludedFromBackupKey error:&error];
+            if ( error != nil ) {
+#ifdef DEBUG
+                NSLog(@"mcs_error: %@", error);
+#endif
+            }
         }
     }
 }
