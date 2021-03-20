@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSInteger maxConcurrentExportCount;
 
 @property (nonatomic, strong, readonly, nullable) NSArray<id<MCSAssetExporter>> *allExporters;
+
+@property (nonatomic, readonly) UInt64 countOfBytesAllExportedAssets;
  
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL;
 - (void)removeAssetWithURL:(NSURL *)URL;
@@ -28,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (float)progressWithURL:(NSURL *)URL;
 - (nullable NSURL *)playbackURLForExportedAssetWithURL:(NSURL *)URL;
  
-- (void)synchronizeForAssetWithURL:(NSURL *)URL;
+- (void)synchronizeForExporterWithAssetURL:(NSURL *)URL;
 - (void)synchronize;
 @end
 NS_ASSUME_NONNULL_END

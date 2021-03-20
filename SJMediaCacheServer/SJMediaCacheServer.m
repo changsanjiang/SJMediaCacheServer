@@ -13,6 +13,8 @@
 #import "MCSProxyTask.h"
 #import "MCSLogger.h"
 #import "MCSDownload.h"
+#import "MCSPrefetcherManager.h"
+#import "MCSAssetExporterManager.h"
 
 @interface SJMediaCacheServer ()<MCSProxyServerDelegate>
 @property (nonatomic, strong, readonly) MCSProxyServer *server;
@@ -57,6 +59,16 @@
     return URL;
 }
 
+#pragma mark - MCSProxyServerDelegate
+
+- (id<MCSProxyTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
+    return [MCSProxyTask.alloc initWithRequest:request delegate:delegate];
+}
+@end
+
+
+@implementation SJMediaCacheServer (Prefetch)
+
 - (void)setMaxConcurrentPrefetchCount:(NSInteger)maxConcurrentPrefetchCount {
     MCSPrefetcherManager.shared.maxConcurrentPrefetchCount = maxConcurrentPrefetchCount;
 }
@@ -93,11 +105,6 @@
     [MCSPrefetcherManager.shared cancelAllPrefetchTasks];
 }
 
-#pragma mark - MCSProxyServerDelegate
-
-- (id<MCSProxyTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
-    return [MCSProxyTask.alloc initWithRequest:request delegate:delegate];
-}
 @end
 
 
@@ -219,13 +226,78 @@
     [MCSAssetManager.shared removeAssetForURL:URL];
 }
 
-- (unsigned long long)cachedSize {
-    return [MCSAssetManager.shared cachedSizeForAssets];
+- (UInt64)countOfBytesAllCaches {
+    return [MCSAssetManager.shared countOfBytesAllAssets] - [MCSAssetExporterManager.shared countOfBytesAllExportedAssets];
 }
 
 - (BOOL)isStoredForURL:(NSURL *)URL {
     if ( URL == nil )
         return NO;
     return [MCSAssetManager.shared isAssetStoredForURL:URL];
+}
+@end
+
+@implementation SJMediaCacheServer (Export)
+
+- (void)registerExportObserver:(id<MCSAssetExportObserver>)observer {
+    [MCSAssetExporterManager.shared registerObserver:observer];
+}
+ 
+- (void)removeExportObserver:(id<MCSAssetExportObserver>)observer {
+    [MCSAssetExporterManager.shared removeObserver:observer];
+}
+
+- (void)setMaxConcurrentExportCount:(NSInteger)maxConcurrentExportCount {
+    MCSAssetExporterManager.shared.maxConcurrentExportCount = maxConcurrentExportCount;
+}
+
+- (NSInteger)maxConcurrentExportCount {
+    return MCSAssetExporterManager.shared.maxConcurrentExportCount;
+}
+
+- (nullable NSArray<id<MCSAssetExporter>> *)allExporters {
+    return MCSAssetExporterManager.shared.allExporters;
+}
+ 
+- (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL {
+    return [self exportAssetWithURL:URL resumes:NO];
+}
+
+- (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL resumes:(BOOL)resumes {
+    id<MCSAssetExporter> exporter = [MCSAssetExporterManager.shared exportAssetWithURL:URL];
+    if ( resumes ) [exporter resume];
+    return exporter;
+}
+ 
+- (MCSAssetExportStatus)exportStatusWithURL:(NSURL *)URL {
+    return [MCSAssetExporterManager.shared statusWithURL:URL];
+}
+
+- (float)exportProgressWithURL:(NSURL *)URL {
+    return [MCSAssetExporterManager.shared progressWithURL:URL];
+}
+
+- (nullable NSURL *)playbackURLForExportedAssetWithURL:(NSURL *)URL {
+    return [MCSAssetExporterManager.shared playbackURLForExportedAssetWithURL:URL];
+}
+
+- (void)synchronizeForExporterWithAssetURL:(NSURL *)URL {
+    [MCSAssetExporterManager.shared synchronizeForExporterWithAssetURL:URL];
+}
+
+- (void)synchronizeForExporters {
+    [MCSAssetExporterManager.shared synchronize];
+}
+
+- (UInt64)countOfBytesAllExportedAssets {
+    return [MCSAssetExporterManager.shared countOfBytesAllExportedAssets];
+}
+
+- (void)removeExportAssetWithURL:(NSURL *)URL {
+    [MCSAssetExporterManager.shared removeAssetWithURL:URL];
+}
+
+- (void)removeAllExportAssets {
+    [MCSAssetExporterManager.shared removeAllAssets];
 }
 @end

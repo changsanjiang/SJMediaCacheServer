@@ -262,7 +262,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     });
 }
 
-- (unsigned long long)cachedSizeForAssets {
+- (UInt64)countOfBytesAllAssets {
     return MCSRootDirectory.size - MCSRootDirectory.databaseSize;
 }
 

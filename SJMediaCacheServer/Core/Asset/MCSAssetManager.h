@@ -63,7 +63,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic) NSTimeInterval checkInterval;
 
-@property (nonatomic, readonly) unsigned long long cachedSizeForAssets;
+@property (nonatomic, readonly) UInt64 countOfBytesAllAssets;
 
 /// Decode the read data.
 ///

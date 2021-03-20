@@ -6,6 +6,7 @@
 //
 
 #import "MCSAssetExporterManager.h"
+#import "NSFileManager+MCS.h"
 #import "MCSPrefetcherManager.h"
 #import "MCSAssetManager.h"
 #import "MCSDatabase.h"
@@ -437,6 +438,25 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
     return MCSPrefetcherManager.shared.maxConcurrentPrefetchCount;
 }
 
+- (nullable NSArray<id<MCSAssetExporter>> *)allExporters {
+    __block NSArray<id<MCSAssetExporter>> *allExporters = nil;
+    [self _lockInBlock:^{
+        allExporters = _exporters.count != 0 ? _exporters.copy : nil;
+    }];
+    return allExporters;
+}
+
+- (UInt64)countOfBytesAllExportedAssets {
+    __block UInt64 count = 0;
+    [self _lockInBlock:^{
+        for ( MCSAssetExporter *exporter in _exporters ) {
+            id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:exporter.name type:exporter.type];
+            count += [NSFileManager.defaultManager mcs_directorySizeAtPath:asset.path];
+        }
+    }];
+    return count;
+}
+
 /// 注册观察者
 ///
 ///     导出的相关回调会通知该观察者.
@@ -454,7 +474,7 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
 
 /// 移除观察
 ///
-///     当不需要监听时, 可以调用该方法.
+///     当不需要监听时, 可以调用该方法移除监听.
 ///
 ///     监听是自动移除的, 在观察者释放时并不需要显示的调用该方法
 ///
@@ -481,6 +501,7 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
     [self _lockInBlock:^{
         exporter = [self _exportAssetWithURL:URL];
     }];
+    [exporter synchronize];
     return exporter;
 }
 
@@ -599,7 +620,7 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
 
 /// 同步缓存, 更新缓存进度
 ///
-- (void)synchronizeForAssetWithURL:(NSURL *)URL {
+- (void)synchronizeForExporterWithAssetURL:(NSURL *)URL {
     if ( URL.absoluteString.length != 0 ) {
         [self _lockInBlock:^{
             NSString *name = [MCSURL.shared assetNameForURL:URL];
