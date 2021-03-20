@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MCSPrefetchTask <NSObject>
 @property (nonatomic, readonly) NSUInteger preloadSize;
 @property (nonatomic, strong, readonly) NSURL *URL;
-
+@property (nonatomic, copy, nullable) void(^startedExecuteBlock)(id<MCSPrefetchTask> task);
 - (void)cancel;
 @end
 NS_ASSUME_NONNULL_END

@@ -11,6 +11,11 @@
 #import "MCSDatabase.h"
 #import "MCSURL.h"
 #import "MCSUtils.h"
+#import "FILEAsset.h"
+#import "HLSAsset.h"
+
+static NSNotificationName const MCSAssetExporterProgressDidChangeNotification = @"MCSAssetExporterProgressDidChangeNotification";
+static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"MCSAssetExporterStatusDidChangeNotification";
 
 @interface MCSAssetExporter : NSObject<MCSSaveable, MCSAssetExporter>
 - (instancetype)initWithURLString:(NSString *)URLStr name:(NSString *)name type:(MCSAssetType)type;
@@ -25,6 +30,7 @@
 
 @interface MCSAssetExporter () {
     dispatch_semaphore_t _semaphore;
+    id<MCSPrefetchTask> _task;
 }
 @property (nonatomic) NSInteger id;
 @property (nonatomic, strong) NSString *name; // asset name
@@ -51,6 +57,7 @@
     self = [super init];
     if ( self ) {
         _semaphore = dispatch_semaphore_create(1);
+        _status = MCSAssetExportStatusSuspended;
     }
     return self;
 }
@@ -64,7 +71,7 @@
 }
 
 + (NSArray<NSString *> *)sql_blacklist {
-    return @[@"URL"];
+    return @[@"URL", @"progress"];
 }
 
 - (NSURL *)URL {
@@ -77,7 +84,6 @@
     return URL;
 }
   
-#warning next ....
 - (MCSAssetExportStatus)status {
     __block MCSAssetExportStatus status;
     [self _lockInBlock:^{
@@ -85,29 +91,263 @@
     }];
     return status;
 }
-#warning next ...
-//@property (nonatomic, readonly) float progress;
+
+- (float)progress {
+    __block float progress = 0;
+    [self _lockInBlock:^{
+        progress = _status == MCSAssetExportStatusFinished ? 1.0 : _progress;
+    }];
+    return progress;
+}
 
 - (void)synchronize {
-    
+    __kindof id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:_name type:_type];
+    switch ( _type ) {
+        case MCSAssetTypeFILE:
+            [self _synchronizeForFILEAsset:asset];
+            break;
+        case MCSAssetTypeHLS:
+            [self _synchronizeForHLSAsset:asset];
+            break;
+    }
 }
 
 - (void)resume {
-    
+    __block BOOL isChanged = NO;
+    [self _lockInBlock:^{
+        switch ( _status ) {
+            case MCSAssetExportStatusFinished:
+            case MCSAssetExportStatusWaiting:
+            case MCSAssetExportStatusExporting:
+            case MCSAssetExportStatusCancelled:
+                return;
+            case MCSAssetExportStatusUnknown:
+            case MCSAssetExportStatusFailed:
+            case MCSAssetExportStatusSuspended: {
+                if ( _URL == nil )
+                    _URL = [NSURL URLWithString:_URLString];
+                if ( _task != nil )
+                    return;
+                
+                __weak typeof(self) _self = self;
+                _task = [MCSPrefetcherManager.shared prefetchWithURL:_URL progress:nil completed:^(NSError * _Nullable error) {
+                    __strong typeof(_self) self = _self;
+                    if ( self == nil ) return;
+                    [self _prefetchTaskDidCompleteWithError:error];
+                }];
+                
+                _task.startedExecuteBlock = ^(id<MCSPrefetchTask>  _Nonnull task) {
+                    __strong typeof(_self) self = _self;
+                    if ( self == nil ) return;
+                    [self _prefetchTaskDidStart];
+                };
+                
+                _status = MCSAssetExportStatusWaiting;
+                isChanged = YES;
+            }
+                return;
+        }
+    }];
+    if ( isChanged ) [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self];
 }
 
 - (void)suspend {
-    
+    __block BOOL isChanged = NO;
+    [self _lockInBlock:^{
+        switch ( _status ) {
+            case MCSAssetExportStatusFinished:
+            case MCSAssetExportStatusFailed:
+            case MCSAssetExportStatusCancelled:
+            case MCSAssetExportStatusSuspended:
+                return;
+            case MCSAssetExportStatusUnknown:
+            case MCSAssetExportStatusWaiting:
+            case MCSAssetExportStatusExporting: {
+                if ( _task != nil ) {
+                    [_task cancel];
+                    _task = nil;
+                }
+                
+                _status = MCSAssetExportStatusSuspended;
+                isChanged = YES;
+            }
+        }
+    }];
+    if ( isChanged ) [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self];
 }
 
 - (void)cancel {
-    
+    __block BOOL isChanged = NO;
+    [self _lockInBlock:^{
+        switch ( _status ) {
+            case MCSAssetExportStatusFinished:
+            case MCSAssetExportStatusCancelled:
+                return;
+            case MCSAssetExportStatusUnknown:
+            case MCSAssetExportStatusFailed:
+            case MCSAssetExportStatusSuspended:
+            case MCSAssetExportStatusWaiting:
+            case MCSAssetExportStatusExporting: {
+                if ( _task != nil ) {
+                    [_task cancel];
+                    _task = nil;
+                }
+                
+                _status = MCSAssetExportStatusCancelled;
+                isChanged = YES;
+            }
+        }
+    }];
+    if ( isChanged ) [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self];
+}
+
+#pragma mark - mark
+
+- (void)_syncProgress {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        switch ( self->_status ) {
+            case MCSAssetExportStatusUnknown:
+            case MCSAssetExportStatusWaiting:
+            case MCSAssetExportStatusFailed:
+            case MCSAssetExportStatusSuspended:
+            case MCSAssetExportStatusCancelled:
+            case MCSAssetExportStatusFinished:
+                break;
+            case MCSAssetExportStatusExporting: {
+                [self synchronize];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self performSelector:@selector(_syncProgress) withObject:nil afterDelay:0.5 inModes:@[NSRunLoopCommonModes]];
+                });
+            }
+                break;
+        }
+    });
+}
+
+- (void)_prefetchTaskDidStart {
+    [self _lockInBlock:^{
+        _status = MCSAssetExportStatusExporting;
+    }];
+    [self _syncProgress];
+    [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self];
+}
+
+- (void)_prefetchTaskDidCompleteWithError:(NSError *_Nullable)error {
+    [self synchronize];
+    [self _lockInBlock:^{
+        _status = error != nil ? MCSAssetExportStatusFailed : MCSAssetExportStatusFinished;
+    }];
+    [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self];
 }
 
 - (void)_lockInBlock:(void(^NS_NOESCAPE)(void))task {
     dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
     task();
     dispatch_semaphore_signal(_semaphore);
+}
+
+- (void)_synchronizeForFILEAsset:(FILEAsset *)asset {
+    __block BOOL isChanged = NO;
+    [self _lockInBlock:^{
+        if ( _status == MCSAssetExportStatusFinished )
+            return;
+        
+        float progress = _progress;
+        NSUInteger totalLength = asset.totalLength;
+        if ( totalLength != 0 ) {
+            NSMutableArray<FILEContent *> *contents = [asset.contents mutableCopy];
+            [contents sortUsingComparator:^NSComparisonResult(FILEContent *obj1, FILEContent *obj2) {
+                NSRange range1 = NSMakeRange(obj1.offset, obj1.length);
+                NSRange range2 = NSMakeRange(obj2.offset, obj2.length);
+                if ( range1.location == range2.location ) {
+                    if ( obj1.length == obj2.length )
+                        return NSOrderedSame;
+                    return obj1.length > obj2.length ? NSOrderedAscending : NSOrderedDescending;
+                }
+                return range1.location < range2.location ? NSOrderedAscending : NSOrderedDescending;
+            }];
+            
+            NSUInteger current = 0;
+            FILEContent *pre = nil;
+            for ( FILEContent *content in contents ) {
+                if ( pre == nil || pre.offset != content.offset ) {
+                    current += content.length;
+                }
+                pre = content;
+            }
+            progress = current * 1.0 / totalLength;
+        }
+        isChanged = progress != _progress;
+        if ( isChanged ) _progress = progress;
+    }];
+    
+    if ( isChanged ) [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterProgressDidChangeNotification object:self];
+}
+
+- (void)_synchronizeForHLSAsset:(HLSAsset *)asset {
+    __block BOOL isChanged = NO;
+    [self _lockInBlock:^{
+        if ( _status == MCSAssetExportStatusFinished )
+            return;
+        
+        float progress = _progress;
+        HLSParser *parser = asset.parser;
+        if ( parser != nil ) {
+            // 获取所有相关的asset, 计算进度
+            NSMutableArray<HLSAsset *> *allAssets = [NSMutableArray arrayWithObject:asset];
+            for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
+                id<HLSURIItem> item = [parser itemAtIndex:i];
+                if ( [parser isVariantItem:item] ) {
+                    NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
+                    HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
+                    if ( asset != nil ) [allAssets addObject:asset];
+                }
+            }
+            
+            float all = 0;
+            for ( HLSAsset *asset in allAssets ) {
+                all += [self _calculateProgressWithHLSAsset:asset];
+            }
+            progress = all / allAssets.count;
+        }
+        
+        isChanged = progress != _progress;
+        if ( isChanged ) _progress = progress;
+    }];
+    
+    if ( isChanged ) [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterProgressDidChangeNotification object:self];
+}
+
+- (float)_calculateProgressWithHLSAsset:(HLSAsset *)asset {
+    if ( asset.parser != nil && asset.tsCount == 0 )
+        return 1.0f;
+    
+    if ( asset.TsContents.count != 0 ) {
+        NSMutableArray<HLSContentTs *> *contents = [asset.TsContents mutableCopy];
+        [contents sortUsingComparator:^NSComparisonResult(HLSContentTs *obj1, HLSContentTs *obj2) {
+            if ( [obj1.name isEqualToString:obj2.name] ) {
+                if ( obj1.length == obj2.length )
+                    return NSOrderedSame;
+                return obj1.length > obj2.length ? NSOrderedAscending : NSOrderedDescending;
+            }
+            return NSOrderedSame;
+        }];
+        
+        NSInteger all = 0;
+        NSInteger cur = 0;
+        HLSContentTs *pre = nil;
+        for ( HLSContentTs *content in contents ) {
+            if ( pre == nil || ![content.name isEqualToString:pre.name] ) {
+                all += content.range.length;
+                cur += content.length;
+            }
+            pre = content;
+        }
+        
+        return cur * 1.0 / all / asset.tsCount;
+    }
+    return 0.0f;
 }
 @end
    
@@ -117,6 +357,9 @@
     NSHashTable<id<MCSAssetExportObserver>> *_Nullable _observers;
     dispatch_semaphore_t _semaphore;
     NSMutableArray<MCSAssetExporter *> *_exporters;
+    
+    id _progressDidChangeToken;
+    id _statusDidChangeToken;
 }
 @end
 
@@ -160,8 +403,37 @@
             [_sqlite3 updateObjects:needsToPause forKeys:@[@"status"] error:NULL];
         }
         _exporters = results.count != 0 ? results.mutableCopy : NSMutableArray.array;
+         
+        __weak typeof(self) _self = self;
+        _progressDidChangeToken = [NSNotificationCenter.defaultCenter addObserverForName:MCSAssetExporterProgressDidChangeNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification * _Nonnull note) {
+            dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return;
+                [self _progressDidChange:note.object];
+            });
+        }];
+        _statusDidChangeToken = [NSNotificationCenter.defaultCenter addObserverForName:MCSAssetExporterStatusDidChangeNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification * _Nonnull note) {
+            dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                __strong typeof(_self) self = _self;
+                if ( self == nil ) return;
+                [self _statusDidChange:note.object];
+            });
+        }];
     }
     return self;
+}
+
+- (void)dealloc {
+    [NSNotificationCenter.defaultCenter removeObserver:_progressDidChangeToken];
+    [NSNotificationCenter.defaultCenter removeObserver:_statusDidChangeToken];
+}
+
+- (void)setMaxConcurrentExportCount:(NSInteger)maxConcurrentExportCount {
+    MCSPrefetcherManager.shared.maxConcurrentPrefetchCount = maxConcurrentExportCount;
+}
+
+- (NSInteger)maxConcurrentExportCount {
+    return MCSPrefetcherManager.shared.maxConcurrentPrefetchCount;
 }
 
 /// 注册观察者
@@ -333,6 +605,7 @@
 }
 
 - (MCSAssetExporter *)_exportAssetWithURL:(NSURL *)URL {
+    [URL mcs_setShouldHoldCache:YES];
     NSString *name = [MCSURL.shared assetNameForURL:URL];
     MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
     MCSAssetExporter *exporter = [self _exporterInMemoryForName:name];
@@ -350,6 +623,38 @@
             return exporter;
     }
     return nil;
+}
+
+- (void)_statusDidChange:(MCSAssetExporter *)exporter {
+    MCSAssetExportStatus status = exporter.status;
+    if ( status == MCSAssetExportStatusCancelled ) {
+        [self _lockInBlock:^{
+            id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:exporter.name type:exporter.type];
+            [MCSAssetManager.shared asset:asset setShouldHoldCache:NO];
+            [_exporters removeObject:exporter];
+            [_sqlite3 removeObjectForClass:MCSAssetExporter.class primaryKeyValue:@(exporter.id) error:NULL];
+        }];
+    }
+    else {
+        [_sqlite3 updateObjects:@[exporter] forKeys:@[@"status"] error:NULL];
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(self->_observers) ) {
+            if ( [observer respondsToSelector:@selector(exporter:statusDidChange:)] ) {
+                [observer exporter:exporter statusDidChange:status];
+            }
+        }
+    });
+}
+
+- (void)_progressDidChange:(MCSAssetExporter *)exporter {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(self->_observers) ) {
+            if ( [observer respondsToSelector:@selector(exporter:progressDidChange:)] ) {
+                [observer exporter:exporter progressDidChange:exporter.progress];
+            }
+        }
+    });
 }
 @end
 

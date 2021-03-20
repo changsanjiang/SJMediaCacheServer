@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) NSURL *URL;
 @property (nonatomic, readonly) MCSAssetExportStatus status;
 @property (nonatomic, readonly) float progress;
-- (void)synchronize; // 同步进度
+- (void)synchronize; // 同步进度(由于存在边播边缓存, 导出进度可能会发生变动)
 - (void)resume;      // 恢复
 - (void)suspend;     // 暂停, 缓存文件不会被删除
 - (void)cancel;      // 取消, 缓存可能会被资源管理器删除
