@@ -33,8 +33,11 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol MCSAssetExportObserver <NSObject>
+@optional
 - (void)exporter:(id<MCSAssetExporter>)exporter statusDidChange:(MCSAssetExportStatus)status;
 - (void)exporter:(id<MCSAssetExporter>)exporter progressDidChange:(float)progress;
+- (void)exporterManagerDidRemoveAssetWithURL:(NSURL *)URL;
+- (void)exporterManagerDidRemoveAllAssets;
 @end
 
 

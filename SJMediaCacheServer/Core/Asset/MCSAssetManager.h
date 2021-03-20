@@ -55,6 +55,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removeAssetForURL:(NSURL *)URL;
 
+- (void)removeAsset:(id<MCSAsset>)asset;
+
 /// The auto trim check time interval in seconds.
 ///
 ///     The manager holds an internal timer to check whether the cache reaches. The default value is 30.
@@ -70,15 +72,22 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
 
 
-- (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL;
+- (nullable __kindof id<MCSAsset>)assetWithURL:(NSURL *)URL;
+
+- (nullable __kindof id<MCSAsset>)assetWithName:(NSString *)name type:(MCSAssetType)type;
 
 - (BOOL)isAssetStoredForURL:(NSURL *)URL;
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
 - (void)willReadAssetForURL:(NSURL *)URL;
+
+- (void)asset:(id<MCSAsset>)asset setShouldHoldCache:(BOOL)shouldHoldCache;
 @end
 
+@interface NSURL (MCSAssetManagerExtended)
+- (void)mcs_setShouldHoldCache:(BOOL)shouldHoldCache;
+@end
 NS_ASSUME_NONNULL_END
 
 // 缓存的资源个数超出限制时, 可能会移除某些资源

@@ -35,6 +35,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     MCSLimitExpires,
 };
 
+#pragma mark - Private
+
 @interface MCSAssetUsageLog (MCSPrivate)
 @property (nonatomic) NSInteger id;
 @property (nonatomic) NSUInteger usageCount;
@@ -45,11 +47,14 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 @property (nonatomic) NSInteger asset;
 @property (nonatomic) MCSAssetType assetType;
 @end
-
-#pragma mark - HLS
-
+  
 @interface HLSAsset (HLSPrivate)
 @property (nonatomic, weak, nullable) HLSAsset *root;
+@property (nonatomic) BOOL shouldHoldCache;
+@end
+
+@interface FILEAsset (FILEPrivate)
+@property (nonatomic) BOOL shouldHoldCache;
 @end
 
 #pragma mark -
@@ -178,6 +183,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     return [self _assetWithName:name type:type];
 }
 
+- (nullable __kindof id<MCSAsset>)assetWithName:(NSString *)name type:(MCSAssetType)type {
+    return [self _assetWithName:name type:type];
+}
+
 - (BOOL)isAssetStoredForURL:(NSURL *)URL {
     __block id<MCSAsset> asset = nil;
     dispatch_barrier_sync(mcs_queue, ^{
@@ -245,6 +254,14 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     });
 }
 
+- (void)removeAsset:(id<MCSAsset>)asset {
+    if ( asset == nil )
+        return;
+    dispatch_barrier_sync(mcs_queue, ^{
+        [self _removeAssets:@[asset]];
+    });
+}
+
 - (unsigned long long)cachedSizeForAssets {
     return MCSRootDirectory.size;
 }
@@ -260,6 +277,13 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             }
             [self _syncToDatabase:log];
         });
+    }
+}
+
+- (void)asset:(id<MCSAsset>)asset setShouldHoldCache:(BOOL)shouldHoldCache {
+    if ( asset.shouldHoldCache != shouldHoldCache ) {
+        ((FILEAsset *)asset).shouldHoldCache = shouldHoldCache;
+        [self _syncToDatabase:asset];
     }
 }
 
@@ -463,6 +487,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             NSArray<SJSQLite3RowData *> *rows = [_sqlite3 exec:[NSString stringWithFormat:
                             @"SELECT * FROM MCSAssetUsageLog WHERE (asset NOT IN (%@) AND assetType = 0) \
                                                                 OR (asset NOT IN (%@) AND assetType = 1) \
+                                                               AND shouldHoldCache = 0 \
                                                                AND updatedTime <= %lf \
                                                           ORDER BY updatedTime ASC, usageCount ASC \
                                                              LIMIT 0, %ld;", s0, s1, time, (long)length] error:NULL];
@@ -474,6 +499,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             NSArray<SJSQLite3RowData *> *rows = [_sqlite3 exec:[NSString stringWithFormat:
                             @"SELECT * FROM MCSAssetUsageLog WHERE (asset NOT IN (%@) AND assetType = 0) \
                                                                 OR (asset NOT IN (%@) AND assetType = 1) \
+                                                               AND shouldHoldCache = 0 \
                                                                AND updatedTime <= %lf;", s0, s1, time] error:NULL];
             logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class rowDatas:rows error:NULL];
         }
@@ -515,5 +541,12 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 - (Class)_assetClassForType:(MCSAssetType)type {
     return type == MCSAssetTypeFILE ? FILEAsset.class : HLSAsset.class;
+}
+@end
+
+@implementation NSURL (MCSAssetManagerExtended)
+- (void)mcs_setShouldHoldCache:(BOOL)shouldHoldCache {
+    id<MCSAsset> asset = [MCSAssetManager.shared assetWithURL:self];
+    [MCSAssetManager.shared asset:asset setShouldHoldCache:shouldHoldCache];
 }
 @end
