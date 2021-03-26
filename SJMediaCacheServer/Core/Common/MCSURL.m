@@ -103,7 +103,7 @@ MCSMD5(NSString *str) {
         // 包含 mcsproxy 为 HLS 内部资源的请求, 此处返回path后面资源的名字
         if ( [url containsString:mcsproxy] ) {
             // format: mcsproxy/asset/name.extension?url=base64EncodedUrl
-            return url.stringByDeletingLastPathComponent.lastPathComponent;
+            return URL.path.stringByDeletingLastPathComponent.lastPathComponent;
         }
         else {
             // 不包含 mcsproxy 时, 将代理URL转换为原始的URL
