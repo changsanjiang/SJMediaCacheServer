@@ -46,6 +46,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 @property (nonatomic) NSInteger asset;
 @property (nonatomic) MCSAssetType assetType;
+
+@property (nonatomic) BOOL shouldHoldCache;
 @end
   
 @interface HLSAsset (HLSPrivate)
@@ -281,10 +283,14 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 - (void)asset:(id<MCSAsset>)asset setShouldHoldCache:(BOOL)shouldHoldCache {
-    if ( asset.shouldHoldCache != shouldHoldCache ) {
-        ((FILEAsset *)asset).shouldHoldCache = shouldHoldCache;
-        [self _syncToDatabase:asset];
-    }
+    dispatch_barrier_sync(mcs_queue, ^{
+        if ( asset != nil && asset.shouldHoldCache != shouldHoldCache ) {
+            ((FILEAsset *)asset).shouldHoldCache = shouldHoldCache;
+            MCSAssetUsageLog *log = _usageLogs[asset.name];
+            log.shouldHoldCache = shouldHoldCache;
+            [self _syncToDatabase:asset];
+        }
+    });
 }
 
 #pragma mark - mark
@@ -360,6 +366,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             
             if ( log == nil ) {
                 log = [MCSAssetUsageLog.alloc initWithAsset:asset];
+                log.shouldHoldCache = asset.shouldHoldCache;
                 [self _syncToDatabase:log]; // save log
             }
             
