@@ -29,7 +29,6 @@ static dispatch_queue_t mcs_queue;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy, nullable) NSString *TsContentType;
 @property (nonatomic, weak, nullable) HLSAsset *root;
-@property (nonatomic) BOOL shouldHoldCache;
 @end
 
 @implementation HLSAsset

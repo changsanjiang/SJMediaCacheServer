@@ -27,8 +27,7 @@ static dispatch_queue_t mcs_queue;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy, nullable) NSString *pathExtension;
 @property (nonatomic, copy, nullable) NSString *contentType;
-@property (nonatomic) NSUInteger totalLength;
-@property (nonatomic) BOOL shouldHoldCache;
+@property (nonatomic) NSUInteger totalLength; 
 @end
 
 @implementation FILEAsset

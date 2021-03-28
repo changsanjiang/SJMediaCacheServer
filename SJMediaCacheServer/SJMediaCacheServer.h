@@ -202,17 +202,23 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic) NSUInteger reservedFreeDiskSpace; // 剩余磁盘空间限制
 
-/// Empties the cache. This method may blocks the calling thread until file delete finished.
+/// Protected caches are not included.
 ///
-- (void)removeAllCaches; // 删除全部缓存
+@property (nonatomic, readonly) UInt64 countOfBytesRemovableCaches; // 可被删除的缓存所占用的大小
 
 /// Removes the cache of the specified URL.
 ///
-- (void)removeCacheForURL:(NSURL *)URL; // 删除某个缓存
-
-/// Returns the total cache size (in bytes).
+///     If the cache for asset is protected, it will not be removed.
 ///
-@property (nonatomic, readonly) UInt64 countOfBytesAllCaches; // 返回已占用的缓存大小
+- (BOOL)removeCacheForURL:(NSURL *)URL; // 删除某个缓存
+
+/// Remove all unprotected caches for assets.
+///
+///     If the cache for asset is protected, it will not be removed.
+///
+///     This method may blocks the calling thread until file delete finished.
+///
+- (void)removeAllRemovableCaches; // 删除缓存
 
 - (BOOL)isStoredForURL:(NSURL *)URL;
 
@@ -221,11 +227,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// What's the difference between export and prefetch?
 ///
-/// The MCSAssetManager manages the cache generated during playback and the prefetched assets.
+/// The MCSAssetExporterManager manages the exported assets.
 ///
-/// The MCSExporterManager manages the exported assets.
+/// The MCSAssetCacheManager manages the cache generated during playback and the prefetched assets.
 ///
-/// So, if you want to remove the an exported asset, you must use MCSExportedManager to remove it.
+/// So, if you want to remove the an exported asset, you must use MCSAssetExporterManager to remove it.
 ///
 @interface SJMediaCacheServer (Export)
 

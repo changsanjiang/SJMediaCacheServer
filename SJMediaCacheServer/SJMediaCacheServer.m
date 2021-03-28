@@ -9,12 +9,13 @@
 #import "SJMediaCacheServer.h"
 #import "MCSProxyServer.h"
 #import "MCSAssetManager.h"
+#import "MCSAssetCacheManager.h"
+#import "MCSAssetExporterManager.h"
 #import "MCSURL.h"
 #import "MCSProxyTask.h"
 #import "MCSLogger.h"
 #import "MCSDownload.h"
 #import "MCSPrefetcherManager.h"
-#import "MCSAssetExporterManager.h"
 
 @interface SJMediaCacheServer ()<MCSProxyServerDelegate>
 @property (nonatomic, strong, readonly) MCSProxyServer *server;
@@ -186,47 +187,45 @@
 
 @implementation SJMediaCacheServer (Cache)
 - (void)setCacheCountLimit:(NSUInteger)cacheCountLimit {
-    MCSAssetManager.shared.cacheCountLimit = cacheCountLimit;
+    MCSAssetCacheManager.shared.cacheCountLimit = cacheCountLimit;
 }
 
 - (NSUInteger)cacheCountLimit {
-    return MCSAssetManager.shared.cacheCountLimit;
+    return MCSAssetCacheManager.shared.cacheCountLimit;
 }
 
 - (void)setMaxDiskAgeForCache:(NSTimeInterval)maxDiskAgeForCache {
-    MCSAssetManager.shared.maxDiskAgeForCache = maxDiskAgeForCache;
+    MCSAssetCacheManager.shared.maxDiskAgeForCache = maxDiskAgeForCache;
 }
 - (NSTimeInterval)maxDiskAgeForCache {
-    return MCSAssetManager.shared.maxDiskAgeForCache;
+    return MCSAssetCacheManager.shared.maxDiskAgeForCache;
 }
 
 - (void)setMaxDiskSizeForCache:(NSUInteger)maxDiskSizeForCache {
-    MCSAssetManager.shared.maxDiskSizeForCache = maxDiskSizeForCache;
+    MCSAssetCacheManager.shared.maxDiskSizeForCache = maxDiskSizeForCache;
 }
 - (NSUInteger)maxDiskSizeForCache {
-    return MCSAssetManager.shared.maxDiskSizeForCache;
+    return MCSAssetCacheManager.shared.maxDiskSizeForCache;
 }
 
 - (void)setReservedFreeDiskSpace:(NSUInteger)reservedFreeDiskSpace {
-    MCSAssetManager.shared.reservedFreeDiskSpace = reservedFreeDiskSpace;
+    MCSAssetCacheManager.shared.reservedFreeDiskSpace = reservedFreeDiskSpace;
 }
 - (NSUInteger)reservedFreeDiskSpace {
-    return MCSAssetManager.shared.reservedFreeDiskSpace;
+    return MCSAssetCacheManager.shared.reservedFreeDiskSpace;
 }
 
-- (void)removeAllCaches {
+- (void)removeAllRemovableCaches {
     [MCSPrefetcherManager.shared cancelAllPrefetchTasks];
-    [MCSAssetManager.shared removeAllAssets];
+    [MCSAssetCacheManager.shared removeAllRemovableCaches];
 }
 
-- (void)removeCacheForURL:(NSURL *)URL {
-    if ( URL == nil )
-        return;
-    [MCSAssetManager.shared removeAssetForURL:URL];
+- (BOOL)removeCacheForURL:(NSURL *)URL {
+    return [MCSAssetCacheManager.shared removeCacheForURL:URL];
 }
 
-- (UInt64)countOfBytesAllCaches {
-    return [MCSAssetManager.shared countOfBytesAllAssets] - [MCSAssetExporterManager.shared countOfBytesAllExportedAssets];
+- (UInt64)countOfBytesRemovableCaches {
+    return MCSAssetCacheManager.shared.countOfBytesRemovableCaches;
 }
 
 - (BOOL)isStoredForURL:(NSURL *)URL {

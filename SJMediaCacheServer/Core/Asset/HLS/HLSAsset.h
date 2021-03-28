@@ -18,8 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly, nullable) NSString *TsContentType;
 @property (nonatomic, readonly) NSUInteger tsCount;
 @property (nonatomic, readonly) BOOL isStored;
-@property (nonatomic, strong, nullable) HLSParser *parser;
-@property (nonatomic, readonly) BOOL shouldHoldCache;
+@property (nonatomic, strong, nullable) HLSParser *parser; 
 
 - (NSString *)indexFilePath;
 - (NSString *)indexFileRelativePath;

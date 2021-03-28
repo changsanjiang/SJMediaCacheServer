@@ -6,9 +6,10 @@
 //
 
 #import "MCSAssetExporterManager.h"
-#import "NSFileManager+MCS.h"
-#import "MCSPrefetcherManager.h"
+#import "MCSAssetCacheManager.h"
 #import "MCSAssetManager.h"
+#import "MCSPrefetcherManager.h"
+#import "NSFileManager+MCS.h"
 #import "MCSDatabase.h"
 #import "MCSURL.h"
 #import "MCSUtils.h"
@@ -519,9 +520,9 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
         MCSAssetExporter *_Nullable exporter = [self _exporterInMemoryForName:name];
         if ( exporter != nil ) {
             [_exporters removeObject:exporter];
-            [URL mcs_setShouldHoldCache:NO];
             [_sqlite3 removeObjectForClass:MCSAssetExporter.class primaryKeyValue:@(exporter.id) error:NULL];
-            [MCSAssetManager.shared removeAssetForURL:URL];
+            [MCSAssetCacheManager.shared setProtected:NO forCacheWithURL:URL];
+            [MCSAssetCacheManager.shared removeCacheForURL:URL];
             isRemoved = YES;
         }
     }];
@@ -546,8 +547,8 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
             [_sqlite3 removeAllObjectsForClass:MCSAssetExporter.class error:NULL];
             for ( MCSAssetExporter *exporter in exporters ) {
                 id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:exporter.name type:exporter.type];
-                [MCSAssetManager.shared asset:asset setShouldHoldCache:NO];
-                [MCSAssetManager.shared removeAsset:asset];
+                [MCSAssetCacheManager.shared setProtected:NO forCacheWithAsset:asset];
+                [MCSAssetCacheManager.shared removeCacheForAsset:asset];
             }
             isRemoved = YES;
         }
@@ -649,12 +650,12 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
 }
 
 - (MCSAssetExporter *)_exportAssetWithURL:(NSURL *)URL {
-    [URL mcs_setShouldHoldCache:YES];
     NSString *name = [MCSURL.shared assetNameForURL:URL];
     MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
     MCSAssetExporter *exporter = [self _exporterInMemoryForName:name];
     if ( exporter == nil ) {
         exporter = [MCSAssetExporter.alloc initWithURLString:URL.absoluteString name:name type:type];
+        [MCSAssetCacheManager.shared setProtected:YES forCacheWithURL:URL];
         [_sqlite3 save:exporter error:NULL];
         [_exporters addObject:exporter];
     }
@@ -674,7 +675,7 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
     if ( status == MCSAssetExportStatusCancelled ) {
         [self _lockInBlock:^{
             id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:exporter.name type:exporter.type];
-            [MCSAssetManager.shared asset:asset setShouldHoldCache:NO];
+            [MCSAssetCacheManager.shared setProtected:NO forCacheWithAsset:asset];
             [_exporters removeObject:exporter];
             [_sqlite3 removeObjectForClass:MCSAssetExporter.class primaryKeyValue:@(exporter.id) error:NULL];
         }];

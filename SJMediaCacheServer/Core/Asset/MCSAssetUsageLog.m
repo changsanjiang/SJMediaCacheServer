@@ -15,7 +15,6 @@
 @property (nonatomic) NSUInteger usageCount;
 @property (nonatomic) NSTimeInterval updatedTime;
 @property (nonatomic) NSTimeInterval createdTime;
-@property (nonatomic) BOOL shouldHoldCache;
 @end
 
 @implementation MCSAssetUsageLog
