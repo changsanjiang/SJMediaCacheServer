@@ -183,11 +183,19 @@ static dispatch_queue_t mcs_queue;
     if ( asset != nil ) {
         dispatch_barrier_async(mcs_queue, ^{
             MCSAssetUsageLog *log = self->_usageLogs[asset.name];
+            if ( log == nil ) {
+                log = (id)[self->_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
+                    [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
+                    [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
+                ] orderBy:nil error:NULL].firstObject;
+                self->_usageLogs[asset.name] = log;
+            }
+            
             if ( log != nil ) {
                 log.usageCount += 1;
                 log.updatedTime = NSDate.date.timeIntervalSince1970;
+                [self _syncToDatabase:log];
             }
-            [self _syncToDatabase:log];
         });
     }
 }
