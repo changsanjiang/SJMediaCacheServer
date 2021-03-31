@@ -128,7 +128,8 @@ static dispatch_queue_t mcs_queue;
                 BOOL isRootAsset = root != asset;
                 if ( isRootAsset ) asset.root = root;
             }
-            return [HLSReader.alloc initWithAsset:asset request:request networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
+            MCSDataType dataType = [MCSURL.shared dataTypeForProxyURL:proxyURL];
+            return [HLSReader.alloc initWithAsset:asset request:request dataType:dataType networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
         }
     }
     return nil;

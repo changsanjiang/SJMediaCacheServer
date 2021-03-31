@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)assetNameForURL:(NSURL *)URL;
 - (MCSAssetType)assetTypeForURL:(NSURL *)URL;
-
+- (MCSDataType)dataTypeForProxyURL:(NSURL *)proxyURL;
 
 - (NSString *)nameWithUrl:(NSString *)url suffix:(NSString *)suffix;
 

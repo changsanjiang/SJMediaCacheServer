@@ -123,6 +123,20 @@ MCSMD5(NSString *str) {
            [URL.path containsString:HLS_SUFFIX_AES_KEY] ? MCSAssetTypeHLS : MCSAssetTypeFILE;
 }
 
+- (MCSDataType)dataTypeForProxyURL:(NSURL *)proxyURL {
+    NSString *last = proxyURL.lastPathComponent;
+    if ( [last containsString:HLS_SUFFIX_INDEX] )
+        return MCSDataTypeHLSPlaylist;
+    
+    if ( [last containsString:HLS_SUFFIX_AES_KEY] )
+        return MCSDataTypeHLSAESKey;
+
+    if ( [last containsString:HLS_SUFFIX_TS] )
+        return MCSDataTypeHLSTs;
+    
+    return MCSDataTypeFILE;
+}
+
 - (NSString *)nameWithUrl:(NSString *)url suffix:(NSString *)suffix {
     NSString *filename = url.mcs_fname;
     // 添加扩展名
