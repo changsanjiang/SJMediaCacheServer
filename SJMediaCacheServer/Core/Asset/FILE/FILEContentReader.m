@@ -188,8 +188,7 @@ static dispatch_queue_t mcs_queue;
         if ( _isClosed )
             return;
         _range = response.range;
-        _content = [_asset createContentWithResponse:response];
-        [_content readwriteRetain];
+        _content = [_asset createContentReadwriteWithResponse:response];
         
         NSString *filePath = [_asset contentFilePathForFilename:_content.filename];
         NSURL *fileURL = [NSURL fileURLWithPath:filePath];

@@ -123,7 +123,8 @@ static dispatch_queue_t mcs_queue;
     return totalLength;
 }
 
-- (nullable FILEContent *)createContentWithResponse:(id<MCSDownloadResponse>)response {
+/// 该操作将会对 content 进行一次 readwriteRetain, 请在不需要时, 调用一次 readwriteRelease.
+- (nullable FILEContent *)createContentReadwriteWithResponse:(id<MCSDownloadResponse>)response {
     NSString *pathExtension = response.pathExtension;
     NSString *contentType = response.contentType;
     NSUInteger totalLength = response.totalLength;
@@ -139,6 +140,7 @@ static dispatch_queue_t mcs_queue;
         }
         
         content = [_provider createContentAtOffset:offset pathExtension:_pathExtension];
+        [content readwriteRetain];
         [_contents addObject:content];
     });
     

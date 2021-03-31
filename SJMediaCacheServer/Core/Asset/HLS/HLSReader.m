@@ -9,7 +9,7 @@
 #import "HLSReader.h"
 #import "HLSContentIndexReader.h"
 #import "HLSContentAESKeyReader.h"
-#import "HLSContentTSReader.h" 
+#import "HLSContentTSReader.h"
 #import "MCSLogger.h"
 #import "HLSAsset.h"
 #import "MCSError.h"

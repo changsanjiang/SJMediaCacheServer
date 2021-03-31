@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSUInteger totalLength; // notify
 @property (nonatomic, readonly) BOOL isStored; 
 
-- (nullable FILEContent *)createContentWithResponse:(id<MCSDownloadResponse>)response;
+- (nullable FILEContent *)createContentReadwriteWithResponse:(id<MCSDownloadResponse>)response;
 - (nullable NSArray<FILEContent *> *)contents;
 - (nullable NSString *)contentFilePathForFilename:(NSString *)filename;
 - (nullable NSString *)contentFileRelativePathForFilename:(NSString *)filename;

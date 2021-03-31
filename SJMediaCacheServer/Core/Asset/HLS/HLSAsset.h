@@ -23,9 +23,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)indexFilePath;
 - (NSString *)indexFileRelativePath;
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL;
-- (nullable id<MCSAssetContent>)createTsContentWithResponse:(id<MCSDownloadResponse>)response;
 - (nullable NSArray<id<MCSAssetContent>> *)TsContents;
 - (nullable NSString *)TsContentFilePathForFilename:(NSString *)filename;
-- (nullable id<MCSAssetContent>)TsContentForRequest:(NSURLRequest *)request;
+- (nullable id<MCSAssetContent>)createTsContentReadwriteWithResponse:(id<MCSDownloadResponse>)response;
+- (nullable id<MCSAssetContent>)TsContentReadwriteForRequest:(NSURLRequest *)request;
 @end
 NS_ASSUME_NONNULL_END

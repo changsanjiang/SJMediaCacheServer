@@ -82,15 +82,17 @@ static dispatch_queue_t mcs_queue;
 
         _isCalledPrepare = YES;
         
-        HLSContentTs *content = [_asset TsContentForRequest:_request];
-        
+        HLSContentTs *content = [_asset TsContentReadwriteForRequest:_request];
         if ( content != nil ) {
-            // go to read the content
             [self _prepareForContent:content];
+            // broken point download
+            if ( content.range.length != content.length ) {
+                NSRange requestRange = NSMakeRange(content.range.location + content.length, content.range.length - content.length);
+                NSMutableURLRequest *newRequest = [_request mcs_requestWithRange:requestRange];
+                _task = [MCSDownload.shared downloadWithRequest:[newRequest mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSTs]] priority:_networkTaskPriority delegate:self];
+            }
             return;
         }
-        
-        MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };\n", NSStringFromClass(self.class), self, _request.mcs_description);
         
         // download the content
         _task = [MCSDownload.shared downloadWithRequest:[_request mcs_requestWithHTTPAdditionalHeaders:[_asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSTs]] priority:_networkTaskPriority delegate:self];
@@ -196,7 +198,7 @@ static dispatch_queue_t mcs_queue;
 - (NSUInteger)totalLength {
     __block NSUInteger totalLength = 0;
     dispatch_sync(mcs_queue, ^{
-        totalLength = _content.totalLength;
+        totalLength = (NSUInteger)_content.totalLength;
     });
     return totalLength;
 }
@@ -226,8 +228,10 @@ static dispatch_queue_t mcs_queue;
         if ( _isClosed )
             return;
         
-        HLSContentTs *content = [_asset createTsContentWithResponse:response];
-        [self _prepareForContent:content];
+        if ( _content == nil ) {
+            HLSContentTs *content = [_asset createTsContentReadwriteWithResponse:response];
+            [self _prepareForContent:content];
+        }
     });
 }
 
@@ -287,7 +291,6 @@ static dispatch_queue_t mcs_queue;
 
 - (void)_prepareForContent:(HLSContentTs *)content {
     _content = content;
-    [_content readwriteRetain];
     NSString *filePath = [_asset TsContentFilePathForFilename:content.filename];
     NSURL *fileURL = [NSURL fileURLWithPath:filePath];
     NSError *error = nil;
@@ -300,6 +303,11 @@ static dispatch_queue_t mcs_queue;
     
     _writer = [NSFileHandle mcs_fileHandleForWritingToURL:fileURL error:&error];
     if ( error != nil ) {
+        [self _onError:error];
+        return;
+    }
+    
+    if ( ![_writer mcs_seekToEndReturningOffset:NULL error:&error] ) {
         [self _onError:error];
         return;
     }
