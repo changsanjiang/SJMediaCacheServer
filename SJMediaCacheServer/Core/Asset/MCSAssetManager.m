@@ -194,7 +194,7 @@ static dispatch_queue_t mcs_queue;
             if ( log != nil ) {
                 log.usageCount += 1;
                 log.updatedTime = NSDate.date.timeIntervalSince1970;
-                [self _syncToDatabase:log];
+                [self->_sqlite3 update:log forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
             }
         });
     }
@@ -286,13 +286,6 @@ static dispatch_queue_t mcs_queue;
 }
 
 #pragma mark - mark
- 
-- (void)_syncUsageLogsToDatabase {
-    if ( _usageLogs.count != 0 ) {
-        [_sqlite3 updateObjects:self->_usageLogs.allValues forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
-        [_usageLogs removeAllObjects];
-    }
-}
 
 - (void)_syncToDatabase:(id<MCSSaveable>)saveable {
     if ( saveable != nil ) {
