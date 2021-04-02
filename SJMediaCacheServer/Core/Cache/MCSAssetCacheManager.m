@@ -212,10 +212,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 - (void)removeAllRemovableCaches {
     dispatch_barrier_sync(mcs_queue, ^{
         NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *protectedAssets = [self _allProtectedAssets];
-        if ( protectedAssets != nil ) {
-            [MCSAssetManager.shared removeAssetsNotIn:protectedAssets];
-            _countOfProtectedAssets = 0;
-        }
+        [MCSAssetManager.shared removeAssetsNotIn:protectedAssets];
+        _countOfProtectedAssets = protectedAssets.count;
     });
 }
 
@@ -230,7 +228,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         MCSAssetCacheTmpProtectedItem *item = (id)[_sqlite3 objectsForClass:MCSAssetCacheTmpProtectedItem.class conditions:@[
             [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)],
             [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)]
-        ] orderBy:nil error:NULL];
+        ] orderBy:nil error:NULL].firstObject;
         
         if ( isProtected ) {
             // save

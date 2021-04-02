@@ -256,7 +256,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSInteger maxConcurrentExportCount;
 
 @property (nonatomic, strong, readonly, nullable) NSArray<id<MCSAssetExporter>> *allExporters;
- 
+
+/// 
+///
+/// \code
+///     [SJMediaCacheServer.shared registerExportObserver:self];
+///
+///     id<MCSAssetExporter> exporter = [SJMediaCacheServer.shared exportAssetWithURL:URL];
+///     [exporter resume];
+/// \endcode
+///
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL;
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL resumes:(BOOL)resumes;
  
