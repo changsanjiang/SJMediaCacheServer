@@ -449,15 +449,7 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
 }
 
 - (UInt64)countOfBytesAllExportedAssets {
-    __block UInt64 count = 0;
-    [self _lockInBlock:^{
-        NSArray<NSDictionary *> *rows = [_sqlite3 queryDataForClass:MCSAssetExporter.class resultColumns:@[@"name", @"type"] conditions:nil orderBy:nil error:NULL];
-        for ( NSDictionary *row in rows ) {
-            id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:row[@"name"] type:[row[@"type"] integerValue]];
-            count += [NSFileManager.defaultManager mcs_directorySizeAtPath:asset.path];
-        }
-    }];
-    return count;
+    return MCSAssetCacheManager.shared.countOfBytesAllCaches - MCSAssetCacheManager.shared.countOfBytesRemovableCaches;
 }
 
 /// 注册观察者

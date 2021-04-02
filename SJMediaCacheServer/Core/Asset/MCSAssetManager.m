@@ -75,6 +75,8 @@ static dispatch_queue_t mcs_queue;
         _usageLogs = NSMutableDictionary.dictionary;
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_assetMetadataDidLoadWithNote:) name:MCSAssetMetadataDidLoadNotification object:nil];
+        
+        [self _syncUsageLogsRecursively];
     }
     return self;
 }
@@ -319,6 +321,18 @@ static dispatch_queue_t mcs_queue;
     }
 }
  
+- (void)_syncUsageLogsRecursively {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(30 * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+        dispatch_barrier_sync(mcs_queue, ^{
+            if ( self->_usageLogs.count != 0 ) {
+                [self->_sqlite3 updateObjects:self->_usageLogs.allValues forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
+                [self->_usageLogs removeAllObjects];
+            }
+        });
+        [self _syncUsageLogsRecursively];
+    });
+}
+
 #pragma mark - mark
 
 - (nullable __kindof id<MCSAsset> )_assetWithName:(NSString *)name type:(MCSAssetType)type {
