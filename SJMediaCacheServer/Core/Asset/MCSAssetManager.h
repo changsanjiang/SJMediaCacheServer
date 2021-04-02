@@ -21,6 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable __kindof id<MCSAsset>)assetWithName:(NSString *)name type:(MCSAssetType)type;
 
+- (nullable __kindof id<MCSAsset>)assetForAssetId:(NSInteger)assetId type:(MCSAssetType)type;
+
 - (BOOL)isAssetStoredForURL:(NSURL *)URL;
 
 /// Decode the read data.
@@ -46,5 +48,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removeAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
 - (void)removeAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets countLimit:(NSInteger)maxCount;
+@end
+NS_ASSUME_NONNULL_END
+
+
+#import "HLSAsset.h"
+
+NS_ASSUME_NONNULL_BEGIN
+@interface HLSAsset (MCSAssetManagerExtended)
+@property (nonatomic, readonly, nullable) NSArray<HLSAsset *> *subAssets;
 @end
 NS_ASSUME_NONNULL_END

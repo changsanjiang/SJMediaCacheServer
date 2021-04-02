@@ -310,20 +310,9 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
         if ( parser != nil ) {
             // 获取所有相关的asset, 计算进度
             NSMutableArray<HLSAsset *> *allAssets = [NSMutableArray arrayWithObject:asset];
-            for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
-                id<HLSURIItem> item = [parser itemAtIndex:i];
-                if ( [parser isVariantItem:item] ) {
-                    NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
-                    HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
-                    if ( asset != nil ) [allAssets addObject:asset];
-                    
-                    NSArray<id<HLSURIItem>> *renditionsItems = [parser renditionsItemsForVariantItem:item];
-                    for ( id<HLSURIItem> item in renditionsItems ) {
-                        NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
-                        HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
-                        if ( asset != nil ) [allAssets addObject:asset];
-                    }
-                }
+            NSArray<HLSAsset *> *subAssets = asset.subAssets;
+            if ( subAssets != nil ) {
+                [allAssets addObjectsFromArray:subAssets];
             }
             
             float all = 0;

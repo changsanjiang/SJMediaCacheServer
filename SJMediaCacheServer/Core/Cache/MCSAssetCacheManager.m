@@ -372,7 +372,18 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     }
     
     if ( protectedHLSAssets.count != 0 ) {
-        protectedAssets[@(MCSAssetTypeHLS)] = SJFoundationExtendedValuesForKey(@"asset", protectedHLSAssets);
+        NSArray<NSNumber *> *rootAssets = SJFoundationExtendedValuesForKey(@"asset", protectedHLSAssets);
+        NSMutableArray<NSNumber *> *array = rootAssets.mutableCopy;
+        for ( NSNumber *root in rootAssets ) {
+            HLSAsset *asset = [MCSAssetManager.shared assetForAssetId:root.integerValue type:MCSAssetTypeHLS];
+            NSArray<HLSAsset *> *subAssets = asset.subAssets;
+            if ( subAssets != nil ) {
+                for ( HLSAsset *subAsset in subAssets ) {
+                    [array addObject:@(subAsset.id)];
+                }
+            }
+        }
+        protectedAssets[@(MCSAssetTypeHLS)] = array.copy;
     }
     
     if ( protectedFILEAssets.count != 0 ) {

@@ -91,6 +91,32 @@ static dispatch_queue_t mcs_queue;
     return [self _assetWithName:name type:type];
 }
 
+- (nullable __kindof id<MCSAsset>)assetForAssetId:(NSInteger)assetId type:(MCSAssetType)type {
+    __block id<MCSAsset> asset = nil;
+    dispatch_barrier_sync(mcs_queue, ^{
+        [_assets enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id<MCSAsset>  _Nonnull obj, BOOL * _Nonnull stop) {
+            if ( obj.type == type && obj.id == assetId ) {
+                asset = obj;
+                *stop = YES;
+            }
+        }];
+        
+        if ( asset == nil ) {
+            Class cls = [self _assetClassForType:type];
+            if ( cls == nil ) return;
+            asset = (id)[_sqlite3 objectsForClass:cls conditions:@[
+                [SJSQLite3Condition conditionWithColumn:@"id" value:@(assetId)]
+            ] orderBy:nil error:NULL].firstObject;
+            
+            if ( asset != nil ) {
+                [asset prepare];
+                _assets[asset.name] = asset;
+            }
+        }
+    });
+    return asset;
+}
+
 - (BOOL)isAssetStoredForURL:(NSURL *)URL {
     __block id<MCSAsset> asset = nil;
     dispatch_barrier_sync(mcs_queue, ^{
@@ -397,5 +423,36 @@ static dispatch_queue_t mcs_queue;
         if ( asset != nil ) [results addObject:asset];
     }];
     return results;
+}
+@end
+
+@implementation HLSAsset (MCSAssetManagerExtended)
+- (nullable NSArray<HLSAsset *> *)subAssets {
+    HLSParser *parser = self.parser;
+    if ( parser != nil ) {
+        NSMutableArray<HLSAsset *> *subAssets = nil;
+        for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
+            id<HLSURIItem> item = [parser itemAtIndex:i];
+            if ( [parser isVariantItem:item] ) {
+                subAssets = NSMutableArray.array;
+
+                NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
+                HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
+                if ( asset != nil ) [subAssets addObject:asset];
+                
+                NSArray<id<HLSURIItem>> *renditionsItems = [parser renditionsItemsForVariantItem:item];
+                for ( id<HLSURIItem> item in renditionsItems ) {
+                    NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
+                    HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
+                    if ( asset != nil ) [subAssets addObject:asset];
+                }
+                
+                // break
+                break;
+            }
+        }
+        return subAssets.copy;
+    }
+    return nil;
 }
 @end
