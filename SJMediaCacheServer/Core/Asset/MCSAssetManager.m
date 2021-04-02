@@ -96,25 +96,7 @@ static dispatch_queue_t mcs_queue;
 - (nullable __kindof id<MCSAsset>)assetForAssetId:(NSInteger)assetId type:(MCSAssetType)type {
     __block id<MCSAsset> asset = nil;
     dispatch_barrier_sync(mcs_queue, ^{
-        [_assets enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id<MCSAsset>  _Nonnull obj, BOOL * _Nonnull stop) {
-            if ( obj.type == type && obj.id == assetId ) {
-                asset = obj;
-                *stop = YES;
-            }
-        }];
-        
-        if ( asset == nil ) {
-            Class cls = [self _assetClassForType:type];
-            if ( cls == nil ) return;
-            asset = (id)[_sqlite3 objectsForClass:cls conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"id" value:@(assetId)]
-            ] orderBy:nil error:NULL].firstObject;
-            
-            if ( asset != nil ) {
-                [asset prepare];
-                _assets[asset.name] = asset;
-            }
-        }
+        asset = [self _assetForAssetId:assetId type:type];
     });
     return asset;
 }
@@ -123,16 +105,8 @@ static dispatch_queue_t mcs_queue;
     __block id<MCSAsset> asset = nil;
     dispatch_barrier_sync(mcs_queue, ^{
         NSString *name = [MCSURL.shared assetNameForURL:URL];
-        asset = _assets[name];
-        if ( asset != nil ) return;
         MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
-        Class cls = [self _assetClassForType:type];
-        if ( cls == nil ) return;
-        asset = (id)[_sqlite3 objectsForClass:cls conditions:@[
-            [SJSQLite3Condition conditionWithColumn:@"name" value:name]
-        ] orderBy:nil error:NULL].firstObject;
-        [asset prepare];
-        if ( asset != nil ) _assets[name] = asset;
+        asset = [self _assetForName:name type:type];
     });
     return asset.isStored;
 }
@@ -169,12 +143,10 @@ static dispatch_queue_t mcs_queue;
     dispatch_barrier_sync(mcs_queue, ^{
         MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
         NSString *name = [MCSURL.shared assetNameForURL:URL];
-        Class cls = [self _assetClassForType:type];
-        if ( cls == nil ) return;
-        id<MCSAsset> asset = (id)[_sqlite3 objectsForClass:cls conditions:@[
-            [SJSQLite3Condition conditionWithColumn:@"name" value:name]
-        ] orderBy:nil error:NULL].firstObject;
-        if ( asset != nil ) [self _removeAssetsInArray:@[asset]];
+        id<MCSAsset> asset = [self _assetForName:name type:type];
+        if ( asset != nil ) {
+            [self _removeAssetsInArray:@[asset]];
+        }
     });
 }
 
@@ -204,28 +176,6 @@ static dispatch_queue_t mcs_queue;
         count = _countOfAllAssets;
     });
     return count;
-}
- 
-- (void)willReadAssetForURL:(NSURL *)URL {
-    id<MCSAsset> asset = [self assetWithURL:URL];
-    if ( asset != nil ) {
-        dispatch_barrier_async(mcs_queue, ^{
-            MCSAssetUsageLog *log = self->_usageLogs[asset.name];
-            if ( log == nil ) {
-                log = (id)[self->_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                    [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
-                    [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
-                ] orderBy:nil error:NULL].firstObject;
-                self->_usageLogs[asset.name] = log;
-            }
-            
-            if ( log != nil ) {
-                log.usageCount += 1;
-                log.updatedTime = NSDate.date.timeIntervalSince1970;
-                [self->_sqlite3 update:log forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
-            }
-        });
-    }
 }
 
 - (UInt64)countOfBytesNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
@@ -294,10 +244,11 @@ static dispatch_queue_t mcs_queue;
         NSArray<MCSAssetUsageLog *> *logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class rowDatas:rows error:NULL];
         if ( logs.count == 0 )
             return;
+        
         // 删除
         NSMutableArray<id<MCSAsset> > *results = NSMutableArray.array;
         [logs enumerateObjectsUsingBlock:^(MCSAssetUsageLog * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            id<MCSAsset> asset = [_sqlite3 objectForClass:[self _assetClassForType:obj.assetType] primaryKeyValue:@(obj.asset) error:NULL];
+            id<MCSAsset> asset = [self _assetForAssetId:obj.asset type:obj.assetType];
             if ( asset != nil ) [results addObject:asset];
         }];
 
@@ -335,42 +286,68 @@ static dispatch_queue_t mcs_queue;
 
 #pragma mark - mark
 
+- (nullable __kindof id<MCSAsset>)_assetForName:(NSString *)name type:(MCSAssetType)type {
+    id<MCSAsset> asset = _assets[name];
+    if ( asset == nil ) {
+        asset = [self _assetInTableForType:type conditions:@[
+            [SJSQLite3Condition conditionWithColumn:@"name" value:name]
+        ]];
+    }
+    return asset;
+}
+
+- (nullable __kindof id<MCSAsset>)_assetForAssetId:(NSInteger)assetId type:(MCSAssetType)type {
+    __block id<MCSAsset> asset = nil;
+    [_assets enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id<MCSAsset>  _Nonnull obj, BOOL * _Nonnull stop) {
+        if ( obj.type == type && obj.id == assetId ) {
+            asset = obj;
+            *stop = YES;
+        }
+    }];
+    
+    if ( asset == nil ) {
+        asset = [self _assetInTableForType:type conditions:@[
+            [SJSQLite3Condition conditionWithColumn:@"id" value:@(assetId)]
+        ]];
+    }
+    return asset;
+}
+
+- (nullable __kindof id<MCSAsset>)_assetInTableForType:(MCSAssetType)type conditions:(NSArray<SJSQLite3Condition *> *)conditions {
+    Class cls = [self _assetClassForType:type];
+    if ( cls == nil )
+        return nil;
+    __block id<MCSAsset> asset = (id)[_sqlite3 objectsForClass:cls conditions:conditions orderBy:nil error:NULL].firstObject;
+    
+    if ( asset != nil ) {
+        [asset prepare];
+        [self _registerAsObserverForAsset:asset];
+        _assets[asset.name] = asset;
+    }
+    return asset;
+}
+
 - (nullable __kindof id<MCSAsset> )_assetWithName:(NSString *)name type:(MCSAssetType)type {
     __block id<MCSAsset> asset = nil;
     dispatch_barrier_sync(mcs_queue, ^{
-        if ( _assets[name] == nil ) {
+        asset = [self _assetForName:name type:type];
+        if ( asset == nil ) {
             Class cls = [self _assetClassForType:type];
             if ( cls == nil ) return;
-            
-            // query
-            id<MCSAsset> r = (id)[_sqlite3 objectsForClass:cls conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"name" value:name]
-            ] orderBy:nil error:NULL].firstObject;
-            
-            // create
-            if ( r == nil ) {
-                r = [cls.alloc initWithName:name];
-                [self _syncToDatabase:r]; // save asset
+            // create asset
+            if ( asset == nil ) {
+                asset = [cls.alloc initWithName:name];
+                [self _syncToDatabase:asset]; // save asset
                 _countOfAllAssets += 1;
             }
-             
-            [r prepare];
-            _assets[name] = r;
-        }
-        
-        asset  = _assets[name];
-        
-        if ( _usageLogs[name] == nil ) {
-            MCSAssetUsageLog *log = (id)[_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
-                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
-            ] orderBy:nil error:NULL].firstObject;
             
-            if ( log == nil ) {
-                log = [MCSAssetUsageLog.alloc initWithAsset:asset];
-                [self _syncToDatabase:log]; // save log
-            }
-            
+            [asset prepare];
+            [self _registerAsObserverForAsset:asset];
+            _assets[name] = asset;
+    
+            // create log
+            MCSAssetUsageLog *log = [MCSAssetUsageLog.alloc initWithAsset:asset];
+            [self _syncToDatabase:log]; // save log
             _usageLogs[name] = log;
         }
     });
@@ -383,13 +360,13 @@ static dispatch_queue_t mcs_queue;
     });
 }
  
- 
 - (void)_removeAssetsInArray:(NSArray<id<MCSAsset> > *)assets {
     if ( assets.count == 0 )
         return;
 
     [assets enumerateObjectsUsingBlock:^(id<MCSAsset>  _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
         [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetWillRemoveAssetNotification object:r];
+        [self _unregisterAsObserverForAsset:r];
         [NSFileManager.defaultManager removeItemAtPath:r.path error:NULL];
         [self.sqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
         [self.sqlite3 removeAllObjectsForClass:MCSAssetUsageLog.class conditions:@[
@@ -430,13 +407,43 @@ static dispatch_queue_t mcs_queue;
     NSArray<MCSAssetUsageLog *> *logs = [_sqlite3 objectsForClass:MCSAssetUsageLog.class rowDatas:rows error:NULL];
     if ( logs.count == 0 )
         return nil;
-    // 删除
+    
     NSMutableArray<id<MCSAsset> > *results = NSMutableArray.array;
     [logs enumerateObjectsUsingBlock:^(MCSAssetUsageLog * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        id<MCSAsset> asset = [_sqlite3 objectForClass:[self _assetClassForType:obj.assetType] primaryKeyValue:@(obj.asset) error:NULL];
+        id<MCSAsset> asset = asset = [self _assetForAssetId:obj.asset type:obj.assetType];
         if ( asset != nil ) [results addObject:asset];
     }];
     return results;
+}
+
+- (void)_registerAsObserverForAsset:(id)asset {
+    [asset addObserver:self forKeyPath:kReadwriteCount options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:NULL];
+}
+
+- (void)_unregisterAsObserverForAsset:(id)asset {
+    [asset removeObserver:self forKeyPath:kReadwriteCount];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id<MCSAsset>)asset change:(NSDictionary *)change context:(void *)context {
+    NSInteger oldValue = [change[NSKeyValueChangeOldKey] integerValue];
+    NSInteger newValue = [change[NSKeyValueChangeNewKey] integerValue];
+    if ( newValue > oldValue ) {
+        dispatch_barrier_async(mcs_queue, ^{
+            MCSAssetUsageLog *log = self->_usageLogs[asset.name];
+            if ( log == nil ) {
+                log = (id)[self->_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
+                    [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
+                    [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
+                ] orderBy:nil error:NULL].firstObject;
+                self->_usageLogs[asset.name] = log;
+            }
+            
+            if ( log != nil ) {
+                log.usageCount += 1;
+                log.updatedTime = NSDate.date.timeIntervalSince1970;
+            }
+        });
+    }
 }
 @end
 

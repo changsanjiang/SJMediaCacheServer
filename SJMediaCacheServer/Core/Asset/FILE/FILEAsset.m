@@ -15,8 +15,6 @@
 #import "NSFileHandle+MCS.h"
 #import "MCSUtils.h"
 
-static NSString *kLength = @"length";
-static NSString *kReadwriteCount = @"readwriteCount";
 static dispatch_queue_t mcs_queue;
 
 @interface FILEAsset () {

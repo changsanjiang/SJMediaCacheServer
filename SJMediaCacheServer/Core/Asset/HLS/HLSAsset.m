@@ -15,8 +15,6 @@
 #import "HLSReader.h"
 #import "MCSRootDirectory.h"
 
-static NSString *kLength = @"length";
-static NSString *kReadwriteCount = @"readwriteCount";
 static dispatch_queue_t mcs_queue;
 
 @interface HLSAsset () {

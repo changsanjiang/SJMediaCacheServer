@@ -33,8 +33,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
-- (void)willReadAssetForURL:(NSURL *)URL;
-
 @property (nonatomic, readonly) UInt64 countOfBytesAllAssets;
 
 @property (nonatomic, readonly) NSInteger countOfAllAssets;

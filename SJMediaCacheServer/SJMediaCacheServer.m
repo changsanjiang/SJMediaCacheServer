@@ -51,10 +51,8 @@
         return URL;
     
     // proxy URL
-    if ( _server.isRunning ) {
-        [MCSAssetManager.shared willReadAssetForURL:URL];
+    if ( _server.isRunning )
         return [MCSURL.shared proxyURLWithURL:URL];
-    }
 
     // param URL
     return URL;
