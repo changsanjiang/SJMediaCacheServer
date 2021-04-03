@@ -220,6 +220,8 @@ static dispatch_queue_t mcs_queue;
         if ( count == _countOfAllAssets )
             return;
         
+        [self _syncUsageLogs];
+        
         [readwriteFileAssets addObject:@(0)];
         [readwriteHLSAssets addObject:@(0)];
         
@@ -271,14 +273,18 @@ static dispatch_queue_t mcs_queue;
         [_sqlite3 save:saveable error:NULL];
     }
 }
- 
+
+- (void)_syncUsageLogs {
+    if ( _usageLogs.count != 0 ) {
+        [_sqlite3 updateObjects:_usageLogs.allValues forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
+        [_usageLogs removeAllObjects];
+    }
+}
+
 - (void)_syncUsageLogsRecursively {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(30 * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
         dispatch_barrier_sync(mcs_queue, ^{
-            if ( self->_usageLogs.count != 0 ) {
-                [self->_sqlite3 updateObjects:self->_usageLogs.allValues forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
-                [self->_usageLogs removeAllObjects];
-            }
+            [self _syncUsageLogs];
         });
         [self _syncUsageLogsRecursively];
     });
@@ -345,9 +351,15 @@ static dispatch_queue_t mcs_queue;
             [self _registerAsObserverForAsset:asset];
             _assets[name] = asset;
     
+            MCSAssetUsageLog *log = [_sqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
+                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
+                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(type)],
+            ] orderBy:nil error:NULL].firstObject;
             // create log
-            MCSAssetUsageLog *log = [MCSAssetUsageLog.alloc initWithAsset:asset];
-            [self _syncToDatabase:log]; // save log
+            if ( log == nil ) {
+                log = [MCSAssetUsageLog.alloc initWithAsset:asset];
+                [self _syncToDatabase:log]; // save log
+            }
             _usageLogs[name] = log;
         }
     });
