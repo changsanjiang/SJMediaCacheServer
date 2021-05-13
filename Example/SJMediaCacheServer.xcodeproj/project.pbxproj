@@ -22,6 +22,17 @@
 		6003F5BA195388D20070C39A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5B8195388D20070C39A /* InfoPlist.strings */; };
 		6003F5BC195388D20070C39A /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5BB195388D20070C39A /* Tests.m */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
+		774057C6264D55270042CCB7 /* SJDemoPlayerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 774057C5264D55270042CCB7 /* SJDemoPlayerViewController.m */; };
+		77C33816264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 77C33815264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.m */; };
+		77C3381E264D301000CBD3E2 /* SJDemoMediaModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 77C3381D264D301000CBD3E2 /* SJDemoMediaModel.m */; };
+		77C3385A264D328B00CBD3E2 /* SJDemoDownloadCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 77C33858264D328B00CBD3E2 /* SJDemoDownloadCell.m */; };
+		77C3385B264D328B00CBD3E2 /* SJDemoDownloadCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 77C33859264D328B00CBD3E2 /* SJDemoDownloadCell.xib */; };
+		77C33860264D358300CBD3E2 /* SJDemoDownloadRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 77C3385F264D358300CBD3E2 /* SJDemoDownloadRow.m */; };
+		77C33867264D37C100CBD3E2 /* SJDemoViewModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 77C33866264D37C100CBD3E2 /* SJDemoViewModel.m */; };
+		77C33884264D433800CBD3E2 /* SJDemoRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 77C33883264D433800CBD3E2 /* SJDemoRow.m */; };
+		77C3388A264D437D00CBD3E2 /* SJDemoMediaTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 77C33888264D437D00CBD3E2 /* SJDemoMediaTableViewCell.m */; };
+		77C3388B264D437D00CBD3E2 /* SJDemoMediaTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 77C33889264D437D00CBD3E2 /* SJDemoMediaTableViewCell.xib */; };
+		77C33892264D43D400CBD3E2 /* SJDemoMediaRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 77C33891264D43D400CBD3E2 /* SJDemoMediaRow.m */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
@@ -59,6 +70,26 @@
 		606FC2411953D9B200FFA9A0 /* Tests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tests-Prefix.pch"; sourceTree = "<group>"; };
 		6C9EB0F0D442524CE20AF77D /* libPods-SJMediaCacheServer_Example.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SJMediaCacheServer_Example.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		71719F9E1E33DC2100824A3D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		774057C4264D55270042CCB7 /* SJDemoPlayerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoPlayerViewController.h; sourceTree = "<group>"; };
+		774057C5264D55270042CCB7 /* SJDemoPlayerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoPlayerViewController.m; sourceTree = "<group>"; };
+		77C33814264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDownloadsDemoViewController.h; sourceTree = "<group>"; };
+		77C33815264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDownloadsDemoViewController.m; sourceTree = "<group>"; };
+		77C3381C264D301000CBD3E2 /* SJDemoMediaModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoMediaModel.h; sourceTree = "<group>"; };
+		77C3381D264D301000CBD3E2 /* SJDemoMediaModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoMediaModel.m; sourceTree = "<group>"; };
+		77C33857264D328B00CBD3E2 /* SJDemoDownloadCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoDownloadCell.h; sourceTree = "<group>"; };
+		77C33858264D328B00CBD3E2 /* SJDemoDownloadCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoDownloadCell.m; sourceTree = "<group>"; };
+		77C33859264D328B00CBD3E2 /* SJDemoDownloadCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SJDemoDownloadCell.xib; sourceTree = "<group>"; };
+		77C3385E264D358300CBD3E2 /* SJDemoDownloadRow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoDownloadRow.h; sourceTree = "<group>"; };
+		77C3385F264D358300CBD3E2 /* SJDemoDownloadRow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoDownloadRow.m; sourceTree = "<group>"; };
+		77C33865264D37C100CBD3E2 /* SJDemoViewModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoViewModel.h; sourceTree = "<group>"; };
+		77C33866264D37C100CBD3E2 /* SJDemoViewModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoViewModel.m; sourceTree = "<group>"; };
+		77C33882264D433800CBD3E2 /* SJDemoRow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoRow.h; sourceTree = "<group>"; };
+		77C33883264D433800CBD3E2 /* SJDemoRow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoRow.m; sourceTree = "<group>"; };
+		77C33887264D437D00CBD3E2 /* SJDemoMediaTableViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoMediaTableViewCell.h; sourceTree = "<group>"; };
+		77C33888264D437D00CBD3E2 /* SJDemoMediaTableViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoMediaTableViewCell.m; sourceTree = "<group>"; };
+		77C33889264D437D00CBD3E2 /* SJDemoMediaTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SJDemoMediaTableViewCell.xib; sourceTree = "<group>"; };
+		77C33890264D43D400CBD3E2 /* SJDemoMediaRow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoMediaRow.h; sourceTree = "<group>"; };
+		77C33891264D43D400CBD3E2 /* SJDemoMediaRow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoMediaRow.m; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9086DD852505476A19109266 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Example.debug.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example.debug.xcconfig"; sourceTree = "<group>"; };
@@ -142,6 +173,7 @@
 				873B8AEA1B1F5CCA007FD442 /* Main.storyboard */,
 				6003F5A5195388D20070C39A /* SJViewController.h */,
 				6003F5A6195388D20070C39A /* SJViewController.m */,
+				77C33819264D2F8700CBD3E2 /* Downloads */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
 				6003F594195388D20070C39A /* Supporting Files */,
@@ -188,6 +220,57 @@
 				9086DD852505476A19109266 /* LICENSE */,
 			);
 			name = "Podspec Metadata";
+			sourceTree = "<group>";
+		};
+		77C33819264D2F8700CBD3E2 /* Downloads */ = {
+			isa = PBXGroup;
+			children = (
+				77C33814264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.h */,
+				77C33815264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.m */,
+				774057C4264D55270042CCB7 /* SJDemoPlayerViewController.h */,
+				774057C5264D55270042CCB7 /* SJDemoPlayerViewController.m */,
+				77C3389B264D52AA00CBD3E2 /* ViewModel */,
+				77C33874264D3FC300CBD3E2 /* View */,
+				77C33877264D3FCD00CBD3E2 /* Model */,
+			);
+			path = Downloads;
+			sourceTree = "<group>";
+		};
+		77C33874264D3FC300CBD3E2 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				77C33887264D437D00CBD3E2 /* SJDemoMediaTableViewCell.h */,
+				77C33888264D437D00CBD3E2 /* SJDemoMediaTableViewCell.m */,
+				77C33889264D437D00CBD3E2 /* SJDemoMediaTableViewCell.xib */,
+				77C33857264D328B00CBD3E2 /* SJDemoDownloadCell.h */,
+				77C33858264D328B00CBD3E2 /* SJDemoDownloadCell.m */,
+				77C33859264D328B00CBD3E2 /* SJDemoDownloadCell.xib */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		77C33877264D3FCD00CBD3E2 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				77C3381C264D301000CBD3E2 /* SJDemoMediaModel.h */,
+				77C3381D264D301000CBD3E2 /* SJDemoMediaModel.m */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		77C3389B264D52AA00CBD3E2 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				77C33865264D37C100CBD3E2 /* SJDemoViewModel.h */,
+				77C33866264D37C100CBD3E2 /* SJDemoViewModel.m */,
+				77C33882264D433800CBD3E2 /* SJDemoRow.h */,
+				77C33883264D433800CBD3E2 /* SJDemoRow.m */,
+				77C33890264D43D400CBD3E2 /* SJDemoMediaRow.h */,
+				77C33891264D43D400CBD3E2 /* SJDemoMediaRow.m */,
+				77C3385E264D358300CBD3E2 /* SJDemoDownloadRow.h */,
+				77C3385F264D358300CBD3E2 /* SJDemoDownloadRow.m */,
+			);
+			path = ViewModel;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -272,8 +355,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77C3388B264D437D00CBD3E2 /* SJDemoMediaTableViewCell.xib in Resources */,
 				873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */,
 				71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */,
+				77C3385B264D328B00CBD3E2 /* SJDemoDownloadCell.xib in Resources */,
 				6003F5A9195388D20070C39A /* Images.xcassets in Resources */,
 				6003F598195388D20070C39A /* InfoPlist.strings in Resources */,
 			);
@@ -340,7 +425,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				6003F59E195388D20070C39A /* SJAppDelegate.m in Sources */,
+				77C3385A264D328B00CBD3E2 /* SJDemoDownloadCell.m in Sources */,
+				77C33867264D37C100CBD3E2 /* SJDemoViewModel.m in Sources */,
+				77C33892264D43D400CBD3E2 /* SJDemoMediaRow.m in Sources */,
+				77C33860264D358300CBD3E2 /* SJDemoDownloadRow.m in Sources */,
+				774057C6264D55270042CCB7 /* SJDemoPlayerViewController.m in Sources */,
+				77C3388A264D437D00CBD3E2 /* SJDemoMediaTableViewCell.m in Sources */,
 				6003F5A7195388D20070C39A /* SJViewController.m in Sources */,
+				77C33816264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.m in Sources */,
+				77C3381E264D301000CBD3E2 /* SJDemoMediaModel.m in Sources */,
+				77C33884264D433800CBD3E2 /* SJDemoRow.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

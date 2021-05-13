@@ -237,13 +237,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Register an observer to listen for export events
 ///
-///     You do not need to unregister the observer. if you forget or are unable to remove the observer, the manager cleans up automatically.
+///     You do not need to unregister the observer. if you forget or are unable to remove the observer, the manager will remove it automatically.
 ///
 - (void)registerExportObserver:(id<MCSAssetExportObserver>)observer; // 监听导出相关的事件
  
 /// Remove the listening.
 ///
-///     You do not need to unregister the observer. if you forget or are unable to remove the observer, the manager cleans up automatically.
+///     You do not need to unregister the observer. if you forget or are unable to remove the observer, the manager will remove it automatically.
 ///
 - (void)removeExportObserver:(id<MCSAssetExportObserver>)observer; // 移除监听
 

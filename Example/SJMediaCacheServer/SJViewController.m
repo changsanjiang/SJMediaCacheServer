@@ -20,6 +20,7 @@
 #import <SJBaseVideoPlayer/SJBaseVideoPlayerConst.h>
 
 #import <MCSDownload.h>
+#import "SJDownloadsDemoViewController.h"
 
 static NSString *const DEMO_URL_HLS = @"http://hls.cntv.myalicdn.com/asp/hls/450/0303000a/3/default/bca293257d954934afadfaa96d865172/450.m3u8";
 static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
@@ -31,8 +32,9 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 @end
 
 @implementation SJViewController
+
 - (IBAction)test:(id)sender {
- 
+    [self.navigationController pushViewController:SJDownloadsDemoViewController.new animated:YES];
 }
 
 - (BOOL)shouldAutorotate {
@@ -44,7 +46,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     [self _setupViews];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionAssetReader;
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownloader;
 //    SJMediaCacheServer.shared.cacheCountLimit = 5;
     
     
