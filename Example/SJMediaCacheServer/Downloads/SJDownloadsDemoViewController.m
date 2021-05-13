@@ -31,6 +31,7 @@
     _viewModel.downloadRowWasTappedExecuteBlock = ^(SJDemoDownloadRow * _Nonnull row, NSIndexPath *indexPath) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
+        // 暂停, 恢复或播放
         [self _pauseResumeOrPlay:row];
     };
     
@@ -103,6 +104,7 @@
 }
 
 - (void)_pauseResumeOrPlay:(SJDemoDownloadRow *)row {
+    // 这里异步调用, 防止组塞主线程
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         id<MCSAssetExporter> exporter = row.exporter;
         switch ( exporter.status ) {
