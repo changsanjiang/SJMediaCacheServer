@@ -25,7 +25,7 @@
         _URL = [NSURL URLWithString:media.url];
         _exporter = [SJMediaCacheServer.shared exportAssetWithURL:_URL];
         
-        // 这里异步同步进度, 防止组塞主线程
+        // 这里异步同步进度, 防止阻塞主线程
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
             [self->_exporter synchronize];
         });

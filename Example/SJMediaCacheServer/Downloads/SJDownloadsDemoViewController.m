@@ -96,7 +96,6 @@
     _tableView = [UITableView.alloc initWithFrame:CGRectZero style:UITableViewStylePlain];
     _tableView.dataSource = self;
     _tableView.delegate = self;
-    [_tableView registerNib:[UINib nibWithNibName:NSStringFromClass(SJDemoDownloadCell.class) bundle:nil] forCellReuseIdentifier:@"A"];
     [self.view addSubview:_tableView];
     [_tableView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.offset(0);
@@ -104,7 +103,7 @@
 }
 
 - (void)_pauseResumeOrPlay:(SJDemoDownloadRow *)row {
-    // 这里异步调用, 防止组塞主线程
+    // 这里异步调用, 防止阻塞主线程
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         id<MCSAssetExporter> exporter = row.exporter;
         switch ( exporter.status ) {
@@ -136,7 +135,7 @@
     SJDemoMediaModel *model = row.media;
     [_viewModel removeRow:row];
     SJDemoDownloadRow *downloadRow = [_viewModel addDownloadRowWithModel:model];
-    // 这里异步调用, 防止组塞主线程
+    // 这里异步调用, 防止阻塞主线程
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         [downloadRow.exporter resume];
     });
