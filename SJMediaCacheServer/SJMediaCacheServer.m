@@ -263,7 +263,11 @@
 - (nullable NSArray<id<MCSAssetExporter>> *)allExporters {
     return MCSAssetExporterManager.shared.allExporters;
 }
- 
+
+- (nullable NSArray<id<MCSAssetExporter>> *)exportsForMask:(MCSAssetExportStatusQueryMask)mask {
+    return [MCSAssetExporterManager.shared exportsForMask:mask];
+}
+
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL {
     return [self exportAssetWithURL:URL resumes:NO];
 }

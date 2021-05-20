@@ -257,6 +257,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly, nullable) NSArray<id<MCSAssetExporter>> *allExporters;
 
+- (nullable NSArray<id<MCSAssetExporter>> *)exportsForMask:(MCSAssetExportStatusQueryMask)mask; // 查询
+
 /// 
 ///
 /// \code
@@ -267,16 +269,16 @@ NS_ASSUME_NONNULL_BEGIN
 /// \endcode
 ///
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL;
-- (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL resumes:(BOOL)resumes;
+- (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL resumes:(BOOL)resumes; // 获取exporter, 如果不存在将会创建.
  
-- (MCSAssetExportStatus)exportStatusWithURL:(NSURL *)URL;
-- (float)exportProgressWithURL:(NSURL *)URL;
-- (nullable NSURL *)playbackURLForExportedAssetWithURL:(NSURL *)URL;
+- (MCSAssetExportStatus)exportStatusWithURL:(NSURL *)URL; // 当前状态
+- (float)exportProgressWithURL:(NSURL *)URL; // 当前进度
+- (nullable NSURL *)playbackURLForExportedAssetWithURL:(NSURL *)URL; // 播放地址(请在缓存完毕后获取)
 
 /// Synchronize the cache to the exporter.
 ///
-- (void)synchronizeForExporterWithAssetURL:(NSURL *)URL;
-- (void)synchronizeForExporters;
+- (void)synchronizeForExporterWithAssetURL:(NSURL *)URL; // 同步进度
+- (void)synchronizeForExporters; // 同步内存中的exporter的进度
 
 @property (nonatomic, readonly) UInt64 countOfBytesAllExportedAssets; // 返回导出资源占用的缓存大小
 
