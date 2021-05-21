@@ -723,22 +723,22 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
     if ( mask & MCSAssetExportStatusQueryMaskUnknown ) {
         [queryStatus addObject:@(MCSAssetExportStatusUnknown)];
     }
-    else if ( mask & MCSAssetExportStatusQueryMaskWaiting ) {
+    if ( mask & MCSAssetExportStatusQueryMaskWaiting ) {
         [queryStatus addObject:@(MCSAssetExportStatusWaiting)];
     }
-    else if ( mask & MCSAssetExportStatusQueryMaskExporting ) {
+    if ( mask & MCSAssetExportStatusQueryMaskExporting ) {
         [queryStatus addObject:@(MCSAssetExportStatusExporting)];
     }
-    else if ( mask & MCSAssetExportStatusQueryMaskFinished ) {
+    if ( mask & MCSAssetExportStatusQueryMaskFinished ) {
         [queryStatus addObject:@(MCSAssetExportStatusFinished)];
     }
-    else if ( mask & MCSAssetExportStatusQueryMaskFailed ) {
+    if ( mask & MCSAssetExportStatusQueryMaskFailed ) {
         [queryStatus addObject:@(MCSAssetExportStatusFailed)];
     }
-    else if ( mask & MCSAssetExportStatusQueryMaskSuspended ) {
+    if ( mask & MCSAssetExportStatusQueryMaskSuspended ) {
         [queryStatus addObject:@(MCSAssetExportStatusSuspended)];
     }
-    else if ( mask & MCSAssetExportStatusQueryMaskCancelled ) {
+    if ( mask & MCSAssetExportStatusQueryMaskCancelled ) {
         [queryStatus addObject:@(MCSAssetExportStatusCancelled)];
     }
     NSArray<MCSAssetExporter *> *_Nullable disk = [_sqlite3 objectsForClass:MCSAssetExporter.class conditions:@[
