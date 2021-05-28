@@ -477,22 +477,33 @@ static dispatch_queue_t mcs_queue;
     static NSString *const HLS_PREFIX_DIR_CURRENT = @"./";
      
     NSString *url = nil;
+    /// /video/name.m3u8
+    ///
     if      ( [self hasPrefix:HLS_PREFIX_DIR_ROOT] ) {
         NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", URL.scheme, URL.host]];
         NSString *subpath = self;
         url = [rootDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
+    /// ../video/name.m3u8
+    /// ../../video/name.m3u8
+    ///
     else if ( [self hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
         NSURL *curDir = URL.mcs_URLByDeletingLastPathComponentAndQuery;
-        NSURL *parentDir = curDir.mcs_URLByDeletingLastPathComponentAndQuery;
-        NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_PARENT.length];
+        NSURL *parentDir = curDir;
+        NSString *subpath = self;
+        while ( [subpath hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
+            parentDir = parentDir.mcs_URLByDeletingLastPathComponentAndQuery;
+            subpath = [subpath substringFromIndex:HLS_PREFIX_DIR_PARENT.length];
+        }
         url = [parentDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
+    /// ./video/name.m3u8
     else if ( [self hasPrefix:HLS_PREFIX_DIR_CURRENT] ) {
         NSURL *curDir = URL.mcs_URLByDeletingLastPathComponentAndQuery;
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_CURRENT.length];
         url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
+    /// http://localhost
     else if ( [self hasPrefix:HLS_PREFIX_LOCALHOST] ) {
         NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", URL.scheme, URL.host]];
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_LOCALHOST.length];
