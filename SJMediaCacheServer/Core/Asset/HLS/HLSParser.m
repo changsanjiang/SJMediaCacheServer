@@ -658,6 +658,7 @@ static dispatch_queue_t mcs_queue;
         // #EXT-X-I-FRAME-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=42029000,CODECS="avc1.4d001f",URI="iframe.m3u8"
         if      ( [line hasPrefix:HLS_PREFIX_MEDIA] || [line hasPrefix:HLS_PREFIX_I_FRAME_STREAM] ) {
             NSRange URIRange = [line mcs_rangeByFrontStr:@"URI=\"" rearStr:@"\"" isRearStrOptional:NO];
+            URIRange.location += linePos;
             HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSPlaylist inRange:URIRange];
             [m addObject:obj];
         }
@@ -684,6 +685,7 @@ static dispatch_queue_t mcs_queue;
         //
         else if ( [line hasPrefix:HLS_PREFIX_AESKEY] ) {
             NSRange URIRange = [line mcs_rangeByFrontStr:@"URI=\"" rearStr:@"\"" isRearStrOptional:NO];
+            URIRange.location += linePos;
             HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSAESKey inRange:URIRange];
             [m addObject:obj];
         }
