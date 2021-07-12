@@ -59,6 +59,9 @@
     if ( URL.isFileURL )
         return URL;
     
+    if ( !_server.isRunning )
+        [_server start];
+    
     // proxy URL
     if ( _server.isRunning )
         return [MCSURL.shared proxyURLWithURL:URL];

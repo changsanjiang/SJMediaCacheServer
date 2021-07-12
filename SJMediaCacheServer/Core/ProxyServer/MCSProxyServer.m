@@ -42,7 +42,6 @@
 
 @interface MCSProxyServer ()
 @property (nonatomic, strong, nullable) HTTPServer *localServer;
-@property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
 
 - (id<MCSProxyTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate;
 
@@ -52,9 +51,6 @@
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        _backgroundTask = UIBackgroundTaskInvalid;
-        
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationDidEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
     return self;
@@ -69,7 +65,7 @@
 }
 
 - (void)start {
-    if ( self.isRunning )
+    if ( _localServer.isRunning )
         return;
     
     if ( _localServer == nil ) {
@@ -100,16 +96,11 @@
 }
 
 #pragma mark -
-
-- (void)applicationDidEnterBackground {
-    if ( _localServer != nil) [self _beginBackgroundTask];
-}
-
+ 
 - (void)applicationWillEnterForeground {
-    if ( _localServer != nil && _backgroundTask == UIBackgroundTaskInvalid && !self.isRunning ) {
+    if ( _localServer != nil && !_localServer.isRunning ) {
         [self _start:nil];
     }
-    [self _endBackgroundTask];
 }
 
 #pragma mark -
@@ -120,22 +111,6 @@
 
 - (void)_stop {
     [_localServer stop];
-}
-
-- (void)_beginBackgroundTask {
-    if ( self.backgroundTask == UIBackgroundTaskInvalid ) {
-        self.backgroundTask = [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler:^{
-            [self _stop];
-            [self _endBackgroundTask];
-        }];
-    }
-}
-
-- (void)_endBackgroundTask {
-    if ( self.backgroundTask != UIBackgroundTaskInvalid ) {
-        [UIApplication.sharedApplication endBackgroundTask:self.backgroundTask];
-        self.backgroundTask = UIBackgroundTaskInvalid;
-    }
 }
 @end
 
