@@ -79,7 +79,6 @@
     for ( int i = 0 ; i < 10 ; ++ i ) {
         [_localServer setPort:port];
         if ( [self _start:NULL] ) {
-            _port = port;
             _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", port]];
             break;
         }
@@ -93,6 +92,10 @@
 
 - (id<MCSProxyTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
     return [self.delegate server:self taskWithRequest:request delegate:delegate];
+}
+
+- (UInt16)port {
+    return _localServer.listeningPort;
 }
 
 #pragma mark -

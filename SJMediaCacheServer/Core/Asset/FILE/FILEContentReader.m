@@ -190,6 +190,14 @@ static dispatch_queue_t mcs_queue;
         _range = response.range;
         _content = [_asset createContentReadwriteWithResponse:response];
         
+        if ( _content == nil ) {
+            [self _onError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
+                MCSErrorUserInfoObjectKey : response,
+                MCSErrorUserInfoReasonKey : @"创建content失败!"
+            }]];
+            return;
+        }
+        
         NSString *filePath = [_asset contentFilePathForFilename:_content.filename];
         NSURL *fileURL = [NSURL fileURLWithPath:filePath];
         NSError *error = nil;

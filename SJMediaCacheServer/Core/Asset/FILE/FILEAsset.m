@@ -139,7 +139,7 @@ static dispatch_queue_t mcs_queue;
         
         content = [_provider createContentAtOffset:offset pathExtension:_pathExtension];
         [content readwriteRetain];
-        [_contents addObject:content];
+        if ( content != nil ) [_contents addObject:content];
     });
     
     if ( isUpdated )
