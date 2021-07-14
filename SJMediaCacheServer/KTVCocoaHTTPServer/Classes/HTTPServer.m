@@ -56,10 +56,6 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_INFO; // | HTTP_LOG_FLAG_TRACE;
 		
 		// Initialize underlying GCD based tcp socket
 		asyncSocket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:serverQueue];
-        
-        [asyncSocket performBlock:^{
-            [self->asyncSocket enableBackgroundingOnSocket];
-        }];
 		
 		// Use default connection class of HTTPConnection
 		connectionClass = [HTTPConnection self];

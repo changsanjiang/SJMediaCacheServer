@@ -16,6 +16,91 @@
 #import "KTVCocoaHTTPServer.h"
 #endif
 
+#import <objc/runtime.h>
+@interface MCSTimer : NSObject
+- (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCSTimer *timer))block;
+
+@property (nonatomic, readonly, getter=isValid) BOOL valid;
+
+- (void)resume;
+- (void)suspend;
+- (void)invalidate;
+@end
+ 
+@implementation MCSTimer {
+    dispatch_semaphore_t _semaphore;
+    dispatch_source_t _timer;
+    NSTimeInterval _timeInterval;
+    BOOL _repeats;
+    BOOL _valid;
+    BOOL _suspend;
+}
+
+/// @param start 启动后延迟多少秒回调block
+- (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCSTimer *timer))block {
+    self = [super init];
+    if ( self ) {
+        _repeats = repeats;
+        _timeInterval = interval;
+        _valid = YES;
+        _suspend = YES;
+        _semaphore = dispatch_semaphore_create(1);
+        _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+        dispatch_source_set_timer(_timer, dispatch_time(DISPATCH_TIME_NOW, (start * NSEC_PER_SEC)), (interval * NSEC_PER_SEC), 0);
+        __weak typeof(self) _self = self;
+        dispatch_source_set_event_handler(_timer, ^{
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return;
+            block(self);
+            if ( !repeats )
+                [self invalidate];
+        });
+    }
+    return self;
+}
+
+- (void)resume {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    if ( _valid && _suspend ) {
+        _suspend = NO;
+        dispatch_resume(_timer);
+    }
+    dispatch_semaphore_signal(_semaphore);
+}
+
+- (void)suspend {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    if ( _valid && !_suspend ) {
+        _suspend = YES;
+        dispatch_suspend(_timer);
+    }
+    dispatch_semaphore_signal(_semaphore);
+}
+
+- (void)invalidate {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    if ( _valid ) {
+        dispatch_source_cancel(_timer);
+        if ( _suspend )
+            dispatch_resume(_timer);
+        _timer = NULL;
+        _valid = NO;
+    }
+    dispatch_semaphore_signal(_semaphore);
+}
+
+- (BOOL)isValid {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    BOOL isValid = _valid;
+    dispatch_semaphore_signal(_semaphore);
+    return isValid;
+}
+
+- (void)dealloc {
+    [self invalidate];
+}
+
+@end
 
 @interface HTTPServer (MCSProxyServerExtended)
 @property (nonatomic, weak, nullable) MCSProxyServer *mcs_server;
@@ -42,16 +127,19 @@
 
 @interface MCSProxyServer ()
 @property (nonatomic, strong, nullable) HTTPServer *localServer;
-
+@property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
 - (id<MCSProxyTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate;
-
+@property (nonatomic, strong, nullable) MCSTimer *timer;
 @end
 
 @implementation MCSProxyServer
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
+        _backgroundTask = UIBackgroundTaskInvalid;
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationWillEnterForegroundWithNote:) name:UIApplicationWillEnterForegroundNotification object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationDidEnterBackgroundWithNote:) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(HTTPConnectionDidDieWithNote:) name:HTTPConnectionDidDieNotification object:nil];
     }
     return self;
 }
@@ -100,20 +188,56 @@
 
 #pragma mark -
  
-- (void)applicationWillEnterForeground {
-    if ( _localServer != nil && !_localServer.isRunning ) {
-        [self _start:nil];
-    }
+- (void)applicationDidEnterBackgroundWithNote:(NSNotification *)note {
+    [self _beginBackgroundTask];
+}
+
+- (void)applicationWillEnterForegroundWithNote:(NSNotification *)note {
+    [self _start:nil];
+    [self _endBackgroundTaskIfNeeded];
+}
+
+- (void)HTTPConnectionDidDieWithNote:(NSNotification *)note {
+    [_timer invalidate];
+    _timer = [MCSTimer.alloc initWithQueue:dispatch_get_main_queue() start:0.5 interval:0 repeats:NO block:^(MCSTimer *timer) {
+        if ( UIApplication.sharedApplication.applicationState == UIApplicationStateBackground && self->_localServer.numberOfHTTPConnections == 0 ) {
+            [self _stop];
+        }
+        [timer invalidate];
+        self->_timer = nil;
+    }];
+    [_timer resume];
 }
 
 #pragma mark -
 
 - (BOOL)_start:(NSError **)error {
-    return [_localServer start:error];
+    if ( _localServer != nil ) {
+        return _localServer.isRunning ?: [_localServer start:error];
+    }
+    return NO;
 }
 
 - (void)_stop {
-    [_localServer stop];
+    if ( _localServer.isRunning )
+        [_localServer stop];
+    [self _endBackgroundTaskIfNeeded];
+}
+
+- (void)_beginBackgroundTask {
+    [self _endBackgroundTaskIfNeeded];
+    if ( UIApplication.sharedApplication.applicationState == UIApplicationStateBackground ) {
+        _backgroundTask = [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler:^{
+            [self _endBackgroundTaskIfNeeded];
+        }];
+    }
+}
+
+- (void)_endBackgroundTaskIfNeeded {
+    if ( _backgroundTask != UIBackgroundTaskInvalid ) {
+        [UIApplication.sharedApplication endBackgroundTask:_backgroundTask];
+        _backgroundTask = UIBackgroundTaskInvalid;
+    }
 }
 @end
 
