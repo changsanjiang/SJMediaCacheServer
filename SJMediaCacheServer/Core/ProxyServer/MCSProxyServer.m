@@ -12,9 +12,12 @@
 #import <objc/message.h>
 #if __has_include(<KTVCocoaHTTPServer/KTVCocoaHTTPServer.h>)
 #import <KTVCocoaHTTPServer/KTVCocoaHTTPServer.h>
+#import <CocoaAsyncSocket/GCDAsyncSocket.h>
 #else
 #import "KTVCocoaHTTPServer.h"
+#import "GCDAsyncSocket.h"
 #endif
+
 
 #import <objc/runtime.h>
 @interface MCSTimer : NSObject
@@ -198,7 +201,7 @@
 - (void)HTTPConnectionDidDieWithNote:(NSNotification *)note {
     [_timer invalidate];
     _timer = [MCSTimer.alloc initWithQueue:dispatch_get_main_queue() start:1.0 interval:0 repeats:NO block:^(MCSTimer *timer) {
-        if ( UIApplication.sharedApplication.applicationState == UIApplicationStateBackground && self->_localServer.numberOfHTTPConnections == 0 ) {
+        if ( self->_localServer.isRunning && UIApplication.sharedApplication.applicationState == UIApplicationStateBackground && self->_localServer.numberOfHTTPConnections == 0 ) {
             [self _stop];
         }
         [timer invalidate];
@@ -211,9 +214,10 @@
 
 - (BOOL)_start:(NSError **)errorPtr {
     if ( _localServer != nil ) {
-        NSError *error = nil;
-        BOOL retv = [_localServer start:&error];
-        return retv;
+        if ( [_localServer isRunning] && [_localServer numberOfHTTPConnections] == 0 ) {
+            [self stop];
+        }
+        return [_localServer start:errorPtr];
     }
     return NO;
 }
