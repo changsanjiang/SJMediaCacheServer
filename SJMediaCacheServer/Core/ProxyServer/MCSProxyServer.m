@@ -148,33 +148,31 @@
     [NSNotificationCenter.defaultCenter removeObserver:self];
 }
 
-- (BOOL)isRunning {
-    return _localServer.isRunning;
-}
-
 - (void)start {
-    if ( _localServer.isRunning )
-        return;
-    
+    _running = YES;
     if ( _localServer == nil ) {
         _localServer = HTTPServer.alloc.init;
         _localServer.mcs_server = self;
         [_localServer setConnectionClass:MCSHTTPConnection.class];
         [_localServer setType:@"_http._tcp"];
-    }
     
-    UInt16 port = 2000;
-    for ( int i = 0 ; i < 10 ; ++ i ) {
-        [_localServer setPort:port];
-        if ( [self _start:NULL] ) {
-            _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", port]];
-            break;
+        UInt16 port = 2000;
+        for ( int i = 0 ; i < 10 ; ++ i ) {
+            [_localServer setPort:port];
+            if ( [self _start:NULL] ) {
+                _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", port]];
+                break;
+            }
+            port += (UInt16)(arc4random() % 1000 + 1);
         }
-        port += (UInt16)(arc4random() % 1000 + 1);
+    }
+    else {
+        [self _start:NULL];
     }
 }
 
 - (void)stop {
+    _running = NO;
     [self _stop];
 }
 
@@ -191,15 +189,15 @@
 - (void)applicationDidEnterBackgroundWithNote:(NSNotification *)note {
     [self _beginBackgroundTask];
 }
-
+ 
 - (void)applicationWillEnterForegroundWithNote:(NSNotification *)note {
-    [self _start:nil];
+    if ( _running ) [self _start:nil];
     [self _endBackgroundTaskIfNeeded];
 }
 
 - (void)HTTPConnectionDidDieWithNote:(NSNotification *)note {
     [_timer invalidate];
-    _timer = [MCSTimer.alloc initWithQueue:dispatch_get_main_queue() start:0.5 interval:0 repeats:NO block:^(MCSTimer *timer) {
+    _timer = [MCSTimer.alloc initWithQueue:dispatch_get_main_queue() start:1.0 interval:0 repeats:NO block:^(MCSTimer *timer) {
         if ( UIApplication.sharedApplication.applicationState == UIApplicationStateBackground && self->_localServer.numberOfHTTPConnections == 0 ) {
             [self _stop];
         }
@@ -211,16 +209,19 @@
 
 #pragma mark -
 
-- (BOOL)_start:(NSError **)error {
+- (BOOL)_start:(NSError **)errorPtr {
     if ( _localServer != nil ) {
-        return _localServer.isRunning ?: [_localServer start:error];
+        NSError *error = nil;
+        BOOL retv = [_localServer start:&error];
+        return retv;
     }
     return NO;
 }
 
 - (void)_stop {
-    if ( _localServer.isRunning )
-        [_localServer stop];
+    [_timer invalidate];
+    _timer = nil;
+    [_localServer stop];
     [self _endBackgroundTaskIfNeeded];
 }
 
