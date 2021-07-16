@@ -250,6 +250,7 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
 - (void)_prefetchTaskDidCompleteWithError:(NSError *_Nullable)error {
     [self synchronize];
     [self _lockInBlock:^{
+        _task = nil;
         _status = error != nil ? MCSAssetExportStatusFailed : MCSAssetExportStatusFinished;
     }];
     [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self];
