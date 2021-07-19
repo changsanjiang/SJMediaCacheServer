@@ -153,7 +153,7 @@
 
 - (void)start {
     _running = YES;
-    if ( _localServer == nil ) {
+    if ( _serverURL == nil ) {
         _localServer = HTTPServer.alloc.init;
         _localServer.mcs_server = self;
         [_localServer setConnectionClass:MCSHTTPConnection.class];

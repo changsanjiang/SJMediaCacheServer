@@ -92,7 +92,6 @@
 		77C33891264D43D400CBD3E2 /* SJDemoMediaRow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoMediaRow.m; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9086DD852505476A19109266 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
-		A624C1F726A1845F00E74391 /* NewVersion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = NewVersion.md; sourceTree = "<group>"; };
 		A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Example.debug.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		B54C6837CBAA07093C7830B7 /* Pods-SJMediaCacheServer_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Example.release.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example.release.xcconfig"; sourceTree = "<group>"; };
 		F64D69C34EAB3D8F86AD1E6C /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
@@ -174,7 +173,6 @@
 				873B8AEA1B1F5CCA007FD442 /* Main.storyboard */,
 				6003F5A5195388D20070C39A /* SJViewController.h */,
 				6003F5A6195388D20070C39A /* SJViewController.m */,
-				A624C1F626A17DF600E74391 /* NewVersion */,
 				77C33819264D2F8700CBD3E2 /* Downloads */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
@@ -273,14 +271,6 @@
 				77C3385F264D358300CBD3E2 /* SJDemoDownloadRow.m */,
 			);
 			path = ViewModel;
-			sourceTree = "<group>";
-		};
-		A624C1F626A17DF600E74391 /* NewVersion */ = {
-			isa = PBXGroup;
-			children = (
-				A624C1F726A1845F00E74391 /* NewVersion.md */,
-			);
-			path = NewVersion;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
