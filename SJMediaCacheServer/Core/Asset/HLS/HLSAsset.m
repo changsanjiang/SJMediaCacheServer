@@ -19,13 +19,12 @@
 @interface HLSAsset () {
     HLSAssetContentProvider *mProvider;
     NSMutableArray<id<HLSAssetTsContent>> *mTsContents;
-    NSString *mTsContentType;
     BOOL mIsPrepared;
 }
 
-@property (nonatomic) NSInteger id;
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, copy, nullable) NSString *TsContentType;
+@property (nonatomic) NSInteger id; // saveable
+@property (nonatomic, copy) NSString *name; // saveable
+@property (nonatomic, copy, nullable) NSString *TsContentType; // saveable
 @property (nonatomic, weak, nullable) HLSAsset *root;
 @end
 
@@ -126,7 +125,7 @@
 - (nullable NSString *)TsContentType {
     __block NSString *TsContentType = nil;
     mcs_queue_sync(^{
-        TsContentType = mTsContentType;
+        TsContentType = _TsContentType;
     });
     return TsContentType;
 }
@@ -155,8 +154,8 @@
     __block BOOL isUpdated = NO;
     __block id<HLSAssetTsContent>content = nil;
     mcs_queue_sync(^{
-        if ( ![TsContentType isEqualToString:mTsContentType] ) {
-            mTsContentType = TsContentType;
+        if ( ![TsContentType isEqualToString:_TsContentType] ) {
+            _TsContentType = TsContentType;
             isUpdated = YES;
         }
         
@@ -268,8 +267,8 @@
     __block BOOL isUpdated = NO;
     __block id<HLSAssetTsContent>content = nil;
     mcs_queue_sync(^{
-        if ( ![TsContentType isEqualToString:mTsContentType] ) {
-            mTsContentType = TsContentType;
+        if ( ![TsContentType isEqualToString:_TsContentType] ) {
+            _TsContentType = TsContentType;
             isUpdated = YES;
         }
         
