@@ -121,7 +121,7 @@
             case MCSAssetExportStatusFinished: {
                 // 下载完成后, 获取播放地址进行播放
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLForExportedAssetWithURL:exporter.URL];
+                    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:exporter.URL];
                     SJDemoPlayerViewController *vc = [SJDemoPlayerViewController.alloc initWithURL:playbackURL];
                     [self presentViewController:vc animated:YES completion:nil];
                 });
