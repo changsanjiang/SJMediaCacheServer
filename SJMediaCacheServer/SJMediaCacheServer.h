@@ -320,8 +320,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL resumes:(BOOL)resumes; // 获取exporter, 如果不存在将会创建.
  
 - (MCSAssetExportStatus)exportStatusWithURL:(NSURL *)URL; // 当前状态
-- (float)exportProgressWithURL:(NSURL *)URL; // 当前进度
-- (nullable NSURL *)playbackURLForExportedAssetWithURL:(NSURL *)URL; // 播放地址(请在缓存完毕后获取)
+- (float)exportProgressWithURL:(NSURL *)URL; // 当前进度 
 
 /// Synchronize the cache to the exporter.
 ///

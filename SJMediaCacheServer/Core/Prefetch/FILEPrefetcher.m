@@ -11,8 +11,7 @@
 #import "NSURLRequest+MCS.h"
 #import "MCSQueue.h"
 #import "MCSUtils.h"
-
-static dispatch_queue_t mcs_queue;
+#import "MCSError.h"
 
 @interface FILEPrefetcher () <MCSAssetReaderDelegate>
 @property (nonatomic) BOOL isCalledPrepare;
@@ -30,13 +29,6 @@ static dispatch_queue_t mcs_queue;
 @implementation FILEPrefetcher
 @synthesize delegate = _delegate;
 @synthesize delegateQueue = _delegateQueue;
-
-+ (void)initialize {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        mcs_queue = mcs_dispatch_queue_create("queue.FILEPrefetcher", DISPATCH_QUEUE_CONCURRENT);
-    });
-}
 
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
     self = [super init];
@@ -62,7 +54,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (void)prepare {
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
        if ( _isClosed || _isCalledPrepare )
             return;
         
@@ -77,48 +69,27 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (void)close {
-    dispatch_barrier_sync(mcs_queue, ^{
-        if ( _isClosed )
-            return;
-        
-        [_reader close];
-        _isClosed = YES;
-        MCSPrefetcherDebugLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
+    mcs_queue_sync(^{
+        [self _close];
     });
 }
 
 - (float)progress {
     __block float progress = 0;
-    dispatch_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         progress = _progress;
     });
     return progress;
 }
 
-- (BOOL)isClosed {
-    __block BOOL isClosed;
-    dispatch_sync(mcs_queue, ^{
-        isClosed = _reader.isClosed;
-    });
-    return isClosed;
-}
-
-- (BOOL)isDone {
-    __block BOOL isDone;
-    dispatch_sync(mcs_queue, ^{
-        isDone = _isDone;
-    });
-    return isDone;
-}
-
 #pragma mark -
 
-- (void)reader:(id<MCSAssetReader>)reader prepareDidFinish:(id<MCSResponse>)response {
+- (void)reader:(id<MCSAssetReader>)reader didReceiveResponse:(id<MCSResponse>)response {
     /* nothing */
 }
 
 - (void)reader:(nonnull id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         if ( _isDone || _isClosed )
             return;
         
@@ -137,16 +108,21 @@ static dispatch_queue_t mcs_queue;
                 });
             }
             
-            if ( _progress >= 1 || _reader.isReadingEndOfData ) {
+            if ( _progress >= 1 || _reader.status == MCSReaderStatusFinished ) {
                 [self _didCompleteWithError:nil];
             }
         }
     });
 }
 
-- (void)reader:(id<MCSAssetReader>)reader anErrorOccurred:(NSError *)error {
-    dispatch_barrier_sync(mcs_queue, ^{
-        [self _didCompleteWithError:error];
+- (void)reader:(id<MCSAssetReader>)reader didAbortWithError:(nullable NSError *)error {
+    mcs_queue_sync(^{
+        if ( _isClosed )
+            return;
+        [self _didCompleteWithError:error ?: [NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+            MCSErrorUserInfoObjectKey : self,
+            MCSErrorUserInfoReasonKey : @"预加载已被终止!"
+        }]];
     });
 }
 
@@ -178,7 +154,7 @@ static dispatch_queue_t mcs_queue;
     if ( _isClosed )
         return;
     
-    [_reader close];
+    [_reader abortWithError:nil];
     _reader = nil;
     _isClosed = YES;
 

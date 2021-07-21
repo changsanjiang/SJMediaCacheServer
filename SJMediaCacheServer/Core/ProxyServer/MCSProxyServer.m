@@ -353,15 +353,15 @@
     return _task != nil ? !_task.isPrepared : YES;
 }
 
-- (void)taskPrepareDidFinish:(id<MCSProxyTask>)task {
+- (void)task:(id<MCSProxyTask>)task didReceiveResponse:(id<MCSResponse>)response {
     [_connection responseHasAvailableData:self];
 }
 
-- (void)taskHasAvailableData:(id<MCSProxyTask>)task {
+- (void)task:(id<MCSProxyTask>)task hasAvailableDataWithLength:(NSUInteger)length {
     [_connection responseHasAvailableData:self];
 }
 
-- (void)task:(id<MCSProxyTask>)task anErrorOccurred:(NSError *)error {
+- (void)task:(id<MCSProxyTask>)task didAbortWithError:(nullable NSError *)error {
     [_connection responseDidAbort:self];
 }
 

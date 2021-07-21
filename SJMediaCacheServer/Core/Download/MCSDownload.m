@@ -18,8 +18,6 @@
 
 @end
 
-static dispatch_queue_t mcs_queue;
-
 @interface MCSDownload () <NSURLSessionDataDelegate>
 @property (nonatomic, strong) NSURLSession *session;
 @property (nonatomic, strong) NSOperationQueue *sessionDelegateQueue;
@@ -30,13 +28,6 @@ static dispatch_queue_t mcs_queue;
 @end
 
 @implementation MCSDownload
-
-+ (void)initialize {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        mcs_queue = mcs_dispatch_queue_create("queue.MCSDownload", DISPATCH_QUEUE_CONCURRENT);
-    });
-}
 
 + (instancetype)shared {
     static MCSDownload *obj = nil;
@@ -82,7 +73,7 @@ static dispatch_queue_t mcs_queue;
     
     NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
     task.priority = priority;
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         _taskCount += 1;
     });
     [self _setDelegate:delegate forTask:task];
@@ -94,7 +85,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (void)cancelAllDownloadTasks {
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
         [_session getTasksWithCompletionHandler:^(NSArray<NSURLSessionDataTask *> * _Nonnull dataTasks, NSArray<NSURLSessionUploadTask *> * _Nonnull uploadTasks, NSArray<NSURLSessionDownloadTask *> * _Nonnull downloadTasks) {
             [dataTasks makeObjectsPerformSelector:@selector(cancel)];
@@ -108,7 +99,7 @@ static dispatch_queue_t mcs_queue;
 @synthesize taskCount = _taskCount;
 - (NSInteger)taskCount {
     __block NSInteger taskCount = 0;
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         taskCount = _taskCount;
     });
     return taskCount;
@@ -183,7 +174,7 @@ static dispatch_queue_t mcs_queue;
     MCSDownloaderDebugLog(@"%@: <%p>.didCompleteWithError { task: %lu, error: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier, errorParam);
 
     
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         if ( _taskCount > 0 ) _taskCount -= 1;
     });
     NSError *error = [self _errorForTask:task] ?: errorParam;
@@ -229,7 +220,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (void)_beginBackgroundTaskIfNeeded {
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         if ( _delegateDictionary.count != 0 && self->_backgroundTask == UIBackgroundTaskInvalid ) {
             self->_backgroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
                 [self _endBackgroundTaskIfNeeded];
@@ -239,7 +230,7 @@ static dispatch_queue_t mcs_queue;
 }
 
 - (void)_endBackgroundTaskIfNeeded {
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         if ( _delegateDictionary.count == 0 && self->_backgroundTask != UIBackgroundTaskInvalid ) {
             [UIApplication.sharedApplication endBackgroundTask:_backgroundTask];
             _backgroundTask = UIBackgroundTaskInvalid;
@@ -250,7 +241,7 @@ static dispatch_queue_t mcs_queue;
 #pragma mark -
 
 - (void)_setDelegate:(nullable id<MCSDownloadTaskDelegate>)delegate forTask:(NSURLSessionTask *)task {
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         self->_delegateDictionary[@(task.taskIdentifier)] = delegate;
         if ( delegate == nil && self->_delegateDictionary.count == 0 ) {
             [self _endBackgroundTaskDelay];
@@ -259,21 +250,21 @@ static dispatch_queue_t mcs_queue;
 }
 - (nullable id<MCSDownloadTaskDelegate>)_delegateForTask:(NSURLSessionTask *)task {
     __block id<MCSDownloadTaskDelegate> delegate = nil;
-    dispatch_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         delegate = self->_delegateDictionary[@(task.taskIdentifier)];
     });
     return delegate;
 }
 
 - (void)_setError:(nullable NSError *)error forTask:(NSURLSessionTask *)task {
-    dispatch_barrier_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         self->_errorDictionary[@(task.taskIdentifier)] = error;
     });
 }
 
 - (nullable NSError *)_errorForTask:(NSURLSessionTask *)task {
     __block NSError *error;
-    dispatch_sync(mcs_queue, ^{
+    mcs_queue_sync(^{
         error = self->_errorDictionary[@(task.taskIdentifier)];
     });
     return error;
@@ -297,7 +288,7 @@ static dispatch_queue_t mcs_queue;
     
     if ( self ) {
         _statusCode = response.statusCode;
-        _pathExtension = MCSSuggestedFilePathExtension(response);
+        _pathExtension = MCSSuggestedFilepathExtension(response);
         _URL = response.URL;
     }
     return self;
