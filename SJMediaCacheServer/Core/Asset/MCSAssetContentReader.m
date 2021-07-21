@@ -17,6 +17,7 @@
 @interface MCSAssetContentReader (MCSSubclassHooks)
 /// 子类准备内容.
 - (void)prepareContent;
+- (void)didAbortWithError:(nullable NSError *)error;
 @end
 
 /// 子类通知抽象类发生了什么事情
@@ -24,8 +25,6 @@
 @interface MCSAssetContentReader (MCSSubclassNotify)
 /// 子类通知抽象类已准备好`content`. 调用前, 请对 `content`做一次 readwriteRetain
 - (void)preparationDidFinishWithContentReadwrite:(id<MCSAssetContent>)content range:(NSRange)range;
-/// 子类通知抽象类发生错误
-- (void)onError:(NSError *)error;
 @end
 
 @interface MCSAssetContentReader()<MCSAssetContentObserver> {
@@ -103,7 +102,7 @@
                 UInt64 position = _mRange.location + _mReadLength;
                 data = [_mContent readDataAtPosition:position capacity:capacity error:&error];
                 if ( error != nil ) {
-                    [self onError:error];
+                    [self _abortWithError:error];
                     return;
                 }
                 
@@ -311,7 +310,7 @@
     MCSContentReaderDebugLog(@"%@: <%p>.prepareContent { range: %@, file: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(mTempRange), mFileContent);
     
     if ( mTempRange.location < mFileContent.startPositionInAsset || NSMaxRange(mTempRange) > (mFileContent.startPositionInAsset + mFileContent.length) ) {
-        [self onError:[NSError mcs_errorWithCode:MCSInvalidParameterError userInfo:@{
+        [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidParameterError userInfo:@{
             MCSErrorUserInfoObjectKey : self,
             MCSErrorUserInfoReasonKey : @"请求范围错误, 请求范围未在内容范围中!"
         }]];
@@ -401,7 +400,7 @@
                     mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response];
                     
                     if ( mHTTPContent == nil ) {
-                        [self onError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
+                        [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
                             MCSErrorUserInfoObjectKey : response,
                             MCSErrorUserInfoReasonKey : @"创建content失败!"
                         }]];
@@ -428,7 +427,7 @@
             case MCSReaderStatusReadyToRead: {
                 NSError *error = nil;
                 if ( ![mHTTPContent writeData:data error:&error] ) {
-                    [self onError:error];
+                    [self abortWithError:error];
                 }
             }
                 break;
@@ -447,7 +446,7 @@
             case MCSReaderStatusPreparing:
             case MCSReaderStatusReadyToRead: {
                 if ( error != nil ) {
-                    [self onError:error];
+                    [self abortWithError:error];
                 }
                 //    else {
                 //        // finished download
