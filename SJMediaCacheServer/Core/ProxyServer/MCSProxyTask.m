@@ -52,10 +52,13 @@
 }
  
 - (nullable NSData *)readDataOfLength:(NSUInteger)length {
+#ifdef DEBUG
+    UInt64 offset = [_reader offset];
+#endif
     NSData *data = [_reader readDataOfLength:length];
 #ifdef DEBUG
     if ( data.length != 0 ) {
-        MCSProxyTaskDebugLog(@"%@: <%p>.read { length: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)data.length);
+        MCSProxyTaskDebugLog(@"%@: <%p>.read { offset: %llu, length: %lu };\n", NSStringFromClass(self.class), self, offset, (unsigned long)data.length);
         if ( _reader.status == MCSReaderStatusFinished )
             MCSProxyTaskDebugLog(@"%@: <%p>.done { after (%lf) seconds };\n", NSStringFromClass(self.class), self, MCSEndTime(_startTime));
     }

@@ -215,7 +215,7 @@
 - (BOOL)_start:(NSError **)errorPtr {
     if ( _localServer != nil ) {
         if ( [_localServer isRunning] && [_localServer numberOfHTTPConnections] == 0 ) {
-            [self stop];
+            [self _stop];
         }
         return [_localServer start:errorPtr];
     }
