@@ -227,7 +227,7 @@
                 _mRange = range;
                 _mContent = content;
                 [_mContent registerObserver:self];
-                _mAvailableLength = _mRange.length - (_mRange.location - _mContent.startPositionInAsset);
+                _mAvailableLength = MIN(_mContent.length, _mRange.length) - (_mRange.location - _mContent.startPositionInAsset);
                 [_delegate readerWasReadyToRead:self];
                 if ( _mAvailableLength != 0 && _mReadLength < _mAvailableLength )
                     [_delegate reader:self hasAvailableDataWithLength:_mAvailableLength - _mReadLength];

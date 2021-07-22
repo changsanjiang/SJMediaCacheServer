@@ -89,29 +89,8 @@
 }
 
 - (void)reader:(nonnull id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    mcs_queue_sync(^{
-        if ( _isDone || _isClosed )
-            return;
-        
-        if ( [reader seekToOffset:reader.offset + length] ) {
-            _loadedLength += length;
-            
-            float progress = _loadedLength * 1.0 / reader.response.range.length;
-            if ( progress >= 1 ) progress = 1;
-            _progress = progress;
-            
-            MCSPrefetcherDebugLog(@"%@: <%p>.preload { preloadSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)reader.response.totalLength, progress);
-                        
-            if ( _delegate != nil ) {
-                dispatch_async(_delegateQueue, ^{
-                    [self.delegate prefetcher:self progressDidChange:progress];
-                });
-            }
-            
-            if ( _progress >= 1 || _reader.status == MCSReaderStatusFinished ) {
-                [self _didCompleteWithError:nil];
-            }
-        }
+    mcs_queue_async(^{
+        [self _reader:reader hasAvailableDataWithLength:length];
     });
 }
 
@@ -127,6 +106,31 @@
 }
 
 #pragma mark -
+
+- (void)_reader:(nonnull id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
+    if ( _isDone || _isClosed )
+        return;
+    
+    if ( [reader seekToOffset:reader.offset + length] ) {
+        _loadedLength += length;
+        
+        float progress = _loadedLength * 1.0 / reader.response.range.length;
+        if ( progress >= 1 ) progress = 1;
+        _progress = progress;
+        
+        MCSPrefetcherDebugLog(@"%@: <%p>.preload { preloadSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)reader.response.totalLength, progress);
+                    
+        if ( _delegate != nil ) {
+            dispatch_async(_delegateQueue, ^{
+                [self.delegate prefetcher:self progressDidChange:progress];
+            });
+        }
+        
+        if ( _progress >= 1 || _reader.status == MCSReaderStatusFinished ) {
+            [self _didCompleteWithError:nil];
+        }
+    }
+}
 
 - (void)_didCompleteWithError:(nullable NSError *)error {
     if ( _isClosed )

@@ -101,8 +101,11 @@
                 break;
             case MCSDataTypeHLSTs: {
                 id<HLSAssetTsContent> content = [mAsset TsContentReadwriteForRequest:mRequest];
-                if ( content == nil ) {
+                if      ( content == nil ) {
                     mReader = [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority dataType:MCSDataTypeHLSTs delegate:self];
+                }
+                else if ( content.length == content.totalLength ) {
+                    mReader = [MCSAssetFileContentReader.alloc initWithAsset:mAsset fileContent:content rangeInAsset:content.rangeInAsset delegate:self];
                 }
                 else {
                     mReader = [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:mRequest rangeInAsset:content.rangeInAsset contentReadwrite:content networkTaskPriority:_networkTaskPriority dataType:MCSDataTypeHLSTs delegate:self];

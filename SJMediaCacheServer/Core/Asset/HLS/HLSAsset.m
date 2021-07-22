@@ -302,12 +302,9 @@
     if ( _root != nil && _root.readwriteCount != 0 ) return;
     if ( self.readwriteCount != 0 ) return;
     if ( _isStored ) return;
+    if ( mTsContents.count == 0 ) return;
     
-    NSMutableArray<id<HLSAssetTsContent>> *contents = NSMutableArray.alloc.init;
-    for ( id<HLSAssetTsContent>content in mTsContents ) { if ( content.readwriteCount == 0 ) [contents addObject:content]; }
-    
-    if ( contents.count == 0 ) return;
-    
+    NSMutableArray<id<HLSAssetTsContent>> *contents = mTsContents.copy;
     NSMutableArray<id<HLSAssetTsContent>> *deletes = NSMutableArray.alloc.init;
     for ( NSInteger i = 0 ; i < contents.count ; ++ i ) {
         id<HLSAssetTsContent>obj1 = contents[i];

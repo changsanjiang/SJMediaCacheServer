@@ -221,50 +221,8 @@
 }
 
 - (void)reader:(id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    mcs_queue_sync(^{
-        if ( _isClosed ) {
-            [reader abortWithError:nil];
-            return;
-        }
-        
-        if ( [reader seekToOffset:reader.offset + length] ) {
-            HLSAsset *asset = reader.asset;
-            CGFloat progress = 0;
-            
-            // `Ts reader`
-            if ( _cur.type == MCSDataTypeHLSTs ) {
-                _TsLoadedLength += length;
-
-                NSInteger totalLength = reader.response.range.length;
-                // size mode
-                if ( _preloadSize != 0 ) {
-                    NSUInteger all = _preloadSize > _TsResponsedSize ? _preloadSize : _TsResponsedSize;
-                    progress = _TsLoadedLength * 1.0 / all;
-                }
-                // num mode
-                else {
-                    CGFloat curProgress = (reader.offset - reader.response.range.location) * 1.0 / totalLength;
-                    NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
-                    progress = (_itemProvider.curTsIndex + curProgress) / all;
-                }
-    
-                if ( progress > 1 ) progress = 1;
-                _TsProgress = progress;
-            }
-            
-            if ( _delegate != nil ) {
-                dispatch_async(_delegateQueue, ^{
-                    CGFloat progress = self.progress;
-                    MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
-
-                    [self.delegate prefetcher:self progressDidChange:progress];
-                });
-            }
-            
-            if ( reader.status == MCSReaderStatusFinished ) {
-                _TsProgress == 1 ? [self _prefetchRenditionsItems] : [self _prepareNextFragment];
-            }
-        }
+    mcs_queue_async(^{
+        [self _reader:reader hasAvailableDataWithLength:length];
     });
 }
   
@@ -358,6 +316,52 @@
             [self _didCompleteWithError:error];
         });
     });
+}
+
+- (void)_reader:(id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
+    if ( _isClosed ) {
+        [reader abortWithError:nil];
+        return;
+    }
+    
+    if ( [reader seekToOffset:reader.offset + length] ) {
+        HLSAsset *asset = reader.asset;
+        CGFloat progress = 0;
+        
+        // `Ts reader`
+        if ( _cur.type == MCSDataTypeHLSTs ) {
+            _TsLoadedLength += length;
+
+            NSInteger totalLength = reader.response.range.length;
+            // size mode
+            if ( _preloadSize != 0 ) {
+                NSUInteger all = _preloadSize > _TsResponsedSize ? _preloadSize : _TsResponsedSize;
+                progress = _TsLoadedLength * 1.0 / all;
+            }
+            // num mode
+            else {
+                CGFloat curProgress = (reader.offset - reader.response.range.location) * 1.0 / totalLength;
+                NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
+                progress = (_itemProvider.curTsIndex + curProgress) / all;
+            }
+
+            if ( progress > 1 ) progress = 1;
+            _TsProgress = progress;
+        }
+        
+        if ( _delegate != nil ) {
+            float progress = (_TsProgress + _renditionsProgress) / (1 + (_renditionsItems.count != 0 ? 1 : 0));
+            dispatch_async(_delegateQueue, ^{
+                MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
+
+                [self.delegate prefetcher:self progressDidChange:progress];
+            });
+        }
+        
+        if ( reader.status == MCSReaderStatusFinished ) {
+            _TsProgress == 1 ? [self _prefetchRenditionsItems] : [self _prepareNextFragment];
+        }
+    }
 }
 
 - (void)_didCompleteWithError:(nullable NSError *)error {

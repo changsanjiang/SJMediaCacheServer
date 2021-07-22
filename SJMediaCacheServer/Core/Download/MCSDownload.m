@@ -18,13 +18,20 @@
 
 @end
 
-@interface MCSDownload () <NSURLSessionDataDelegate>
-@property (nonatomic, strong) NSURLSession *session;
-@property (nonatomic, strong) NSOperationQueue *sessionDelegateQueue;
-@property (nonatomic, strong) NSURLSessionConfiguration *sessionConfiguration;
-@property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSError *> *errorDictionary;
-@property (nonatomic, strong) NSMutableDictionary<NSNumber *, id<MCSDownloadTaskDelegate>> *delegateDictionary;
-@property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
+@interface MCSDownload () <NSURLSessionDataDelegate> {
+    NSURLSession *mSession;
+    NSOperationQueue *mSessionDelegateQueue;
+    NSURLSessionConfiguration *mSessionConfiguration;
+    NSMutableDictionary<NSNumber *, NSError *> *mErrorDictionary;
+    NSMutableDictionary<NSNumber *, id<MCSDownloadTaskDelegate>> *mDelegateDictionary;
+    UIBackgroundTaskIdentifier mBackgroundTask;
+
+    NSMutableURLRequest *_Nullable(^mRequestHandler)(NSMutableURLRequest *request);
+    NSData *(^mDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+    void(^mErrorCallback)(NSURLRequest *request, NSError *error);
+    NSTimeInterval mTimeoutInterval;
+    NSInteger mTaskCount;
+}
 @end
 
 @implementation MCSDownload
@@ -39,17 +46,23 @@
 }
 
 - (instancetype)init {
+#ifdef DEBUG
+    NSLog(@"%d : %s", __LINE__, sel_getName(_cmd));
+#endif
+
+    
     if (self = [super init]) {
-        _timeoutInterval = 30.0f;
-        _backgroundTask = UIBackgroundTaskInvalid;
-        _errorDictionary = [NSMutableDictionary dictionary];
-        _delegateDictionary = [NSMutableDictionary dictionary];
-        _sessionDelegateQueue = [[NSOperationQueue alloc] init];
-        _sessionDelegateQueue.qualityOfService = NSQualityOfServiceUserInteractive;
-        _sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
-        _sessionConfiguration.timeoutIntervalForRequest = _timeoutInterval;
-        _sessionConfiguration.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
-        _session = [NSURLSession sessionWithConfiguration:_sessionConfiguration delegate:self delegateQueue:_sessionDelegateQueue];
+        mTimeoutInterval = 30.0f;
+        mBackgroundTask = UIBackgroundTaskInvalid;
+        mErrorDictionary = [NSMutableDictionary dictionary];
+        mDelegateDictionary = [NSMutableDictionary dictionary];
+        mSessionDelegateQueue = [[NSOperationQueue alloc] init];
+        mSessionDelegateQueue.qualityOfService = NSQualityOfServiceUserInteractive;
+        mSessionDelegateQueue.maxConcurrentOperationCount = 1;
+        mSessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+        mSessionConfiguration.timeoutIntervalForRequest = mTimeoutInterval;
+        mSessionConfiguration.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
+        mSession = [NSURLSession sessionWithConfiguration:mSessionConfiguration delegate:self delegateQueue:mSessionDelegateQueue];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidEnterBackground:)
                                                      name:UIApplicationDidEnterBackgroundNotification
@@ -65,51 +78,110 @@
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
- 
-- (nullable id<MCSDownloadTask>)downloadWithRequest:(NSURLRequest *)requestParam priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate {
-    NSURLRequest *request = [self _requestWithParam:requestParam];
-    if ( request == nil )
-        return nil;
-    
-    NSURLSessionDataTask *task = [_session dataTaskWithRequest:request];
-    task.priority = priority;
-    mcs_queue_sync(^{
-        _taskCount += 1;
-    });
-    [self _setDelegate:delegate forTask:task];
-    [task resume];
-    
-    MCSDownloaderDebugLog(@"%@: <%p>.downloadWithRequest { task: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier, [request mcs_description]);
 
+- (void)setRequestHandler:(NSMutableURLRequest * _Nullable (^_Nullable)(NSMutableURLRequest * _Nonnull))requestHandler {
+    mcs_queue_sync(^{
+        mRequestHandler = requestHandler;
+    });
+}
+
+- (NSMutableURLRequest * _Nullable (^_Nullable)(NSMutableURLRequest * _Nonnull))requestHandler {
+    __block id retv;
+    mcs_queue_sync(^{
+        retv = mRequestHandler;
+    });
+    return retv;
+}
+
+- (void)setDataEncoder:(NSData * _Nonnull (^_Nullable)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))dataEncoder {
+    mcs_queue_sync(^{
+        mDataEncoder = dataEncoder;
+    });
+}
+
+- (NSData * _Nonnull (^_Nullable)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))dataEncoder {
+    __block id retv;
+    mcs_queue_sync(^{
+        retv = mDataEncoder;
+    });
+    return retv;
+}
+
+- (void)setErrorCallback:(void (^_Nullable)(NSURLRequest * _Nonnull, NSError * _Nonnull))errorCallback {
+    mcs_queue_sync(^{
+        mErrorCallback = errorCallback;
+    });
+}
+
+- (void (^_Nullable)(NSURLRequest * _Nonnull, NSError * _Nonnull))errorCallback {
+    __block id retv;
+    mcs_queue_sync(^{
+        retv = mErrorCallback;
+    });
+    return retv;
+}
+
+- (void)setTimeoutInterval:(NSTimeInterval)timeoutInterval {
+    mcs_queue_sync(^{
+        mTimeoutInterval = timeoutInterval;
+    });
+}
+
+- (NSTimeInterval)timeoutInterval {
+    __block NSTimeInterval interval;
+    mcs_queue_sync(^{
+        interval = mTimeoutInterval;
+    });
+    return interval;
+}
+
+- (NSInteger)taskCount {
+  __block NSInteger taskCount = 0;
+  mcs_queue_sync(^{
+      taskCount = mTaskCount;
+  });
+  return taskCount;
+}
+
+#pragma mark - mark
+
+- (nullable id<MCSDownloadTask>)downloadWithRequest:(NSURLRequest *)request priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate {
+    __block NSURLSessionTask *task;
+    mcs_queue_sync(^{
+        NSMutableURLRequest *cur = [request mutableCopy];
+        cur.cachePolicy = NSURLRequestReloadIgnoringCacheData;
+        cur.timeoutInterval = mTimeoutInterval;
+        if ( mRequestHandler != nil ) cur = mRequestHandler(cur);
+        if ( cur == nil ) return;
+        task = [mSession dataTaskWithRequest:cur];
+        task.priority = priority;
+        mTaskCount += 1;
+        mDelegateDictionary[@(task.taskIdentifier)] = delegate;
+        [task resume];
+        MCSDownloaderDebugLog(@"%@: <%p>.downloadWithRequest { task: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier, [cur mcs_description]);
+    });
     return task;
 }
 
 - (void)cancelAllDownloadTasks {
     mcs_queue_sync(^{
         dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-        [_session getTasksWithCompletionHandler:^(NSArray<NSURLSessionDataTask *> * _Nonnull dataTasks, NSArray<NSURLSessionUploadTask *> * _Nonnull uploadTasks, NSArray<NSURLSessionDownloadTask *> * _Nonnull downloadTasks) {
+        [mSession getTasksWithCompletionHandler:^(NSArray<NSURLSessionDataTask *> * _Nonnull dataTasks, NSArray<NSURLSessionUploadTask *> * _Nonnull uploadTasks, NSArray<NSURLSessionDownloadTask *> * _Nonnull downloadTasks) {
             [dataTasks makeObjectsPerformSelector:@selector(cancel)];
             dispatch_semaphore_signal(semaphore);
         }];
         dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-        _taskCount = 0;
+        mTaskCount = 0;
     });
 }
- 
-@synthesize taskCount = _taskCount;
-- (NSInteger)taskCount {
-    __block NSInteger taskCount = 0;
-    mcs_queue_sync(^{
-        taskCount = _taskCount;
-    });
-    return taskCount;
-}
-
+  
 #pragma mark - mark
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
-    __auto_type delegate = [self _delegateForTask:task];
-    [delegate downloadTask:task willPerformHTTPRedirectionWithNewRequest:request];
+    mcs_queue_async(^{
+        id<MCSDownloadTaskDelegate> delegate = self->mDelegateDictionary[@(task.taskIdentifier)];
+        [delegate downloadTask:task willPerformHTTPRedirectionWithNewRequest:request];
+    });
     completionHandler(request);
 }
 
@@ -147,62 +219,48 @@
         }
     }
     
-    if ( error != nil ) {
-        [self _setError:error forTask:task];
-        completionHandler(NSURLSessionResponseCancel);
-        return;
-    }
-    
-    id<MCSDownloadTaskDelegate> delegate = [self _delegateForTask:task];
-    if ( delegate != nil ) {
+    mcs_queue_async(^{
+        NSNumber *key = @(task.taskIdentifier);
+        if ( error != nil ) {
+            self->mErrorDictionary[key] = error;
+            completionHandler(NSURLSessionResponseCancel);
+            /* return */
+            return;
+        }
+        
+        id<MCSDownloadTaskDelegate> delegate = self->mDelegateDictionary[key];
         [delegate downloadTask:task didReceiveResponse:[MCSDownloadResponse.alloc initWithHTTPResponse:response]];
         completionHandler(NSURLSessionResponseAllow);
-    }
+    });
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)dataParam {
     MCSDownloaderDebugLog(@"%@: <%p>.didReceiveData { task: %lu, dataLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)dataTask.taskIdentifier, (unsigned long)dataParam.length);
-
-    __auto_type delegate = [self _delegateForTask:dataTask];
-    NSData *data = dataParam;
-    if ( _dataEncoder != nil )
-        data = _dataEncoder(dataTask.currentRequest, (NSUInteger)(dataTask.countOfBytesReceived - dataParam.length), dataParam);
-    [delegate downloadTask:dataTask didReceiveData:data];
+    mcs_queue_async(^{
+        id<MCSDownloadTaskDelegate> delegate = self->mDelegateDictionary[@(dataTask.taskIdentifier)];
+        NSData *data = dataParam;
+        if ( self->mDataEncoder != nil ) data = self->mDataEncoder(dataTask.currentRequest, (NSUInteger)(dataTask.countOfBytesReceived - dataParam.length), dataParam);
+        [delegate downloadTask:dataTask didReceiveData:data];
+    });
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)errorParam {
     MCSDownloaderDebugLog(@"%@: <%p>.didCompleteWithError { task: %lu, error: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier, errorParam);
-
-    
-    mcs_queue_sync(^{
-        if ( _taskCount > 0 ) _taskCount -= 1;
+    mcs_queue_async(^{
+        if ( self->mTaskCount > 0 ) self->mTaskCount -= 1;
+        NSNumber *key = @(task.taskIdentifier);
+        NSError *error = self->mErrorDictionary[key] ?: errorParam;
+        id<MCSDownloadTaskDelegate> delegate = self->mDelegateDictionary[key];
+        [delegate downloadTask:task didCompleteWithError:error];
+        if ( error != nil && error.code != NSUserCancelledError && self->mErrorCallback != nil ) {
+            self->mErrorCallback(task.originalRequest, error);
+        }
+       
+        self->mDelegateDictionary[key] = nil;
+        self->mErrorDictionary[key] = nil;
     });
-    NSError *error = [self _errorForTask:task] ?: errorParam;
-    
-    __auto_type delegate = [self _delegateForTask:task];
-    [delegate downloadTask:task didCompleteWithError:error];
-    
-    if ( error != nil && error.code != NSUserCancelledError ) {
-        if ( _errorCallback != nil ) _errorCallback(task.originalRequest, error);
-    }
-    
-    [self _setDelegate:nil forTask:task];
-    [self _setError:nil forTask:task];
 }
-
-#pragma mark -
-
-- (NSURLRequest *)_requestWithParam:(NSURLRequest *)param {
-    NSMutableURLRequest *request = [param mutableCopy];
-    request.cachePolicy = NSURLRequestReloadIgnoringCacheData;
-    request.timeoutInterval = _timeoutInterval;
-    
-    if ( _requestHandler != nil )
-        request = _requestHandler(request);
-    
-    return request;
-}
-
+  
 #pragma mark - Background Task
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification {
@@ -214,15 +272,15 @@
 }
 
 - (void)_endBackgroundTaskDelay {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(28 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self _endBackgroundTaskIfNeeded];
     });
 }
 
 - (void)_beginBackgroundTaskIfNeeded {
     mcs_queue_sync(^{
-        if ( _delegateDictionary.count != 0 && self->_backgroundTask == UIBackgroundTaskInvalid ) {
-            self->_backgroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+        if ( mDelegateDictionary.count != 0 && mBackgroundTask == UIBackgroundTaskInvalid ) {
+            mBackgroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
                 [self _endBackgroundTaskIfNeeded];
             }];
         }
@@ -231,43 +289,11 @@
 
 - (void)_endBackgroundTaskIfNeeded {
     mcs_queue_sync(^{
-        if ( _delegateDictionary.count == 0 && self->_backgroundTask != UIBackgroundTaskInvalid ) {
-            [UIApplication.sharedApplication endBackgroundTask:_backgroundTask];
-            _backgroundTask = UIBackgroundTaskInvalid;
+        if ( mDelegateDictionary.count == 0 && mBackgroundTask != UIBackgroundTaskInvalid ) {
+            [UIApplication.sharedApplication endBackgroundTask:mBackgroundTask];
+            mBackgroundTask = UIBackgroundTaskInvalid;
         }
     });
-}
-
-#pragma mark -
-
-- (void)_setDelegate:(nullable id<MCSDownloadTaskDelegate>)delegate forTask:(NSURLSessionTask *)task {
-    mcs_queue_sync(^{
-        self->_delegateDictionary[@(task.taskIdentifier)] = delegate;
-        if ( delegate == nil && self->_delegateDictionary.count == 0 ) {
-            [self _endBackgroundTaskDelay];
-        }
-    });
-}
-- (nullable id<MCSDownloadTaskDelegate>)_delegateForTask:(NSURLSessionTask *)task {
-    __block id<MCSDownloadTaskDelegate> delegate = nil;
-    mcs_queue_sync(^{
-        delegate = self->_delegateDictionary[@(task.taskIdentifier)];
-    });
-    return delegate;
-}
-
-- (void)_setError:(nullable NSError *)error forTask:(NSURLSessionTask *)task {
-    mcs_queue_sync(^{
-        self->_errorDictionary[@(task.taskIdentifier)] = error;
-    });
-}
-
-- (nullable NSError *)_errorForTask:(NSURLSessionTask *)task {
-    __block NSError *error;
-    mcs_queue_sync(^{
-        error = self->_errorDictionary[@(task.taskIdentifier)];
-    });
-    return error;
 }
 @end
 
