@@ -50,6 +50,10 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, mRequest.mcs_description];
+}
+
 - (void)dealloc {
     mcs_queue_sync(^{
         _delegate = nil;
@@ -158,8 +162,8 @@
                 return;
             case MCSReaderStatusReadyToRead: {
                 result = [mReader seekToOffset:offset];
+                mOffset = mReader.offset;
                 if ( mReader.status == MCSReaderStatusFinished ) {
-                    mOffset = mReader.offset;
                     [self _finish];
                 }
             }
