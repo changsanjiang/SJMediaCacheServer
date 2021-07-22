@@ -25,8 +25,15 @@
 
 @implementation HLSURIItemProvider
 
+- (void)dealloc {
+    [_asset readwriteRelease];
+}
+
 - (void)setAsset:(nullable HLSAsset *)asset {
     if ( asset != _asset ) {
+        [asset readwriteRetain];
+        [_asset readwriteRelease];
+        
         _asset = asset;
         _curFragmentIndex = NSNotFound;
         _curTsIndex = NSNotFound;
