@@ -158,9 +158,9 @@
     if ( _isClosed )
         return;
     
+    _isClosed = YES;
     [_reader abortWithError:nil];
     _reader = nil;
-    _isClosed = YES;
 
     MCSPrefetcherDebugLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
