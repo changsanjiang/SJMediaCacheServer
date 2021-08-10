@@ -59,6 +59,8 @@ MCSRequestRangeIsUndefined(MCSRequestContentRange range);
 
 #pragma mark -
 
+FOUNDATION_EXTERN NSRange const MCSNSRangeUndefined;
+
 FOUNDATION_EXPORT BOOL
 MCSNSRangeIsUndefined(NSRange range);
 

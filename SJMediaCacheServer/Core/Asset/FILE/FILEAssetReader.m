@@ -28,10 +28,10 @@
     __weak id<MCSAssetReaderDelegate> mDelegate;
     NSData *(^mReadDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
     float mNetworkTaskPriority;
+    NSRange mFixedRange;
 }
  
 @property (nonatomic, readonly, nullable) id<MCSAssetContentReader> current;
-@property (nonatomic) NSRange range;
 @end
 
 @implementation FILEAssetReader
@@ -47,7 +47,7 @@
         mNetworkTaskPriority = networkTaskPriority;
         mReadDataDecoder = readDataDecoder;
         mCurrentIndex = NSNotFound;
-
+        mFixedRange = MCSNSRangeUndefined;
         [mAsset readwriteRetain];
     }
     return self;
@@ -132,7 +132,7 @@
                         mCurrentIndex = i;
                         result = [reader seekToOffset:offset];
                         if ( result ) {
-                            mReadLength = offset - _range.location;
+                            mReadLength = offset - mResponse.range.location;
                             if ( reader.status == MCSReaderStatusFinished ) [self _prepareNextReader];
                         }
                         break;
@@ -189,7 +189,7 @@
 - (NSUInteger)offset {
     __block NSUInteger offset = 0;
     mcs_queue_sync(^{
-        offset = _range.location + mReadLength;
+        offset = mResponse.range.location + mReadLength;
     });
     return offset;
 }
@@ -234,31 +234,31 @@
     }
     else {
         MCSRequestContentRange requestRange = MCSRequestGetContentRange(mRequest.mcs_headers);
-        NSRange current = NSMakeRange(0, 0);
+        NSRange fixed = NSMakeRange(0, 0);
         // 200
         if      ( requestRange.start == NSNotFound && requestRange.end == NSNotFound ) {
-            current = NSMakeRange(0, totalLength);
+            fixed = NSMakeRange(0, totalLength);
         }
         // bytes=100-500
         else if ( requestRange.start != NSNotFound && requestRange.end != NSNotFound ) {
             NSUInteger location = requestRange.start;
             NSUInteger length = (totalLength > requestRange.end ? (requestRange.end + 1) : totalLength) - location;
-            current = NSMakeRange(location, length);
+            fixed = NSMakeRange(location, length);
         }
         // bytes=-500
         else if ( requestRange.start == NSNotFound && requestRange.end != NSNotFound ) {
             NSUInteger length = totalLength > requestRange.end ? (requestRange.end + 1) : 0;
             NSUInteger location = totalLength - length;
-            current = NSMakeRange(location, length);
+            fixed = NSMakeRange(location, length);
         }
         // bytes=500-
         else if ( requestRange.start != NSNotFound && requestRange.end == NSNotFound ) {
             NSUInteger location = requestRange.start;
             NSUInteger length = totalLength > location ? (totalLength - location) : 0;
-            current = NSMakeRange(location, length);
+            fixed = NSMakeRange(location, length);
         }
-
-        if ( current.length == 0 ) {
+        
+        if ( fixed.length == 0 ) {
             [self _abortWithError:[NSError mcs_errorWithCode:MCSInvalidRequestError userInfo:@{
                 MCSErrorUserInfoObjectKey : mRequest,
                 MCSErrorUserInfoReasonKey : @"请求range参数错误!"
@@ -266,15 +266,14 @@
             return;
         }
         
-        _range = current;
-        
+        NSRange curr = fixed;
         NSMutableArray<id<MCSAssetContentReader>> *subreaders = NSMutableArray.array;
         for ( id<MCSAssetContent> content in contents ) {
             NSRange available = NSMakeRange(content.startPositionInAsset, content.length);
-            NSRange intersection = NSIntersectionRange(current, available);
+            NSRange intersection = NSIntersectionRange(curr, available);
             if ( intersection.length != 0 ) {
                 // undownloaded part
-                NSRange leftRange = NSMakeRange(current.location, intersection.location - current.location);
+                NSRange leftRange = NSMakeRange(curr.location, intersection.location - curr.location);
                 if ( leftRange.length != 0 ) {
                     MCSAssetHTTPContentReader *reader = [self _HTTPContentReaderWithRange:leftRange];
                     [subreaders addObject:reader];
@@ -286,19 +285,20 @@
                 [subreaders addObject:reader];
                 
                 // next part
-                current = NSMakeRange(NSMaxRange(intersection), NSMaxRange(_range) - NSMaxRange(intersection));
+                curr = NSMakeRange(NSMaxRange(intersection), NSMaxRange(fixed) - NSMaxRange(intersection));
             }
             
-            if ( current.length == 0 || available.location > NSMaxRange(current) ) break;
+            if ( curr.length == 0 || available.location > NSMaxRange(curr) ) break;
         }
         
-        if ( current.length != 0 ) {
+        if ( curr.length != 0 ) {
             // undownloaded part
-            MCSAssetHTTPContentReader *reader = [self _HTTPContentReaderWithRange:current];
+            MCSAssetHTTPContentReader *reader = [self _HTTPContentReaderWithRange:curr];
             [subreaders addObject:reader];
         }
          
         mSubreaders = subreaders.copy;
+        mFixedRange = fixed;
     }
      
     MCSAssetReaderDebugLog(@"%@: <%p>.createSubreaders { count: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)mSubreaders.count);
@@ -389,9 +389,10 @@
     mcs_queue_sync(^{
         switch ( mStatus ) {
             default:break;
+                // first reader
             case MCSReaderStatusPreparing: {
-                NSRange range = _range;
-                if ( mSubreaders.count == 1 ) range = reader.range;
+                id<MCSAssetContentReader> first = reader;
+                NSRange range = mSubreaders.count == 1 ? first.range : mFixedRange;
                 mResponse = [MCSResponse.alloc initWithTotalLength:mAsset.totalLength range:range contentType:mAsset.contentType];
                 mStatus = MCSReaderStatusReadyToRead;
                 [mDelegate reader:self didReceiveResponse:mResponse];

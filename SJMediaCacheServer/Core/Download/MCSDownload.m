@@ -199,24 +199,6 @@
                 MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"响应无效: statusCode(%ld)!", (long)res.statusCode]
             }];
         }
-        else if ( res.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT && 0 == MCSResponseGetContentLength(res) ) {
-            error = [NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
-                MCSErrorUserInfoObjectKey : response,
-                MCSErrorUserInfoReasonKey : @"响应无效: contentLength 为 0!"
-            }];
-        }
-        else if ( res.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
-            NSRange range1 = MCSRequestRange(MCSRequestGetContentRange(task.currentRequest.allHTTPHeaderFields));
-            NSRange range2 = MCSResponseRange(MCSResponseGetContentRange(res));
-            if ( !MCSNSRangeIsUndefined(range1) && !NSEqualRanges(range1, range2)) {
-                if ( !MCSNSRangeIsUndefined(range2) && NSMaxRange(range2) <= NSMaxRange(range1) ) {
-                    error = [NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
-                        MCSErrorUserInfoObjectKey : response,
-                        MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"响应无效: requestRange(%@), responseRange(%@) range无效!", NSStringFromRange(range1), NSStringFromRange(range2)]
-                    }];
-                }
-            }
-        }
     }
     
     mcs_queue_async(^{

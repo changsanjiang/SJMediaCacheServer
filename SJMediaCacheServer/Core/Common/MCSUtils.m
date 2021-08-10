@@ -205,6 +205,8 @@ MCSRequestRangeIsUndefined(MCSRequestContentRange range) {
         range.end == NSNotFound;
 }
 
+NSRange const MCSNSRangeUndefined = {NSNotFound, NSNotFound};
+
 BOOL
 MCSNSRangeIsUndefined(NSRange range) {
     return range.location == NSNotFound || range.length == NSNotFound;
