@@ -84,7 +84,7 @@ MCSEndTime(uint64_t elapsed_time);
 
 #pragma mark - DEBUG
 
-//#define MCS_QUEUE_ENABLE_DEBUG
+#define MCS_QUEUE_ENABLE_DEBUG
 
 #ifdef MCS_QUEUE_ENABLE_DEBUG
 #define MCS_QUEUE_CHECK_INTERVAL 5

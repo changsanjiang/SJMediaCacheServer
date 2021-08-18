@@ -9,6 +9,7 @@
 #import "MCSProxyServer.h"
 #import "NSURLRequest+MCS.h"
 #import "MCSLogger.h"
+#import "MCSQueue.h"
 #import <objc/message.h>
 #if __has_include(<KTVCocoaHTTPServer/KTVCocoaHTTPServer.h>)
 #import <KTVCocoaHTTPServer/KTVCocoaHTTPServer.h>
@@ -18,8 +19,6 @@
 #import "GCDAsyncSocket.h"
 #endif
 
-
-#import <objc/runtime.h>
 @interface MCSTimer : NSObject
 - (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCSTimer *timer))block;
 
@@ -105,8 +104,23 @@
 
 @end
 
-@interface HTTPServer (MCSProxyServerExtended)
-@property (nonatomic, weak, nullable) MCSProxyServer *mcs_server;
+@interface MCSHTTPServer : HTTPServer
+- (instancetype)initWithProxyServer:(__weak MCSProxyServer *)proxyServer;
+@property (nonatomic, weak, readonly, nullable) MCSProxyServer *mcs_server;
+@end
+
+@implementation MCSHTTPServer
+- (instancetype)initWithProxyServer:(__weak MCSProxyServer *)proxyServer {
+    self = [super init];
+    if ( self ) {
+        _mcs_server = proxyServer;
+    }
+    return self;
+}
+
+- (HTTPConfig *)config {
+    return [HTTPConfig.alloc initWithServer:self documentRoot:self->documentRoot queue:mcs_queue()];
+}
 @end
 
 @interface MCSHTTPConnection : HTTPConnection
@@ -129,7 +143,7 @@
 #pragma mark -
 
 @interface MCSProxyServer ()
-@property (nonatomic, strong, nullable) HTTPServer *localServer;
+@property (nonatomic, strong, nullable) MCSHTTPServer *localServer;
 @property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
 - (id<MCSProxyTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate;
 @property (nonatomic, strong, nullable) MCSTimer *timer;
@@ -154,8 +168,7 @@
 - (void)start {
     _running = YES;
     if ( _serverURL == nil ) {
-        _localServer = HTTPServer.alloc.init;
-        _localServer.mcs_server = self;
+        _localServer = [MCSHTTPServer.alloc initWithProxyServer:self];
         [_localServer setConnectionClass:MCSHTTPConnection.class];
         [_localServer setType:@"_http._tcp"];
     
@@ -248,16 +261,6 @@
 
 #pragma mark -
 
-@implementation HTTPServer (MCSProxyServerExtended)
-- (void)setMcs_server:(MCSProxyServer *)mcs_server {
-    objc_setAssociatedObject(self, @selector(mcs_server), mcs_server, OBJC_ASSOCIATION_ASSIGN);
-}
-
-- (MCSProxyServer *)mcs_server {
-    return objc_getAssociatedObject(self, _cmd);
-}
-@end
-
 @implementation MCSHTTPConnection
 - (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig {
     self = [super initWithAsyncSocket:newSocket configuration:aConfig];
@@ -281,7 +284,7 @@
 }
 
 - (MCSProxyServer *)mcs_server {
-    return config.server.mcs_server;
+    return ((MCSHTTPServer *)config.server).mcs_server;
 }
 
 - (void)finishResponse {
