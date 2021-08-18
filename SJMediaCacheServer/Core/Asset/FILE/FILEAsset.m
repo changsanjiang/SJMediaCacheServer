@@ -80,7 +80,7 @@
 - (nullable NSArray<id<MCSAssetContent>> *)contents {
     __block NSArray<id<MCSAssetContent>> *contents;
     mcs_queue_sync(^{
-        contents = mContents;
+        contents = mContents.copy;
     });
     return contents;
 }

@@ -2,7 +2,7 @@
 //  HLSAssetContentReader.m
 //  SJMediaCacheServer
 //
-//  Created by 蓝舞者 on 2021/7/19.
+//  Created by 畅三江 on 2021/7/19.
 //
 
 #import "HLSAssetContentReader.h"
