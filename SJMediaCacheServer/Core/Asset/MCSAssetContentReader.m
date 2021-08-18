@@ -113,7 +113,7 @@
                 _mReadLength += readLength;
                 BOOL isReachedEndPosition = (_mReadLength == _mRange.length);
                 
-                MCSContentReaderDebugLog(@"%@: <%p>.read { offset: %llu, length: %llu };\n", NSStringFromClass(self.class), self, position, readLength);
+                MCSContentReaderDebugLog(@"%@: <%p>.read { range: %@, offset: %llu, length: %llu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_mRange), position, readLength);
 
                 if ( isReachedEndPosition ) [self _finish];
             }
@@ -227,10 +227,11 @@
                 _mRange = range;
                 _mContent = content;
                 [_mContent registerObserver:self];
-                _mAvailableLength = MIN(_mContent.length, _mRange.length) - (_mRange.location - _mContent.startPositionInAsset);
+                NSRange contentRange = NSMakeRange(_mContent.startPositionInAsset, (NSInteger)_mContent.length);
+                _mAvailableLength = NSIntersectionRange(contentRange, _mRange).length;
                 [_delegate readerWasReadyToRead:self];
                 if ( _mAvailableLength != 0 && _mReadLength < _mAvailableLength )
-                    [_delegate reader:self hasAvailableDataWithLength:_mAvailableLength - _mReadLength];
+                    [_delegate reader:self hasAvailableDataWithLength:(NSInteger)(_mAvailableLength - _mReadLength)];
             }
                 break;
         }
@@ -241,7 +242,8 @@
 
 - (void)content:(id<MCSAssetContent>)content didWriteDataWithLength:(NSUInteger)length {
     mcs_queue_sync(^{
-        _mAvailableLength = content.length;
+        NSRange contentRange = NSMakeRange(_mContent.startPositionInAsset, content.length);
+        _mAvailableLength = NSIntersectionRange(contentRange, _mRange).length;
         [_delegate reader:self hasAvailableDataWithLength:length];
     });
 }

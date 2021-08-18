@@ -474,7 +474,7 @@
     
     NSMutableArray<id<MCSAsset> > *results = NSMutableArray.array;
     [logs enumerateObjectsUsingBlock:^(MCSAssetUsageLog * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        id<MCSAsset> asset = asset = [self _assetForAssetId:obj.asset type:obj.assetType];
+        id<MCSAsset> asset = [self _assetForAssetId:obj.asset type:obj.assetType];
         if ( asset != nil ) [results addObject:asset];
     }];
     return results;

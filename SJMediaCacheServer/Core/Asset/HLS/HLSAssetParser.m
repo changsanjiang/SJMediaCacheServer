@@ -347,8 +347,10 @@
                 break;
             default: break;
         }
-        NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:url suffix:suffix inAsset:_asset.name];
-        [indexFileContents replaceCharactersInRange:obj.range withString:proxy];
+        if ( suffix.length != 0 ) {
+            NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:url suffix:suffix inAsset:_asset.name];
+            [indexFileContents replaceCharactersInRange:obj.range withString:proxy];
+        }
     }];
     ///
     /// 仅保留最前面的stream
@@ -571,16 +573,16 @@
                 HLSURIItem *item = [HLSURIItem.alloc initWithType:MCSDataTypeHLSPlaylist URI:URI HTTPAdditionalHeaders:nil];
                 item.isVariantItem = YES;
                 item.audioRenditions = [audioRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
-                    return [obj.groupId isEqualToString:audioGroupId];
+                    return [obj.groupId isEqualToString:audioGroupId ?: @""];
                 }];
                 item.videoRenditions = [videoRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
-                    return [obj.groupId isEqualToString:videoGroupId];
+                    return [obj.groupId isEqualToString:videoGroupId ?: @""];
                 }];
                 item.subtitleRenditions = [subtitleRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
-                    return [obj.groupId isEqualToString:subtitleGroupId];
+                    return [obj.groupId isEqualToString:subtitleGroupId ?: @""];
                 }];
                 item.closedCaptionsRenditions = [closedCaptionsRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
-                    return [obj.groupId isEqualToString:closedCaptionsGroupId];
+                    return [obj.groupId isEqualToString:closedCaptionsGroupId ?: @""];
                 }];
                 [m addObject:item];
                 vsFlag = NO;
