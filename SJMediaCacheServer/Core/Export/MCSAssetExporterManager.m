@@ -271,27 +271,16 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
         float progress = _progress;
         NSUInteger totalLength = asset.totalLength;
         if ( totalLength != 0 ) {
-            NSMutableArray<id<MCSAssetContent> > *contents = [asset.contents mutableCopy];
-            [contents sortUsingComparator:^NSComparisonResult(id<MCSAssetContent> obj1, id<MCSAssetContent> obj2) {
-                NSRange range1 = NSMakeRange(obj1.startPositionInAsset, obj1.length);
-                NSRange range2 = NSMakeRange(obj2.startPositionInAsset, obj2.length);
-                if ( range1.location == range2.location ) {
-                    if ( obj1.length == obj2.length )
-                        return NSOrderedSame;
-                    return obj1.length > obj2.length ? NSOrderedAscending : NSOrderedDescending;
-                }
-                return [@(range1.location) compare:@(range2.location)];
+            __block id<MCSAssetContent> prev = nil;
+            __block UInt64 length = 0;
+            [asset enumerateContentNodesUsingBlock:^(id<FILEAssetContentNode>  _Nonnull node, BOOL * _Nonnull stop) {
+                id<MCSAssetContent> cur = node.maximumLengthContent;
+                length += cur.length;
+                UInt64 prevPosition = prev.startPositionInAsset + prev.length;
+                if ( prevPosition > cur.startPositionInAsset ) length -= (prevPosition - cur.startPositionInAsset);
+                prev = cur;
             }];
-            
-            NSUInteger current = 0;
-            id<MCSAssetContent> pre = nil;
-            for ( id<MCSAssetContent> content in contents ) {
-                if ( pre == nil || pre.startPositionInAsset != content.startPositionInAsset ) {
-                    current += content.length;
-                }
-                pre = content;
-            }
-            progress = current * 1.0 / totalLength;
+            progress = length * 1.0 / totalLength;
         }
         isChanged = progress != _progress;
         if ( isChanged ) _progress = progress;
