@@ -125,6 +125,7 @@
     FILEAssetContentNode *cur = _head;
     while ( cur != nil ) {
         block(cur, &stop);
+        cur = cur.next;
         if ( stop ) break;;
     }
 }
