@@ -24,17 +24,16 @@
 @interface FILEAssetContentNode ()
 @property (nonatomic, unsafe_unretained, nullable) FILEAssetContentNode *prev;
 @property (nonatomic, unsafe_unretained, nullable) FILEAssetContentNode *next;
-- (instancetype)initWithContent:(id<MCSAssetContent>)content;
 - (void)addContent:(id<MCSAssetContent>)content;
 @end
 
 @implementation FILEAssetContentNode {
     NSMutableArray<id<MCSAssetContent>> *mContents;
 }
-- (instancetype)initWithContent:(id<MCSAssetContent>)content {
+- (instancetype)init {
     self = [super init];
     if ( self ) {
-        mContents = [NSMutableArray arrayWithObject:content];
+        mContents = [NSMutableArray arrayWithCapacity:1];
     }
     return self;
 }
@@ -91,7 +90,7 @@
     if ( curNode == nil ) {
         // create new node
         //
-        curNode = [FILEAssetContentNode.alloc initWithContent:content];
+        curNode = [FILEAssetContentNode.alloc init];
         mNodes[curNodeKey] = curNode;
          
         // restructure nodes position
