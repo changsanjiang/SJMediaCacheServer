@@ -22,6 +22,7 @@
 @end
 
 @interface FILEAssetContentNode ()
+- (instancetype)initWithContent:(id<MCSAssetContent>)content;
 @property (nonatomic, unsafe_unretained, nullable) FILEAssetContentNode *prev;
 @property (nonatomic, unsafe_unretained, nullable) FILEAssetContentNode *next;
 - (void)addContent:(id<MCSAssetContent>)content;
@@ -30,10 +31,10 @@
 @implementation FILEAssetContentNode {
     NSMutableArray<id<MCSAssetContent>> *mContents;
 }
-- (instancetype)init {
+- (instancetype)initWithContent:(id<MCSAssetContent>)content {
     self = [super init];
     if ( self ) {
-        mContents = [NSMutableArray arrayWithCapacity:1];
+        mContents = [NSMutableArray arrayWithObject:content];
     }
     return self;
 }
@@ -90,12 +91,14 @@
     if ( curNode == nil ) {
         // create new node
         //
-        curNode = [FILEAssetContentNode.alloc init];
+        curNode = [FILEAssetContentNode.alloc initWithContent:content];
         mNodes[curNodeKey] = curNode;
          
         // restructure nodes position
         //
         // prevNode.position < curNode.position < nextNode.position
+        //
+        // preNode.next = curNode; curNode.prev = prevNode, curNode.next = nextNode; nextNode.prev = curNode;
         //
         FILEAssetContentNode *prevNode = _tail;
         FILEAssetContentNode *nextNode = nil;
@@ -107,6 +110,7 @@
         prevNode.next = curNode;
         curNode.prev = prevNode;
         curNode.next = nextNode;
+        nextNode.prev = curNode;
         
         if ( _head == nil || _head.startPositionInAsset > curNodePosition ) {
             _head = curNode;
@@ -116,7 +120,9 @@
             _tail = curNode;
         }
     }
-    [curNode addContent:content];
+    else {
+        [curNode addContent:content];
+    }
 }
 
 - (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(id<FILEAssetContentNode> node, BOOL *stop))block {
