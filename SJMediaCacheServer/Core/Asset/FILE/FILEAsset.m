@@ -26,6 +26,7 @@
 @property (nonatomic, unsafe_unretained, nullable) FILEAssetContentNode *prev;
 @property (nonatomic, unsafe_unretained, nullable) FILEAssetContentNode *next;
 - (void)addContent:(id<MCSAssetContent>)content;
+- (void)removeContentAtIndex:(NSInteger)index;
 @end
 
 @implementation FILEAssetContentNode {
@@ -58,6 +59,10 @@
     [mContents addObject:content];
 }
 
+- (void)removeContentAtIndex:(NSInteger)index {
+    [mContents removeObjectAtIndex:index];
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"%@: <%p> { startPosisionInAsset: %llu, maximumLength: %llu, contents: %lu };\n", NSStringFromClass(self.class), self, self.startPositionInAsset, self.maximumLengthContent.length, (unsigned long)mContents.count];
 }
@@ -65,6 +70,7 @@
 
 @interface FILEAssetContentNodeList : NSObject
 - (instancetype)initWithContents:(nullable NSArray<id<MCSAssetContent>> *)contents;
+@property (nonatomic, readonly) NSUInteger count; // node count
 @property (nonatomic, readonly, nullable) FILEAssetContentNode *head;
 @property (nonatomic, readonly, nullable) FILEAssetContentNode *tail;
 - (void)bringContentToNode:(id<MCSAssetContent>)content;
@@ -82,6 +88,10 @@
         [self bringContentToNode:content];
     }
     return self;
+}
+
+- (NSUInteger)count {
+    return mNodes.count;
 }
 
 - (void)bringContentToNode:(id<MCSAssetContent>)content {
@@ -138,8 +148,8 @@
 - (void)removeNode:(FILEAssetContentNode *)node {
     FILEAssetContentNode *prevNode = node.prev;
     FILEAssetContentNode *nextNode = node.next;
-    if ( prevNode != nil ) nextNode.prev = prevNode;
-    if ( nextNode != nil ) prevNode.next = nextNode;
+    nextNode.prev = prevNode;
+    prevNode.next = nextNode;
 
     if ( _head == node ) _head = nextNode;
     if ( _tail == node ) _tail = prevNode;
@@ -198,7 +208,7 @@
         _configuration = MCSConfiguration.alloc.init;
         mProvider = [FILEAssetContentProvider contentProviderWithDirectory:directory];
         mNodeList = [FILEAssetContentNodeList.alloc initWithContents:mProvider.contents];
-        [self _mergeContents];
+        [self _restructureContents];
     });
 }
 
@@ -294,87 +304,71 @@
 
 - (void)readwriteCountDidChange:(NSInteger)count {
     if ( count == 0 )
-        [self _mergeContents];
-}
-
-// 合并文件
-- (void)_mergeContents {
-    if ( self.readwriteCount != 0 ) return;
-    if ( _isStored ) return;
-//    if ( mContents.count < 2 ) {
-//        _isStored = mContents.count == 1 && mContents.lastObject.length == _totalLength;
-//        return;
-//    }
-//
-//    NSMutableArray<id<MCSAssetContent>> *contents = [mContents mutableCopy];
-//    NSMutableArray<id<MCSAssetContent>> *deletes = NSMutableArray.alloc.init;
-//    [contents sortUsingComparator:^NSComparisonResult(id<MCSAssetContent>obj1, id<MCSAssetContent>obj2) {
-//        NSRange range1 = NSMakeRange(obj1.startPositionInAsset, obj1.length);
-//        NSRange range2 = NSMakeRange(obj2.startPositionInAsset, obj2.length);
-//
-//        // 1 包含 2
-//        if ( MCSNSRangeContains(range1, range2) ) {
-//            if ( ![deletes containsObject:obj2] ) [deletes addObject:obj2];
-//        }
-//        // 2 包含 1
-//        else if ( MCSNSRangeContains(range2, range1) ) {
-//            if ( ![deletes containsObject:obj1] ) [deletes addObject:obj1];;
-//        }
-//
-//        return [@(range1.location) compare:@(range2.location)];
-//    }];
-//
-//    if ( deletes.count != 0 ) [contents removeObjectsInArray:deletes];
-//
-//    // merge
-//    UInt64 capacity = 1 * 1024 * 1024;
-//    for ( NSInteger i = 0 ; i < contents.count - 1; i += 2 ) {
-//        id<MCSAssetContent>write = contents[i];
-//        id<MCSAssetContent>read  = contents[i + 1];
-//
-//        NSUInteger maxPosition1 = write.startPositionInAsset + write.length;
-//        NSUInteger maxPosition2 = read.startPositionInAsset + read.length;
-//        NSRange readRange = NSMakeRange(0, 0);
-//        if ( maxPosition1 >= read.startPositionInAsset && maxPosition1 < maxPosition2 ) // 有交集
-//            readRange = NSMakeRange(maxPosition1, maxPosition2 - maxPosition1); // 读取read中未相交的部分
-//
-//        if ( readRange.length != 0 ) {
-//            [write readwriteRetain];
-//            [read readwriteRetain];
-//            NSError *error = nil;
-//            UInt64 positon = readRange.location;
-//            while ( true ) { @autoreleasepool {
-//                NSData *data = [read readDataAtPosition:positon capacity:capacity error:&error];
-//                if ( error != nil || data.length == 0 )
-//                    break;
-//                if ( ![write writeData:data error:&error] )
-//                    break;
-//                positon += data.length;
-//                if ( positon == NSMaxRange(readRange) ) break;
-//            }}
-//            [read readwriteRelease];
-//            [write readwriteRelease];
-//            [read closeRead];
-//            [write closeWrite];
-//            if ( error == nil ) {
-//                [deletes addObject:read];
-//            }
-//        }
-//    }
-//
-//    if ( deletes.count != 0 ) {
-//        for ( id<MCSAssetContent>content in deletes ) { [mProvider removeContent:content]; }
-//        [mContents removeObjectsInArray:deletes];
-//    }
-//
-//    _isStored = mContents.count == 1 && mContents.lastObject.length == _totalLength;
+        [self _restructureContents];
 }
 
 // 拆分重组内容. 将内容按指定字节拆分重组
 - (void)_restructureContents {
-    if ( _isStored ) return;
-    NSInteger countOfBytesContentUnit = 1 * 1024 * 1024;
- 
+    if ( _isStored || self.readwriteCount != 0 ) return;
+    UInt64 capacity = 1 * 1024 * 1024;
+    FILEAssetContentNode *curNode = mNodeList.head;
+    while ( curNode != nil ) {
+        [self _removeExcessContentsForNode:curNode];
+        FILEAssetContentNode *nextNode = curNode.next;
+        if ( nextNode == nil ) break;
+        [self _removeExcessContentsForNode:nextNode];
+        
+        id<MCSAssetContent> curContent = curNode.maximumLengthContent;
+        id<MCSAssetContent> nextContent = nextNode.maximumLengthContent;
+        
+        NSRange curRange = {curContent.startPositionInAsset, curContent.length};
+        NSRange nextRange = {nextContent.startPositionInAsset, nextContent.length};
+        if      ( MCSNSRangeContains(curRange, nextRange) ) {
+            [mProvider removeContent:nextContent];
+            [mNodeList removeNode:nextNode];
+        }
+        else if ( NSIntersectionRange(curRange, nextRange).location != NSNotFound ) { // 连续的, 存在交集
+            NSRange readRange = {NSMaxRange(curRange), NSMaxRange(nextRange) - NSMaxRange(curRange)};   // 读取read中未相交的部分
+            [curContent readwriteRetain];
+            [nextContent readwriteRetain];
+            NSError *error = nil;
+            UInt64 position = readRange.location;
+            while ( true ) { @autoreleasepool {
+                NSData *data = [nextContent readDataAtPosition:position capacity:capacity error:&error];
+                if ( error != nil || data.length == 0 )
+                    break;
+                if ( ![curContent writeData:data error:&error] )
+                    break;
+                position += data.length;
+                if ( position == NSMaxRange(readRange) ) break;
+            }}
+            [nextContent readwriteRelease];
+            [nextContent closeRead];
+            [curContent readwriteRelease];
+            [curContent closeWrite];
+            
+            if ( error == nil ) {
+                [mProvider removeContent:nextContent];
+                [mNodeList removeNode:nextNode];
+            }
+        }
+        curNode = curNode.next;
+    }
+    
+    _isStored = mNodeList.head.maximumLengthContent.length == _totalLength;
+}
+
+- (void)_removeExcessContentsForNode:(FILEAssetContentNode *)node {
+    NSArray<id<MCSAssetContent>> *contents = node.allContents;
     // 同一段位置可能存在多个文件
+    // 删除多余的无用的content
+    if ( contents.count > 1 ) {
+        [contents enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<MCSAssetContent>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ( idx != 0 && obj.readwriteCount == 0 ) {
+                [mProvider removeContent:obj];
+                [node removeContentAtIndex:idx];
+            }
+        }];
+    }
 }
 @end
