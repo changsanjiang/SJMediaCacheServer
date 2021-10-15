@@ -154,6 +154,6 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 
 //    NSInteger contentUnitBytes = 2 * 1024 * 1024;
 //        // 内容重组(按指定大小进行重组)
-//        id<MCSAssetContent> content = node.maximumLengthContent;
+//        id<MCSAssetContent> content = node.longestContent;
 //        // #warning next ...
 //        // 如何将内容重组

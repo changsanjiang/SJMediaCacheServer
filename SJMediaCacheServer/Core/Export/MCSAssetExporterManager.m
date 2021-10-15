@@ -274,7 +274,7 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
             __block id<MCSAssetContent> prev = nil;
             __block UInt64 length = 0;
             [asset enumerateContentNodesUsingBlock:^(id<FILEAssetContentNode>  _Nonnull node, BOOL * _Nonnull stop) {
-                id<MCSAssetContent> cur = node.maximumLengthContent;
+                id<MCSAssetContent> cur = node.longestContent;
                 length += cur.length;
                 UInt64 prevPosition = prev.startPositionInAsset + prev.length;
                 if ( prevPosition > cur.startPositionInAsset ) length -= (prevPosition - cur.startPositionInAsset);

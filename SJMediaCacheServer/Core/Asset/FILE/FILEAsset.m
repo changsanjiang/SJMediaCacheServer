@@ -17,7 +17,7 @@
 
 @interface FILEAssetContentNode : NSObject<FILEAssetContentNode>
 @property (nonatomic, readonly) UInt64 startPositionInAsset;
-@property (nonatomic, readonly, nullable) id<MCSAssetContent> maximumLengthContent;
+@property (nonatomic, readonly, nullable) id<MCSAssetContent> longestContent;
 @property (nonatomic, readonly, nullable) NSArray<id<MCSAssetContent>> *allContents;
 @end
 
@@ -44,7 +44,7 @@
     return mContents.firstObject.startPositionInAsset;
 }
 
-- (nullable id<MCSAssetContent>)maximumLengthContent {
+- (nullable id<MCSAssetContent>)longestContent {
     id<MCSAssetContent> retv = mContents.firstObject;
     for ( NSInteger i = 1 ; i < mContents.count ; ++ i ) {
         id<MCSAssetContent> content = mContents[i];
@@ -64,7 +64,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@: <%p> { startPosisionInAsset: %llu, maximumLength: %llu, contents: %lu };\n", NSStringFromClass(self.class), self, self.startPositionInAsset, self.maximumLengthContent.length, (unsigned long)mContents.count];
+    return [NSString stringWithFormat:@"%@: <%p> { startPositionInAsset: %llu, maximumLength: %llu, contents: %lu };\n", NSStringFromClass(self.class), self, self.startPositionInAsset, self.longestContent.length, (unsigned long)mContents.count];
 }
 @end
 
@@ -318,44 +318,44 @@
         if ( nextNode == nil ) break;
         [self _removeExcessContentsForNode:nextNode];
         
-        id<MCSAssetContent> curContent = curNode.maximumLengthContent;
-        id<MCSAssetContent> nextContent = nextNode.maximumLengthContent;
+        id<MCSAssetContent> write = curNode.longestContent;
+        id<MCSAssetContent> read = nextNode.longestContent;
         
-        NSRange curRange = {curContent.startPositionInAsset, curContent.length};
-        NSRange nextRange = {nextContent.startPositionInAsset, nextContent.length};
+        NSRange curRange = {write.startPositionInAsset, write.length};
+        NSRange nextRange = {read.startPositionInAsset, read.length};
         if      ( MCSNSRangeContains(curRange, nextRange) ) {
-            [mProvider removeContent:nextContent];
+            [mProvider removeContent:read];
             [mNodeList removeNode:nextNode];
         }
         else if ( NSIntersectionRange(curRange, nextRange).location != NSNotFound ) { // 连续的, 存在交集
             NSRange readRange = {NSMaxRange(curRange), NSMaxRange(nextRange) - NSMaxRange(curRange)};   // 读取read中未相交的部分
-            [curContent readwriteRetain];
-            [nextContent readwriteRetain];
+            [write readwriteRetain];
+            [read readwriteRetain];
             NSError *error = nil;
             UInt64 position = readRange.location;
             while ( true ) { @autoreleasepool {
-                NSData *data = [nextContent readDataAtPosition:position capacity:capacity error:&error];
+                NSData *data = [read readDataAtPosition:position capacity:capacity error:&error];
                 if ( error != nil || data.length == 0 )
                     break;
-                if ( ![curContent writeData:data error:&error] )
+                if ( ![write writeData:data error:&error] )
                     break;
                 position += data.length;
                 if ( position == NSMaxRange(readRange) ) break;
             }}
-            [nextContent readwriteRelease];
-            [nextContent closeRead];
-            [curContent readwriteRelease];
-            [curContent closeWrite];
+            [read readwriteRelease];
+            [read closeRead];
+            [write readwriteRelease];
+            [write closeWrite];
             
             if ( error == nil ) {
-                [mProvider removeContent:nextContent];
+                [mProvider removeContent:read];
                 [mNodeList removeNode:nextNode];
             }
         }
         curNode = curNode.next;
     }
     
-    _isStored = mNodeList.head.maximumLengthContent.length == _totalLength;
+    _isStored = mNodeList.head.longestContent.length == _totalLength;
 }
 
 - (void)_removeExcessContentsForNode:(FILEAssetContentNode *)node {

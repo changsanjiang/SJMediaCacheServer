@@ -29,6 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol FILEAssetContentNode <NSObject>
 @property (nonatomic, readonly) UInt64 startPositionInAsset;
 @property (nonatomic, readonly, nullable) NSArray<id<MCSAssetContent>> *allContents;
-@property (nonatomic, readonly, nullable) id<MCSAssetContent> maximumLengthContent;
+@property (nonatomic, readonly, nullable) id<MCSAssetContent> longestContent;
 @end
 NS_ASSUME_NONNULL_END
