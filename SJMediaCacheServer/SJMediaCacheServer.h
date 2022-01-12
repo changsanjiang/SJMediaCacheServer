@@ -179,6 +179,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SJMediaCacheServer (Convert)
 
+/// Access metrics in this block. This may not be executed in main thread.
+@property (nonatomic, copy, nullable) void *(^didFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics) API_AVAILABLE(ios(10.0));
+
 /// Resolve the identifier of the asset referenced by the URL.
 ///
 ///     The asset identifier represents a unique asset. When different URLs references the same asset, you can return the same identifier in the block.

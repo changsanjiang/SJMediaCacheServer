@@ -27,6 +27,7 @@
     UIBackgroundTaskIdentifier mBackgroundTask;
 
     NSMutableURLRequest *_Nullable(^mRequestHandler)(NSMutableURLRequest *request);
+    void *(^mDidFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics) API_AVAILABLE(ios(10.0));
     NSData *(^mDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
     void(^mErrorCallback)(NSURLRequest *request, NSError *error);
     NSTimeInterval mTimeoutInterval;
@@ -89,6 +90,20 @@
     __block id retv;
     mcs_queue_sync(^{
         retv = mRequestHandler;
+    });
+    return retv;
+}
+
+- (void)setDidFinishCollectingMetrics:(void * _Nonnull (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
+    mcs_queue_sync(^{
+        mDidFinishCollectingMetrics = didFinishCollectingMetrics;
+    });
+}
+
+- (void * _Nonnull (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
+    __block id retv;
+    mcs_queue_sync(^{
+        retv = mDidFinishCollectingMetrics;
     });
     return retv;
 }
@@ -223,6 +238,14 @@
         NSData *data = dataParam;
         if ( self->mDataEncoder != nil ) data = self->mDataEncoder(dataTask.currentRequest, (NSUInteger)(dataTask.countOfBytesReceived - dataParam.length), dataParam);
         [delegate downloadTask:dataTask didReceiveData:data];
+    });
+}
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didFinishCollectingMetrics:(NSURLSessionTaskMetrics *)metrics API_AVAILABLE(ios(10.0)) {
+    mcs_queue_async(^{
+        if (self->mDidFinishCollectingMetrics != nil) {
+            self->mDidFinishCollectingMetrics(session, task, metrics);
+        }
     });
 }
 
