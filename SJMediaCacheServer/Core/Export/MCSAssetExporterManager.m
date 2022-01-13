@@ -256,7 +256,7 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
         _status = error != nil ? MCSAssetExportStatusFailed : MCSAssetExportStatusFinished;
     }];
     NSDictionary *userInfo = nil;
-    if (error) {
+    if ( error != nil ) {
         userInfo = @{MCSAssetExporterErrorUserInfoKey: error};
     }
     [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self userInfo:userInfo];
@@ -782,7 +782,7 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
             }
         }
         
-        if (exporter.status == MCSAssetExportStatusFailed) {
+        if ( status == MCSAssetExportStatusFailed ) {
             for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(self->_observers) ) {
                 if ( [observer respondsToSelector:@selector(exporter:statusDidChange:)] ) {
                     [observer exporter:exporter failedWithError:error];

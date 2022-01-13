@@ -47,7 +47,7 @@
             NSString *retv = URL.absoluteString;
             NSString *query = URL.query;
             if ( query.length != 0 ) {
-                retv = [retv substringToIndex:retv.length - (query.length + 1 /*?*/)];
+                retv = [retv substringToIndex:retv.length - (query.length + 1 /*'?'.length*/)];
             }
             return retv;
         };

@@ -47,11 +47,6 @@
 }
 
 - (instancetype)init {
-#ifdef DEBUG
-    NSLog(@"%d : %s", __LINE__, sel_getName(_cmd));
-#endif
-
-    
     if (self = [super init]) {
         mTimeoutInterval = 30.0f;
         mBackgroundTask = UIBackgroundTaskInvalid;
