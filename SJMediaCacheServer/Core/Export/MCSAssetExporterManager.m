@@ -19,6 +19,8 @@
 static NSNotificationName const MCSAssetExporterProgressDidChangeNotification = @"MCSAssetExporterProgressDidChangeNotification";
 static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"MCSAssetExporterStatusDidChangeNotification";
 
+static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErrorUserInfoKey";
+
 @interface MCSAssetExporter : NSObject<MCSSaveable, MCSAssetExporter>
 - (instancetype)initWithURLString:(NSString *)URLStr name:(NSString *)name type:(MCSAssetType)type;
 @property (nonatomic, strong, readonly) NSURL *URL;
@@ -253,7 +255,11 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
         _task = nil;
         _status = error != nil ? MCSAssetExportStatusFailed : MCSAssetExportStatusFinished;
     }];
-    [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self];
+    NSDictionary *userInfo = nil;
+    if (error) {
+        userInfo = @{MCSAssetExporterErrorUserInfoKey: error};
+    }
+    [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetExporterStatusDidChangeNotification object:self userInfo:userInfo];
 }
 
 - (void)_lockInBlock:(void(^NS_NOESCAPE)(void))task {
@@ -391,7 +397,8 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
             dispatch_async(dispatch_get_global_queue(0, 0), ^{
                 __strong typeof(_self) self = _self;
                 if ( self == nil ) return;
-                [self _statusDidChange:note.object];
+                NSError *error = [note.userInfo objectForKey:MCSAssetExporterErrorUserInfoKey];
+                [self _statusDidChange:note.object error:error];
             });
         }];
     }
@@ -735,7 +742,7 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
     return retv.copy;
 }
 
-- (void)_statusDidChange:(MCSAssetExporter *)exporter {
+- (void)_statusDidChange:(MCSAssetExporter *)exporter error:(nullable NSError *)error {
     MCSAssetExportStatus status = exporter.status;
     if ( status == MCSAssetExportStatusCancelled ) {
         [self _lockInBlock:^{
@@ -772,6 +779,14 @@ static NSNotificationName const MCSAssetExporterStatusDidChangeNotification = @"
         for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(self->_observers) ) {
             if ( [observer respondsToSelector:@selector(exporter:statusDidChange:)] ) {
                 [observer exporter:exporter statusDidChange:status];
+            }
+        }
+        
+        if (exporter.status == MCSAssetExportStatusFailed) {
+            for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(self->_observers) ) {
+                if ( [observer respondsToSelector:@selector(exporter:statusDidChange:)] ) {
+                    [observer exporter:exporter failedWithError:error];
+                }
             }
         }
     });

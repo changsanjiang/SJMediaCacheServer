@@ -156,6 +156,15 @@
 
 
 @implementation SJMediaCacheServer (Convert)
+
+- (void)setDidFinishCollectingMetrics:(void * _Nonnull (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
+    MCSDownload.shared.didFinishCollectingMetrics = didFinishCollectingMetrics;
+}
+
+- (void * _Nonnull (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
+    return MCSDownload.shared.didFinishCollectingMetrics;
+}
+
 - (void)setResolveAssetIdentifier:(NSString * _Nonnull (^)(NSURL * _Nonnull))resolveAssetIdentifier {
     MCSURL.shared.resolveAssetIdentifier = resolveAssetIdentifier;
 }
