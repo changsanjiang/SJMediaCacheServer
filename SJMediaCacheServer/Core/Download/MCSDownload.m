@@ -189,6 +189,12 @@
         mTaskCount = 0;
     });
 }
+
+- (void)customSessionConfig:(void (^)(NSURLSessionConfiguration * _Nonnull))config {
+    mcs_queue_sync(^{
+        config(mSession.configuration);
+    });
+}
   
 #pragma mark - mark
 

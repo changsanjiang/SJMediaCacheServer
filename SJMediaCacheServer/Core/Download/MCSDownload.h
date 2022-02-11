@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSDownloadTask>)downloadWithRequest:(NSURLRequest *)request priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate;
 - (void)cancelAllDownloadTasks;
 
+- (void)customSessionConfig:(nullable void(^)(NSURLSessionConfiguration *))config;
+
 @property (nonatomic, readonly) NSInteger taskCount;
 
 + (instancetype)new NS_UNAVAILABLE;

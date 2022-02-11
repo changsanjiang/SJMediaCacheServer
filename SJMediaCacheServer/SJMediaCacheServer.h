@@ -174,6 +174,10 @@ NS_ASSUME_NONNULL_BEGIN
 ///     Note that these headers are added to the request only if not already present.
 ///
 - (nullable NSDictionary<NSString *, NSString *> *)assetURL:(NSURL *)URL HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type;
+
+/// custom URLSessionConfiguration
+/// @param config the using config, to be customed
+- (void)customSessionConfig:(nullable void(^)(NSURLSessionConfiguration *))config;
 @end
 
 

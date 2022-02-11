@@ -151,6 +151,11 @@
     id<MCSAsset> asset = [MCSAssetManager.shared assetWithURL:URL];
     return [asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:type];
 }
+
+- (void)customSessionConfig:(nullable void(^)(NSURLSessionConfiguration *))config {
+    [MCSDownload.shared customSessionConfig:config];
+}
+
 @end
 
 
