@@ -27,7 +27,7 @@
     UIBackgroundTaskIdentifier mBackgroundTask;
 
     NSMutableURLRequest *_Nullable(^mRequestHandler)(NSMutableURLRequest *request);
-    void *(^mDidFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics) API_AVAILABLE(ios(10.0));
+    void (^mDidFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics) API_AVAILABLE(ios(10.0));
     NSData *(^mDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
     void(^mErrorCallback)(NSURLRequest *request, NSError *error);
     NSTimeInterval mTimeoutInterval;
@@ -94,13 +94,13 @@
     return retv;
 }
 
-- (void)setDidFinishCollectingMetrics:(void * _Nonnull (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
+- (void)setDidFinishCollectingMetrics:(void (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
     mcs_queue_sync(^{
         mDidFinishCollectingMetrics = didFinishCollectingMetrics;
     });
 }
 
-- (void * _Nonnull (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
+- (void (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
     __block id retv;
     mcs_queue_sync(^{
         retv = mDidFinishCollectingMetrics;
