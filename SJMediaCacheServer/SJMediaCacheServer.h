@@ -17,6 +17,18 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// MCSPlayBackRequestTaskDidFailedNotification:
+///     Playback request failure will past by this notificaion.
+///     One playback item may has multiple request task.
+///     So this notification may be posted multiple time.
+/// MCSPlayBackRequestURLUserInfoKey:
+///     Request URL in this key, Type URL
+/// MCSPlayBackFailureUserInfoKey:
+///     Request error in this key, type NSError
+extern NSNotificationName const MCSPlayBackRequestTaskDidFailedNotification;
+extern NSString *const MCSPlayBackRequestURLUserInfoKey;
+extern NSString *const MCSPlayBackRequestFailureUserInfoKey;
+
 @interface SJMediaCacheServer : NSObject
 + (instancetype)shared;
 

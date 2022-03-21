@@ -18,6 +18,10 @@
 #import "MCSPrefetcherManager.h"
 #import "MCSQueue.h"
 
+NSNotificationName const MCSPlayBackRequestTaskDidFailedNotification = @"MCSPlayBackRequestTaskDidFailedNotification";
+NSString *const MCSPlayBackRequestURLUserInfoKey = @"MCSPlayBackRequestURLUserInfoKey";
+NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailureUserInfoKey";
+
 @interface SJMediaCacheServer ()<MCSProxyServerDelegate>
 @property (nonatomic, strong, readonly) MCSProxyServer *server;
 @end
@@ -86,6 +90,18 @@
 - (id<MCSProxyTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
     return [MCSProxyTask.alloc initWithRequest:request delegate:delegate];
 }
+
+- (void)server:(MCSProxyServer *)server performTask:(id<MCSProxyTask>)task failure:(NSError *)error {
+    NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] initWithCapacity:2];
+    NSURL *proxyURL = task.request.URL;
+    NSURL *URL = [MCSURL.shared URLWithProxyURL:proxyURL];
+    userInfo[MCSPlayBackRequestURLUserInfoKey] = URL;
+    userInfo[MCSPlayBackRequestFailureUserInfoKey] = error;
+    
+    [NSNotificationCenter.defaultCenter postNotificationName:MCSPlayBackRequestTaskDidFailedNotification
+                                                      object:nil userInfo:userInfo];
+}
+
 @end
 
 
