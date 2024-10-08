@@ -195,6 +195,16 @@
 }
 
 - (void)HTTPConnectionDidDieWithNote:(NSNotification *)note {
+    if([NSThread currentThread].isMainThread) {
+        [self setupTimer];
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setupTimer];
+        });
+    }
+}
+
+- (void)setupTimer {
     [_timer invalidate];
     _timer = [MCSTimer.alloc initWithQueue:dispatch_get_main_queue() start:10.0 interval:0 repeats:NO block:^(MCSTimer *timer) {
         if ( self->_localServer.isRunning && UIApplication.sharedApplication.applicationState == UIApplicationStateBackground && self->_localServer.numberOfHTTPConnections == 0 ) {
