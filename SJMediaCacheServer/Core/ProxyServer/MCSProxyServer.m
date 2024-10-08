@@ -167,24 +167,7 @@
 
 - (void)start {
     _running = YES;
-    if ( _serverURL == nil ) {
-        _localServer = [MCSHTTPServer.alloc initWithProxyServer:self];
-        [_localServer setConnectionClass:MCSHTTPConnection.class];
-        [_localServer setType:@"_http._tcp"];
-    
-        UInt16 port = 2000;
-        for ( int i = 0 ; i < 10 ; ++ i ) {
-            [_localServer setPort:port];
-            if ( [self _start:NULL] ) {
-                _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", port]];
-                break;
-            }
-            port += (UInt16)(arc4random() % 1000 + 1);
-        }
-    }
-    else {
-        [self _start:NULL];
-    }
+    [self _start];
 }
 
 - (void)stop {
@@ -207,13 +190,13 @@
 }
  
 - (void)applicationWillEnterForegroundWithNote:(NSNotification *)note {
-    if ( _running ) [self _start:nil];
+    if ( _running ) [self _start];
     [self _endBackgroundTaskIfNeeded];
 }
 
 - (void)HTTPConnectionDidDieWithNote:(NSNotification *)note {
     [_timer invalidate];
-    _timer = [MCSTimer.alloc initWithQueue:dispatch_get_main_queue() start:1.0 interval:0 repeats:NO block:^(MCSTimer *timer) {
+    _timer = [MCSTimer.alloc initWithQueue:dispatch_get_main_queue() start:10.0 interval:0 repeats:NO block:^(MCSTimer *timer) {
         if ( self->_localServer.isRunning && UIApplication.sharedApplication.applicationState == UIApplicationStateBackground && self->_localServer.numberOfHTTPConnections == 0 ) {
             [self _stop];
         }
@@ -225,12 +208,24 @@
 
 #pragma mark -
 
-- (BOOL)_start:(NSError **)errorPtr {
-    if ( _localServer != nil ) {
-        if ( [_localServer isRunning] && [_localServer numberOfHTTPConnections] == 0 ) {
-            [self _stop];
+- (BOOL)_start {
+    if ( _localServer != nil && [_localServer start:NULL] ) {
+        return YES;
+    }
+    
+    _localServer = [MCSHTTPServer.alloc initWithProxyServer:self];
+    [_localServer setConnectionClass:MCSHTTPConnection.class];
+    [_localServer setType:@"_http._tcp"];
+
+    UInt16 port = 2000;
+    for ( int i = 0 ; i < 10 ; ++ i ) {
+        [_localServer setPort:port];
+        if ( [_localServer start:NULL] ) {
+            _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", port]];
+            [_delegate server:self serverURLDidChange:_serverURL];
+            return YES;
         }
-        return [_localServer start:errorPtr];
+        port += (UInt16)(arc4random() % 1000 + 1);
     }
     return NO;
 }

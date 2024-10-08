@@ -45,7 +45,6 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
         _server.delegate = self;
         [_server start];
         
-        MCSURL.shared.serverURL = _server.serverURL;
         
         self.resolveAssetIdentifier = ^NSString * _Nonnull(NSURL * _Nonnull URL) {
             NSString *retv = URL.absoluteString;
@@ -86,6 +85,10 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 }
 
 #pragma mark - MCSProxyServerDelegate
+
+- (void)server:(MCSProxyServer *)server serverURLDidChange:(NSURL *)serverURL {
+    MCSURL.shared.serverURL = _server.serverURL;
+}
 
 - (id<MCSProxyTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
     return [MCSProxyTask.alloc initWithRequest:request delegate:delegate];
