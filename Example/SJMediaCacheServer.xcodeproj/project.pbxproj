@@ -611,7 +611,7 @@
 			baseConfigurationReference = B54C6837CBAA07093C7830B7 /* Pods-SJMediaCacheServer_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = U5A7L7SMNP;
+				DEVELOPMENT_TEAM = DVCY355DY9;
 				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SJMediaCacheServer/SJMediaCacheServer-Prefix.pch";

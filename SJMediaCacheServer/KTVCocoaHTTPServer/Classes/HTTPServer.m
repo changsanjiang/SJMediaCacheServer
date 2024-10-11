@@ -557,17 +557,6 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_INFO; // | HTTP_LOG_FLAG_TRACE;
 	[newConnection start];
 }
 
-- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err {
-#ifdef DEBUG
-    if (err) {
-        NSLog(@"Socket disconnected due to error: %@", err.localizedDescription);
-    } else {
-        NSLog(@"Socket disconnected gracefully.");
-    }
-#endif
-    [self serverSocketDidDisconnect];
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Bonjour
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

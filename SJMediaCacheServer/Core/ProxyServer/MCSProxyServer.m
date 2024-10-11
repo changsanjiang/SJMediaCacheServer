@@ -10,6 +10,7 @@
 #import "NSURLRequest+MCS.h"
 #import "MCSLogger.h"
 #import "MCSQueue.h"
+#import "MCSHeartbeatManager.h"
 #import <objc/message.h>
 #if __has_include(<KTVCocoaHTTPServer/KTVCocoaHTTPServer.h>)
 #import <KTVCocoaHTTPServer/KTVCocoaHTTPServer.h>
@@ -18,95 +19,6 @@
 #import "KTVCocoaHTTPServer.h"
 #import "GCDAsyncSocket.h"
 #endif
-
-@interface MCSTimer : NSObject
-- (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCSTimer *timer))block;
-
-@property (nonatomic, readonly, getter=isValid) BOOL valid;
-
-- (void)resume;
-- (void)suspend;
-- (void)invalidate;
-@end
- 
-@implementation MCSTimer {
-    dispatch_semaphore_t _semaphore;
-    dispatch_source_t _timer;
-    NSTimeInterval _timeInterval;
-    BOOL _repeats;
-    BOOL _valid;
-    BOOL _suspend;
-}
-
-/// @param start 启动后延迟多少秒回调block
-- (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCSTimer *timer))block {
-    self = [super init];
-    if ( self ) {
-        _repeats = repeats;
-        _timeInterval = interval;
-        _valid = YES;
-        _suspend = YES;
-        _semaphore = dispatch_semaphore_create(1);
-        _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
-        dispatch_source_set_timer(_timer, dispatch_time(DISPATCH_TIME_NOW, (start * NSEC_PER_SEC)), (interval * NSEC_PER_SEC), 0);
-        __weak typeof(self) _self = self;
-        dispatch_source_set_event_handler(_timer, ^{
-            __strong typeof(_self) self = _self;
-            if ( self == nil ) return;
-            block(self);
-            if ( !repeats )
-                [self invalidate];
-        });
-    }
-    return self;
-}
-
-- (void)resume {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    if ( _valid && _suspend ) {
-        _suspend = NO;
-        dispatch_resume(_timer);
-    }
-    dispatch_semaphore_signal(_semaphore);
-}
-
-- (void)suspend {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    if ( _valid && !_suspend ) {
-        _suspend = YES;
-        dispatch_suspend(_timer);
-    }
-    dispatch_semaphore_signal(_semaphore);
-}
-
-- (void)invalidate {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    if ( _valid ) {
-        dispatch_source_cancel(_timer);
-        if ( _suspend )
-            dispatch_resume(_timer);
-        _timer = NULL;
-        _valid = NO;
-    }
-    dispatch_semaphore_signal(_semaphore);
-}
-
-- (BOOL)isValid {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    BOOL isValid = _valid;
-    dispatch_semaphore_signal(_semaphore);
-    return isValid;
-}
-
-- (void)dealloc {
-    [self invalidate];
-}
-
-@end
-
-@interface MCSProxyServer (internal)
-- (void)onHttpServerSocketDidDisconnect;
-@end
 
 @interface MCSHTTPServer : HTTPServer
 - (instancetype)initWithProxyServer:(__weak MCSProxyServer *)proxyServer;
@@ -124,10 +36,6 @@
 
 - (HTTPConfig *)config {
     return [HTTPConfig.alloc initWithServer:self documentRoot:self->documentRoot queue:mcs_queue()];
-}
-
-- (void)serverSocketDidDisconnect {
-    [_mcs_server onHttpServerSocketDidDisconnect];
 }
 @end
 
@@ -153,9 +61,12 @@
 @interface MCSProxyServer ()
 @property (nonatomic, strong, nullable) MCSHTTPServer *localServer;
 - (id<MCSProxyTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate;
+- (BOOL)isHeartBeatRequest:(HTTPMessage *)msg;
 @end
 
-@implementation MCSProxyServer
+@implementation MCSProxyServer {
+    MCSHeartbeatManager *mHeartbeatManager;
+}
 @synthesize serverURL = _serverURL;
 
 - (instancetype)init {
@@ -163,6 +74,14 @@
     _localServer = [MCSHTTPServer.alloc initWithProxyServer:self];
     [_localServer setConnectionClass:MCSHTTPConnection.class];
     [_localServer setType:@"_http._tcp"];
+    
+    __weak typeof(self) _self = self;
+    mHeartbeatManager = [MCSHeartbeatManager.alloc initWithInterval:10 failureHandler:^(MCSHeartbeatManager * _Nonnull mgr) {
+        __strong typeof(_self) self = _self;
+        if ( self == nil ) return;
+        [self stop];
+        [self start];
+    }];
     return self;
 }
 
@@ -186,26 +105,24 @@
         }
         
         _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", _localServer.listeningPort]];
+        mHeartbeatManager.serverURL = _serverURL;
         [_delegate server:self serverURLDidChange:_serverURL];
+        [mHeartbeatManager startHeartbeat];
         return YES;
     }
 }
 
 - (void)stop {
     [_localServer stop];
+    [mHeartbeatManager stopHeartbeat];
 }
 
 - (id<MCSProxyTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
     return [self.delegate server:self taskWithRequest:request delegate:delegate];
 }
 
-#pragma mark -
-
-- (void)onHttpServerSocketDidDisconnect {
-#ifdef DEBUG
-    NSLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
-#endif
-    [self stop];
+- (BOOL)isHeartBeatRequest:(HTTPMessage *)msg {
+    return [mHeartbeatManager isHeartBeatRequest:msg];
 }
 @end
 
@@ -268,15 +185,23 @@
 }
 @end
 
-@implementation MCSHTTPResponse
+@implementation MCSHTTPResponse {
+    BOOL isHeartbeatRequest;
+}
+
 - (instancetype)initWithConnection:(MCSHTTPConnection *)connection {
     self = [super init];
     if ( self ) {
         _connection = connection;
         
         MCSProxyServer *server = [connection mcs_server];
-        _request = [NSURLRequest mcs_requestWithMessage:connection.mcs_request];
-        _task = [server taskWithRequest:_request delegate:self];
+        if ( [server isHeartBeatRequest:connection.mcs_request] ) {
+            isHeartbeatRequest = YES;
+        }
+        else {
+            _request = [NSURLRequest mcs_requestWithMessage:connection.mcs_request];
+            _task = [server taskWithRequest:_request delegate:self];
+        }
     }
     return self;
 }
@@ -290,7 +215,7 @@
 }
 
 - (BOOL)isDone {
-    return _task.isDone;
+    return isHeartbeatRequest || _task.isDone;
 }
 
 - (void)connectionDidClose {
@@ -300,15 +225,18 @@
 - (NSDictionary *)httpHeaders {
     NSMutableDictionary *headers = NSMutableDictionary.dictionary;
     headers[@"Server"] = @"localhost";
-    headers[@"Content-Type"] = _task.response.contentType;
+    headers[@"Content-Type"] = isHeartbeatRequest ? @"application/octet-stream" : _task.response.contentType;
     headers[@"Accept-Ranges"] = @"bytes";
     headers[@"Connection"] = @"keep-alive";
     return headers;
 }
 
 - (BOOL)delayResponseHeaders {
+    if ( isHeartbeatRequest ) return NO;
     return _task != nil ? !_task.isPrepared : YES;
 }
+
+#pragma mark - mark
 
 - (void)task:(id<MCSProxyTask>)task didReceiveResponse:(id<MCSResponse>)response {
     [_connection responseHasAvailableData:self];
@@ -327,6 +255,9 @@
 #pragma mark - Chunked
  
 - (UInt64)contentLength {
+    if ( isHeartbeatRequest ) {
+        return 0;
+    }
     if ( _task.isPrepared ) {
         NSParameterAssert(_task.response.totalLength != 0);
     }

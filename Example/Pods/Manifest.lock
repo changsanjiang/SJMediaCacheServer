@@ -29,14 +29,14 @@ PODS:
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJMediaCacheServer (1.7.6):
-    - SJMediaCacheServer/Core (= 1.7.6)
-    - SJMediaCacheServer/KTVCocoaHTTPServer (= 1.7.6)
+  - SJMediaCacheServer (1.7.8):
+    - SJMediaCacheServer/Core (= 1.7.8)
+    - SJMediaCacheServer/KTVCocoaHTTPServer (= 1.7.8)
     - SJUIKit/SQLite3
-  - SJMediaCacheServer/Core (1.7.6):
+  - SJMediaCacheServer/Core (1.7.8):
     - SJMediaCacheServer/KTVCocoaHTTPServer
     - SJUIKit/SQLite3
-  - SJMediaCacheServer/KTVCocoaHTTPServer (1.7.6):
+  - SJMediaCacheServer/KTVCocoaHTTPServer (1.7.8):
     - CocoaAsyncSocket
     - SJUIKit/SQLite3
   - SJUIKit/AttributesFactory (0.0.0.52):
@@ -94,11 +94,11 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
   SJBaseVideoPlayer: c8f2fdb374ec2c946c37b1f39eee24f0812a979b
-  SJMediaCacheServer: 3a558208af572554583d956dbf14e4bb7818f0e4
+  SJMediaCacheServer: 95bebce42f281fccaff25a5e8284022478ff7ba5
   SJUIKit: 8246b1001e616b0dbd090309fd58cdd609ae3fd4
   SJVideoPlayer: f819c5074aea5192fe624784f8a7e820e45b85cf
   YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30
 
 PODFILE CHECKSUM: 690818b1e4af91654d69c268d523fe8d360cee62
 
-COCOAPODS: 1.11.2
+COCOAPODS: 1.15.2
