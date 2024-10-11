@@ -179,15 +179,16 @@
 
 - (BOOL)start {
     @synchronized (self) {
-        if ( !_localServer.isRunning || _localServer.listeningPort == 0 ) {
-            if ( [_localServer start:NULL] ) {
-                _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", _localServer.listeningPort]];
-                [_delegate server:self serverURLDidChange:_serverURL];
-                return YES;
-            }
+        if ( self.isRunning ) return YES;
+        
+        if ( ![_localServer start:NULL] ) {
+            return NO;
         }
+        
+        _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", _localServer.listeningPort]];
+        [_delegate server:self serverURLDidChange:_serverURL];
+        return YES;
     }
-    return NO;
 }
 
 - (void)stop {
