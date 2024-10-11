@@ -11,15 +11,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @interface MCSProxyServer : NSObject
-- (instancetype)init;
 @property (nonatomic, weak, nullable) id<MCSProxyServerDelegate> delegate;
 
-/// return 0 if the server is not running.
-@property (nonatomic, readonly) UInt16 port;
 @property (nonatomic, readonly, getter=isRunning) BOOL running;
 @property (nonatomic, strong, readonly) NSURL *serverURL;
 
-- (void)start;
+- (BOOL)start;
 - (void)stop;
 @end
 

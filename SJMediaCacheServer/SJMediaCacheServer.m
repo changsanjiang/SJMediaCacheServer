@@ -43,8 +43,6 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
         
         _server = [MCSProxyServer.alloc init];
         _server.delegate = self;
-        [_server start];
-        
         
         self.resolveAssetIdentifier = ^NSString * _Nonnull(NSURL * _Nonnull URL) {
             NSString *retv = URL.absoluteString;
@@ -64,12 +62,9 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
     
     if ( URL.isFileURL )
         return URL;
-    
-    if ( !_server.isRunning )
-        [_server start];
-    
+
     // proxy URL
-    if ( _server.isRunning )
+    if ( _server.isRunning || [_server start] )
         return [MCSURL.shared proxyURLWithURL:URL];
 
     // param URL

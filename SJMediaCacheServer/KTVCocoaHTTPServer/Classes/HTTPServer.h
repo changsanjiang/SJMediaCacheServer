@@ -205,3 +205,8 @@
 - (NSUInteger)numberOfWebSocketConnections;
 
 @end
+
+
+@interface HTTPServer (Subclass)
+- (void)serverSocketDidDisconnect;
+@end

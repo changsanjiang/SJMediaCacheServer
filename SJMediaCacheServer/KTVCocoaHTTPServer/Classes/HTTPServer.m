@@ -411,6 +411,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_INFO; // | HTTP_LOG_FLAG_TRACE;
 	
 	dispatch_sync(serverQueue, ^{ @autoreleasepool {
 		
+        // 开启一个监听套接字来接受外部连接，这种操作在后台模式下是有限制的。
 		success = [asyncSocket acceptOnInterface:interface port:port error:&err];
 		if (success)
 		{
@@ -554,6 +555,17 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_INFO; // | HTTP_LOG_FLAG_TRACE;
 	[connectionsLock unlock];
 	
 	[newConnection start];
+}
+
+- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err {
+#ifdef DEBUG
+    if (err) {
+        NSLog(@"Socket disconnected due to error: %@", err.localizedDescription);
+    } else {
+        NSLog(@"Socket disconnected gracefully.");
+    }
+#endif
+    [self serverSocketDidDisconnect];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

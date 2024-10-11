@@ -104,6 +104,10 @@
 
 @end
 
+@interface MCSProxyServer (internal)
+- (void)onHttpServerSocketDidDisconnect;
+@end
+
 @interface MCSHTTPServer : HTTPServer
 - (instancetype)initWithProxyServer:(__weak MCSProxyServer *)proxyServer;
 @property (nonatomic, weak, readonly, nullable) MCSProxyServer *mcs_server;
@@ -120,6 +124,10 @@
 
 - (HTTPConfig *)config {
     return [HTTPConfig.alloc initWithServer:self documentRoot:self->documentRoot queue:mcs_queue()];
+}
+
+- (void)serverSocketDidDisconnect {
+    [_mcs_server onHttpServerSocketDidDisconnect];
 }
 @end
 
@@ -144,133 +152,73 @@
 
 @interface MCSProxyServer ()
 @property (nonatomic, strong, nullable) MCSHTTPServer *localServer;
-@property (nonatomic) UIBackgroundTaskIdentifier backgroundTask;
 - (id<MCSProxyTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate;
-@property (nonatomic, strong, nullable) MCSTimer *timer;
 @end
 
 @implementation MCSProxyServer
+@synthesize serverURL = _serverURL;
+
 - (instancetype)init {
     self = [super init];
-    if ( self ) {
-        _backgroundTask = UIBackgroundTaskInvalid;
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationWillEnterForegroundWithNote:) name:UIApplicationWillEnterForegroundNotification object:nil];
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(applicationDidEnterBackgroundWithNote:) name:UIApplicationDidEnterBackgroundNotification object:nil];
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(HTTPConnectionDidDieWithNote:) name:HTTPConnectionDidDieNotification object:nil];
-    }
+    _localServer = [MCSHTTPServer.alloc initWithProxyServer:self];
+    [_localServer setConnectionClass:MCSHTTPConnection.class];
+    [_localServer setType:@"_http._tcp"];
     return self;
 }
 
-- (void)dealloc {
-    [NSNotificationCenter.defaultCenter removeObserver:self];
+- (BOOL)isRunning {
+    BOOL notStarted = !_localServer.isRunning || _localServer.listeningPort == 0;
+    return !notStarted;
 }
 
-- (void)start {
-    _running = YES;
-    [self _start];
+- (NSURL *)serverURL {
+    @synchronized (self) {
+        return _serverURL;
+    }
+}
+
+- (BOOL)start {
+    @synchronized (self) {
+        if ( !_localServer.isRunning || _localServer.listeningPort == 0 ) {
+            if ( [_localServer start:NULL] ) {
+                _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", _localServer.listeningPort]];
+                [_delegate server:self serverURLDidChange:_serverURL];
+                return YES;
+            }
+        }
+    }
+    return NO;
 }
 
 - (void)stop {
-    _running = NO;
-    [self _stop];
+    [_localServer stop];
 }
 
 - (id<MCSProxyTask>)taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
     return [self.delegate server:self taskWithRequest:request delegate:delegate];
 }
 
-- (UInt16)port {
-    return _localServer.listeningPort;
-}
-
-#pragma mark -
- 
-- (void)applicationDidEnterBackgroundWithNote:(NSNotification *)note {
-    [self _beginBackgroundTask];
-}
- 
-- (void)applicationWillEnterForegroundWithNote:(NSNotification *)note {
-    if ( _running ) [self _start];
-    [self _endBackgroundTaskIfNeeded];
-}
-
-- (void)HTTPConnectionDidDieWithNote:(NSNotification *)note {
-    if([NSThread currentThread].isMainThread) {
-        [self setupTimer];
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self setupTimer];
-        });
-    }
-}
-
-- (void)setupTimer {
-    [_timer invalidate];
-    _timer = [MCSTimer.alloc initWithQueue:dispatch_get_main_queue() start:10.0 interval:0 repeats:NO block:^(MCSTimer *timer) {
-        if ( self->_localServer.isRunning && UIApplication.sharedApplication.applicationState == UIApplicationStateBackground && self->_localServer.numberOfHTTPConnections == 0 ) {
-            [self _stop];
-        }
-        [timer invalidate];
-        self->_timer = nil;
-    }];
-    [_timer resume];
-}
-
 #pragma mark -
 
-- (BOOL)_start {
-    if ( _localServer != nil && [_localServer start:NULL] ) {
-        return YES;
-    }
-    
-    _localServer = [MCSHTTPServer.alloc initWithProxyServer:self];
-    [_localServer setConnectionClass:MCSHTTPConnection.class];
-    [_localServer setType:@"_http._tcp"];
-
-    UInt16 port = 2000;
-    for ( int i = 0 ; i < 10 ; ++ i ) {
-        [_localServer setPort:port];
-        if ( [_localServer start:NULL] ) {
-            _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", port]];
-            [_delegate server:self serverURLDidChange:_serverURL];
-            return YES;
-        }
-        port += (UInt16)(arc4random() % 1000 + 1);
-    }
-    return NO;
-}
-
-- (void)_stop {
-    [_timer invalidate];
-    _timer = nil;
-    [_localServer stop];
-    [self _endBackgroundTaskIfNeeded];
-}
-
-- (void)_beginBackgroundTask {
-    [self _endBackgroundTaskIfNeeded];
-    if ( UIApplication.sharedApplication.applicationState == UIApplicationStateBackground ) {
-        _backgroundTask = [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler:^{
-            [self _endBackgroundTaskIfNeeded];
-        }];
-    }
-}
-
-- (void)_endBackgroundTaskIfNeeded {
-    if ( _backgroundTask != UIBackgroundTaskInvalid ) {
-        [UIApplication.sharedApplication endBackgroundTask:_backgroundTask];
-        _backgroundTask = UIBackgroundTaskInvalid;
-    }
+- (void)onHttpServerSocketDidDisconnect {
+#ifdef DEBUG
+    NSLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
+#endif
+    [self stop];
 }
 @end
 
 #pragma mark -
 
-@implementation MCSHTTPConnection
+@implementation MCSHTTPConnection {
+    __weak MCSProxyServer *mServer;
+}
+
 - (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig {
     self = [super initWithAsyncSocket:newSocket configuration:aConfig];
     if ( self ) {
         MCSHTTPConnectionDebugLog(@"\n%@: <%p>.init;\n", NSStringFromClass(self.class), self);
+        mServer = ((MCSHTTPServer *)config.server).mcs_server;
     }
     return self;
 }
@@ -289,7 +237,7 @@
 }
 
 - (MCSProxyServer *)mcs_server {
-    return ((MCSHTTPServer *)config.server).mcs_server;
+    return mServer;
 }
 
 - (void)finishResponse {
