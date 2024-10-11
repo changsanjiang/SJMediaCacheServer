@@ -144,8 +144,8 @@
                     @synchronized (self) {
                         if ( timer == self->mTimer ) {
                             if ( error != nil ) {
-                                self->mFailureHandler(self);
                                 [self stopHeartbeat];
+                                self->mFailureHandler(self);
                                 return;
                             }
                             [timer resume];

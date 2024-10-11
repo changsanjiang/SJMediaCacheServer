@@ -76,7 +76,7 @@
     [_localServer setType:@"_http._tcp"];
     
     __weak typeof(self) _self = self;
-    mHeartbeatManager = [MCSHeartbeatManager.alloc initWithInterval:10 failureHandler:^(MCSHeartbeatManager * _Nonnull mgr) {
+    mHeartbeatManager = [MCSHeartbeatManager.alloc initWithInterval:5 failureHandler:^(MCSHeartbeatManager * _Nonnull mgr) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
         [self stop];
@@ -86,8 +86,7 @@
 }
 
 - (BOOL)isRunning {
-    BOOL notStarted = !_localServer.isRunning || _localServer.listeningPort == 0;
-    return !notStarted;
+    return _localServer.isRunning;
 }
 
 - (NSURL *)serverURL {
