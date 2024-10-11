@@ -2910,20 +2910,71 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		09CF2ED22F64363A1AD4B0E73EE33503 /* Release */ = {
+		019E9FF2BBA3DAB8CEB26453B5A1B302 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 84938DBE839C72F1A8634E911785D00C /* SJBaseVideoPlayer.release.xcconfig */;
+			baseConfigurationReference = A25D8459BFE6ED407F60BA52A6563872 /* SJVideoPlayer.debug.xcconfig */;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/SJBaseVideoPlayer/SJBaseVideoPlayer-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				GCC_PREFIX_HEADER = "Target Support Files/SJVideoPlayer/SJVideoPlayer-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = SJBaseVideoPlayer;
-				PRODUCT_NAME = SJBaseVideoPlayer;
+				PRODUCT_MODULE_NAME = SJVideoPlayer;
+				PRODUCT_NAME = SJVideoPlayer;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		03D93DC5EBB26D926D5FA6180E9F8968 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 357D09794711F99059A2DE74F173CA38 /* SJMediaCacheServer.debug.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/SJMediaCacheServer/SJMediaCacheServer-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = SJMediaCacheServer;
+				PRODUCT_NAME = SJMediaCacheServer;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2B8EC6CB1B26EED42FF0915B29612BA1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E878D046EBF0F7135FAC5B5953146F1A /* SJMediaCacheServer.release.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/SJMediaCacheServer/SJMediaCacheServer-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = SJMediaCacheServer;
+				PRODUCT_NAME = SJMediaCacheServer;
 				PUBLIC_HEADERS_FOLDER_PATH = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -2934,7 +2985,7 @@
 			};
 			name = Release;
 		};
-		25AD9454612BF454A1E3DC4CD4FA8C6D /* Debug */ = {
+		2B9E26EAE2CD392AD762421F663075A1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -2987,7 +3038,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -3000,20 +3051,46 @@
 			};
 			name = Debug;
 		};
-		2739FE53F14B71CD4EC4A27785852A37 /* Debug */ = {
+		452EE849B9F79981BEA5F4F1C32B66B1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9BE15A5703EFCB75DFE3F1F4E978D1C4 /* YYModel.debug.xcconfig */;
+			baseConfigurationReference = EB1FD4CDD1DB5C4BE8F81C0011A77A7F /* Masonry.release.xcconfig */;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/YYModel/YYModel-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				GCC_PREFIX_HEADER = "Target Support Files/Masonry/Masonry-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = YYModel;
-				PRODUCT_NAME = YYModel;
+				PRODUCT_MODULE_NAME = Masonry;
+				PRODUCT_NAME = Masonry;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		461D06ACA3CE4EB1CDD5B70E719AFF97 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 1163C3A14109A4D2F9FD9C7D0CC1511A /* Masonry.debug.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/Masonry/Masonry-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = Masonry;
+				PRODUCT_NAME = Masonry;
 				PUBLIC_HEADERS_FOLDER_PATH = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -3023,15 +3100,17 @@
 			};
 			name = Debug;
 		};
-		41E08D31E91C9611773A117A6E908BA3 /* Debug */ = {
+		5A9AED5E96ED778B9B3CD19DA5E2BC21 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 3046FC0456342F8CCC5A9A8D90A4DA19 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MACH_O_TYPE = staticlib;
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
@@ -3043,220 +3122,7 @@
 			};
 			name = Debug;
 		};
-		4639B8AB4C47AF59C814959EDFED451A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 357D09794711F99059A2DE74F173CA38 /* SJMediaCacheServer.debug.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/SJMediaCacheServer/SJMediaCacheServer-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = SJMediaCacheServer;
-				PRODUCT_NAME = SJMediaCacheServer;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		4C39AF1CD9B6AEDA0B2091F453CA9264 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 07005C3E239743AA8248E9B517E13CD9 /* CocoaAsyncSocket.debug.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/CocoaAsyncSocket/CocoaAsyncSocket-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = CocoaAsyncSocket;
-				PRODUCT_NAME = CocoaAsyncSocket;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		72895039D29909EF43464B748B76D683 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 56A1AA9E47F05A989126CC6D30DA4230 /* SJBaseVideoPlayer.debug.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/SJBaseVideoPlayer/SJBaseVideoPlayer-prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(inherited)",
-					SJDEBUG,
-				);
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = SJBaseVideoPlayer;
-				PRODUCT_NAME = SJBaseVideoPlayer;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		734986019671ED72382D125943BE152F /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 854E08D6C331D7BD60C65B0014EA9DC2 /* YYModel.release.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/YYModel/YYModel-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = YYModel;
-				PRODUCT_NAME = YYModel;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		7628E77745F1D49AFC8EBD35E28DC1EE /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = EB1FD4CDD1DB5C4BE8F81C0011A77A7F /* Masonry.release.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/Masonry/Masonry-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = Masonry;
-				PRODUCT_NAME = Masonry;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		807090782F36A82710CFE8F4723CCD02 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2FDC0C8316BB10E6DF5D4C4A73CB7425 /* CocoaAsyncSocket.release.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/CocoaAsyncSocket/CocoaAsyncSocket-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = CocoaAsyncSocket;
-				PRODUCT_NAME = CocoaAsyncSocket;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		860BC9CE050BA6B1199287E344C8C515 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = E878D046EBF0F7135FAC5B5953146F1A /* SJMediaCacheServer.release.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/SJMediaCacheServer/SJMediaCacheServer-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = SJMediaCacheServer;
-				PRODUCT_NAME = SJMediaCacheServer;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		872B47D156270C8CE064FD6E6D5592B5 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 896C0076B8C8AC3EE8558B31BFBAB238 /* Pods-SJMediaCacheServer_Example.release.xcconfig */;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				MACH_O_TYPE = staticlib;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PODS_ROOT = "$(SRCROOT)";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.${PRODUCT_NAME:rfc1034identifier}";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		C02329919DD2F068C343CA81C9347FA4 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1163C3A14109A4D2F9FD9C7D0CC1511A /* Masonry.debug.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/Masonry/Masonry-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = Masonry;
-				PRODUCT_NAME = Masonry;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		CA547D2C7E9A8A153DC2B27FBE00B112 /* Release */ = {
+		63FAF33E1C55B71A5F5A8B3CC8749F99 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -3306,7 +3172,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3318,15 +3184,90 @@
 			};
 			name = Release;
 		};
-		D4955BE75392AA0B2A7A3B699F52A040 /* Debug */ = {
+		7239552833C0DFA537D82A83A3A21554 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9BE15A5703EFCB75DFE3F1F4E978D1C4 /* YYModel.debug.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/YYModel/YYModel-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = YYModel;
+				PRODUCT_NAME = YYModel;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7CBC49FB37C13A3B6D1A06825E0D849C /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 03688A7AF5FE0C88FF4AAE14429B4176 /* SJVideoPlayer.release.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/SJVideoPlayer/SJVideoPlayer-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = SJVideoPlayer;
+				PRODUCT_NAME = SJVideoPlayer;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		82582CA16090D7AB1E3D6BB129C2DAAF /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 854E08D6C331D7BD60C65B0014EA9DC2 /* YYModel.release.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/YYModel/YYModel-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = YYModel;
+				PRODUCT_NAME = YYModel;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B71416CC5CA25D862764B0253C296A7C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4A1011C9648B3938F4A5D5ED9DA2D77D /* SJUIKit.debug.xcconfig */;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
 				GCC_PREFIX_HEADER = "Target Support Files/SJUIKit/SJUIKit-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				PRIVATE_HEADERS_FOLDER_PATH = "";
@@ -3341,38 +3282,16 @@
 			};
 			name = Debug;
 		};
-		DE70C6C240430151F729082CE839CF90 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = A25D8459BFE6ED407F60BA52A6563872 /* SJVideoPlayer.debug.xcconfig */;
-			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/SJVideoPlayer/SJVideoPlayer-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				OTHER_LDFLAGS = "";
-				OTHER_LIBTOOLFLAGS = "";
-				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = SJVideoPlayer;
-				PRODUCT_NAME = SJVideoPlayer;
-				PUBLIC_HEADERS_FOLDER_PATH = "";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		E0E92D4A0A6DC9787C278394A3FA5A15 /* Release */ = {
+		BF82DD5C935DDF5354DF1C3324E2AA31 /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D7E82F8CA94911ABCDBA1D38120CD1C9 /* SJUIKit.release.xcconfig */;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
 				GCC_PREFIX_HEADER = "Target Support Files/SJUIKit/SJUIKit-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				PRIVATE_HEADERS_FOLDER_PATH = "";
@@ -3388,20 +3307,121 @@
 			};
 			name = Release;
 		};
-		F3589EA984301E3E1099517D0D4F4708 /* Release */ = {
+		CBCDA2913C64C99EF8C1770B4F127D83 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 03688A7AF5FE0C88FF4AAE14429B4176 /* SJVideoPlayer.release.xcconfig */;
+			baseConfigurationReference = 896C0076B8C8AC3EE8558B31BFBAB238 /* Pods-SJMediaCacheServer_Example.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/SJVideoPlayer/SJVideoPlayer-prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MACH_O_TYPE = staticlib;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PODS_ROOT = "$(SRCROOT)";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.${PRODUCT_NAME:rfc1034identifier}";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CE3C8CD4015D30E24BF480397957A0DF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 56A1AA9E47F05A989126CC6D30DA4230 /* SJBaseVideoPlayer.debug.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/SJBaseVideoPlayer/SJBaseVideoPlayer-prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					SJDEBUG,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOLFLAGS = "";
 				PRIVATE_HEADERS_FOLDER_PATH = "";
-				PRODUCT_MODULE_NAME = SJVideoPlayer;
-				PRODUCT_NAME = SJVideoPlayer;
+				PRODUCT_MODULE_NAME = SJBaseVideoPlayer;
+				PRODUCT_NAME = SJBaseVideoPlayer;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D6537C9833F32B66A2162733A0E9FF30 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 07005C3E239743AA8248E9B517E13CD9 /* CocoaAsyncSocket.debug.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/CocoaAsyncSocket/CocoaAsyncSocket-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = CocoaAsyncSocket;
+				PRODUCT_NAME = CocoaAsyncSocket;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F41C45CC5C4E6B0B101F44644F8C133F /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 84938DBE839C72F1A8634E911785D00C /* SJBaseVideoPlayer.release.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/SJBaseVideoPlayer/SJBaseVideoPlayer-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = SJBaseVideoPlayer;
+				PRODUCT_NAME = SJBaseVideoPlayer;
+				PUBLIC_HEADERS_FOLDER_PATH = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FF040DA32519597124442785F86E33DF /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2FDC0C8316BB10E6DF5D4C4A73CB7425 /* CocoaAsyncSocket.release.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/CocoaAsyncSocket/CocoaAsyncSocket-prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				PRODUCT_MODULE_NAME = CocoaAsyncSocket;
+				PRODUCT_NAME = CocoaAsyncSocket;
 				PUBLIC_HEADERS_FOLDER_PATH = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -3418,8 +3438,8 @@
 		0929A8F1B2C7EBD46C9DC180930A69F7 /* Build configuration list for PBXNativeTarget "SJBaseVideoPlayer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				72895039D29909EF43464B748B76D683 /* Debug */,
-				09CF2ED22F64363A1AD4B0E73EE33503 /* Release */,
+				CE3C8CD4015D30E24BF480397957A0DF /* Debug */,
+				F41C45CC5C4E6B0B101F44644F8C133F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3427,8 +3447,8 @@
 		0F2BAEF2E3ADDA5146DDCC8F2393B86F /* Build configuration list for PBXNativeTarget "CocoaAsyncSocket" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4C39AF1CD9B6AEDA0B2091F453CA9264 /* Debug */,
-				807090782F36A82710CFE8F4723CCD02 /* Release */,
+				D6537C9833F32B66A2162733A0E9FF30 /* Debug */,
+				FF040DA32519597124442785F86E33DF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3436,8 +3456,8 @@
 		3F8A7CFA1ED5AB90A77D4350C671E29C /* Build configuration list for PBXNativeTarget "Pods-SJMediaCacheServer_Example" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				41E08D31E91C9611773A117A6E908BA3 /* Debug */,
-				872B47D156270C8CE064FD6E6D5592B5 /* Release */,
+				5A9AED5E96ED778B9B3CD19DA5E2BC21 /* Debug */,
+				CBCDA2913C64C99EF8C1770B4F127D83 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3445,8 +3465,8 @@
 		4821239608C13582E20E6DA73FD5F1F9 /* Build configuration list for PBXProject "Pods" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				25AD9454612BF454A1E3DC4CD4FA8C6D /* Debug */,
-				CA547D2C7E9A8A153DC2B27FBE00B112 /* Release */,
+				2B9E26EAE2CD392AD762421F663075A1 /* Debug */,
+				63FAF33E1C55B71A5F5A8B3CC8749F99 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3454,8 +3474,8 @@
 		5A789A948947157496AAE69394A68D5E /* Build configuration list for PBXNativeTarget "SJVideoPlayer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DE70C6C240430151F729082CE839CF90 /* Debug */,
-				F3589EA984301E3E1099517D0D4F4708 /* Release */,
+				019E9FF2BBA3DAB8CEB26453B5A1B302 /* Debug */,
+				7CBC49FB37C13A3B6D1A06825E0D849C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3463,8 +3483,8 @@
 		5FAF570367D2989CC3AADAE7E5CE4BC2 /* Build configuration list for PBXNativeTarget "SJUIKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				D4955BE75392AA0B2A7A3B699F52A040 /* Debug */,
-				E0E92D4A0A6DC9787C278394A3FA5A15 /* Release */,
+				B71416CC5CA25D862764B0253C296A7C /* Debug */,
+				BF82DD5C935DDF5354DF1C3324E2AA31 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3472,8 +3492,8 @@
 		6525CCFB5FEEBC36FDDE16A88CD85B83 /* Build configuration list for PBXNativeTarget "Masonry" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C02329919DD2F068C343CA81C9347FA4 /* Debug */,
-				7628E77745F1D49AFC8EBD35E28DC1EE /* Release */,
+				461D06ACA3CE4EB1CDD5B70E719AFF97 /* Debug */,
+				452EE849B9F79981BEA5F4F1C32B66B1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3481,8 +3501,8 @@
 		730649E175A92954D2E913765F2397D9 /* Build configuration list for PBXNativeTarget "SJMediaCacheServer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4639B8AB4C47AF59C814959EDFED451A /* Debug */,
-				860BC9CE050BA6B1199287E344C8C515 /* Release */,
+				03D93DC5EBB26D926D5FA6180E9F8968 /* Debug */,
+				2B8EC6CB1B26EED42FF0915B29612BA1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3490,8 +3510,8 @@
 		B3B143610698DA663A5C5D067B518381 /* Build configuration list for PBXNativeTarget "YYModel" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				2739FE53F14B71CD4EC4A27785852A37 /* Debug */,
-				734986019671ED72382D125943BE152F /* Release */,
+				7239552833C0DFA537D82A83A3A21554 /* Debug */,
+				82582CA16090D7AB1E3D6BB129C2DAAF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
