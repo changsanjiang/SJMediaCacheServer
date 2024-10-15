@@ -29,7 +29,6 @@
 @interface MCSPrefetchOperation ()<MCSPrefetcherDelegate> {
     id<MCSPrefetcher> _prefetcher;
     BOOL _isPrefetchAllMode;
-    dispatch_semaphore_t _semaphore;
     BOOL _isCancelled;
     BOOL _isExecuting;
     BOOL _isFinished;
@@ -41,7 +40,6 @@
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
     self = [super init];
     if ( self ) {
-        _semaphore = dispatch_semaphore_create(1);
         _URL = URL;
         _preloadSize = bytes;
         _mcs_progressBlock = progressBlock;
@@ -53,7 +51,6 @@
 - (instancetype)initWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
     self = [super init];
     if ( self ) {
-        _semaphore = dispatch_semaphore_create(1);
         _URL = URL;
         _numberOfPreloadedFiles = num;
         _mcs_progressBlock = progressBlock;
@@ -65,7 +62,6 @@
 - (instancetype)initWithURL:(NSURL *)URL progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
     self = [super init];
     if ( self ) {
-        _semaphore = dispatch_semaphore_create(1);
         _URL = URL;
         _isPrefetchAllMode = YES;
         _mcs_progressBlock = progressBlock;
@@ -75,17 +71,23 @@
 }
 
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher progressDidChange:(float)progress {
-    if ( _mcs_progressBlock != nil ) {
-        _mcs_progressBlock(progress);
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ( self->_mcs_progressBlock != nil ) {
+            self->_mcs_progressBlock(progress);
+        }
+    });
 }
 
 - (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error {
-    [self _completeOperationIfExecuting];
-
-    if ( _mcs_completionBlock != nil ) {
-        _mcs_completionBlock(error);
+    @synchronized (self) {
+        [self _completeOperationIfExecuting];
     }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ( self->_mcs_completionBlock != nil ) {
+            self->_mcs_completionBlock(error);
+        }
+    });
 }
 
 #pragma mark -
@@ -95,44 +97,44 @@
     _isExecuting = YES;
     [self didChangeValueForKey:@"isExecuting"];
     
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    if ( _isCancelled ) {
-        dispatch_semaphore_signal(_semaphore);
-        [self _completeOperationIfExecuting];
-        return;
-    }
-    dispatch_semaphore_signal(_semaphore);
-    
-    MCSAssetType type = [MCSURL.shared assetTypeForURL:_URL];
-    switch ( type ) {
-        case MCSAssetTypeFILE: {
-            _prefetcher = _isPrefetchAllMode || _numberOfPreloadedFiles != 0 ?
-                [FILEPrefetcher.alloc initWithURL:_URL delegate:self delegateQueue:dispatch_get_main_queue()] :
-                [FILEPrefetcher.alloc initWithURL:_URL preloadSize:_preloadSize delegate:self delegateQueue:dispatch_get_main_queue()];
+    @synchronized (self) {
+        if ( _isCancelled ) {
+            [self _completeOperationIfExecuting];
+            return;
         }
-            break;
-        case MCSAssetTypeHLS: {
-            if ( _isPrefetchAllMode ) {
-                _prefetcher = [HLSPrefetcher.alloc initWithURL:_URL delegate:self delegateQueue:dispatch_get_main_queue()];
+        
+        MCSAssetType type = [MCSURL.shared assetTypeForURL:_URL];
+        switch ( type ) {
+            case MCSAssetTypeFILE: {
+                _prefetcher = _isPrefetchAllMode || _numberOfPreloadedFiles != 0 ?
+                    [FILEPrefetcher.alloc initWithURL:_URL delegate:self] :
+                    [FILEPrefetcher.alloc initWithURL:_URL preloadSize:_preloadSize delegate:self];
             }
-            else {
-                _prefetcher = _numberOfPreloadedFiles != 0 ?
-                    [HLSPrefetcher.alloc initWithURL:_URL numberOfPreloadedFiles:_numberOfPreloadedFiles delegate:self delegateQueue:dispatch_get_main_queue()] :
-                    [HLSPrefetcher.alloc initWithURL:_URL preloadSize:_preloadSize delegate:self delegateQueue:dispatch_get_main_queue()];
+                break;
+            case MCSAssetTypeHLS: {
+                if ( _isPrefetchAllMode ) {
+                    _prefetcher = [HLSPrefetcher.alloc initWithURL:_URL delegate:self];
+                }
+                else {
+                    _prefetcher = _numberOfPreloadedFiles != 0 ?
+                        [HLSPrefetcher.alloc initWithURL:_URL numberOfPreloadedFiles:_numberOfPreloadedFiles delegate:self] :
+                        [HLSPrefetcher.alloc initWithURL:_URL preloadSize:_preloadSize delegate:self];
+                }
             }
+                break;
         }
-            break;
+        [_prefetcher prepare];
+        
+        if ( _startedExecuteBlock != nil ) _startedExecuteBlock(self);
     }
-    [_prefetcher prepare];
-    
-    if ( _startedExecuteBlock != nil ) _startedExecuteBlock(self);
 }
 
 - (void)cancel {
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    _isCancelled = YES;
-    dispatch_semaphore_signal(_semaphore);
-    [self _completeOperationIfExecuting];
+    @synchronized (self) {
+        if ( _isFinished ) return;
+        _isCancelled = YES;
+        [self _completeOperationIfExecuting];
+    }
 }
 
 #pragma mark -
@@ -143,21 +145,13 @@
     [self willChangeValueForKey:@"isFinished"];
     [self willChangeValueForKey:@"isExecuting"];
 
-    BOOL isChanged = NO;
-    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    if ( !_isFinished ) {
-        [self->_prefetcher close];
-        self->_prefetcher = nil;
-        _isExecuting = NO;
-        _isFinished = YES;
-        isChanged = YES;
-    }
-    dispatch_semaphore_signal(_semaphore);
+    if ( _isCancelled ) [_prefetcher cancel];
+    _prefetcher = nil;
+    _isExecuting = NO;
+    _isFinished = YES;
     
-    if ( isChanged ) {
-        [self didChangeValueForKey:@"isExecuting"];
-        [self didChangeValueForKey:@"isFinished"];
-    }
+    [self didChangeValueForKey:@"isExecuting"];
+    [self didChangeValueForKey:@"isFinished"];
 }
 
 #pragma mark -
@@ -167,11 +161,15 @@
 }
 
 - (BOOL)isExecuting {
-    return _isExecuting;
+    @synchronized (self) {
+        return _isExecuting;
+    }
 }
 
 - (BOOL)isFinished {
-    return _isFinished;
+    @synchronized (self) {
+        return _isFinished;
+    }
 }
 
 - (BOOL)isCancelled {

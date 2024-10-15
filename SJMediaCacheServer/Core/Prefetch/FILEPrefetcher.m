@@ -9,14 +9,12 @@
 #import "MCSLogger.h"
 #import "MCSAssetManager.h"
 #import "NSURLRequest+MCS.h"
-#import "MCSQueue.h"
 #import "MCSUtils.h"
 #import "MCSError.h"
 
 @interface FILEPrefetcher () <MCSAssetReaderDelegate>
 @property (nonatomic) BOOL isCalledPrepare;
-@property (nonatomic) BOOL isClosed;
-@property (nonatomic) BOOL isDone;
+@property (nonatomic) BOOL isCompleted;
 
 @property (nonatomic, strong, nullable) id<MCSAssetReader> reader;
 @property (nonatomic) NSUInteger loadedLength;
@@ -28,21 +26,19 @@
 
 @implementation FILEPrefetcher
 @synthesize delegate = _delegate;
-@synthesize delegateQueue = _delegateQueue;
 
-- (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate delegateQueue:(nonnull dispatch_queue_t)queue {
+- (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
     self = [super init];
     if ( self ) {
         _delegate = delegate;
-        _delegateQueue = queue;
         _URL = URL;
         _preloadSize = bytes;
     }
     return self;
 }
 
-- (instancetype)initWithURL:(NSURL *)URL delegate:(nullable id<MCSPrefetcherDelegate>)delegate delegateQueue:(dispatch_queue_t)queue {
-    return [self initWithURL:URL preloadSize:NSNotFound delegate:delegate delegateQueue:queue];
+- (instancetype)initWithURL:(NSURL *)URL delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
+    return [self initWithURL:URL preloadSize:NSNotFound delegate:delegate];
 }
 
 - (NSString *)description {
@@ -53,33 +49,33 @@
     MCSPrefetcherDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
-- (void)prepare {
-    mcs_queue_sync(^{
-       if ( _isClosed || _isCalledPrepare )
-            return;
-        
-        MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
-
-        _isCalledPrepare = YES;
-        
-        NSURLRequest *request = [NSURLRequest mcs_requestWithURL:_URL range:NSMakeRange(0, _preloadSize)];
-        _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
-        [_reader prepare];
-    });
-}
-
-- (void)close {
-    mcs_queue_sync(^{
-        [self _close];
-    });
-}
-
 - (float)progress {
-    __block float progress = 0;
-    mcs_queue_sync(^{
-        progress = _progress;
-    });
-    return progress;
+    @synchronized (self) {
+        return _progress;
+    }
+}
+
+#pragma mark - mark
+
+- (void)prepare {
+    @synchronized (self) {
+        if ( _isCompleted || _isCalledPrepare )
+             return;
+         
+         MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
+
+         _isCalledPrepare = YES;
+         
+         NSURLRequest *request = [NSURLRequest mcs_requestWithURL:_URL range:NSMakeRange(0, _preloadSize)];
+         _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
+         [_reader prepare];
+    }
+}
+
+- (void)cancel {
+    @synchronized (self) {
+        [self _cancel];
+    }
 }
 
 #pragma mark -
@@ -89,79 +85,75 @@
 }
 
 - (void)reader:(nonnull id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    mcs_queue_async(^{
-        [self _reader:reader hasAvailableDataWithLength:length];
-    });
+    @synchronized (self) {
+        if ( _isCompleted ) return;
+        
+        if ( [reader seekToOffset:reader.offset + length] ) {
+            _loadedLength += length;
+            
+            float progress = _loadedLength * 1.0 / reader.response.range.length;
+            if ( progress >= 1 ) progress = 1;
+            _progress = progress;
+            
+            MCSPrefetcherDebugLog(@"%@: <%p>.preload { preloadSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)reader.response.totalLength, progress);
+                        
+            if ( _delegate != nil ) {
+                [_delegate prefetcher:self progressDidChange:progress];
+            }
+            
+            if ( _reader.status == MCSReaderStatusFinished ) {
+                [self _completeWithError:nil];
+            }
+        }
+    }
 }
 
 - (void)reader:(id<MCSAssetReader>)reader didAbortWithError:(nullable NSError *)error {
-    mcs_queue_sync(^{
-        if ( _isClosed )
-            return;
-        [self _didCompleteWithError:error ?: [NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+    @synchronized (self) {
+        [self _completeWithError:error ?: [NSError mcs_errorWithCode:MCSAbortError userInfo:@{
             MCSErrorUserInfoObjectKey : self,
             MCSErrorUserInfoReasonKey : @"预加载已被终止!"
         }]];
-    });
+    }
 }
 
-#pragma mark -
+#pragma mark - unlocked
 
-- (void)_reader:(nonnull id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    if ( _isDone || _isClosed )
-        return;
-    
-    if ( [reader seekToOffset:reader.offset + length] ) {
-        _loadedLength += length;
+/// unlocked
+- (void)_completeWithError:(NSError *_Nullable)error {
+    if ( !_isCompleted ) {
+        _isCompleted = YES;
         
-        float progress = _loadedLength * 1.0 / reader.response.range.length;
-        if ( progress >= 1 ) progress = 1;
-        _progress = progress;
+    #ifdef DEBUG
+        if ( error == nil )
+            MCSPrefetcherDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
+        else
+            MCSPrefetcherErrorLog(@"%@:  <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
+    #endif
         
-        MCSPrefetcherDebugLog(@"%@: <%p>.preload { preloadSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)reader.response.totalLength, progress);
-                    
         if ( _delegate != nil ) {
-            dispatch_async(_delegateQueue, ^{
-                [self.delegate prefetcher:self progressDidChange:progress];
-            });
+            [_delegate prefetcher:self didCompleteWithError:error];
         }
+    }
+}
+
+/// unlocked
+- (void)_cancel {
+    if ( !_isCompleted ) {
+        _isCompleted = YES;
         
-        if ( _progress >= 1 || _reader.status == MCSReaderStatusFinished ) {
-            [self _didCompleteWithError:nil];
+        NSError *error = [NSError mcs_errorWithCode:MCSCancelledError userInfo:@{
+            MCSErrorUserInfoObjectKey : self,
+            MCSErrorUserInfoReasonKey : @"预加载被取消"
+        }];
+        [_reader abortWithError:error];
+        _reader = nil;
+        
+        MCSPrefetcherDebugLog(@"%@: <%p>.cancel;\n", NSStringFromClass(self.class), self);
+        
+        if ( _delegate != nil ) {
+            [_delegate prefetcher:self didCompleteWithError:error];
         }
     }
-}
-
-- (void)_didCompleteWithError:(nullable NSError *)error {
-    if ( _isClosed )
-        return;
-    
-    _isDone = (error == nil);
-    
-#ifdef DEBUG
-    if ( _isDone )
-        MCSPrefetcherDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
-    else
-        MCSPrefetcherErrorLog(@"%@:  <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
-#endif
-    
-    [self _close];
-    
-    if ( _delegate != nil ) {
-        dispatch_async(_delegateQueue, ^{
-            [self.delegate prefetcher:self didCompleteWithError:error];
-        });
-    }
-}
-
-- (void)_close {
-    if ( _isClosed )
-        return;
-    
-    _isClosed = YES;
-    [_reader abortWithError:nil];
-    _reader = nil;
-
-    MCSPrefetcherDebugLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
 }
 @end
