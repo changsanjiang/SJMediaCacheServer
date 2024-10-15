@@ -13,7 +13,6 @@
 #import "MCSConfiguration.h"
 #import "MCSRootDirectory.h"
 #import "NSFileHandle+MCS.h"
-#import "MCSQueue.h"
 
 @interface FILEAssetContentNode : NSObject<FILEAssetContentNode>
 @property (nonatomic, readonly) UInt64 startPositionInAsset;
@@ -200,16 +199,17 @@
 }
 
 - (void)prepare {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         NSParameterAssert(self.name != nil);
-        if ( mIsPrepared ) return;
-        mIsPrepared = YES;
-        NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
-        _configuration = MCSConfiguration.alloc.init;
-        mProvider = [FILEAssetContentProvider contentProviderWithDirectory:directory];
-        mNodeList = [FILEAssetContentNodeList.alloc initWithContents:mProvider.contents];
-        [self _restructureContents];
-    });
+        if ( !mIsPrepared ) {
+            mIsPrepared = YES;
+            NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
+            _configuration = MCSConfiguration.alloc.init;
+            mProvider = [FILEAssetContentProvider contentProviderWithDirectory:directory];
+            mNodeList = [FILEAssetContentNodeList.alloc initWithContents:mProvider.contents];
+            [self _restructureContents];
+        }
+    }
 }
 
 - (NSString *)path {
@@ -223,17 +223,15 @@
 }
 
 - (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(id<FILEAssetContentNode> node, BOOL *stop))block {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         [mNodeList enumerateContentNodesUsingBlock:block];
-    });
+    }
 }
 
 - (BOOL)isStored {
-    __block BOOL isStored = NO;
-    mcs_queue_sync(^{
-        isStored = _isStored;
-    });
-    return isStored;
+    @synchronized (self) {
+        return _isStored;
+    }
 }
 
 - (nullable NSString *)filepathForContent:(id<MCSAssetContent>)content {
@@ -241,27 +239,21 @@
 }
 
 - (nullable NSString *)pathExtension {
-    __block NSString *pathExtension = nil;
-    mcs_queue_sync(^{
-        pathExtension = _pathExtension;
-    });
-    return pathExtension;
+    @synchronized (self) {
+        return _pathExtension;
+    }
 }
 
 - (nullable NSString *)contentType {
-    __block NSString *contentType = nil;
-    mcs_queue_sync(^{
-        contentType = _contentType;
-    });
-    return contentType;
+    @synchronized (self) {
+        return _contentType;
+    }
 }
 
 - (NSUInteger)totalLength {
-    __block NSUInteger totalLength = 0;
-    mcs_queue_sync(^{
-        totalLength = _totalLength;
-    });
-    return totalLength;
+    @synchronized (self) {
+        return _totalLength;
+    }
 }
 
 /// 该操作将会对 content 进行一次 readwriteRetain, 请在不需要时, 调用一次 readwriteRelease.
@@ -282,9 +274,9 @@
     NSString *contentType = response.contentType;
     NSUInteger totalLength = response.totalLength;
     NSUInteger offset = response.range.location;
-    __block id<MCSAssetContent>content = nil;
-    __block BOOL isUpdated = NO;
-    mcs_queue_sync(^{
+    id<MCSAssetContent>content = nil;
+    BOOL isUpdated = NO;
+    @synchronized (self) {
         if ( _totalLength != totalLength || ![_pathExtension isEqualToString:pathExtension] || ![_contentType isEqualToString:contentType] ) {
             _totalLength = totalLength;
             _pathExtension = pathExtension;
@@ -295,7 +287,7 @@
         content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension];
         [content readwriteRetain];
         if ( content != nil ) [mNodeList bringContentToNode:content];
-    });
+    }
     
     if ( isUpdated )
         [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetMetadataDidLoadNotification object:self];
@@ -303,11 +295,16 @@
 }
 
 - (void)readwriteCountDidChange:(NSInteger)count {
-    if ( count == 0 )
-        [self _restructureContents];
+    if ( count == 0 ) {
+        @synchronized (self) {
+            [self _restructureContents];
+        }
+    }
 }
 
-// 拆分重组内容. 将内容按指定字节拆分重组
+/// 拆分重组内容. 将内容按指定字节拆分重组
+///
+/// unlocked
 - (void)_restructureContents {
     if ( _isStored || self.readwriteCount != 0 ) return;
     UInt64 capacity = 1 * 1024 * 1024;
@@ -358,6 +355,7 @@
     _isStored = mNodeList.head.longestContent.length == _totalLength;
 }
 
+/// unlocked
 - (void)_removeExcessContentsForNode:(FILEAssetContentNode *)node {
     NSArray<id<MCSAssetContent>> *contents = node.allContents;
     // 同一段位置可能存在多个文件
