@@ -74,7 +74,7 @@
     UInt64 fileSize = (UInt64)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
     MCSAssetContent *content = [MCSAssetContent.alloc initWithFilepath:filepath startPositionInAsset:0 length:fileSize];
     [content readwriteRetain];
-    [self preparationDidFinishWithContentReadwrite:content range:NSMakeRange(0, content.length)];
+    [self contentDidReady:content range:NSMakeRange(0, content.length)];
 }
 @end
 
@@ -144,7 +144,7 @@
             UInt64 fileSize = (UInt64)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
             MCSAssetContent *content = [MCSAssetContent.alloc initWithFilepath:filepath startPositionInAsset:0 length:fileSize];
             [content readwriteRetain];
-            [self preparationDidFinishWithContentReadwrite:content range:NSMakeRange(0, fileSize)];
+            [self contentDidReady:content range:NSMakeRange(0, fileSize)];
         }
             break;
     }

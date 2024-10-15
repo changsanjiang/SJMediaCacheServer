@@ -9,23 +9,7 @@
 #import "MCSError.h"
 #import "MCSLogger.h"
 #import "NSFileHandle+MCS.h"
-#import "MCSQueue.h"
 #import "MCSUtils.h"
-
-/// 子类需要实现的方法
-///
-@interface MCSAssetContentReader (MCSSubclassHooks)
-/// 子类准备内容.
-- (void)prepareContent;
-- (void)didAbortWithError:(nullable NSError *)error;
-@end
-
-/// 子类通知抽象类发生了什么事情
-///
-@interface MCSAssetContentReader (MCSSubclassNotify)
-/// 子类通知抽象类已准备好`content`. 调用前, 请对 `content`做一次 readwriteRetain
-- (void)preparationDidFinishWithContentReadwrite:(id<MCSAssetContent>)content range:(NSRange)range;
-@end
 
 @interface MCSAssetContentReader()<MCSAssetContentObserver> {
     MCSReaderStatus _mStatus;
@@ -49,11 +33,9 @@
 }
 
 - (void)dealloc {
-    mcs_queue_sync(^{
-        _delegate = nil;
-        [self _abortWithError:nil];
-        MCSContentReaderDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
-    });
+    _delegate = nil;
+    [self _abortWithError:nil];
+    MCSContentReaderDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
 - (NSString *)description {
@@ -61,15 +43,13 @@
 }
 
 - (nullable __kindof id<MCSAssetContent>)content {
-    __block id<MCSAssetContent> content = nil;
-    mcs_queue_sync(^{
-        content = _mContent;
-    });
-    return content;
+    @synchronized (self) {
+        return _mContent;
+    }
 }
 
 - (void)prepare {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         switch ( _mStatus ) {
             case MCSReaderStatusReadyToRead:
             case MCSReaderStatusPreparing:
@@ -83,60 +63,62 @@
             }
                 break;
         }
-    });
+    }
 }
 
 - (nullable NSData *)readDataOfLength:(UInt64)lengthParam {
-    __block NSData *data = nil;
-    mcs_queue_sync(^{
-        switch ( _mStatus ) {
-            case MCSReaderStatusUnknown:
-            case MCSReaderStatusPreparing:
-            case MCSReaderStatusFinished:
-            case MCSReaderStatusAborted:
-                /* return */
-                return;
-            case MCSReaderStatusReadyToRead: {
-                NSError *error = nil;
-                UInt64 capacity = MIN(lengthParam, _mAvailableLength - _mReadLength);
-                UInt64 position = _mRange.location + _mReadLength;
-                data = [_mContent readDataAtPosition:position capacity:capacity error:&error];
-                if ( error != nil ) {
-                    [self _abortWithError:error];
-                    return;
-                }
-                
-                UInt64 readLength = data.length;
-                if ( readLength == 0 )
-                    return;
-                
-                _mReadLength += readLength;
-                BOOL isReachedEndPosition = (_mReadLength == _mRange.length);
-                
-                MCSContentReaderDebugLog(@"%@: <%p>.read { range: %@, offset: %llu, length: %llu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_mRange), position, readLength);
+    NSError *error = nil;
+    NSData *data = nil;
+    @try {
+        @synchronized (self) {
+            switch ( _mStatus ) {
+                case MCSReaderStatusUnknown:
+                case MCSReaderStatusPreparing:
+                case MCSReaderStatusFinished:
+                case MCSReaderStatusAborted:
+                    /* return */
+                    return nil;
+                case MCSReaderStatusReadyToRead: {
+                    UInt64 capacity = MIN(lengthParam, _mAvailableLength - _mReadLength);
+                    UInt64 position = _mRange.location + _mReadLength;
+                    data = [_mContent readDataAtPosition:position capacity:capacity error:&error];
+                    if ( data == nil || error != nil ) return nil; // return if error & @finally abort
+                    
+                    UInt64 readLength = data.length;
+                    if ( readLength == 0 ) return nil;
+                    
+                    _mReadLength += readLength;
 
-                if ( isReachedEndPosition ) [self _finish];
+                    MCSContentReaderDebugLog(@"%@: <%p>.read { range: %@, offset: %llu, length: %llu };\n", NSStringFromClass(self.class), self, NSStringFromRange(_mRange), position, readLength);
+                    
+                    BOOL isReachedEndPosition = (_mReadLength == _mRange.length);
+                    if ( isReachedEndPosition ) {
+                        [self _finish];
+                    }
+                }
+                    break;
             }
-                break;
         }
-    });
-    return data;
+        return data;
+    } @finally {
+        if ( error != nil ) {
+            [self abortWithError:error];
+        }
+    }
 }
 
 - (BOOL)seekToOffset:(UInt64)offset {
-    __block BOOL result = NO;
-    mcs_queue_sync(^{
+    @synchronized (self) {
         switch ( _mStatus ) {
             case MCSReaderStatusUnknown:
             case MCSReaderStatusPreparing:
             case MCSReaderStatusFinished:
             case MCSReaderStatusAborted:
                 /* return */
-                return;
+                return NO;
             case MCSReaderStatusReadyToRead: {
                 NSRange range = NSMakeRange(_mRange.location, _mAvailableLength);
-                if ( !NSLocationInRange(offset - 1, range) )
-                    return;
+                if ( !NSLocationInRange(offset - 1, range) ) return NO;
                 
                 // offset     = range.location + readLength;
                 // readLength = offset - range.location
@@ -148,73 +130,52 @@
                         [self _finish];
                     }
                 }
-                result = YES;
+                return YES;
             }
-                break;
         }
-    });
-    return result;
+    }
 }
 
 - (void)abortWithError:(nullable NSError *)error {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         [self _abortWithError:error];
-    });
+    }
 }
 
 #pragma mark -
 
 - (NSRange)range {
-    __block NSRange range;
-    mcs_queue_sync(^{
-        range = _mRange;
-    });
-    return range;
+    @synchronized (self) {
+        return _mRange;
+    }
 }
 
 - (UInt64)availableLength {
-    __block UInt64 availableLength;
-    mcs_queue_sync(^{
-        availableLength = _mAvailableLength;
-    });
-    return availableLength;
+    @synchronized (self) {
+        return _mAvailableLength;
+    }
 }
 
 - (UInt64)offset {
-    __block UInt64 offset = 0;
-    mcs_queue_sync(^{
-        offset = _mRange.location + _mReadLength;
-    });
-    return offset;
+    @synchronized (self) {
+        return _mRange.location + _mReadLength;
+    }
 }
 
 - (MCSReaderStatus)status {
-    __block MCSReaderStatus status;
-    mcs_queue_sync(^{
-        status = _mStatus;
-    });
-    return status;
+    @synchronized (self) {
+        return _mStatus;
+    }
 }
 
-#pragma mark - subclass
-
-- (void)prepareContent {
-    @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                   reason:[NSString stringWithFormat:@"You must override %@ in a subclass.", NSStringFromSelector(_cmd)]
-                                 userInfo:nil];
-}
-
-- (void)didAbortWithError:(nullable NSError *)error {
-    // nothing
-    // 子类可以重写该方法去清理相关资源
-}
+#pragma mark - subclass callback
 
 /// 子类在完成准备后的回调
 ///
 ///     调用前, 请对 `content`做一次 readwriteRetain
 ///
-- (void)preparationDidFinishWithContentReadwrite:(id<MCSAssetContent>)content range:(NSRange)range {
-    mcs_queue_sync(^{
+- (void)contentDidReady:(id<MCSAssetContent>)content range:(NSRange)range {
+    @synchronized (self) {
         switch ( _mStatus ) {
             case MCSReaderStatusFinished:
             case MCSReaderStatusAborted:
@@ -235,20 +196,20 @@
             }
                 break;
         }
-    });
+    }
 }
 
 #pragma mark - MCSAssetContentObserver
 
 - (void)content:(id<MCSAssetContent>)content didWriteDataWithLength:(NSUInteger)length {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         NSRange contentRange = NSMakeRange(_mContent.startPositionInAsset, content.length);
         _mAvailableLength = NSIntersectionRange(contentRange, _mRange).length;
-        [_delegate reader:self hasAvailableDataWithLength:length];
-    });
+    }
+    [_delegate reader:self hasAvailableDataWithLength:length];
 }
 
-#pragma mark -
+#pragma mark - unlocked
 
 - (void)_abortWithError:(nullable NSError *)error {
     switch ( _mStatus ) {
@@ -291,6 +252,8 @@
     [_mContent readwriteRelease];
     [_mContent closeRead];
 }
+
+- (void)didAbortWithError:(nullable NSError *)error { }
 @end
 
 
@@ -320,7 +283,7 @@
     }
     
     [mFileContent readwriteRetain];
-    [self preparationDidFinishWithContentReadwrite:mFileContent range:mReadRange];
+    [self contentDidReady:mFileContent range:mReadRange];
 }
 @end
 
@@ -376,7 +339,7 @@
             NSMutableURLRequest *newRequest = [[mRequest mcs_requestWithRange:newRange] mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:mDataType]];
             mTask = [MCSDownload.shared downloadWithRequest:newRequest priority:mNetworkTaskPriority delegate:self];
         }
-        [self preparationDidFinishWithContentReadwrite:mHTTPContent range:mReadRange];
+        [self contentDidReady:mHTTPContent range:mReadRange];
     }
     // download ts all content
     else {
@@ -389,78 +352,36 @@
 - (void)downloadTask:(id<MCSDownloadTask>)task willPerformHTTPRedirectionWithNewRequest:(NSURLRequest *)request { }
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didReceiveResponse:(id<MCSDownloadResponse>)response {
-    mcs_queue_sync(^{
-        switch ( self.status ) {
-            case MCSReaderStatusFinished:
-            case MCSReaderStatusAborted:
-            case MCSReaderStatusReadyToRead:
-                /* return */
-                return;
-            case MCSReaderStatusUnknown:
-            case MCSReaderStatusPreparing: {
-                if ( mHTTPContent == nil ) {
-                    mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response];
-                    
-                    if ( mHTTPContent == nil ) {
-                        [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
-                            MCSErrorUserInfoObjectKey : response,
-                            MCSErrorUserInfoReasonKey : @"创建content失败!"
-                        }]];
-                        return;
-                    }
-                    
-                    [self preparationDidFinishWithContentReadwrite:mHTTPContent range:response.statusCode == 206 ? response.range : NSMakeRange(0, response.totalLength)];
-                }
-            }
-                break;
+    if ( mHTTPContent == nil ) {
+        mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response];
+        
+        if ( mHTTPContent == nil ) {
+            [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
+                MCSErrorUserInfoObjectKey : response,
+                MCSErrorUserInfoReasonKey : @"创建content失败!"
+            }]];
+            return;
         }
-    });
+        
+        [self contentDidReady:mHTTPContent range:response.range];
+    }
 }
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didReceiveData:(NSData *)data {
-    mcs_queue_sync(^{
-        switch ( self.status ) {
-            case MCSReaderStatusFinished:
-            case MCSReaderStatusAborted:
-                /* return */
-                return;
-            case MCSReaderStatusUnknown:
-            case MCSReaderStatusPreparing:
-            case MCSReaderStatusReadyToRead: {
-                NSError *error = nil;
-                if ( ![mHTTPContent writeData:data error:&error] ) {
-                    [self abortWithError:error];
-                }
-            }
-                break;
-        }
-    });
+    NSError *error = nil;
+    if ( ![mHTTPContent writeData:data error:&error] ) {
+        [self abortWithError:error];
+    }
 }
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didCompleteWithError:(NSError *)error {
-    mcs_queue_sync(^{
-        switch ( self.status ) {
-            case MCSReaderStatusFinished:
-            case MCSReaderStatusAborted:
-                /* return */
-                return;
-            case MCSReaderStatusUnknown:
-            case MCSReaderStatusPreparing:
-            case MCSReaderStatusReadyToRead: {
-                if ( error != nil ) {
-                    [self abortWithError:error];
-                }
-                //    else {
-                //        // finished download
-                //    }
-            }
-                break;
-        }
-    });
+    mTask = nil;
+    if ( error != nil ) {
+        [self abortWithError:error];
+    }
 }
 
 - (void)didAbortWithError:(nullable NSError *)error {
     [mTask cancel];
-    mTask = nil;
 }
 @end

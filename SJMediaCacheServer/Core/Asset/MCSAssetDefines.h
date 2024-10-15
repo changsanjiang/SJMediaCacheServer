@@ -53,15 +53,5 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)reader:(id<MCSAssetContentReader>)reader hasAvailableDataWithLength:(NSUInteger)length;
 - (void)reader:(id<MCSAssetContentReader>)reader didAbortWithError:(nullable NSError *)error;
 @end
-
-
-@protocol MCSAssetContentReaderSubclass <NSObject>
-// hooks
-- (void)prepareContent;
-- (void)didAbortWithError:(nullable NSError *)error;
-
-// subclass callback
-- (void)preparationDidFinishWithContentReadwrite:(id<MCSAssetContent>)content range:(NSRange)range;
-@end
 NS_ASSUME_NONNULL_END
 #endif /* MCSAssetDefines_h */

@@ -9,7 +9,7 @@
 #import "MCSAssetDefines.h"
 
 NS_ASSUME_NONNULL_BEGIN
-@interface MCSAssetContentReader : NSObject<MCSAssetContentReader, MCSAssetContentReaderSubclass>
+@interface MCSAssetContentReader : NSObject<MCSAssetContentReader>
 - (instancetype)initWithAsset:(id<MCSAsset>)asset delegate:(id<MCSAssetContentReaderDelegate>)delegate;
 - (void)prepare;
 @property (nonatomic, strong, readonly, nullable) __kindof id<MCSAssetContent> content;
@@ -22,6 +22,21 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)abortWithError:(nullable NSError *)error;
 @end
 
+
+@interface MCSAssetContentReader (Internal)
+/// 实现类在准备好 content 之后, 调用该方法通知抽象类
+///
+/// 实现类通知抽象类已准备好`content`. 调用前, 请对 `content`做一次 readwriteRetain
+- (void)contentDidReady:(id<MCSAssetContent>)content range:(NSRange)range;
+@end
+
+@interface MCSAssetContentReader (Subclass)
+- (void)prepareContent; /// 实现类准备内容
+@end
+
+@interface MCSAssetContentReader (Hooks)
+- (void)didAbortWithError:(nullable NSError *)error;
+@end
 
 @interface MCSAssetFileContentReader : MCSAssetContentReader
 
