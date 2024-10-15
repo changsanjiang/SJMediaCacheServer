@@ -20,9 +20,9 @@
     NSHashTable<id<MCSAssetReaderObserver>> *mObservers;
     MCSReaderStatus mStatus;
     FILEAsset *mAsset;
-    NSInteger mCurrentIndex;
     NSURLRequest *mRequest;
-    NSArray<id<MCSAssetContentReader>> *_Nullable mSubreaders;
+    NSArray<id<MCSAssetContentReader>> *_Nullable mContentReaders;
+    NSInteger mCurrentReaderIndex;
     UInt64 mReadLength;
     id<MCSResponse> mResponse;
     __weak id<MCSAssetReaderDelegate> mDelegate;
@@ -31,7 +31,7 @@
     NSRange mFixedRange;
 }
  
-@property (nonatomic, readonly, nullable) id<MCSAssetContentReader> current;
+@property (nonatomic, readonly, nullable) id<MCSAssetContentReader> currentReader;
 @end
 
 @implementation FILEAssetReader
@@ -46,7 +46,7 @@
         mDelegate = delegate;
         mNetworkTaskPriority = networkTaskPriority;
         mReadDataDecoder = readDataDecoder;
-        mCurrentIndex = NSNotFound;
+        mCurrentReaderIndex = NSNotFound;
         mFixedRange = MCSNSRangeUndefined;
         [mAsset readwriteRetain];
     }
@@ -54,12 +54,10 @@
 }
 
 - (void)dealloc {
-    mcs_queue_sync(^{
-        mDelegate = nil;
-        [mObservers removeAllObjects];
-        [self _abortWithError:nil];
-        MCSAssetReaderDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
-    });
+    mDelegate = nil;
+    [mObservers removeAllObjects];
+    [self _abortWithError:nil];
+    MCSAssetReaderDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
 - (NSString *)description {
@@ -67,7 +65,7 @@
 }
 
 - (void)prepare {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         switch ( mStatus ) {
             case MCSReaderStatusPreparing:
             case MCSReaderStatusFinished:
@@ -78,128 +76,125 @@
             case MCSReaderStatusUnknown: {
                 mStatus = MCSReaderStatusPreparing;
                 MCSAssetReaderDebugLog(@"%@: <%p>.prepare { asset: %@ };\n", NSStringFromClass(self.class), self, mAsset.name);
-                [self _notifyObserversWithStatus:mStatus];
+                [self _notifyObserversWithStatus:MCSReaderStatusPreparing];
                 [self _prepare];
             }
                 break;
         }
-    });
+    }
 }
 
-- (NSData *)readDataOfLength:(NSUInteger)length {
-    __block NSData *data = nil;
-    mcs_queue_sync(^{
+- (nullable NSData *)readDataOfLength:(NSUInteger)length {
+    NSData *data = nil;
+    @synchronized (self) {
         switch ( mStatus ) {
             case MCSReaderStatusUnknown:
             case MCSReaderStatusPreparing:
             case MCSReaderStatusFinished:
             case MCSReaderStatusAborted:
                 /* return */
-                return;
+                return nil;
             case MCSReaderStatusReadyToRead: {
-                id<MCSAssetContentReader> current = self.current;
-                if ( current.status != MCSReaderStatusReadyToRead )
-                    return;
-                data = [current readDataOfLength:length];
-                NSUInteger readLength = data.length;
-                if ( mReadDataDecoder != nil )
-                    data = mReadDataDecoder(mRequest, mSubreaders.firstObject.range.location + mReadLength, data);
-                mReadLength += readLength;
+                id<MCSAssetContentReader> currentReader = self.currentReader;
+                if ( currentReader.status == MCSReaderStatusReadyToRead ) {
+                    data = [currentReader readDataOfLength:length];
+                    if ( data == nil || data.length == 0 ) return nil;
+                    NSUInteger readLength = data.length;
+                    if ( mReadDataDecoder != nil ) data = mReadDataDecoder(mRequest, mContentReaders.firstObject.range.location + mReadLength, data);
+                    mReadLength += readLength;
+                }
                 
-                if ( current.status == MCSReaderStatusFinished )
-                    [self _prepareNextReader];
-            }
-                break;
-        }
-    });
-    return data;
-}
-
-- (BOOL)seekToOffset:(NSUInteger)offset {
-    __block BOOL result = NO;
-    mcs_queue_sync(^{
-        switch ( mStatus ) {
-            case MCSReaderStatusUnknown:
-            case MCSReaderStatusPreparing:
-            case MCSReaderStatusFinished:
-            case MCSReaderStatusAborted:
-                /* return */
-                return;
-            case MCSReaderStatusReadyToRead: {
-                for ( NSInteger i = 0 ; i < mSubreaders.count ; ++ i ) {
-                    id<MCSAssetContentReader> reader = mSubreaders[i];
-                    if ( NSLocationInRange(offset - 1, reader.range) ) {
-                        mCurrentIndex = i;
-                        result = [reader seekToOffset:offset];
-                        if ( result ) {
-                            mReadLength = offset - mResponse.range.location;
-                            if ( reader.status == MCSReaderStatusFinished ) [self _prepareNextReader];
-                        }
-                        break;
-                    }
+                if ( currentReader.status == MCSReaderStatusFinished ) {
+                    [self _prepareNextContentReader];
                 }
             }
                 break;
         }
-    });
-    return result;
+    }
+    return data;
+}
+
+- (BOOL)seekToOffset:(NSUInteger)offset {
+    @synchronized (self) {
+        switch ( mStatus ) {
+            case MCSReaderStatusUnknown:
+            case MCSReaderStatusPreparing:
+            case MCSReaderStatusFinished:
+            case MCSReaderStatusAborted:
+                /* return */
+                return NO;
+            case MCSReaderStatusReadyToRead: {
+                for ( NSInteger i = 0 ; i < mContentReaders.count ; ++ i ) {
+                    id<MCSAssetContentReader> contentReader = mContentReaders[i];
+                    if ( NSLocationInRange(offset - 1, contentReader.range) ) {
+                        mCurrentReaderIndex = i;
+                        BOOL result = [contentReader seekToOffset:offset];
+                        if ( result ) {
+                            mReadLength = offset - mResponse.range.location;
+                            
+                            if ( contentReader.status == MCSReaderStatusFinished ) {
+                                [self _prepareNextContentReader];
+                            }
+                        }
+                        return result;
+                    }
+                }
+                return NO;
+            }
+        }
+    }
 }
 
 - (void)abortWithError:(nullable NSError *)error {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         [self _abortWithError:error];
-    });
+    }
 }
 
 - (void)registerObserver:(id<MCSAssetReaderObserver>)observer {
-    if ( !observer ) return;
-    mcs_queue_sync(^{
-        if ( mObservers == nil ) {
-            mObservers = NSHashTable.weakObjectsHashTable;
+    if ( observer != nil ) {
+        @synchronized (self) {
+            if ( mObservers == nil ) {
+                mObservers = NSHashTable.weakObjectsHashTable;
+            }
+            [mObservers addObject:observer];
         }
-        [mObservers addObject:observer];
-    });
+    }
 }
 
 - (void)removeObserver:(id<MCSAssetReaderObserver>)observer {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         [mObservers removeObject:observer];
-    });
+    }
 }
 
 #pragma mark -
 
 - (id<MCSResponse>)response {
-    __block id<MCSResponse> response = nil;
-    mcs_queue_sync(^{
-        response = mResponse;
-    });
-    return response;
+    @synchronized (self) {
+        return mResponse;
+    }
 }
  
 - (NSUInteger)availableLength {
-    __block NSUInteger availableLength;
-    mcs_queue_sync(^{
-        id<MCSAssetContentReader> current = self.current;
-        availableLength = current.range.location + current.availableLength;
-    });
-    return availableLength;
+    @synchronized (self) {
+        id<MCSAssetContentReader> currentReader = self.currentReader;
+        NSUInteger availableLength = currentReader.range.location + currentReader.availableLength;
+        return availableLength;
+    }
 }
  
 - (NSUInteger)offset {
-    __block NSUInteger offset = 0;
-    mcs_queue_sync(^{
-        offset = mResponse.range.location + mReadLength;
-    });
-    return offset;
+    @synchronized (self) {
+        NSUInteger offset = mResponse.range.location + mReadLength;
+        return offset;
+    }
 }
 
 - (MCSReaderStatus)status {
-    __block MCSReaderStatus status;
-    mcs_queue_sync(^{
-        status = mStatus;
-    });
-    return status;
+    @synchronized (self) {
+        return mStatus;
+    }
 }
 
 - (id<MCSAsset>)asset {
@@ -213,15 +208,20 @@
 - (nullable id<MCSAssetReaderDelegate>)delegate {
     return mDelegate;
 }
-#pragma mark -
 
+
+#pragma mark - unlocked
+
+/// 创建 content readers
+///
+/// unlocked
 - (void)_prepare {
     NSUInteger totalLength = mAsset.totalLength;
     if ( totalLength == 0 ) {
         // create single sub reader to load asset total length
         NSURL *URL = mRequest.URL;
         NSMutableURLRequest *request = [mRequest mcs_requestWithRedirectURL:URL];
-        mSubreaders = @[
+        mContentReaders = @[
             [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:request networkTaskPriority:mNetworkTaskPriority dataType:MCSDataTypeFILE delegate:self]
         ];
     }
@@ -260,7 +260,7 @@
         }
         
         __block NSRange curr = fixed;
-        NSMutableArray<id<MCSAssetContentReader>> *subreaders = NSMutableArray.array;
+        NSMutableArray<id<MCSAssetContentReader>> *contentReaders = NSMutableArray.array;
         [mAsset enumerateContentNodesUsingBlock:^(id<FILEAssetContentNode>  _Nonnull node, BOOL * _Nonnull stop) {
             id<MCSAssetContent> content = node.longestContent;
             NSRange available = NSMakeRange(content.startPositionInAsset, content.length);
@@ -270,13 +270,13 @@
                 NSRange leftRange = NSMakeRange(curr.location, intersection.location - curr.location);
                 if ( leftRange.length != 0 ) {
                     MCSAssetHTTPContentReader *reader = [self _HTTPContentReaderWithRange:leftRange];
-                    [subreaders addObject:reader];
+                    [contentReaders addObject:reader];
                 }
                 
                 // downloaded part
                 NSRange matchedRange = NSMakeRange(NSMaxRange(leftRange), intersection.length);
                 MCSAssetFileContentReader *reader = [MCSAssetFileContentReader.alloc initWithAsset:mAsset fileContent:content rangeInAsset:matchedRange delegate:self];
-                [subreaders addObject:reader];
+                [contentReaders addObject:reader];
                 
                 // next part
                 curr = NSMakeRange(NSMaxRange(intersection), NSMaxRange(fixed) - NSMaxRange(intersection));
@@ -291,41 +291,50 @@
         if ( curr.length != 0 ) {
             // undownloaded part
             MCSAssetHTTPContentReader *reader = [self _HTTPContentReaderWithRange:curr];
-            [subreaders addObject:reader];
+            [contentReaders addObject:reader];
         }
          
-        mSubreaders = subreaders.copy;
+        mContentReaders = contentReaders.copy;
         mFixedRange = fixed;
     }
      
-    MCSAssetReaderDebugLog(@"%@: <%p>.createSubreaders { count: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)mSubreaders.count);
+    MCSAssetReaderDebugLog(@"%@: <%p>.createSubreaders { count: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)mContentReaders.count);
 
-    [self _prepareNextReader];
+    [self _prepareNextContentReader];
 }
 
-- (void)_prepareNextReader {
-    if ( self.current == mSubreaders.lastObject ) {
+/// 准备下一个 content reader
+///
+/// unlocked
+- (void)_prepareNextContentReader {
+    if ( self.currentReader == mContentReaders.lastObject ) {
         [self _finish];
         return;
     }
     
-    if ( mCurrentIndex == NSNotFound )
-        mCurrentIndex = 0;
+    if ( mCurrentReaderIndex == NSNotFound )
+        mCurrentReaderIndex = 0;
     else
-        mCurrentIndex += 1;
+        mCurrentReaderIndex += 1;
     
-    MCSAssetReaderDebugLog(@"%@: <%p>.subreader.prepare { index: %ld, sub: %@, count: %lu };\n", NSStringFromClass(self.class), self, (long)mCurrentIndex, self.current, (unsigned long)mSubreaders.count);
+    MCSAssetReaderDebugLog(@"%@: <%p>.subreader.prepare { index: %ld, sub: %@, count: %lu };\n", NSStringFromClass(self.class), self, (long)mCurrentReaderIndex, self.currentReader, (unsigned long)mContentReaders.count);
 
-    [self.current prepare];
+    [self.currentReader prepare];
 }
 
-- (nullable id<MCSAssetContentReader>)current {
-    if ( mCurrentIndex != NSNotFound && mCurrentIndex < mSubreaders.count ) {
-        return mSubreaders[mCurrentIndex];
+/// 获取当前的 content reader
+///
+/// unlocked
+- (nullable id<MCSAssetContentReader>)currentReader {
+    if ( mCurrentReaderIndex != NSNotFound && mCurrentReaderIndex < mContentReaders.count ) {
+        return mContentReaders[mCurrentReaderIndex];
     }
     return nil;
 }
 
+/// 出错中止
+///
+/// unlocked
 - (void)_abortWithError:(nullable NSError *)error {
     switch ( mStatus ) {
         case MCSReaderStatusFinished:
@@ -339,12 +348,15 @@
             [self _clean];
             [mDelegate reader:self didAbortWithError:error];
             MCSAssetReaderDebugLog(@"%@: <%p>.abort { error: %@ };\n", NSStringFromClass(self.class), self, error);
-            [self _notifyObserversWithStatus:mStatus];
+            [self _notifyObserversWithStatus:MCSReaderStatusAborted];
         }
             break;
     }
 }
 
+/// 读取完成
+///
+/// unlocked
 - (void)_finish {
     switch ( mStatus ) {
         case MCSReaderStatusFinished:
@@ -357,21 +369,27 @@
             [self _clean];
             mStatus = MCSReaderStatusFinished;
             MCSAssetReaderDebugLog(@"%@: <%p>.finished;\n", NSStringFromClass(self.class), self);
-            [self _notifyObserversWithStatus:mStatus];
+            [self _notifyObserversWithStatus:MCSReaderStatusFinished];
         }
             break;
     }
 }
 
+/// 清理
+///
+/// unlocked
 - (void)_clean {
-    [mSubreaders makeObjectsPerformSelector:@selector(abortWithError:) withObject:nil];
-    mSubreaders = nil;
+    [mContentReaders makeObjectsPerformSelector:@selector(abortWithError:) withObject:nil];
+    mContentReaders = nil;
 
     [mAsset readwriteRelease];
     
     MCSAssetReaderDebugLog(@"%@: <%p>.clean;\n", NSStringFromClass(self.class), self);
 }
 
+/// 通知
+///
+/// unlocked
 - (void)_notifyObserversWithStatus:(MCSReaderStatus)status {
     for ( id<MCSAssetReaderObserver> observer in MCSAllHashTableObjects(mObservers) ) {
         if ( [observer respondsToSelector:@selector(reader:statusDidChange:)] ) {
@@ -383,21 +401,21 @@
 #pragma mark - MCSAssetContentReaderDelegate
 
 - (void)readerWasReadyToRead:(id<MCSAssetContentReader>)reader {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         switch ( mStatus ) {
             default:break;
                 // first reader
             case MCSReaderStatusPreparing: {
                 id<MCSAssetContentReader> first = reader;
-                NSRange range = mSubreaders.count == 1 ? first.range : mFixedRange;
+                NSRange range = mContentReaders.count == 1 ? first.range : mFixedRange;
                 mResponse = [MCSResponse.alloc initWithTotalLength:mAsset.totalLength range:range contentType:mAsset.contentType];
                 mStatus = MCSReaderStatusReadyToRead;
                 [mDelegate reader:self didReceiveResponse:mResponse];
-                [self _notifyObserversWithStatus:mStatus];
+                [self _notifyObserversWithStatus:MCSReaderStatusReadyToRead];
             }
                 break;
         }
-    });
+    }
 }
 
 - (void)reader:(id<MCSAssetContentReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
@@ -405,9 +423,7 @@
 }
 
 - (void)reader:(id<MCSAssetContentReader>)reader didAbortWithError:(NSError *)error {
-    mcs_queue_sync(^{
-        [self _abortWithError:error];
-    });
+    [self abortWithError:error];
 }
 
 - (MCSAssetHTTPContentReader *)_HTTPContentReaderWithRange:(NSRange)range {
