@@ -81,7 +81,7 @@
                 case MCSReaderStatusReadyToRead: {
                     UInt64 capacity = MIN(lengthParam, _mAvailableLength - _mReadLength);
                     UInt64 position = _mRange.location + _mReadLength;
-                    data = [_mContent readDataAtPosition:position capacity:capacity error:&error];
+                    data = capacity != 0 ? [_mContent readDataAtPosition:position capacity:capacity error:&error] : nil;
                     if ( data == nil || error != nil ) return nil; // return if error & @finally abort
                     
                     UInt64 readLength = data.length;

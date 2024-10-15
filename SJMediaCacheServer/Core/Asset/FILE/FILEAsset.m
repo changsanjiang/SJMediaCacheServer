@@ -162,7 +162,9 @@
 @interface FILEAsset () {
     FILEAssetContentProvider *mProvider;
     FILEAssetContentNodeList *mNodeList;
-    BOOL mIsPrepared;
+    BOOL mPrepared;
+    BOOL mMetadataReady;
+    BOOL mAssembled; // 文件组合完成; 已得到完整文件;
 }
 
 @property (nonatomic) NSInteger id; // saveable
@@ -201,8 +203,8 @@
 - (void)prepare {
     @synchronized (self) {
         NSParameterAssert(self.name != nil);
-        if ( !mIsPrepared ) {
-            mIsPrepared = YES;
+        if ( !mPrepared ) {
+            mPrepared = YES;
             NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
             _configuration = MCSConfiguration.alloc.init;
             mProvider = [FILEAssetContentProvider contentProviderWithDirectory:directory];
@@ -278,13 +280,14 @@
     NSUInteger totalLength = response.totalLength;
     NSUInteger offset = response.range.location;
     id<MCSAssetContent>content = nil;
-    BOOL isUpdated = NO;
+    BOOL shouldNotify = NO;
     @synchronized (self) {
-        if ( _totalLength != totalLength || ![_pathExtension isEqualToString:pathExtension] || ![_contentType isEqualToString:contentType] ) {
+        if ( !mMetadataReady ) {
+            mMetadataReady = YES;
             _totalLength = totalLength;
             _pathExtension = pathExtension;
             _contentType = contentType;
-            isUpdated = YES;
+            shouldNotify = YES;
         }
         
         content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension];
@@ -292,7 +295,7 @@
         if ( content != nil ) [mNodeList bringContentToNode:content];
     }
     
-    if ( isUpdated )
+    if ( shouldNotify )
         [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetMetadataDidLoadNotification object:self];
     return content;
 }
@@ -309,7 +312,7 @@
 ///
 /// unlocked
 - (void)_restructureContents {
-    if ( _totalLength == 0 || self.readwriteCount != 0 ) return;
+    if ( mAssembled || _totalLength == 0 || self.readwriteCount != 0 ) return;
     UInt64 capacity = 1 * 1024 * 1024;
     FILEAssetContentNode *curNode = mNodeList.head;
     while ( curNode != nil ) {
@@ -327,8 +330,8 @@
             [mProvider removeContent:read];
             [mNodeList removeNode:nextNode];
         }
-        else if ( NSIntersectionRange(curRange, nextRange).location != NSNotFound ) { // 连续的, 存在交集
-            NSRange readRange = {NSMaxRange(curRange), NSMaxRange(nextRange) - NSMaxRange(curRange)};   // 读取read中未相交的部分
+        else if ( NSMaxRange(curRange) == nextRange.location || NSIntersectionRange(curRange, nextRange).length != 0 ) { // 连续的或存在交集
+            NSRange readRange = { NSMaxRange(curRange), NSMaxRange(nextRange) - NSMaxRange(curRange) };   // 读取read中未相交的部分
             [write readwriteRetain];
             [read readwriteRetain];
             NSError *error = nil;
@@ -356,6 +359,7 @@
     }
     
     if ( !_isStored ) _isStored = mNodeList.head.longestContent.length == _totalLength;
+    if ( _isStored && mNodeList.count == 1 ) mAssembled = YES;
 }
 
 /// unlocked
@@ -364,8 +368,9 @@
     // 同一段位置可能存在多个文件
     // 删除多余的无用的content
     if ( contents.count > 1 ) {
+        id<MCSAssetContent> longestContent = node.longestContent;
         [contents enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<MCSAssetContent>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ( idx != 0 && obj.readwriteCount == 0 ) {
+            if ( obj != longestContent && obj.readwriteCount == 0 ) {
                 [mProvider removeContent:obj];
                 [node removeContentAtIndex:idx];
             }

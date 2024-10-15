@@ -71,7 +71,8 @@
     
     @synchronized (self) {
         UInt64 endPos = mStartPositionInAsset + mLength;
-        if ( posInAsset >= endPos ) return nil;
+        if ( posInAsset >= endPos ) 
+            return nil;
         
         // create reader
         if ( mReader == nil ) mReader = [NSFileHandle mcs_fileHandleForReadingFromURL:[NSURL fileURLWithPath:mFilepath] error:&error];
