@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable __kindof id<MCSAsset>)assetWithName:(NSString *)name type:(MCSAssetType)type;
 
-- (nullable __kindof id<MCSAsset>)assetForAssetId:(NSInteger)assetId type:(MCSAssetType)type;
+- (nullable __kindof id<MCSAsset>)queryAssetForAssetId:(NSInteger)assetId type:(MCSAssetType)type;
 
 - (BOOL)isAssetStoredForURL:(NSURL *)URL;
 
@@ -33,9 +33,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
-@property (nonatomic, readonly) UInt64 countOfBytesAllAssets;
+@property (readonly) UInt64 countOfBytesAllAssets;
 
-@property (nonatomic, readonly) NSInteger countOfAllAssets;
+@property (readonly) NSInteger countOfAllAssets;
 
 - (UInt64)countOfBytesNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
 
@@ -44,8 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeAsset:(id<MCSAsset>)asset;
 - (void)removeAssetsInArray:(NSArray<id<MCSAsset>> *)array;
 
-- (void)removeAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
-- (void)removeAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets countLimit:(NSInteger)maxCount;
+- (void)trimAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
+- (void)trimAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets countLimit:(NSInteger)maxCount;
 @end
 NS_ASSUME_NONNULL_END
 

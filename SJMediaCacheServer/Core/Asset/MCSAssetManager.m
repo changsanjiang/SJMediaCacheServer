@@ -9,8 +9,6 @@
 #import "MCSAssetManager.h"
 #import <objc/message.h>
 
-#import "MCSQueue.h"
-
 #import "MCSDatabase.h"
 #import "MCSUtils.h"
 #import "MCSAssetUsageLog.h"
@@ -85,32 +83,59 @@
  
 #pragma mark -
 
+- (UInt64)countOfBytesAllAssets {
+    @synchronized (self) {
+        return MCSRootDirectory.size - MCSRootDirectory.databaseSize;
+    }
+}
+
+- (NSInteger)countOfAllAssets {
+    @synchronized (self) {
+        return mCountOfAllAssets;
+    }
+}
+
+- (UInt64)countOfBytesNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
+    UInt64 size = 0;
+    @synchronized (self) {
+        NSArray<id<MCSAsset> > *results = [self _queryAssetsNotIn:assets];
+        for ( id<MCSAsset> asset in results ) {
+            size += [NSFileManager.defaultManager mcs_directorySizeAtPath:asset.path];
+        }
+    }
+    return size;
+}
+
+/// 获取或创建 asset;
 - (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL {
     MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
     NSString *name = [MCSURL.shared assetNameForURL:URL];
-    return [self _createAssetWithName:name type:type];
+    @synchronized (self) {
+        return [self _ensureAssetWithName:name type:type];
+    }
 }
 
+/// 获取或创建 asset;
 - (nullable __kindof id<MCSAsset>)assetWithName:(NSString *)name type:(MCSAssetType)type {
-    return [self _createAssetWithName:name type:type];
+    @synchronized (self) {
+        return [self _ensureAssetWithName:name type:type];
+    }
 }
 
-- (nullable __kindof id<MCSAsset>)assetForAssetId:(NSInteger)assetId type:(MCSAssetType)type {
-    __block id<MCSAsset> asset = nil;
-    mcs_queue_sync(^{
-        asset = [self _assetForAssetId:assetId type:type];
-    });
-    return asset;
+/// 从缓存(内存或本地)获取 asset;
+- (nullable __kindof id<MCSAsset>)queryAssetForAssetId:(NSInteger)assetId type:(MCSAssetType)type {
+    @synchronized (self) {
+        return [self _queryAssetForAssetId:assetId type:type];
+    }
 }
 
+/// 查询 asset 的数据是否已全部保存;
 - (BOOL)isAssetStoredForURL:(NSURL *)URL {
-    __block id<MCSAsset> asset = nil;
-    mcs_queue_sync(^{
-        NSString *name = [MCSURL.shared assetNameForURL:URL];
-        MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
-        asset = [self _assetForName:name type:type];
-    });
-    return asset.isStored;
+    NSString *name = [MCSURL.shared assetNameForURL:URL];
+    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
+    @synchronized (self) {
+        return [self _queryAssetForName:name type:type].isStored;
+    }
 }
  
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
@@ -139,79 +164,59 @@
             break;
         }
     }
-    mcs_queue_sync(^{
-        if ( reader != nil ) {
-            if ( mReaders == nil )
-                mReaders = [NSHashTable.alloc initWithOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsOpaquePersonality capacity:0];
-            [reader registerObserver:self];
+    if ( reader != nil ) {
+        @synchronized (self) {
+            if ( mReaders == nil ) mReaders = [NSHashTable.alloc initWithOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsOpaquePersonality capacity:0];
             [mReaders addObject:reader];
         }
-    });
+        [reader registerObserver:self];
+    }
     return reader;
 }
 
 - (void)removeAssetForURL:(NSURL *)URL {
-    if ( URL.absoluteString.length == 0 )
-        return;
-    mcs_queue_sync(^{
-        MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
-        NSString *name = [MCSURL.shared assetNameForURL:URL];
-        id<MCSAsset> asset = [self _assetForName:name type:type];
-        if ( asset != nil ) {
-            [self _removeAssetsInArray:@[asset]];
-        }
-    });
+    if ( URL.absoluteString.length == 0 ) return;
+    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
+    NSString *name = [MCSURL.shared assetNameForURL:URL];
+    @synchronized (self) {
+        id<MCSAsset> asset = [self _queryAssetForName:name type:type];
+        if ( asset != nil ) [self _removeAssetsInArray:@[asset]];
+    }
 }
 
 - (void)removeAsset:(id<MCSAsset>)asset {
-    if ( asset == nil )
-        return;
-    mcs_queue_sync(^{
-        [self _removeAssetsInArray:@[asset]];
-    });
+    if ( asset != nil ) {
+        @synchronized (self) {
+            [self _removeAssetsInArray:@[asset]];
+        }
+    }
 }
 
 - (void)removeAssetsInArray:(NSArray<id<MCSAsset>> *)array {
-    if ( array.count == 0 )
-        return;
-    mcs_queue_sync(^{
-        [self _removeAssetsInArray:array];
-    });
-}
-
-- (UInt64)countOfBytesAllAssets {
-    return MCSRootDirectory.size - MCSRootDirectory.databaseSize;
-}
-
-- (NSInteger)countOfAllAssets {
-    __block NSInteger count = 0;
-    mcs_queue_sync(^{
-        count = mCountOfAllAssets;
-    });
-    return count;
-}
-
-- (UInt64)countOfBytesNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
-    __block UInt64 size = 0;
-    mcs_queue_sync(^{
-        NSArray<id<MCSAsset> > *results = [self _assetsNotIn:assets];
-        for ( id<MCSAsset> asset in results ) {
-            size += [NSFileManager.defaultManager mcs_directorySizeAtPath:asset.path];
+    if ( array != nil && array.count != 0 ) {
+        @synchronized (self) {
+            [self _removeAssetsInArray:array];
         }
-    });
-    return size;
+    }
 }
 
-/// 读取中的资源不会被删除
-///
-- (void)removeAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
-    [self removeAssetsForLastReadingTime:timeLimit notIn:assets countLimit:NSNotFound];
+- (void)removeAssetsNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
+    @synchronized (self) {
+        NSArray<id<MCSAsset> > *results = [self _queryAssetsNotIn:assets];
+        [self _removeAssetsInArray:results]; // 删除
+    }
 }
 
-/// 读取中的资源不会被删除
+/// 清理asset; 读取中的资源不会被删除
 ///
-- (void)removeAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets countLimit:(NSInteger)countLimit {
-    mcs_queue_sync(^{
+- (void)trimAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
+    [self trimAssetsForLastReadingTime:timeLimit notIn:assets countLimit:NSNotFound];
+}
+
+/// 清理asset; 读取中的资源不会被删除
+///
+- (void)trimAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets countLimit:(NSInteger)countLimit {
+    @synchronized (self) {
         // 过滤被使用中的资源
         NSMutableSet<NSNumber *> *readwriteFileAssets = NSMutableSet.set;
         NSMutableSet<NSNumber *> *readwriteHLSAssets = NSMutableSet.set;
@@ -261,32 +266,25 @@
         // 删除
         NSMutableArray<id<MCSAsset> > *results = NSMutableArray.array;
         [logs enumerateObjectsUsingBlock:^(MCSAssetUsageLog * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            id<MCSAsset> asset = [self _assetForAssetId:obj.asset type:obj.assetType];
+            id<MCSAsset> asset = [self _queryAssetForAssetId:obj.asset type:obj.assetType];
             if ( asset != nil ) [results addObject:asset];
         }];
 
         [self _removeAssetsInArray:results];
-    });
-}
-
-- (void)removeAssetsNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
-    mcs_queue_sync(^{
-        NSArray<id<MCSAsset> > *results = [self _assetsNotIn:assets];
-        // 删除
-        [self _removeAssetsInArray:results];
-    });
+    }
 }
 
 #pragma mark - MCSAssetReaderObserver
 
 - (void)reader:(id<MCSAssetReader>)reader statusDidChange:(MCSReaderStatus)status {
-    mcs_queue_sync(^{
-        switch ( status ) {
-            case MCSReaderStatusUnknown:
-            case MCSReaderStatusPreparing:
-                break;
-            case MCSReaderStatusReadyToRead: {
+    switch ( status ) {
+        case MCSReaderStatusUnknown:
+        case MCSReaderStatusPreparing:
+            break;
+        case MCSReaderStatusReadyToRead: {
+            @synchronized (self) {
                 id<MCSAsset> asset = reader.asset;
+                if ( asset == nil ) return;
                 MCSAssetUsageLog *log = mUsageLogs[asset.name];
                 if ( log == nil ) {
                     log = (id)[mSqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
@@ -295,60 +293,88 @@
                     ] orderBy:nil error:NULL].firstObject;
                     mUsageLogs[asset.name] = log;
                 }
-                
-                if ( log != nil ) {
-                    log.usageCount += 1;
-                    log.updatedTime = NSDate.date.timeIntervalSince1970;
-                }
+                log.usageCount += 1;
+                log.updatedTime = NSDate.date.timeIntervalSince1970;
             }
-                break;
-            case MCSReaderStatusFinished:
-            case MCSReaderStatusAborted: {
-                [reader removeObserver:self];
+        }
+            break;
+        case MCSReaderStatusFinished:
+        case MCSReaderStatusAborted: {
+            [reader removeObserver:self];
+            @synchronized (self) {
                 [mReaders removeObject:reader];
             }
-                break;
         }
-    });
+            break;
+    }
 }
  
 #pragma mark - mark
 
-- (void)_syncToDatabase:(id<MCSSaveable>)saveable {
-    if ( saveable != nil ) {
-        [mSqlite3 save:saveable error:NULL];
-    }
-}
-
-- (void)_syncUsageLogs {
-    if ( mUsageLogs.count != 0 ) {
-        [mSqlite3 updateObjects:mUsageLogs.allValues forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
-        [mUsageLogs removeAllObjects];
-    }
-}
-
 - (void)_syncUsageLogsRecursively {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(30 * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-        mcs_queue_sync(^{
+        @synchronized (self) {
             [self _syncUsageLogs];
-        });
+        }
         [self _syncUsageLogsRecursively];
     });
 }
 
-#pragma mark - mark
+- (void)_assetMetadataDidLoadWithNote:(NSNotification *)note {
+    @synchronized (self) {
+        [self _syncToDatabase:note.object];
+    }
+}
 
-- (nullable __kindof id<MCSAsset>)_assetForName:(NSString *)name type:(MCSAssetType)type {
+#pragma mark - unlocked
+
+/// 获取或创建 asset;
+///
+/// unlocked
+- (nullable __kindof id<MCSAsset> )_ensureAssetWithName:(NSString *)name type:(MCSAssetType)type {
+    return [self _queryAssetForName:name type:type] ?: [self _createAssetWithName:name type:type];
+}
+
+/// 创建 asset 并存入本地;
+///
+/// unlocked
+- (nullable __kindof id<MCSAsset> )_createAssetWithName:(NSString *)name type:(MCSAssetType)type {
+    id<MCSAsset> asset = nil;
+    Class cls = [self _assetClassForType:type];
+    asset = [cls.alloc initWithName:name]; // create asset
+    [self _syncToDatabase:asset]; // save asset
+    mCountOfAllAssets += 1;
+    [asset prepare];
+    mAssets[name] = asset;
+
+    MCSAssetUsageLog *log = [mSqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
+        [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
+        [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(type)],
+    ] orderBy:nil error:NULL].firstObject;
+    
+    log = [MCSAssetUsageLog.alloc initWithAsset:asset]; // create log
+    [self _syncToDatabase:log]; // save log
+    mUsageLogs[name] = log;
+    return asset;
+}
+
+/// 从缓存(内存或本地)获取 asset;
+///
+/// unlocked
+- (nullable __kindof id<MCSAsset>)_queryAssetForName:(NSString *)name type:(MCSAssetType)type {
     id<MCSAsset> asset = mAssets[name];
     if ( asset == nil ) {
-        asset = [self _assetInTableForType:type conditions:@[
+        asset = [self _queryAssetInTableForType:type conditions:@[
             [SJSQLite3Condition conditionWithColumn:@"name" value:name]
         ]];
     }
     return asset;
 }
 
-- (nullable __kindof id<MCSAsset>)_assetForAssetId:(NSInteger)assetId type:(MCSAssetType)type {
+/// 从缓存(内存或本地)获取 asset;
+///
+/// unlocked
+- (nullable __kindof id<MCSAsset>)_queryAssetForAssetId:(NSInteger)assetId type:(MCSAssetType)type {
     __block id<MCSAsset> asset = nil;
     [mAssets enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id<MCSAsset>  _Nonnull obj, BOOL * _Nonnull stop) {
         if ( obj.type == type && obj.id == assetId ) {
@@ -358,14 +384,17 @@
     }];
     
     if ( asset == nil ) {
-        asset = [self _assetInTableForType:type conditions:@[
+        asset = [self _queryAssetInTableForType:type conditions:@[
             [SJSQLite3Condition conditionWithColumn:@"id" value:@(assetId)]
         ]];
     }
     return asset;
 }
 
-- (nullable __kindof id<MCSAsset>)_assetInTableForType:(MCSAssetType)type conditions:(NSArray<SJSQLite3Condition *> *)conditions {
+/// 从本地获取 asset;
+///
+/// unlocked
+- (nullable __kindof id<MCSAsset>)_queryAssetInTableForType:(MCSAssetType)type conditions:(NSArray<SJSQLite3Condition *> *)conditions {
     Class cls = [self _assetClassForType:type];
     if ( cls == nil )
         return nil;
@@ -378,76 +407,10 @@
     return asset;
 }
 
-- (nullable __kindof id<MCSAsset> )_createAssetWithName:(NSString *)name type:(MCSAssetType)type {
-    __block id<MCSAsset> asset = nil;
-    mcs_queue_sync(^{
-        asset = [self _assetForName:name type:type];
-        if ( asset == nil ) {
-            Class cls = [self _assetClassForType:type];
-            if ( cls == nil ) return;
-            // create asset
-            if ( asset == nil ) {
-                asset = [cls.alloc initWithName:name];
-                [self _syncToDatabase:asset]; // save asset
-                mCountOfAllAssets += 1;
-            }
-            
-            [asset prepare];
-            mAssets[name] = asset;
-    
-            MCSAssetUsageLog *log = [mSqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
-                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(type)],
-            ] orderBy:nil error:NULL].firstObject;
-            // create log
-            if ( log == nil ) {
-                log = [MCSAssetUsageLog.alloc initWithAsset:asset];
-                [self _syncToDatabase:log]; // save log
-            }
-            mUsageLogs[name] = log;
-        }
-    });
-    return asset;
-}
-
-- (void)_assetMetadataDidLoadWithNote:(NSNotification *)note {
-    mcs_queue_async(^{
-        [self _syncToDatabase:note.object];
-    });
-}
- 
-- (void)_removeAssetsInArray:(NSArray<id<MCSAsset> > *)assets {
-    if ( assets.count == 0 )
-        return;
-    
-    [assets enumerateObjectsUsingBlock:^(id<MCSAsset>  _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
-        for ( id<MCSAssetReader> reader in MCSAllHashTableObjects(mReaders) ) {
-            if ( reader.asset == r ) {
-                [reader abortWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
-                    MCSErrorUserInfoObjectKey : r,
-                    MCSErrorUserInfoReasonKey : @"资源缓存将要被删除!"
-                }]];
-            }
-        }
-        
-        [NSFileManager.defaultManager removeItemAtPath:r.path error:NULL];
-        [mSqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
-        [mSqlite3 removeAllObjectsForClass:MCSAssetUsageLog.class conditions:@[
-            [SJSQLite3Condition conditionWithColumn:@"asset" value:@(r.id)],
-            [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(r.type)],
-        ] error:NULL];
-        [mAssets removeObjectForKey:r.name];
-        [mUsageLogs removeObjectForKey:r.name];
-    }];
-    
-    mCountOfAllAssets -= assets.count;
-}
-
-- (Class)_assetClassForType:(MCSAssetType)type {
-    return type == MCSAssetTypeFILE ? FILEAsset.class : HLSAsset.class;
-}
-
-- (nullable NSArray<id<MCSAsset>> *)_assetsNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
+/// 从本地获取 asset;
+///
+/// unlocked
+- (nullable NSArray<id<MCSAsset>> *)_queryAssetsNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
     
     NSMutableSet<NSNumber *> *FILEAssets = NSMutableSet.set;
     NSMutableSet<NSNumber *> *HLSAssets = NSMutableSet.set;
@@ -472,10 +435,60 @@
     
     NSMutableArray<id<MCSAsset> > *results = NSMutableArray.array;
     [logs enumerateObjectsUsingBlock:^(MCSAssetUsageLog * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        id<MCSAsset> asset = [self _assetForAssetId:obj.asset type:obj.assetType];
+        id<MCSAsset> asset = [self _queryAssetForAssetId:obj.asset type:obj.assetType];
         if ( asset != nil ) [results addObject:asset];
     }];
     return results;
+}
+
+/// 删除 assets;
+///
+/// unlocked
+- (void)_removeAssetsInArray:(NSArray<id<MCSAsset> > *)assets {
+    if ( assets == nil || assets.count == 0 ) return;
+    assets = assets.copy;
+    [assets enumerateObjectsUsingBlock:^(id<MCSAsset>  _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
+        for ( id<MCSAssetReader> reader in MCSAllHashTableObjects(mReaders) ) {
+            if ( reader.asset == r ) {
+                [reader abortWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+                    MCSErrorUserInfoObjectKey : r,
+                    MCSErrorUserInfoReasonKey : @"资源缓存将要被删除!"
+                }]];
+            }
+        }
+        
+        [NSFileManager.defaultManager removeItemAtPath:r.path error:NULL];
+        [mSqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
+        [mSqlite3 removeAllObjectsForClass:MCSAssetUsageLog.class conditions:@[
+            [SJSQLite3Condition conditionWithColumn:@"asset" value:@(r.id)],
+            [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(r.type)],
+        ] error:NULL];
+        [mAssets removeObjectForKey:r.name];
+        [mUsageLogs removeObjectForKey:r.name];
+    }];
+    
+    mCountOfAllAssets -= assets.count;
+}
+
+/// 同步到本地
+///
+/// unlocked
+- (void)_syncToDatabase:(id<MCSSaveable>)saveable {
+    if ( saveable != nil ) [mSqlite3 save:saveable error:NULL];
+}
+
+/// 同步到本地
+///
+/// unlocked
+- (void)_syncUsageLogs {
+    if ( mUsageLogs.count != 0 ) {
+        [mSqlite3 updateObjects:mUsageLogs.allValues forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
+        [mUsageLogs removeAllObjects];
+    }
+}
+ 
+- (Class)_assetClassForType:(MCSAssetType)type {
+    return type == MCSAssetTypeFILE ? FILEAsset.class : HLSAsset.class;
 }
 @end
 

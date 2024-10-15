@@ -343,12 +343,12 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
             // 清理一半
             NSTimeInterval timeLimit = NSDate.date.timeIntervalSince1970 - _lastTimeLimit;
             NSInteger countLimit = (NSInteger)ceil(_cacheCountLimit != 0 ? (count - _cacheCountLimit * 0.5) : (count * 0.5));
-            [MCSAssetManager.shared removeAssetsForLastReadingTime:timeLimit notIn:protectedAssets countLimit:countLimit];
+            [MCSAssetManager.shared trimAssetsForLastReadingTime:timeLimit notIn:protectedAssets countLimit:countLimit];
         }
             break;
         case MCSLimitExpires: {
             NSTimeInterval timeLimit = NSDate.date.timeIntervalSince1970 - _maxDiskAgeForCache;
-            [MCSAssetManager.shared removeAssetsForLastReadingTime:timeLimit notIn:protectedAssets];
+            [MCSAssetManager.shared trimAssetsForLastReadingTime:timeLimit notIn:protectedAssets];
         }
             break;
     }
@@ -373,7 +373,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         NSArray<NSNumber *> *rootAssets = SJFoundationExtendedValuesForKey(@"asset", protectedHLSAssets);
         NSMutableArray<NSNumber *> *array = rootAssets.mutableCopy;
         for ( NSNumber *root in rootAssets ) {
-            HLSAsset *asset = [MCSAssetManager.shared assetForAssetId:root.integerValue type:MCSAssetTypeHLS];
+            HLSAsset *asset = [MCSAssetManager.shared queryAssetForAssetId:root.integerValue type:MCSAssetTypeHLS];
             NSArray<HLSAsset *> *subAssets = asset.subAssets;
             if ( subAssets != nil ) {
                 for ( HLSAsset *subAsset in subAssets ) {
