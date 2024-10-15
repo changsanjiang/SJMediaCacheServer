@@ -267,8 +267,13 @@
     if ( self ) {
         mFileContent = content;
         mReadRange = range;
+        [mFileContent readwriteRetain];
     }
     return self;
+}
+
+- (void)dealloc {
+    [mFileContent readwriteRelease];
 }
  
 - (void)prepareContent {
@@ -319,8 +324,13 @@
         mHTTPContent = content;
         mReadRange = range;
         mNetworkTaskPriority = priority;
+        [mHTTPContent readwriteRetain];
     }
     return self;
+}
+
+- (void)dealloc {
+    [mHTTPContent readwriteRelease];
 }
 
 - (NSString *)description {
@@ -339,6 +349,7 @@
             NSMutableURLRequest *newRequest = [[mRequest mcs_requestWithRange:newRange] mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:mDataType]];
             mTask = [MCSDownload.shared downloadWithRequest:newRequest priority:mNetworkTaskPriority delegate:self];
         }
+        [mHTTPContent readwriteRetain];
         [self contentDidReady:mHTTPContent range:mReadRange];
     }
     // download ts all content
@@ -363,6 +374,7 @@
             return;
         }
         
+        [mHTTPContent readwriteRetain];
         [self contentDidReady:mHTTPContent range:response.range];
     }
 }
