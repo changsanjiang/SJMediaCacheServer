@@ -19,30 +19,29 @@
 #import "KTVCocoaHTTPServer.h"
 #import "GCDAsyncSocket.h"
 #endif
+@class MCSHTTPServer, MCSHTTPConnection, MCSHTTPResponse;
 
 @interface MCSHTTPServer : HTTPServer
 - (instancetype)initWithProxyServer:(__weak MCSProxyServer *)proxyServer;
-@property (nonatomic, weak, readonly, nullable) MCSProxyServer *mcs_server;
+@property (nonatomic, weak, readonly, nullable) MCSProxyServer *proxyServer;
 @end
 
-@implementation MCSHTTPServer
+@implementation MCSHTTPServer {
+    __weak MCSProxyServer *_Nullable mProxyServer;
+}
+
 - (instancetype)initWithProxyServer:(__weak MCSProxyServer *)proxyServer {
     self = [super init];
-    if ( self ) {
-        _mcs_server = proxyServer;
-    }
+    mProxyServer = proxyServer;
     return self;
 }
 
-- (HTTPConfig *)config {
-    return [HTTPConfig.alloc initWithServer:self documentRoot:self->documentRoot queue:mcs_queue()];
+- (MCSProxyServer *)proxyServer {
+    return mProxyServer;
 }
 @end
 
-@interface MCSHTTPConnection : HTTPConnection
-- (HTTPMessage *)mcs_request;
-- (MCSProxyServer *)mcs_server;
-@end
+#pragma mark - mark
  
 @interface MCSHTTPResponse : NSObject<HTTPResponse, MCSProxyTaskDelegate>
 - (instancetype)initWithConnection:(MCSHTTPConnection *)connection;
@@ -52,11 +51,58 @@
 - (void)prepareForReadingData;
 @end
 
-@interface NSURLRequest (MCSHTTPConnectionExtended)
-+ (NSMutableURLRequest *)mcs_requestWithMessage:(HTTPMessage *)message;
+@interface MCSHTTPConnection : HTTPConnection
+@property (nonatomic, readonly) HTTPMessage *proxyRequest;
+@property (nonatomic, readonly) MCSProxyServer *proxyServer;
 @end
 
-#pragma mark -
+@implementation MCSHTTPConnection {
+    __weak MCSProxyServer *mProxyServer;
+}
+
+- (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig {
+    self = [super initWithAsyncSocket:newSocket configuration:aConfig];
+    MCSHTTPConnectionDebugLog(@"\n%@: <%p>.init;\n", NSStringFromClass(self.class), self);
+    mProxyServer = ((MCSHTTPServer *)config.server).proxyServer;
+    return self;
+}
+
+- (HTTPMessage *)proxyRequest {
+    return request;
+}
+
+- (MCSProxyServer *)proxyServer {
+    return mProxyServer;
+}
+
+- (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
+    MCSHTTPResponse *response = [MCSHTTPResponse.alloc initWithConnection:self];
+    MCSHTTPConnectionDebugLog(@"%@: <%p>.response { URL: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, method, response.request.URL, NSStringFromRange(response.request.mcs_range));
+    [response prepareForReadingData];
+    return response;
+}
+
+- (void)finishResponse {
+    [super finishResponse];
+    MCSHTTPConnectionDebugLog(@"%@: <%p>.finishResponse;\n", NSStringFromClass(self.class), self);
+}
+
+- (void)die {
+    [super die];
+    MCSHTTPConnectionDebugLog(@"%@: <%p>.die;\n", NSStringFromClass(self.class), self);
+}
+
+- (void)dealloc {
+    MCSHTTPConnectionDebugLog(@"%@: <%p>.dealloc;\n\n", NSStringFromClass(self.class), self);
+}
+
+- (void)responseDidAbort:(NSObject<HTTPResponse> *)sender {
+    [super responseDidAbort:sender];
+    MCSHTTPConnectionDebugLog(@"%@: <%p>.abort;\n", NSStringFromClass(self.class), self);
+}
+@end
+
+#pragma mark - mark
 
 @interface MCSProxyServer ()
 @property (nonatomic, strong, nullable) MCSHTTPServer *localServer;
@@ -125,58 +171,8 @@
 }
 @end
 
-#pragma mark -
+#pragma mark - mark
 
-@implementation MCSHTTPConnection {
-    __weak MCSProxyServer *mServer;
-}
-
-- (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig {
-    self = [super initWithAsyncSocket:newSocket configuration:aConfig];
-    if ( self ) {
-        MCSHTTPConnectionDebugLog(@"\n%@: <%p>.init;\n", NSStringFromClass(self.class), self);
-        mServer = ((MCSHTTPServer *)config.server).mcs_server;
-    }
-    return self;
-}
-
-- (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
-    MCSHTTPResponse *response = [MCSHTTPResponse.alloc initWithConnection:self];
-    
-    MCSHTTPConnectionDebugLog(@"%@: <%p>.response { URL: %@, method: %@, range: %@ };\n", NSStringFromClass(self.class), self, method, response.request.URL, NSStringFromRange(response.request.mcs_range));
-    
-    [response prepareForReadingData];
-    return response;
-}
-
-- (HTTPMessage *)mcs_request {
-    return request;
-}
-
-- (MCSProxyServer *)mcs_server {
-    return mServer;
-}
-
-- (void)finishResponse {
-    [super finishResponse];
-    
-    MCSHTTPConnectionDebugLog(@"%@: <%p>.finishResponse;\n", NSStringFromClass(self.class), self);
-}
-
-- (void)die {
-    [super die];
-    MCSHTTPConnectionDebugLog(@"%@: <%p>.die;\n", NSStringFromClass(self.class), self);
-}
-
-- (void)dealloc {
-    MCSHTTPConnectionDebugLog(@"%@: <%p>.dealloc;\n\n", NSStringFromClass(self.class), self);
-}
-
-- (void)responseDidAbort:(NSObject<HTTPResponse> *)sender {
-    [super responseDidAbort:sender];
-    MCSHTTPConnectionDebugLog(@"%@: <%p>.abort;\n", NSStringFromClass(self.class), self);
-}
-@end
 
 @implementation NSURLRequest (MCSHTTPConnectionExtended)
 + (NSMutableURLRequest *)mcs_requestWithMessage:(HTTPMessage *)message {
@@ -193,13 +189,13 @@
     if ( self ) {
         _connection = connection;
         
-        MCSProxyServer *server = [connection mcs_server];
-        if ( [server isHeartBeatRequest:connection.mcs_request] ) {
+        MCSProxyServer *proxyServer = connection.proxyServer;
+        if ( [proxyServer isHeartBeatRequest:connection.proxyRequest] ) {
             isHeartbeatRequest = YES;
         }
         else {
-            _request = [NSURLRequest mcs_requestWithMessage:connection.mcs_request];
-            _task = [server taskWithRequest:_request delegate:self];
+            _request = [NSURLRequest mcs_requestWithMessage:connection.proxyRequest];
+            _task = [proxyServer taskWithRequest:_request delegate:self];
         }
     }
     return self;
@@ -235,7 +231,7 @@
     return _task != nil ? !_task.isPrepared : YES;
 }
 
-#pragma mark - mark
+#pragma mark - MCSProxyTaskDelegate
 
 - (void)task:(id<MCSProxyTask>)task didReceiveResponse:(id<MCSResponse>)response {
     [_connection responseHasAvailableData:self];
@@ -247,7 +243,7 @@
 
 - (void)task:(id<MCSProxyTask>)task didAbortWithError:(nullable NSError *)error {
     [_connection responseDidAbort:self];
-    MCSProxyServer *server = [_connection mcs_server];
+    MCSProxyServer *server = _connection.proxyServer;
     [server.delegate server:server performTask:task failure:error];
 }
 

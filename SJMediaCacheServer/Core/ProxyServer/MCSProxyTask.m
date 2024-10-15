@@ -26,16 +26,13 @@
 @implementation MCSProxyTask
 - (instancetype)initWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
     NSParameterAssert(request.URL.absoluteString.length != 0);
-    
     self = [super init];
-    if ( self ) {
 #ifdef DEBUG
-        MCSProxyTaskDebugLog(@"%@: <%p>.init { URL: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, [MCSURL.shared URLWithProxyURL:request.URL], request.URL, request.allHTTPHeaderFields);
+    MCSProxyTaskDebugLog(@"%@: <%p>.init { URL: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, [MCSURL.shared URLWithProxyURL:request.URL], request.URL, request.allHTTPHeaderFields);
 #endif
-        
-        _request = request;
-        _delegate = delegate;
-    }
+    
+    _request = request;
+    _delegate = delegate;
     return self;
 }
 
@@ -97,14 +94,14 @@
     [_reader abortWithError:nil];
 }
 
-#pragma mark -
+#pragma mark - MCSAssetReaderDelegate
 
 - (void)reader:(id<MCSAssetReader>)reader didReceiveResponse:(id<MCSResponse>)response {
-    if ( reader.status != MCSReaderStatusAborted ) [_delegate task:self didReceiveResponse:response];
+    [_delegate task:self didReceiveResponse:response];
 }
 
 - (void)reader:(id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
-    if ( reader.status != MCSReaderStatusAborted ) [_delegate task:self hasAvailableDataWithLength:length];
+    [_delegate task:self hasAvailableDataWithLength:length];
 }
 
 - (void)reader:(id<MCSAssetReader>)reader didAbortWithError:(nullable NSError *)error {

@@ -13,8 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSProxyServer : NSObject
 @property (nonatomic, weak, nullable) id<MCSProxyServerDelegate> delegate;
 
-@property (nonatomic, readonly, getter=isRunning) BOOL running;
-@property (nonatomic, strong, readonly) NSURL *serverURL;
+@property (readonly, getter=isRunning) BOOL running;
+@property (strong, readonly) NSURL *serverURL;
 
 - (BOOL)start;
 - (void)stop;
