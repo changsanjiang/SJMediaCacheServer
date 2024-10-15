@@ -16,7 +16,7 @@
     UInt64 mLength;
     UInt64 mStartPositionInAsset;
     NSHashTable<id<MCSAssetContentObserver>> *_Nullable mObservers;
-
+    
     NSFileHandle *_Nullable mWriter;
     NSFileHandle *_Nullable mReader;
 }
@@ -36,60 +36,55 @@
 }
 
 - (NSString *)description {
-    __block NSString *description = nil;
-    mcs_queue_sync(^{
-        description = [NSString stringWithFormat:@"%@: <%p> { startPosisionInAsset: %llu, lenth: %llu, readwriteCount: %ld, filepath: %@ };\n", NSStringFromClass(self.class), self, mStartPositionInAsset, mLength, (long)self.readwriteCount, mFilepath];
-    });
-    return description;
+    @synchronized (self) {
+        return [NSString stringWithFormat:@"%@: <%p> { startPosisionInAsset: %llu, lenth: %llu, readwriteCount: %ld, filepath: %@ };\n", NSStringFromClass(self.class), self, mStartPositionInAsset, mLength, (long)self.readwriteCount, mFilepath];
+    }
 }
 
 - (void)dealloc {
-    mcs_queue_sync(^{
-        [self closeWrite];
-        [self closeRead];
-    });
+    [self _closeWrite];
+    [self _closeRead];
 }
 
 - (void)registerObserver:(id<MCSAssetContentObserver>)observer {
-    if ( !observer ) return;
-    mcs_queue_sync(^{
-        if ( mObservers == nil ) {
-            mObservers = NSHashTable.weakObjectsHashTable;
+    if ( observer != nil ) {
+        @synchronized (self) {
+            if ( mObservers == nil ) mObservers = NSHashTable.weakObjectsHashTable;
+            [mObservers addObject:observer];
         }
-        [mObservers addObject:observer];
-    });
+    }
 }
 
 - (void)removeObserver:(id<MCSAssetContentObserver>)observer {
-    mcs_queue_sync(^{
-        [mObservers removeObject:observer];
-    });
+    if ( observer != nil ) {
+        @synchronized (self) {
+            [mObservers removeObject:observer];
+        }
+    }
 }
 
 - (nullable NSData *)readDataAtPosition:(UInt64)posInAsset capacity:(UInt64)capacity error:(out NSError **)errorPtr {
-    __block NSData *data = nil;
-    __block NSError *error = nil;
-    mcs_queue_sync(^{
-        if ( posInAsset < mStartPositionInAsset )
-            return;
-        
-        UInt64 endPos = mStartPositionInAsset + mLength;
-        if ( posInAsset >= endPos )
-            return;
-        
-        if ( mReader == nil )
-            mReader = [NSFileHandle mcs_fileHandleForReadingFromURL:[NSURL fileURLWithPath:mFilepath] error:&error];
-        if ( mReader == nil )
-            return;
-        
-        if ( ![mReader mcs_seekToOffset:posInAsset - mStartPositionInAsset error:&error] )
-            return;
-        
-        data = [mReader mcs_readDataUpToLength:capacity error:&error];
-    });
+    if ( posInAsset < mStartPositionInAsset )
+        return nil;
+    NSData *data = nil;
+    NSError *error = nil;
     
-    if ( error != nil && errorPtr != NULL)
-        *errorPtr = error;
+    @synchronized (self) {
+        UInt64 endPos = mStartPositionInAsset + mLength;
+        if ( posInAsset >= endPos ) return nil;
+        
+        // create reader
+        if ( mReader == nil ) mReader = [NSFileHandle mcs_fileHandleForReadingFromURL:[NSURL fileURLWithPath:mFilepath] error:&error];
+        
+        // read data
+        if ( mReader != nil ) {
+            if ( [mReader mcs_seekToOffset:posInAsset - mStartPositionInAsset error:&error] ) {
+                data = [mReader mcs_readDataUpToLength:capacity error:&error];
+            }
+        }
+    }
+    
+    if ( error != nil && errorPtr != NULL) *errorPtr = error;
     return data;
 }
 
@@ -98,11 +93,9 @@
 }
 
 - (UInt64)length {
-    __block UInt64 length = 0;
-    mcs_queue_sync(^{
-        length = mLength;
-    });
-    return length;
+    @synchronized (self) {
+        return mLength;
+    }
 }
 
 - (NSString *)filepath {
@@ -112,59 +105,59 @@
 #pragma mark - mark
 
 - (BOOL)writeData:(NSData *)data error:(out NSError **)errorPtr {
-    __block NSError *error = nil;
-    mcs_queue_sync(^{
-        if ( mWriter == nil ) {
-            mWriter = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:mFilepath] error:&error];
-            if ( mWriter != nil && ![mWriter mcs_seekToEndReturningOffset:NULL error:&error] ) {
-                [mWriter mcs_closeAndReturnError:NULL];
-                mWriter = nil;
+    UInt64 length = data.length;
+    NSArray<id<MCSAssetContentObserver>> *observers = nil;
+    NSError *error = nil;
+    @try {
+        @synchronized (self) {
+            /// create writer
+            if ( mWriter == nil ) {
+                NSFileHandle *writer = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:mFilepath] error:&error];
+                if ( writer != nil ) {
+                    if ( [writer mcs_seekToEndReturningOffset:NULL error:&error] ) {
+                        mWriter = writer;
+                    }
+                    else {
+                        [writer mcs_closeAndReturnError:NULL];
+                    }
+                }
+            }
+            
+            // write data
+            if ( mWriter != nil ) {
+                if ( [mWriter mcs_writeData:data error:&error] ) {
+                    mLength += length;
+                    observers = MCSAllHashTableObjects(self->mObservers);
+                }
             }
         }
-        
-        if ( mWriter == nil )
-            return;
-        
-        if ( ![mWriter mcs_writeData:data error:&error] )
-            return;
-        
-        UInt64 length = data.length;
-        mLength += length;
-        mcs_queue_async(^{
-            for ( id<MCSAssetContentObserver> observer in MCSAllHashTableObjects(self->mObservers)) {
+        if ( error != nil && errorPtr != NULL) *errorPtr = error;
+        return error == nil;
+    } @finally {
+        if ( observers != nil ) {
+            for ( id<MCSAssetContentObserver> observer in observers) {
                 [observer content:self didWriteDataWithLength:length];
             }
-        });
-    });
-    
-    if ( error != nil && errorPtr != NULL)
-        *errorPtr = error;
-    return error == nil;
+        }
+    }
 }
 
 ///
 /// 读取计数为0时才会生效
 ///
 - (void)closeWrite {
-    mcs_queue_sync(^{
-        if ( self.readwriteCount == 0 && mWriter != nil ) {
-            [mWriter mcs_synchronizeAndReturnError:NULL];
-            [mWriter mcs_closeAndReturnError:NULL];
-            mWriter = nil;
-        }
-    });
+    @synchronized (self) {
+        if ( self.readwriteCount == 0 ) [self _closeWrite];
+    }
 }
 
 ///
 /// 读取计数为0时才会生效
 ///
 - (void)closeRead {
-    mcs_queue_sync(^{
-        if ( self.readwriteCount == 0 && mReader != nil ) {
-            [mReader mcs_closeAndReturnError:NULL];
-            mReader = nil;
-        }
-    });
+    @synchronized (self) {
+        if ( self.readwriteCount == 0 ) [self _closeRead];
+    }
 }
 
 ///
@@ -173,5 +166,22 @@
 - (void)close {
     [self closeWrite];
     [self closeRead];
+}
+
+#pragma mark - unlocked
+
+- (void)_closeRead {
+    if ( mReader != nil ) {
+        [mReader mcs_closeAndReturnError:NULL];
+        mReader = nil;
+    }
+}
+
+- (void)_closeWrite {
+    if (mWriter != nil ) {
+        [mWriter mcs_synchronizeAndReturnError:NULL];
+        [mWriter mcs_closeAndReturnError:NULL];
+        mWriter = nil;
+    }
 }
 @end

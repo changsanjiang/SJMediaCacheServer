@@ -50,6 +50,8 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 //    SJMediaCacheServer.shared.cacheCountLimit = 5;
     
     
+    [SJMediaCacheServer.shared removeAllRemovableCaches];
+    
     [self _demo1];
 //    [self _demo2];
 //    [self _demo3];

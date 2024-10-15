@@ -13,28 +13,39 @@
     NSInteger mReadwriteCount;
 }
 
+#ifdef DEBUG
+- (void)dealloc {
+    if ( mReadwriteCount != 0 ) {
+        NSLog(@"%@<%p>: %d : %s; waring: readwrite retained.", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
+    }
+}
+#endif
+
 - (NSInteger)readwriteCount {
-    __block NSInteger readwriteCount = 0;
-    mcs_queue_sync(^{
-        readwriteCount = mReadwriteCount;
-    });
-    return readwriteCount;
+    @synchronized (self) {
+        return mReadwriteCount;
+    }
 }
 
 - (void)readwriteRetain {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         mReadwriteCount += 1;
         [self readwriteCountDidChange:mReadwriteCount];
-    });
+    }
 }
 
 - (void)readwriteRelease {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         if ( mReadwriteCount > 0 ) {
             mReadwriteCount -= 1;
             [self readwriteCountDidChange:mReadwriteCount];
         }
-    });
+#ifdef DEBUG
+        else {
+            NSLog(@"%@<%p>: %d : %s; waring: readwriteRelease was overcalled.", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
+        }
+#endif
+    }
 }
 
 - (void)readwriteCountDidChange:(NSInteger)count {}
