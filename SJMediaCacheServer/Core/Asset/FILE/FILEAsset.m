@@ -309,7 +309,7 @@
 ///
 /// unlocked
 - (void)_restructureContents {
-    if ( _isStored || self.readwriteCount != 0 ) return;
+    if ( _totalLength == 0 || self.readwriteCount != 0 ) return;
     UInt64 capacity = 1 * 1024 * 1024;
     FILEAssetContentNode *curNode = mNodeList.head;
     while ( curNode != nil ) {
@@ -355,7 +355,7 @@
         curNode = curNode.next;
     }
     
-    _isStored = mNodeList.head.longestContent.length == _totalLength;
+    if ( !_isStored ) _isStored = mNodeList.head.longestContent.length == _totalLength;
 }
 
 /// unlocked
