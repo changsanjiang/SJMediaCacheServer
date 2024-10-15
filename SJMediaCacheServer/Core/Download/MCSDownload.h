@@ -14,17 +14,15 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)shared;
 
 @property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request);
-@property (nonatomic, copy, nullable) void (^didFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics) API_AVAILABLE(ios(10.0));
-@property (nonatomic, copy, nullable) NSData *(^dataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
-@property (nonatomic, copy, nullable) void(^errorCallback)(NSURLRequest *request, NSError *error);
-@property (nonatomic) NSTimeInterval timeoutInterval;
+@property (nonatomic, copy, null_resettable) id<MCSDownloadResponse> _Nullable(^responseHandler)(NSURLResponse *res);
+@property (nonatomic, copy, nullable) NSData *(^receivedDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+
+@property (nonatomic, copy, nullable) void (^didFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics);
+@property (nonatomic) NSTimeInterval timeoutInterval; // default value is 30s;
 
 - (nullable id<MCSDownloadTask>)downloadWithRequest:(NSURLRequest *)request priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate;
-- (void)cancelAllDownloadTasks;
 
 - (void)customSessionConfig:(nullable void(^)(NSURLSessionConfiguration *))config;
-
-@property (nonatomic, readonly) NSInteger taskCount;
 
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
@@ -32,9 +30,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 @interface MCSDownloadResponse : MCSResponse<MCSDownloadResponse>
-- (instancetype)initWithHTTPResponse:(NSHTTPURLResponse *)response;
+- (instancetype)initWithURL:(NSURL *)URL
+                 statusCode:(NSInteger)statusCode
+              pathExtension:(NSString *_Nullable)pathExtension
+                totalLength:(NSUInteger)totalLength
+                      range:(NSRange)range
+                contentType:(NSString *_Nullable)contentType;
 @property (nonatomic, readonly) NSInteger statusCode;
 @property (nonatomic, copy, readonly) NSString *pathExtension;
 @property (nonatomic, copy, readonly) NSURL *URL;
+
+- (instancetype)initWithTotalLength:(NSUInteger)totalLength NS_UNAVAILABLE;
+- (instancetype)initWithTotalLength:(NSUInteger)totalLength contentType:(nullable NSString *)contentType  NS_UNAVAILABLE;
+- (instancetype)initWithTotalLength:(NSUInteger)totalLength range:(NSRange)range NS_UNAVAILABLE;
+- (instancetype)initWithTotalLength:(NSUInteger)totalLength range:(NSRange)range contentType:(nullable NSString *)contentType NS_UNAVAILABLE;
 @end
 NS_ASSUME_NONNULL_END

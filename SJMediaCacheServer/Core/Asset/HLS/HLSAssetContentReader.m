@@ -45,7 +45,7 @@
 }
 
 - (void)_downloadToFile:(NSString *)filepath {
-    [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority willPerformHTTPRedirection:nil completed:^(NSData * _Nullable data, NSError * _Nullable downloadError) {
+    [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority willPerformHTTPRedirection:nil completion:^(NSData * _Nullable data, NSError * _Nullable downloadError) {
         mcs_queue_sync(^{
             if ( self.status == MCSReaderStatusAborted )
                 return;

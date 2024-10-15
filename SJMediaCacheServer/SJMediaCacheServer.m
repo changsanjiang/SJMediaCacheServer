@@ -192,10 +192,10 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 }
 
 - (void)setWriteDataEncoder:(NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))writeDataEncoder {
-    MCSDownload.shared.dataEncoder = writeDataEncoder;
+    MCSDownload.shared.receivedDataEncoder = writeDataEncoder;
 }
 - (NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))writeDataEncoder {
-    return MCSDownload.shared.dataEncoder;
+    return MCSDownload.shared.receivedDataEncoder;
 }
 
 - (void)setReadDataDecoder:(NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))readDataDecoder {

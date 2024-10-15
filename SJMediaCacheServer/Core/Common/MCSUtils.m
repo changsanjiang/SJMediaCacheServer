@@ -44,25 +44,25 @@ MCSResponseGetContentRange(NSHTTPURLResponse *response) {
 
 NSRange
 MCSResponseRange(MCSResponseContentRange responseRange) {
-    return NSMakeRange(responseRange.start, responseRange.end + 1 - responseRange.start);
+    return !MCSResponseRangeIsUndefined(responseRange) ? NSMakeRange(responseRange.start, responseRange.end + 1 - responseRange.start) : NSMakeRange(NSNotFound, NSNotFound);
 }
 
-NSString *
+NSString *_Nullable
 MCSResponseGetServer(NSHTTPURLResponse *response) {
     NSDictionary *responseHeaders = response.allHeaderFields;
-    return responseHeaders[@"Server"] ?: responseHeaders[@"server"];
+    return responseHeaders[@"Server"];
 }
 
-NSString *
+NSString *_Nullable
 MCSResponseGetContentType(NSHTTPURLResponse *response) {
     NSDictionary *responseHeaders = response.allHeaderFields;
-    return responseHeaders[@"Content-Type"] ?: responseHeaders[@"content-type"];
+    return responseHeaders[@"Content-Type"];
 }
 
 NSUInteger
 MCSResponseGetContentLength(NSHTTPURLResponse *response) {
     NSDictionary *responseHeaders = response.allHeaderFields;
-    NSNumber *contentLength = responseHeaders[@"Content-Length"] ?: responseHeaders[@"content-length"];
+    NSNumber *contentLength = responseHeaders[@"Content-Length"];
     return (NSUInteger)[contentLength longLongValue];
 }
 
@@ -217,7 +217,7 @@ MCSNSRangeContains(NSRange main, NSRange sub) {
     return (main.location <= sub.location) && (main.location + main.length >= sub.location + sub.length);
 }
 
-NSString *
+NSString *_Nullable
 MCSSuggestedFilepathExtension(NSHTTPURLResponse *response) {
     NSString *extension = response.suggestedFilename.pathExtension;
     if ( extension.length != 0 )

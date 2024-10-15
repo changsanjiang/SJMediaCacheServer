@@ -286,7 +286,7 @@
     __weak typeof(self) _self = self;
     [MCSContents request:currRequest networkTaskPriority:_networkTaskPriority willPerformHTTPRedirection:^(NSURLRequest * _Nonnull newRequest) {
         currRequest = newRequest;
-    } completed:^(NSData * _Nullable data, NSError * _Nullable error) {
+    } completion:^(NSData * _Nullable data, NSError * _Nullable error) {
         mcs_queue_sync(^{
             __strong typeof(_self) self = _self;
             if ( self == nil ) return;

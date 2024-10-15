@@ -25,10 +25,10 @@ MCSResponseGetContentRange(NSHTTPURLResponse *response);
 FOUNDATION_EXTERN NSRange
 MCSResponseRange(MCSResponseContentRange range);
 
-FOUNDATION_EXTERN NSString *
+FOUNDATION_EXTERN NSString *_Nullable
 MCSResponseGetServer(NSHTTPURLResponse *response);
 
-FOUNDATION_EXTERN NSString *
+FOUNDATION_EXTERN NSString *_Nullable
 MCSResponseGetContentType(NSHTTPURLResponse *response);
 
 FOUNDATION_EXPORT NSUInteger
