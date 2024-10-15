@@ -222,6 +222,9 @@
     return MCSAssetTypeFILE;
 }
 
+/// 遍历内容节点
+///
+/// 在获取某个节点的 content 之后, 如要使用请在回调块中调用 readwriteRetain 以防 content 被删除;
 - (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(id<FILEAssetContentNode> node, BOOL *stop))block {
     @synchronized (self) {
         [mNodeList enumerateContentNodesUsingBlock:block];
@@ -310,10 +313,10 @@
     UInt64 capacity = 1 * 1024 * 1024;
     FILEAssetContentNode *curNode = mNodeList.head;
     while ( curNode != nil ) {
-        [self _removeExcessContentsForNode:curNode];
+        [self _trimExcessContentsForNode:curNode];
         FILEAssetContentNode *nextNode = curNode.next;
         if ( nextNode == nil ) break;
-        [self _removeExcessContentsForNode:nextNode];
+        [self _trimExcessContentsForNode:nextNode];
         
         id<MCSAssetContent> write = curNode.longestContent;
         id<MCSAssetContent> read = nextNode.longestContent;
@@ -356,7 +359,7 @@
 }
 
 /// unlocked
-- (void)_removeExcessContentsForNode:(FILEAssetContentNode *)node {
+- (void)_trimExcessContentsForNode:(FILEAssetContentNode *)node {
     NSArray<id<MCSAssetContent>> *contents = node.allContents;
     // 同一段位置可能存在多个文件
     // 删除多余的无用的content
