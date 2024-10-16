@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)readDataAtPosition:(UInt64)positionInAsset capacity:(UInt64)capacity error:(out NSError **)error;
 @property (nonatomic, readonly) UInt64 startPositionInAsset;
 @property (nonatomic, readonly) UInt64 length;
-@property (nonatomic, copy, readonly) NSString *filepath;
+@property (nonatomic, strong, readonly) NSString *mimeType;
 
 - (void)registerObserver:(id<MCSAssetContentObserver>)observer;
 - (void)removeObserver:(id<MCSAssetContentObserver>)observer;
@@ -30,4 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)new NS_UNAVAILABLE;
 @end
 
+
+
+@interface MCSAssetContent (Internal)
+@property (nonatomic, strong, readonly) NSString *filepath;
+@end
 NS_ASSUME_NONNULL_END

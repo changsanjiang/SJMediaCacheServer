@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)close;
 @property (nonatomic, readonly) UInt64 startPositionInAsset;
 @property (nonatomic, readonly) UInt64 length;
+@property (nonatomic, strong, readonly) NSString *mimeType;
 
 - (void)registerObserver:(id<MCSAssetContentObserver>)observer;
 - (void)removeObserver:(id<MCSAssetContentObserver>)observer;

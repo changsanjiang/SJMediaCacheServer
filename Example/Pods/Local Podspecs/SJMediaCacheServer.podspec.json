@@ -24,6 +24,11 @@
 
     ]
   },
+  "resource_bundles": {
+    "SJMediaCacheServer": [
+      "SJMediaCacheServer/Assets/**/*"
+    ]
+  },
   "subspecs": [
     {
       "name": "Core",

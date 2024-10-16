@@ -218,7 +218,7 @@ MCSNSRangeContains(NSRange main, NSRange sub) {
 }
 
 NSString *_Nullable
-MCSSuggestedFilepathExtension(NSHTTPURLResponse *response) {
+MCSSuggestedPathExtension(NSHTTPURLResponse *response) {
     NSString *extension = response.suggestedFilename.pathExtension;
     if ( extension.length != 0 )
         return extension;

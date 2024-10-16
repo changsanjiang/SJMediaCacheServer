@@ -10,6 +10,7 @@
 #import "NSFileManager+MCS.h"
 #import "MCSQueue.h"
 #import "MCSUtils.h"
+#import "MCSMimeType.h"
  
 @implementation MCSAssetContent {
     NSString *mFilepath;
@@ -27,6 +28,7 @@
         mFilepath = filepath;
         mStartPositionInAsset = position;
         mLength = length;
+        _mimeType = MCSMimeTypeFromFileAtPath(filepath);
     }
     return self;
 }
@@ -97,10 +99,6 @@
     @synchronized (self) {
         return mLength;
     }
-}
-
-- (NSString *)filepath {
-    return mFilepath;
 }
 
 #pragma mark - mark
@@ -184,5 +182,12 @@
         [mWriter mcs_closeAndReturnError:NULL];
         mWriter = nil;
     }
+}
+@end
+
+
+@implementation MCSAssetContent (Internal)
+- (NSString *)filepath {
+    return mFilepath;
 }
 @end

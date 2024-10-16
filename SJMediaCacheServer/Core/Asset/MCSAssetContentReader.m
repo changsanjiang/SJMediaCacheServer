@@ -170,10 +170,6 @@
 
 #pragma mark - subclass callback
 
-/// 子类在完成准备后的回调
-///
-///     调用前, 请对 `content`做一次 readwriteRetain
-///
 - (void)contentDidReady:(id<MCSAssetContent>)content range:(NSRange)range {
     @synchronized (self) {
         switch ( _mStatus ) {
@@ -324,13 +320,13 @@
         mHTTPContent = content;
         mReadRange = range;
         mNetworkTaskPriority = priority;
-        [mHTTPContent readwriteRetain];
+        [mHTTPContent readwriteRetain]; // retain to prevent deletion
     }
     return self;
 }
 
 - (void)dealloc {
-    [mHTTPContent readwriteRelease];
+    [mHTTPContent readwriteRelease]; // release
 }
 
 - (NSString *)description {
@@ -349,7 +345,7 @@
             NSMutableURLRequest *newRequest = [[mRequest mcs_requestWithRange:newRange] mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:mDataType]];
             mTask = [MCSDownload.shared downloadWithRequest:newRequest priority:mNetworkTaskPriority delegate:self];
         }
-        [mHTTPContent readwriteRetain];
+        [mHTTPContent readwriteRetain]; // retain for read
         [self contentDidReady:mHTTPContent range:mReadRange];
     }
     // download ts all content
@@ -364,7 +360,7 @@
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didReceiveResponse:(id<MCSDownloadResponse>)response {
     if ( mHTTPContent == nil ) {
-        mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response];
+        mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response]; // retain
         
         if ( mHTTPContent == nil ) {
             [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
@@ -374,14 +370,14 @@
             return;
         }
         
-        [mHTTPContent readwriteRetain];
+        [mHTTPContent readwriteRetain]; // retain for read
         [self contentDidReady:mHTTPContent range:response.range];
     }
 }
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didReceiveData:(NSData *)data {
     NSError *error = nil;
-    if ( ![mHTTPContent writeData:data error:&error] ) {
+    if ( ![mHTTPContent writeData:data error:&error] ) { // write data
         [self abortWithError:error];
     }
 }

@@ -17,7 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
 @property (nonatomic, copy, readonly, nullable) NSString *pathExtension; // notify
-@property (nonatomic, copy, readonly, nullable) NSString *contentType; // notify
 @property (nonatomic, readonly) NSUInteger totalLength; // notify
 @property (nonatomic, readonly) BOOL isStored; 
 

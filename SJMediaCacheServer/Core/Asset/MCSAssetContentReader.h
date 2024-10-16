@@ -24,9 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 @interface MCSAssetContentReader (Internal)
-/// 实现类在准备好 content 之后, 调用该方法通知抽象类
+/// 实现类在准备好 content 之后, 调用该方法通知抽象类;
 ///
-/// 实现类通知抽象类已准备好`content`. 调用前, 请对 `content`做一次 readwriteRetain
+/// 实现类通知抽象类已准备好 content;
+/// 调用前请对 content 做一次 readwriteRetain 操作, 防止被提前 release; 之后不需要外部调用 release, 抽象类会在读取操作结束后做一次 release 操作;
 - (void)contentDidReady:(id<MCSAssetContent>)content range:(NSRange)range;
 @end
 

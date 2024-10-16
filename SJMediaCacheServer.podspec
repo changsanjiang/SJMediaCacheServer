@@ -40,4 +40,8 @@ Pod::Spec.new do |s|
   end
   
   s.dependency 'SJUIKit/SQLite3'
+  
+  s.resource_bundles = {
+   'SJMediaCacheServer' => ['SJMediaCacheServer/Assets/**/*']
+  }
 end

@@ -71,7 +71,7 @@
             NSURL *URL = res.URL;
             NSInteger statusCode = res.statusCode;
             NSString *_Nullable contentType = MCSResponseGetContentType(res);
-            NSString *_Nullable pathExtension = MCSSuggestedFilepathExtension(res);
+            NSString *_Nullable pathExtension = MCSSuggestedPathExtension(res);
             return [MCSDownloadResponse.alloc initWithURL:URL statusCode:statusCode pathExtension:pathExtension totalLength:totalLength range:range contentType:contentType];
         };
         _responseHandler = mDefaultResponseHandler;

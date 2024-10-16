@@ -25,7 +25,7 @@
     if ( self ) {
         _totalLength = totalLength;
         _range = range;
-        _contentType = contentType ?: @"application/octet-stream";
+        _contentType = contentType != nil && contentType.length != 0 ? contentType : @"application/octet-stream";
     }
     return self;
 }

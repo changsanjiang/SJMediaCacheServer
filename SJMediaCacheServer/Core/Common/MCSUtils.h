@@ -68,7 +68,9 @@ FOUNDATION_EXPORT BOOL
 MCSNSRangeContains(NSRange main, NSRange sub);
 
 FOUNDATION_EXPORT NSString *_Nullable
-MCSSuggestedFilepathExtension(NSHTTPURLResponse *response);
+MCSSuggestedPathExtension(NSHTTPURLResponse *response);
+
+#pragma mark -
 
 #ifdef DEBUG
 FOUNDATION_EXPORT uint64_t

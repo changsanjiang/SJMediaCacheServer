@@ -6,12 +6,13 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "MCSInterfaces.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSContents : NSObject
  
-+ (void)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority willPerformHTTPRedirection:(void(^_Nullable)(NSURLRequest *newRequest))block completion:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler;
++ (id<MCSDownloadTask>)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority willPerformHTTPRedirection:(void(^_Nullable)(NSURLRequest *newRequest))block completion:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler;
 
 @end
 

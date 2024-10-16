@@ -408,7 +408,7 @@
             case MCSReaderStatusPreparing: {
                 id<MCSAssetContentReader> first = reader;
                 NSRange range = mContentReaders.count == 1 ? first.range : mFixedRange;
-                mResponse = [MCSResponse.alloc initWithTotalLength:mAsset.totalLength range:range contentType:mAsset.contentType];
+                mResponse = [MCSResponse.alloc initWithTotalLength:mAsset.totalLength range:range contentType:reader.content.mimeType];
                 mStatus = MCSReaderStatusReadyToRead;
                 [mDelegate reader:self didReceiveResponse:mResponse];
                 [self _notifyObserversWithStatus:MCSReaderStatusReadyToRead];

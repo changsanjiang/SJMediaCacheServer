@@ -8,19 +8,22 @@
 #import "MCSContents.h"
 #import "MCSDownload.h"
 
-@interface MCSContents()<MCSDownloadTaskDelegate>
+@interface MCSContents()<MCSDownloadTask, MCSDownloadTaskDelegate>
 
 @end
 
 @implementation MCSContents {
     id _Nullable mStringSelf;
+    id<MCSDownloadTask> mTask;
     NSMutableData *mData;
     void(^mWillPerformHTTPRedirection)(NSURLRequest *newRequest);
     void(^mCompletionHandler)(NSData *_Nullable data, NSError *_Nullable error);
 }
 
-+ (void)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority willPerformHTTPRedirection:(void(^_Nullable)(NSURLRequest *newRequest))block completion:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler {
-    [[MCSContents.alloc initWithWillPerformHTTPRedirection:block completion:completionHandler] startWithRequest:request networkTaskPriority:networkTaskPriority];
++ (id<MCSDownloadTask>)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority willPerformHTTPRedirection:(void(^_Nullable)(NSURLRequest *newRequest))block completion:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler {
+    MCSContents *cts = [MCSContents.alloc initWithWillPerformHTTPRedirection:block completion:completionHandler];
+    [cts startWithRequest:request networkTaskPriority:networkTaskPriority];
+    return cts;
 }
 
 - (instancetype)initWithWillPerformHTTPRedirection:(void(^_Nullable)(NSURLRequest *newRequest))block completion:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler {
@@ -35,8 +38,14 @@
 
 - (void)startWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority {
     mStringSelf = self;
-    [MCSDownload.shared downloadWithRequest:request priority:networkTaskPriority delegate:self];
+    mTask = [MCSDownload.shared downloadWithRequest:request priority:networkTaskPriority delegate:self];
 }
+
+- (void)cancel {
+    [mTask cancel];
+}
+
+#pragma mark - MCSDownloadTaskDelegate
 
 - (void)downloadTask:(id<MCSDownloadTask>)task willPerformHTTPRedirectionWithNewRequest:(NSURLRequest *)request {
     if ( mWillPerformHTTPRedirection != nil ) mWillPerformHTTPRedirection(request);
