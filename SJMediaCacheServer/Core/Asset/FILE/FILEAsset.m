@@ -33,7 +33,6 @@
 @implementation FILEAsset
 @synthesize id = _id;
 @synthesize name = _name;
-@synthesize isStored = _isStored;
 
 + (NSString *)sql_primaryKey {
     return @"id";
@@ -95,7 +94,7 @@
 
 - (BOOL)isStored {
     @synchronized (self) {
-        return _isStored;
+        return mAssembled;
     }
 }
 
@@ -209,8 +208,7 @@
         curNode = curNode.next;
     }
     
-    if ( !_isStored ) _isStored = mNodeList.head.longestContent.length == _totalLength;
-    if ( _isStored && mNodeList.count == 1 ) mAssembled = YES;
+    mAssembled = mNodeList.head.longestContent.length == _totalLength;
 }
 
 /// unlocked

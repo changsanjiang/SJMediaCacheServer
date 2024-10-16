@@ -24,7 +24,8 @@
 
 #import "MCSUtils.h"
 
-static NSString *const DEMO_URL_HLS = @"http://replay.lanwuzhe.cn/recordings/z1.lanwuzhe.3819/1728777397_1728863797.m3u8";
+//static NSString *const DEMO_URL_HLS = @"http://replay.lanwuzhe.cn/recordings/z1.lanwuzhe.3819/1728777397_1728863797.m3u8";
+static NSString *const DEMO_URL_HLS = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
 static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
 //static NSString *const DEMO_URL_HLS = @"http://192.168.1.112/hls/index.m3u8";
 //static NSString *const DEMO_URL_FILE = @"http://192.168.1.112/file/video.mp4";

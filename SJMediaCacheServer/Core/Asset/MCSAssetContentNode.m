@@ -73,6 +73,12 @@
     NSMutableDictionary<NSNumber *, MCSAssetContentNode *> *mNodes;
 }
 
+- (instancetype)init {
+    self = [super init];
+    mNodes = NSMutableDictionary.dictionary;
+    return self;
+}
+
 - (NSUInteger)count {
     return mNodes.count;
 }
