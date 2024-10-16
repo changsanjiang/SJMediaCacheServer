@@ -279,7 +279,7 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
         if ( totalLength != 0 ) {
             __block id<MCSAssetContent> prev = nil;
             __block UInt64 length = 0;
-            [asset enumerateContentNodesUsingBlock:^(id<FILEAssetContentNode>  _Nonnull node, BOOL * _Nonnull stop) {
+            [asset enumerateContentNodesUsingBlock:^(MCSAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
                 id<MCSAssetContent> cur = node.longestContent;
                 length += cur.length;
                 UInt64 prevPosition = prev.startPositionInAsset + prev.length;

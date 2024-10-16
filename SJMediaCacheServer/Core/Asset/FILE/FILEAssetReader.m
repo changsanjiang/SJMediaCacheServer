@@ -261,7 +261,7 @@
         
         __block NSRange curr = fixed;
         NSMutableArray<id<MCSAssetContentReader>> *contentReaders = NSMutableArray.array;
-        [mAsset enumerateContentNodesUsingBlock:^(id<FILEAssetContentNode>  _Nonnull node, BOOL * _Nonnull stop) {
+        [mAsset enumerateContentNodesUsingBlock:^(MCSAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
             id<MCSAssetContent> content = node.longestContent;
             NSRange available = NSMakeRange(content.startPositionInAsset, content.length);
             NSRange intersection = NSIntersectionRange(curr, available);
