@@ -61,7 +61,10 @@
             mConfiguration = MCSConfiguration.alloc.init;
             NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
             mProvider = [FILEAssetContentProvider contentProviderWithDirectory:directory];
-            mNodeList = [MCSAssetContentNodeList.alloc initWithContents:mProvider.contents];
+            mNodeList = [MCSAssetContentNodeList.alloc init];
+            [mProvider.contents enumerateObjectsUsingBlock:^(id<MCSAssetContent>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                [mNodeList attachContentToNode:obj placement:obj.startPositionInAsset];
+            }];
             [self _restructureContents];
         }
     }
@@ -141,7 +144,7 @@
         
         content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension];
         [content readwriteRetain];
-        if ( content != nil ) [mNodeList attachContentToNode:content];
+        if ( content != nil ) [mNodeList attachContentToNode:content placement:content.startPositionInAsset];
     }
     
     if ( shouldNotify ) [MCSAssetManager.shared assetMetadataDidLoad:self];

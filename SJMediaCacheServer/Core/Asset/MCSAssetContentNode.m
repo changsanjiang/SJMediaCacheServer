@@ -8,7 +8,7 @@
 #import "MCSAssetContentNode.h"
 
 @interface MCSAssetContentNode ()
-- (instancetype)initWithContent:(id<MCSAssetContent>)content;
+- (instancetype)initWithContent:(id<MCSAssetContent>)content placement:(UInt64)placement;
 @property (nonatomic, unsafe_unretained, nullable) MCSAssetContentNode *prev;
 @property (nonatomic, unsafe_unretained, nullable) MCSAssetContentNode *next;
 - (void)addContent:(id<MCSAssetContent>)content;
@@ -16,17 +16,19 @@
 @end
 
 @implementation MCSAssetContentNode {
+    UInt64 mPlacement;
     NSMutableArray<id<MCSAssetContent>> *mContents;
 }
 
-- (instancetype)initWithContent:(id<MCSAssetContent>)content {
+- (instancetype)initWithContent:(id<MCSAssetContent>)content placement:(UInt64)placement {
     self = [super init];
+    mPlacement = placement;
     mContents = [NSMutableArray arrayWithObject:content];
     return self;
 }
 
-- (UInt64)startPositionInAsset {
-    return mContents.firstObject.startPositionInAsset;
+- (UInt64)placement {
+    return mPlacement;
 }
 
 - (nullable id<MCSAssetContent>)longestContent {
@@ -62,7 +64,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@: <%p> { startPositionInAsset: %llu, maximumLength: %llu, contents: %lu };\n", NSStringFromClass(self.class), self, self.startPositionInAsset, self.longestContent.length, (unsigned long)mContents.count];
+    return [NSString stringWithFormat:@"%@: <%p> { placement: %llu, maximumLength: %llu, contents: %lu };\n", NSStringFromClass(self.class), self, mPlacement, self.longestContent.length, (unsigned long)mContents.count];
 }
 @end
 
@@ -71,60 +73,71 @@
     NSMutableDictionary<NSNumber *, MCSAssetContentNode *> *mNodes;
 }
 
-- (instancetype)initWithContents:(nullable NSArray<id<MCSAssetContent>> *)contents {
-    self = [super init];
-    mNodes = NSMutableDictionary.dictionary;
-    for ( id<MCSAssetContent> content in contents ) {
-        [self attachContentToNode:content];
-    }
-    return self;
-}
-
 - (NSUInteger)count {
     return mNodes.count;
 }
 
 /// 将内容 content 附加到某个节点, 如果该节点不存在, 则创建一个新节点并将其插入到链表中;
-- (void)attachContentToNode:(id<MCSAssetContent>)content {
-    UInt64 curNodePosition = content.startPositionInAsset;
-    NSNumber *curNodeKey = @(curNodePosition);
+- (void)attachContentToNode:(id<MCSAssetContent>)content placement:(UInt64)placement {
+    NSNumber *curNodeKey = @(placement);
     MCSAssetContentNode *curNode = mNodes[curNodeKey];
-    if ( curNode == nil ) {
-        // create new node
-        //
-        curNode = [MCSAssetContentNode.alloc initWithContent:content];
-        mNodes[curNodeKey] = curNode;
-         
-        // position is startPositionInAsset
-        //
-        // restructure nodes position
-        //
-        // prevNode.position < curNode.position < nextNode.position
-        //
-        // preNode.next = curNode; curNode.prev = prevNode, curNode.next = nextNode; nextNode.prev = curNode;
-        //
-        MCSAssetContentNode *prevNode = _tail;
-        MCSAssetContentNode *nextNode = nil;
-        while ( prevNode.startPositionInAsset > curNodePosition ) {
-            nextNode = prevNode;
-            prevNode = prevNode.prev;
-        }
-        
+    if ( curNode != nil ) {
+        [curNode addContent:content];
+        return;
+    }
+    
+    // create new node
+    //
+    curNode = [MCSAssetContentNode.alloc initWithContent:content placement:placement];
+    mNodes[curNodeKey] = curNode;
+    
+    if ( _head == nil ) {
+        _head = curNode;
+        _tail = curNode;
+        return;
+    }
+    
+    // restructure nodes
+    //
+    // prevNode.placement < curNode.placement < nextNode.placement
+    //
+    // preNode.next = curNode; curNode.prev = prevNode, curNode.next = nextNode; nextNode.prev = curNode;
+    //
+    
+    // 如果新节点位置比头节点小直接插入头部
+    if ( placement < _head.placement ) {
+        curNode.next = _head;
+        _head.prev = curNode;
+        _head = curNode;
+        return;
+    }
+    
+    // 如果新节点位置比尾节点大直接插入尾部
+    if ( placement > _tail.placement ) {
+        curNode.prev = _tail;
+        _tail.next = curNode;
+        _tail = curNode;
+        return;
+    }
+    
+    // 寻找合适的前后节点
+    MCSAssetContentNode *prevNode = _tail;
+    MCSAssetContentNode *nextNode = nil;
+
+    while ( prevNode != nil && prevNode.placement > placement ) {
+        nextNode = prevNode;
+        prevNode = prevNode.prev;
+    }
+    
+    // 插入节点到链表
+    if ( prevNode != nil ) {
         prevNode.next = curNode;
         curNode.prev = prevNode;
+    }
+    
+    if ( nextNode != nil ) {
         curNode.next = nextNode;
         nextNode.prev = curNode;
-        
-        if ( _head == nil || _head.startPositionInAsset > curNodePosition ) {
-            _head = curNode;
-        }
-        
-        if ( _tail == nil || _tail.startPositionInAsset < curNodePosition ) {
-            _tail = curNode;
-        }
-    }
-    else {
-        [curNode addContent:content];
     }
 }
 
@@ -147,7 +160,7 @@
     if ( _head == node ) _head = nextNode;
     if ( _tail == node ) _tail = prevNode;
     
-    NSNumber *nodeKey = @(node.startPositionInAsset);
+    NSNumber *nodeKey = @(node.placement);
     [mNodes removeObjectForKey:nodeKey];
 }
 @end
