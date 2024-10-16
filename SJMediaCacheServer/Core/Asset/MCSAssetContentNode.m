@@ -97,12 +97,11 @@
         return;
     }
     
-    // restructure nodes
+    // Restructure nodes in the linked list to insert the new node;
     //
-    // prevNode.placement < curNode.placement < nextNode.placement
+    // Ensure that prevNode.placement < curNode.placement < nextNode.placement;
     //
     // preNode.next = curNode; curNode.prev = prevNode, curNode.next = nextNode; nextNode.prev = curNode;
-    //
     
     // 如果新节点位置比头节点小直接插入头部
     if ( placement < _head.placement ) {
