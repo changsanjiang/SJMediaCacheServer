@@ -7,6 +7,7 @@
 
 #import "MCSHeartbeatManager.h"
 #import "HTTPMessage.h"
+#import "MCSLogger.h"
 
 @interface MCSTimer : NSObject
 - (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCSTimer *timer))block;

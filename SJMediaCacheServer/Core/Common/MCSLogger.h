@@ -67,6 +67,12 @@ NS_ASSUME_NONNULL_BEGIN
 #define MCSProxyTaskErrorLog(format, arg...) \
     MCSErrorLog(MCSLogOptionProxyTask, format, ##arg)
 
+// heartbeat
+#define MCSHearbeatDebugLog(format, arg...) \
+    MCSDebugLog(MCSLogOptionHearbeat, format, ##arg)
+#define MCSHearbeatErrorLog(format, arg...) \
+    MCSErrorLog(MCSLogOptionHearbeat, format, ##arg)
+
 #else
 #define MCSDebugLog(option, format, arg...)
 #define MCSErrorLog(option, format, arg...)
@@ -82,5 +88,7 @@ NS_ASSUME_NONNULL_BEGIN
 #define MCSHTTPConnectionErrorLog(format, arg...)
 #define MCSProxyTaskDebugLog(format, arg...)
 #define MCSProxyTaskErrorLog(format, arg...)
+#define MCSHearbeatDebugLog(format, arg...)
+#define MCSHearbeatErrorLog(format, arg...)
 #endif
 NS_ASSUME_NONNULL_END
