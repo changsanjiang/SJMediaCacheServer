@@ -210,4 +210,8 @@
     _pathExtension = pathExtension;
     return self;
 }
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, statusCode: %ld, pathExtension: %@, totalLength: %lu, range: %@, contentType: %@ };\n", NSStringFromClass(self.class), self, _URL, _statusCode, _pathExtension, (unsigned long)self.totalLength, NSStringFromRange(self.range), self.contentType];
+}
 @end

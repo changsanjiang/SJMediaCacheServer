@@ -7,7 +7,6 @@
 
 #import "MCSConsts.h"
  
-NSNotificationName const MCSAssetMetadataDidLoadNotification = @"MCSAssetMetadataDidLoadNotification";
 NSNotificationName const MCSFileWriteOutOfSpaceErrorNotification = @"MCSFileWriteOutOfSpaceErrorNotification";
 
 NSString *const HLS_SUFFIX_INDEX   = @".m3u8";

@@ -76,7 +76,7 @@
 @interface HLSURIItem : NSObject<HLSURIItem>
 - (instancetype)initWithType:(MCSDataType)type URI:(NSString *)URI HTTPAdditionalHeaders:(nullable NSDictionary *)HTTPAdditionalHeaders;
 /// MCSDataTypeHLSAESKey    = 2,
-/// MCSDataTypeHLSTs        = 3,
+/// MCSDataTypeHLSMediaSegment        = 3,
 @property (nonatomic) MCSDataType type;
 @property (nonatomic, copy) NSString *URI;
 @property (nonatomic, copy, nullable) NSDictionary *HTTPAdditionalHeaders;
@@ -143,7 +143,7 @@
     BOOL _isCalledPrepare;
     NSURLRequest *_request;
     NSArray<HLSURIItem *> *_Nullable _URIItems;
-    NSArray<HLSURIItem *> *_Nullable _TsArray;
+    NSArray<HLSURIItem *> *_Nullable _mediaSegments; // or ts array
     id<HLSAssetParserDelegate> _Nullable _delegate;
 }
 @end
@@ -176,19 +176,15 @@
 }
 
 - (NSUInteger)allItemsCount {
-    __block NSUInteger count = 0;
-    mcs_queue_sync(^{
-        count = _URIItems.count;
-    });
-    return count;
+    @synchronized (self) {
+        return _URIItems.count;
+    }
 }
 
-- (NSUInteger)tsCount {
-    __block NSUInteger count = 0;
-    mcs_queue_sync(^{
-        count = _TsArray.count;
-    });
-    return count;
+- (NSUInteger)mediaSegmentCount {
+    @synchronized (self) {
+        return _mediaSegments.count;
+    }
 }
 
 - (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index {
@@ -221,47 +217,41 @@
     return nil;
 }
 
-- (nullable id<HLSURIItem>)tsAtIndex:(NSUInteger)index {
-    __block HLSURIItem *item = nil;
-    mcs_queue_sync(^{
-        item = index < _TsArray.count ? _TsArray[index] : nil;
-    });
-    return item;
+- (nullable NSArray<id<HLSURIItem>> *)mediaSegments {
+    @synchronized (self) {
+        return _mediaSegments;
+    }
 }
 
 - (void)prepare {
-    mcs_queue_async(^{
+    @synchronized (self) {
         if ( self->_isClosed || self->_isCalledPrepare )
             return;
         
         self->_isCalledPrepare = YES;
         
         [self _start];
-    });
+    }
 }
 
 - (void)close {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         [self _close];
-    });
+    }
 }
 
 @synthesize isDone = _isDone;
 - (BOOL)isDone {
-    __block BOOL isDone = NO;
-    mcs_queue_sync(^{
-        isDone = _isDone;
-    });
-    return isDone;
+    @synchronized (self) {
+        return _isDone;
+    }
 }
 
 @synthesize isClosed = _isClosed;
 - (BOOL)isClosed {
-    __block BOOL isClosed = NO;
-    mcs_queue_sync(^{
-        isClosed = _isClosed;
-    });
-    return isClosed;
+    @synchronized (self) {
+        return _isClosed;
+    }
 }
 
 #pragma mark -
@@ -339,7 +329,7 @@
             case MCSDataTypeHLSAESKey:
                 suffix = HLS_SUFFIX_AES_KEY;
                 break;
-            case MCSDataTypeHLSTs:
+            case MCSDataTypeHLSMediaSegment:
                 suffix = HLS_SUFFIX_TS;
                 break;
             default: break;
@@ -393,9 +383,9 @@
     _URIItems = [content mcs_URIItems];
     NSMutableArray<HLSURIItem *> *_Nullable TsItems = NSMutableArray.array;
     for ( HLSURIItem *item in _URIItems ) {
-        if ( item.type == MCSDataTypeHLSTs ) [TsItems addObject:item];
+        if ( item.type == MCSDataTypeHLSMediaSegment ) [TsItems addObject:item];
     }
-    _TsArray = TsItems.count != 0 ? TsItems.copy : nil;
+    _mediaSegments = TsItems.count != 0 ? TsItems.copy : nil;
     _isDone = YES;
     
     [_delegate parserParseDidFinish:self];
@@ -623,7 +613,7 @@
                     headers = @{
                         @"Range" : [NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)bytesRange.location, NSMaxRange(bytesRange) - 1]
                     };
-                [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSTs URI:URI HTTPAdditionalHeaders:headers]];
+                [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSMediaSegment URI:URI HTTPAdditionalHeaders:headers]];
                 tsFlag = NO;
             }
         }
@@ -682,7 +672,7 @@
         else if ( tsFlag ) {
             if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
                 NSRange URIRange = NSMakeRange(linePos, line.length);
-                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSTs inRange:URIRange];
+                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSMediaSegment inRange:URIRange];
                 [m addObject:obj];
                 tsFlag = NO;
             }

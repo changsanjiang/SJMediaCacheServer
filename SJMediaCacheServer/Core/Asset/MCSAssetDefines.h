@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 @protocol MCSAssetContent <MCSReadwriteReference> 
 - (nullable NSData *)readDataAtPosition:(UInt64)positionInAsset capacity:(UInt64)capacity error:(out NSError **)error;
+- (BOOL)rewindWithError:(out NSError **)error;
 - (BOOL)writeData:(NSData *)data error:(out NSError **)error;
 - (void)closeWrite;
 - (void)closeRead;
@@ -30,7 +31,6 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MCSAssetContentObserver <NSObject>
 - (void)content:(id<MCSAssetContent>)content didWriteDataWithLength:(NSUInteger)length;
 @end
-
 
 #pragma mark - mark
 

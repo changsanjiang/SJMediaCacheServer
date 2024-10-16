@@ -73,9 +73,6 @@
         mCountOfAllAssets = [mSqlite3 countOfObjectsForClass:MCSAssetUsageLog.class conditions:nil error:NULL];
         mAssets = NSMutableDictionary.dictionary;
         mUsageLogs = NSMutableDictionary.dictionary;
-        
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_assetMetadataDidLoadWithNote:) name:MCSAssetMetadataDidLoadNotification object:nil];
-        
         [self _syncUsageLogsRecursively];
     }
     return self;
@@ -151,16 +148,17 @@
             break;
         }
         case MCSAssetTypeHLS: {
-            // If proxyURL has a playlist suffix, the proxyRequest may be requesting a sub-asset
-            BOOL isPlaylistRequest = [proxyURL.lastPathComponent hasSuffix:HLS_SUFFIX_INDEX];
-            HLSAsset *asset = [self assetWithURL:isPlaylistRequest ? URL : proxyURL];
-            if ( isPlaylistRequest ) {
-                HLSAsset *root = [self assetWithURL:proxyURL];
-                BOOL isRootAsset = root != asset;
-                if ( isRootAsset ) asset.root = root;
-            }
-            MCSDataType dataType = [MCSURL.shared dataTypeForProxyURL:proxyURL];
-            reader = [HLSAssetReader.alloc initWithAsset:asset request:request dataType:dataType networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
+#warning next ... 打开注释
+//            // If proxyURL has a playlist suffix, the proxyRequest may be requesting a sub-asset
+//            BOOL isPlaylistRequest = [proxyURL.lastPathComponent hasSuffix:HLS_SUFFIX_INDEX];
+//            HLSAsset *asset = [self assetWithURL:isPlaylistRequest ? URL : proxyURL];
+//            if ( isPlaylistRequest ) {
+//                HLSAsset *root = [self assetWithURL:proxyURL];
+//                BOOL isRootAsset = root != asset;
+//                if ( isRootAsset ) asset.root = root;
+//            }
+//            MCSDataType dataType = [MCSURL.shared dataTypeForProxyURL:proxyURL];
+//            reader = [HLSAssetReader.alloc initWithAsset:asset request:request dataType:dataType networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
             break;
         }
     }
@@ -320,9 +318,9 @@
     });
 }
 
-- (void)_assetMetadataDidLoadWithNote:(NSNotification *)note {
+- (void)assetMetadataDidLoad:(id<MCSAsset>)asset {
     @synchronized (self) {
-        [self _syncToDatabase:note.object];
+        [self _syncToDatabase:asset];
     }
 }
 
@@ -332,6 +330,8 @@
 ///
 /// unlocked
 - (nullable __kindof id<MCSAsset> )_ensureAssetWithName:(NSString *)name type:(MCSAssetType)type {
+#warning next ...
+    if ( type == MCSAssetTypeHLS ) return nil;
     return [self _queryAssetForName:name type:type] ?: [self _createAssetWithName:name type:type];
 }
 

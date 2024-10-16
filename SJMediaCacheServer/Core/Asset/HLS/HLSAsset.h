@@ -16,7 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) MCSAssetType type;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
-@property (nonatomic, copy, readonly, nullable) NSString *TsContentType;
 @property (nonatomic, readonly) NSUInteger tsCount;
 @property (nonatomic, readonly) BOOL isStored;
 @property (nonatomic, strong, nullable) HLSAssetParser *parser; 

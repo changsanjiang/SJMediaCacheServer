@@ -22,15 +22,19 @@
     NSFileHandle *_Nullable mReader;
 }
 
-- (instancetype)initWithFilepath:(NSString *)filepath startPositionInAsset:(UInt64)position length:(UInt64)length {
+- (instancetype)initWithMimeType:(NSString *)mimeType filepath:(NSString *)filepath startPositionInAsset:(UInt64)position length:(UInt64)length {
     self = [super init];
     if ( self ) {
         mFilepath = filepath;
         mStartPositionInAsset = position;
         mLength = length;
-        _mimeType = MCSMimeTypeFromFileAtPath(filepath);
+        _mimeType = mimeType;
     }
     return self;
+}
+
+- (instancetype)initWithFilepath:(NSString *)filepath startPositionInAsset:(UInt64)position length:(UInt64)length {
+    return [self initWithMimeType:MCSMimeTypeFromFileAtPath(filepath) filepath:filepath startPositionInAsset:position length:length];
 }
 
 - (instancetype)initWithFilepath:(NSString *)filepath startPositionInAsset:(UInt64)position {
@@ -103,6 +107,36 @@
 
 #pragma mark - mark
 
+- (BOOL)rewindWithError:(out NSError **)errorPtr {
+    NSError *error = nil;
+    NSArray<id<MCSAssetContentObserver>> *observers = nil;
+    @try {
+        @synchronized (self) {
+            /// create writer
+            if ( mWriter == nil ) {
+                mWriter = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:mFilepath] error:&error];
+            }
+            
+            // rewind
+            if ( mWriter != nil ) {
+                if ( [mWriter mcs_rewindWithError:&error] ) {
+                    mLength = 0;
+                    observers = MCSAllHashTableObjects(self->mObservers);
+                }
+            }
+        }
+        if ( error != nil && errorPtr != NULL) *errorPtr = error;
+        return error == nil;
+    } 
+    @finally {
+        if ( observers != nil ) {
+            for ( id<MCSAssetContentObserver> observer in observers) {
+                [observer content:self didWriteDataWithLength:0];
+            }
+        }
+    }
+}
+
 - (BOOL)writeData:(NSData *)data error:(out NSError **)errorPtr {
     UInt64 length = data.length;
     NSArray<id<MCSAssetContentObserver>> *observers = nil;
@@ -132,7 +166,8 @@
         }
         if ( error != nil && errorPtr != NULL) *errorPtr = error;
         return error == nil;
-    } @finally {
+    } 
+    @finally {
         if ( observers != nil ) {
             for ( id<MCSAssetContentObserver> observer in observers) {
                 [observer content:self didWriteDataWithLength:length];

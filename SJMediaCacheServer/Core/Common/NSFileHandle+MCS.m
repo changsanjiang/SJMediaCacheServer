@@ -36,6 +36,30 @@
     return reader;
 }
 
+/// 将一个打开的文件流的指针重置到文件的开头
+- (BOOL)mcs_rewindWithError:(out NSError **)outError {
+    NSError *error = nil;
+    BOOL result = NO;
+    if ( @available(iOS 13.0, tvOS 13.0, *) ) {
+        result = [self truncateAtOffset:0 error:&error];
+    }
+    else {
+        @try {
+            [self truncateFileAtOffset:0];
+            result = YES;
+        } @catch (NSException *exception) {
+            error = [NSError mcs_errorWithCode:MCSExceptionError userInfo:@{
+                MCSErrorUserInfoExceptionKey : exception
+            }];
+        }
+    }
+    if ( error != nil && outError != NULL ) *outError = [NSError mcs_errorWithCode:MCSFileError userInfo:@{
+        MCSErrorUserInfoErrorKey : error,
+        MCSErrorUserInfoReasonKey : @"文件指针重置失败!"
+    }];
+    return result;
+}
+
 - (BOOL)mcs_seekToOffset:(NSUInteger)offset error:(out NSError **)outError {
     NSError *error = nil;
     BOOL result = NO;

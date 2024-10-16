@@ -6,6 +6,7 @@
 //
  
 #import "HLSAssetDefines.h"
+@class HLSAssetParser;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)indexFileRelativePath;
 - (NSString *)AESKeyFilepathWithName:(NSString *)AESKeyName;
 
-- (nullable NSArray<id<HLSAssetTsContent>> *)TsContents;
+- (nullable NSArray<id<HLSAssetTsContent>> *)loadTsContentsWithParser:(HLSAssetParser *)parser;
 - (nullable id<HLSAssetTsContent>)createTsContentWithName:(NSString *)name totalLength:(NSUInteger)totalLength;
 - (nullable id<HLSAssetTsContent>)createTsContentWithName:(NSString *)name totalLength:(NSUInteger)totalLength rangeInAsset:(NSRange)range;
 - (nullable NSString *)TsContentFilepath:(id<HLSAssetTsContent>)content;

@@ -127,7 +127,7 @@ MCSMD5(NSString *str) {
         return MCSDataTypeHLSAESKey;
 
     if ( [last containsString:HLS_SUFFIX_TS] )
-        return MCSDataTypeHLSTs;
+        return MCSDataTypeHLSMediaSegment;
     
     return MCSDataTypeFILE;
 }

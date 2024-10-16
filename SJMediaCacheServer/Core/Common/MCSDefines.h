@@ -16,11 +16,11 @@ typedef NS_ENUM(NSUInteger, MCSAssetType) {
 };
 
 typedef NS_OPTIONS(NSUInteger, MCSDataType) {
-    MCSDataTypeHLSMask      = 0xFF,
-    MCSDataTypeHLSPlaylist  = 1,
-    MCSDataTypeHLSAESKey    = 2,
-    MCSDataTypeHLSTs        = 3,
-    MCSDataTypeHLS          = 1 << MCSDataTypeHLSPlaylist | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSTs,
+    MCSDataTypeHLSMask                = 0xFF,
+    MCSDataTypeHLSPlaylist            = 1,
+    MCSDataTypeHLSAESKey              = 2,
+    MCSDataTypeHLSMediaSegment        = 3, // ts
+    MCSDataTypeHLS                    = 1 << MCSDataTypeHLSPlaylist | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSMediaSegment,
 
     MCSDataTypeFILEMask      = 0xFF00,
     MCSDataTypeFILE          = 1 << 8,

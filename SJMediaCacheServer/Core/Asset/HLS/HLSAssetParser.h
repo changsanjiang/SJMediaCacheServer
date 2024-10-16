@@ -23,11 +23,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, weak, readonly, nullable) HLSAsset *asset;
 @property (nonatomic, readonly) NSUInteger allItemsCount;
-@property (nonatomic, readonly) NSUInteger tsCount;
+@property (nonatomic, readonly) NSUInteger mediaSegmentCount;
 
 - (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index;
 - (BOOL)isVariantItem:(id<HLSURIItem>)item;
 - (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item;
+- (nullable NSArray<id<HLSURIItem>> *)mediaSegments;
 
 @property (nonatomic, readonly) BOOL isClosed;
 @property (nonatomic, readonly) BOOL isDone;

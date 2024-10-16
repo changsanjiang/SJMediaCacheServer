@@ -360,7 +360,7 @@
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didReceiveResponse:(id<MCSDownloadResponse>)response {
     if ( mHTTPContent == nil ) {
-        mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response]; // retain
+        mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response]; // retain for write
         
         if ( mHTTPContent == nil ) {
             [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{

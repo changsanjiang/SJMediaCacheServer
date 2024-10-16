@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)registerObserver:(id<MCSAssetContentObserver>)observer;
 - (void)removeObserver:(id<MCSAssetContentObserver>)observer;
 
+- (instancetype)initWithMimeType:(NSString *)mimeType filepath:(NSString *)filepath startPositionInAsset:(UInt64)position length:(UInt64)length;
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
 @end

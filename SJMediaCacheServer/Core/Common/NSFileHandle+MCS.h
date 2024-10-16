@@ -1,4 +1,4 @@
-//
+ //
 //  NSFileHandle+MCS.h
 //  SJMediaCacheServer
 //
@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)mcs_fileHandleForReadingFromURL:(NSURL *)url error:(out NSError **)error;
 
 + (nullable instancetype)mcs_fileHandleForWritingToURL:(NSURL *)url error:(out NSError **)error;
+
+- (BOOL)mcs_rewindWithError:(out NSError **)error;
 
 - (BOOL)mcs_seekToOffset:(NSUInteger)offset error:(out NSError **)error;
 

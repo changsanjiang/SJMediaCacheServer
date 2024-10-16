@@ -47,6 +47,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)trimAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
 - (void)trimAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets countLimit:(NSInteger)maxCount;
 @end
+
+@interface MCSAssetManager (Internal)
+- (void)assetMetadataDidLoad:(id<MCSAsset>)asset;
+@end
 NS_ASSUME_NONNULL_END
 
 

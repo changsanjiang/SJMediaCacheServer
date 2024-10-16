@@ -14,17 +14,15 @@
 #import "HLSAssetContentProvider.h"
 #import "HLSAssetReader.h"
 #import "MCSRootDirectory.h"
-#import "MCSQueue.h"
 
 @interface HLSAsset () {
     HLSAssetContentProvider *mProvider;
     NSMutableArray<id<HLSAssetTsContent>> *mTsContents;
-    BOOL mIsPrepared;
+    BOOL mPrepared;
 }
 
 @property (nonatomic) NSInteger id; // saveable
 @property (nonatomic, copy) NSString *name; // saveable
-@property (nonatomic, copy, nullable) NSString *TsContentType; // saveable
 @property (nonatomic, weak, nullable) HLSAsset *root;
 @end
 
@@ -55,19 +53,20 @@
 }
 
 - (void)prepare {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         NSParameterAssert(self.name != nil);
-        if ( mIsPrepared )
+        if ( mPrepared )
             return;
-        mIsPrepared = YES;
+        mPrepared = YES;
         
         NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
         _configuration = MCSConfiguration.alloc.init;
         mProvider = [HLSAssetContentProvider.alloc initWithDirectory:directory];
         _parser = [HLSAssetParser parserInAsset:self];
-        mTsContents = [(mProvider.TsContents ?: @[]) mutableCopy];
+#warning next ...
+//        mTsContents = [(mProvider.TsContents ?: @[]) mutableCopy];
         [self _mergeContents];
-    });
+    }
 }
 
 - (NSString *)path {
@@ -77,17 +76,15 @@
 #pragma mark - mark
 
 - (void)setParser:(nullable HLSAssetParser *)parser {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         _parser = parser;
-    });
+    }
 }
 
 - (nullable HLSAssetParser *)parser {
-    __block HLSAssetParser *parser = nil;
-    mcs_queue_sync(^{
-        parser = _parser;
-    });
-    return parser;
+    @synchronized (self) {
+        return _parser;
+    }
 }
 
 - (MCSAssetType)type {
@@ -95,19 +92,15 @@
 }
 
 - (nullable NSArray<id<HLSAssetTsContent>> *)TsContents {
-    __block NSArray<id<HLSAssetTsContent>> *contents;
-    mcs_queue_sync(^{
-        contents = mTsContents;
-    });
-    return contents;
+    @synchronized (self) {
+        return mTsContents;
+    }
 }
 
 - (BOOL)isStored {
-    __block BOOL isStored = NO;
-    mcs_queue_sync(^{
-        isStored = _isStored;
-    });
-    return isStored;
+    @synchronized (self) {
+        return _isStored;
+    }
 }
 
 - (NSString *)indexFilepath {
@@ -122,42 +115,34 @@
     return [mProvider AESKeyFilepathWithName:[MCSURL.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_AES_KEY]];
 }
 
-- (nullable NSString *)TsContentType {
-    __block NSString *TsContentType = nil;
-    mcs_queue_sync(^{
-        TsContentType = _TsContentType;
-    });
-    return TsContentType;
-}
-
 - (NSUInteger)tsCount {
-    return self.parser.tsCount;
+    @synchronized (self) {
+        return _parser.mediaSegmentCount;
+    }
 }
 
 @synthesize root = _root;
 - (void)setRoot:(nullable HLSAsset *)root {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         _root = root;
-    });
+    }
 }
 
 - (nullable HLSAsset *)root {
-    __block HLSAsset *root = nil;
-    mcs_queue_sync(^{
-        root = _root;
-    });
-    return root;
+    @synchronized (self) {
+        return _root;
+    }
 }
 
 - (nullable id<HLSAssetTsContent>)createTsContentWithResponse:(id<MCSDownloadResponse>)response {
     NSString *TsContentType = response.contentType;
     __block BOOL isUpdated = NO;
     __block id<HLSAssetTsContent>content = nil;
-    mcs_queue_sync(^{
-        if ( ![TsContentType isEqualToString:_TsContentType] ) {
-            _TsContentType = TsContentType;
-            isUpdated = YES;
-        }
+    @synchronized (self) {
+//        if ( ![TsContentType isEqualToString:_TsContentType] ) {
+//            _TsContentType = TsContentType;
+//            isUpdated = YES;
+//        }
         
         NSString *name = [MCSURL.shared nameWithUrl:response.URL.absoluteString suffix:HLS_SUFFIX_TS];
         
@@ -169,17 +154,17 @@
         }
         
         [mTsContents addObject:content];
-    });
+    }
     
-    if ( isUpdated )
-        [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetMetadataDidLoadNotification object:self];
+//    if ( isUpdated )
+//        [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetMetadataDidLoadNotification object:self];
     return content;
 }
  
 - (nullable id<HLSAssetTsContent>)TsContentForRequest:(NSURLRequest *)request {
     NSString *name = [MCSURL.shared nameWithUrl:request.URL.absoluteString suffix:HLS_SUFFIX_TS];
     __block id<HLSAssetTsContent>ts = nil;
-    mcs_queue_sync(^{
+    @synchronized (self) {
         // range
         NSRange r = NSMakeRange(0, 0);
         BOOL isRangeRequest = MCSRequestIsRangeRequest(request);
@@ -198,7 +183,7 @@
                 break;
             }
         }
-    });
+    }
     return ts;
 }
 
@@ -213,7 +198,7 @@
 - (nullable id<HLSAssetTsContent>)TsContentReadwriteForRequest:(NSURLRequest *)request {
     NSString *name = [MCSURL.shared nameWithUrl:request.URL.absoluteString suffix:HLS_SUFFIX_TS];
     __block id<HLSAssetTsContent>_ts = nil;
-    mcs_queue_sync(^{
+    @synchronized (self) {
         // range
         BOOL isRangeRequest = MCSRequestIsRangeRequest(request);
         NSRange requestRange = NSMakeRange(0, 0);
@@ -245,7 +230,7 @@
         if ( _ts != nil ) {
             [_ts readwriteRetain];
         }
-    });
+    }
     return _ts;
 }
 
@@ -259,18 +244,18 @@
         case MCSDataTypeFILE:
             /* return */
             return nil;
-        case MCSDataTypeHLSTs:
+        case MCSDataTypeHLSMediaSegment:
             break;
     }
     
     NSString *TsContentType = response.contentType;
     __block BOOL isUpdated = NO;
     __block id<HLSAssetTsContent>content = nil;
-    mcs_queue_sync(^{
-        if ( ![TsContentType isEqualToString:_TsContentType] ) {
-            _TsContentType = TsContentType;
-            isUpdated = YES;
-        }
+    @synchronized (self) {
+//        if ( ![TsContentType isEqualToString:_TsContentType] ) {
+//            _TsContentType = TsContentType;
+//            isUpdated = YES;
+//        }
         
         NSString *name = [MCSURL.shared nameWithUrl:response.URL.absoluteString suffix:HLS_SUFFIX_TS];
         
@@ -282,10 +267,10 @@
         }
         [content readwriteRetain];
         [mTsContents addObject:content];
-    });
-    
-    if ( isUpdated )
-        [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetMetadataDidLoadNotification object:self];
+    }
+//    
+//    if ( isUpdated )
+//        [NSNotificationCenter.defaultCenter postNotificationName:MCSAssetMetadataDidLoadNotification object:self];
     return content;
 }
 
@@ -321,7 +306,7 @@
         [mTsContents removeObjectsInArray:deletes];
     }
     
-    if ( mTsContents.count == _parser.tsCount ) {
+    if ( mTsContents.count == _parser.mediaSegmentCount ) {
         BOOL isStoredAllContents = YES;
         for ( id<HLSAssetTsContent>content in mTsContents ) {
             if ( content.length != content.totalLength ) {

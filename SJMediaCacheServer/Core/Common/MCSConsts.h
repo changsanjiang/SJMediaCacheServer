@@ -9,7 +9,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-FOUNDATION_EXPORT NSNotificationName const MCSAssetMetadataDidLoadNotification;
 FOUNDATION_EXPORT NSNotificationName const MCSFileWriteOutOfSpaceErrorNotification;
 
 FOUNDATION_EXPORT NSString *const HLS_SUFFIX_INDEX;

@@ -80,7 +80,7 @@
         MCSAssetReaderDebugLog(@"%@: <%p>.prepare { asset: %@, request: %@ };\n", NSStringFromClass(self.class), self, mAsset.name, mRequest);
         [self _notifyObserversWithStatus:mStatus];
         
-        if ( mDataType == MCSDataTypeHLSTs || mDataType == MCSDataTypeHLSAESKey ) {
+        if ( mDataType == MCSDataTypeHLSMediaSegment || mDataType == MCSDataTypeHLSAESKey ) {
             if ( mAsset.parser == nil ) {
                 [self _abortWithError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
                     MCSErrorUserInfoObjectKey : mRequest,
@@ -99,16 +99,16 @@
                 mReader = [HLSAssetAESKeyContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
             }
                 break;
-            case MCSDataTypeHLSTs: {
+            case MCSDataTypeHLSMediaSegment: {
                 id<HLSAssetTsContent> content = [mAsset TsContentReadwriteForRequest:mRequest];
                 if      ( content == nil ) {
-                    mReader = [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority dataType:MCSDataTypeHLSTs delegate:self];
+                    mReader = [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority dataType:MCSDataTypeHLSMediaSegment delegate:self];
                 }
                 else if ( content.length == content.totalLength ) {
                     mReader = [MCSAssetFileContentReader.alloc initWithAsset:mAsset fileContent:content rangeInAsset:content.rangeInAsset delegate:self];
                 }
                 else {
-                    mReader = [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:mRequest rangeInAsset:content.rangeInAsset contentReadwrite:content networkTaskPriority:_networkTaskPriority dataType:MCSDataTypeHLSTs delegate:self];
+                    mReader = [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:mRequest rangeInAsset:content.rangeInAsset contentReadwrite:content networkTaskPriority:_networkTaskPriority dataType:MCSDataTypeHLSMediaSegment delegate:self];
                 }
             }
                 break;
@@ -300,9 +300,9 @@
                 mStatus = MCSReaderStatusReadyToRead;
                 mOffset = reader.offset;
                 switch ( mDataType ) {
-                    case MCSDataTypeHLSTs: {
+                    case MCSDataTypeHLSMediaSegment: {
                         id<HLSAssetTsContent> content = reader.content;
-                        _response = [MCSResponse.alloc initWithTotalLength:content.totalLength range:reader.range contentType:mAsset.TsContentType];
+                        _response = [MCSResponse.alloc initWithTotalLength:content.totalLength range:reader.range contentType:content.mimeType];
                     }
                         break;
                     case MCSDataTypeHLSMask:

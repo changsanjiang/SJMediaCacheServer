@@ -9,7 +9,6 @@
 #import "HLSAsset.h"
 #import "MCSLogger.h"
 #import "MCSContents.h"
-#import "MCSQueue.h"
 #import "MCSError.h"
 #import "MCSAssetContent.h"
 #import "NSFileManager+MCS.h"
@@ -18,6 +17,7 @@
     HLSAsset *mAsset;
     NSURLRequest *mRequest;
     float mPriority;
+    id<MCSDownloadTask> _Nullable mTask;
 }
 
 - (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate {
@@ -35,42 +35,56 @@
     MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };\n", NSStringFromClass(self.class), self, mRequest.mcs_description);
 
     NSString *filepath = [mAsset AESKeyFilepathWithURL:mRequest.URL];
-    if ( [NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-        [self _prepareContentAtPath:filepath];
-        return;
+    @synchronized (HLSAssetAESKeyContentReader.class) {
+        if ( [NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+            [self _createContentAtPath:filepath];
+            return;
+        }
     }
     
     MCSContentReaderDebugLog(@"%@: <%p>.download { request: %@\n };\n", NSStringFromClass(self.class), self, mRequest.mcs_description);
     [self _downloadToFile:filepath];
 }
 
+- (void)didAbortWithError:(NSError *)error {
+    [mTask cancel];
+}
+
 - (void)_downloadToFile:(NSString *)filepath {
-    [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority willPerformHTTPRedirection:nil completion:^(NSData * _Nullable data, NSError * _Nullable downloadError) {
-        mcs_queue_sync(^{
-            if ( self.status == MCSReaderStatusAborted )
-                return;
-            
-            NSError *writeError = nil;
-            // write to file
-            if ( downloadError == nil && ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-                [data writeToFile:filepath options:NSDataWritingAtomic error:&writeError];
-            }
-            
-            NSError *error = downloadError ?: writeError;
-            if ( error != nil ) {
-                [self abortWithError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
-                    MCSErrorUserInfoErrorKey : error,
-                    MCSErrorUserInfoReasonKey : @"下载失败或写入文件失败!"
-                }]];
-                return;
-            }
-            
-            [self _prepareContentAtPath:filepath];
-        });
+    mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority willPerformHTTPRedirection:nil completion:^(NSData * _Nullable data, NSError * _Nullable downloadError) {
+        @synchronized (self) {
+            [self _downloadDidCompleteWithData:data error:downloadError saveToFile:filepath];
+        }
     }];
 }
 
-- (void)_prepareContentAtPath:(NSString *)filepath {
+/// unlocked
+- (void)_downloadDidCompleteWithData:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError saveToFile:(NSString *)filepath {
+    if ( self.status == MCSReaderStatusAborted )
+        return;
+    
+    NSError *writeError = nil;
+    if ( downloadError == nil ) {
+        @synchronized (HLSAssetAESKeyContentReader.class) {
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
+                [data writeToFile:filepath options:NSDataWritingAtomic error:&writeError]; // write data to file
+            }
+        }
+    }
+    
+    NSError *error = downloadError ?: writeError;
+    if ( error != nil ) {
+        [self abortWithError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
+            MCSErrorUserInfoErrorKey : error,
+            MCSErrorUserInfoReasonKey : @"下载失败或写入文件失败!"
+        }]];
+        return;
+    }
+    
+    [self _createContentAtPath:filepath];
+}
+
+- (void)_createContentAtPath:(NSString *)filepath {
     UInt64 fileSize = (UInt64)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
     MCSAssetContent *content = [MCSAssetContent.alloc initWithFilepath:filepath startPositionInAsset:0 length:fileSize];
     [content readwriteRetain];
@@ -106,7 +120,7 @@
 - (void)prepareContent {
     HLSAssetParser *_Nullable parser = mAsset.parser;
     if ( parser != nil ) {
-        [self _prepareContentForParser:parser];
+        [self _createContentWithParser:parser];
     }
     else {
         mTempParser = [HLSAssetParser.alloc initWithAsset:mAsset request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:mPriority delegate:self];
@@ -117,9 +131,9 @@
 #pragma mark - HLSAssetParserDelegate
 
 - (void)parserParseDidFinish:(HLSAssetParser *)parser {
-    mcs_queue_sync(^{
-        [self _prepareContentForParser:parser];
-    });
+    @synchronized (self) {
+        [self _createContentWithParser:parser];
+    }
 }
 
 - (void)parser:(HLSAssetParser *)parser anErrorOccurred:(NSError *)error {
@@ -128,7 +142,14 @@
 
 #pragma mark - mark
 
-- (void)_prepareContentForParser:(HLSAssetParser *)parser {
+- (void)didAbortWithError:(NSError *)error {
+    
+}
+
+#pragma mark - mark
+
+/// unlocked
+- (void)_createContentWithParser:(HLSAssetParser *)parser {
     switch ( self.status ) {
         case MCSReaderStatusFinished:
         case MCSReaderStatusAborted:

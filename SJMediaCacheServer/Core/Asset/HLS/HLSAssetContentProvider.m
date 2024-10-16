@@ -12,7 +12,7 @@
 
 #define HLS_PREFIX_FILENAME   @"hls"
 #define HLS_PREFIX_FILENAME1  HLS_PREFIX_FILENAME
-#define HLS_PREFIX_FILENAME2 @"hlsr"
+#define HLS_PREFIX_FILENAME2 @"hlsr" // range
 
 @implementation HLSAssetContentProvider {
     NSString *_directory;
@@ -41,7 +41,7 @@
     return [_directory stringByAppendingPathComponent:AESKeyName];
 }
 
-- (nullable NSArray<id<HLSAssetTsContent>> *)TsContents {
+- (nullable NSArray<id<HLSAssetTsContent>> *)loadTsContentsWithParser:(HLSAssetParser *)parser {
     NSMutableArray<id<HLSAssetTsContent>> *m = nil;
     for ( NSString *filename in [NSFileManager.defaultManager contentsOfDirectoryAtPath:_directory error:NULL] ) {
         if ( ![filename hasPrefix:HLS_PREFIX_FILENAME] )
@@ -55,11 +55,13 @@
         if      ( [filename hasPrefix:HLS_PREFIX_FILENAME2] ) {
             long long length = (long long)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
             NSRange range = [self _TsRangeForFilename:filename];
-            ts = [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength length:length rangeInAsset:range];
+#warning next ...
+//            ts = [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength length:length rangeInAsset:range];
         }
         else if ( [filename hasPrefix:HLS_PREFIX_FILENAME1] ) {
             long long length = (long long)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
-            ts = [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength length:length];
+#warning next ...
+//            ts = [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength length:length];
         }
         
         if ( ts != nil )
@@ -75,7 +77,8 @@
         NSString *filepath = [self _TsContentFilepathForFilename:filename];
         if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
             [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-            return [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength];
+#warning next ...
+//            return [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength];
         }
         number += 1;
     } while (true);
@@ -93,7 +96,8 @@
         NSString *filepath = [self _TsContentFilepathForFilename:filename];
         if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
             [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
-            return [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength rangeInAsset:range];
+#warning next ...
+//            return [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength rangeInAsset:range];
         }
         number += 1;
     } while (true);
