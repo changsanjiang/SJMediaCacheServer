@@ -162,7 +162,7 @@
 ///
 /// unlocked
 - (void)_restructureContents {
-    if ( mAssembled || _totalLength == 0 || self.readwriteCount != 0 ) return;
+    if ( mAssembled || !mMetadataReady || self.readwriteCount != 0 ) return;
     UInt64 capacity = 1 * 1024 * 1024;
     MCSAssetContentNode *curNode = mNodeList.head;
     while ( curNode != nil ) {
