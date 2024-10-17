@@ -187,7 +187,7 @@
         
         _isCalledPrepare = YES;
 
-        NSURL *proxyURL = [MCSURL.shared proxyURLWithURL:_URL];
+        NSURL *proxyURL = [MCSURL.shared generateProxyURLFromURL:_URL];
         NSURLRequest *proxyRequest = [NSURLRequest.alloc initWithURL:proxyURL];
         _reader = [MCSAssetManager.shared readerWithRequest:proxyRequest networkTaskPriority:0 delegate:self];
         [_reader prepare];

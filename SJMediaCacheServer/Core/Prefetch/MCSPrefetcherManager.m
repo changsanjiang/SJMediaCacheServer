@@ -103,7 +103,7 @@
             return;
         }
         
-        MCSAssetType type = [MCSURL.shared assetTypeForURL:_URL];
+        MCSAssetType type = [MCSURL.shared getAssetTypeBy:_URL];
         switch ( type ) {
             case MCSAssetTypeFILE: {
                 _prefetcher = _isPrefetchAllMode || _numberOfPreloadedFiles != 0 ?

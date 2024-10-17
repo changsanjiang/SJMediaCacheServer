@@ -17,7 +17,7 @@
 }
 
 - (NSURL *)originalURL {
-    return [MCSURL.shared URLWithProxyURL:_proxyRequest.URL];
+    return [MCSURL.shared restoreURLFromProxyURL:_proxyRequest.URL];
 }
 
 - (MCSDataType)requestDataType {
@@ -28,7 +28,7 @@
     return [NSString stringWithFormat:@"%@:<%p> { originalURL: %@, proxyRequest: %@ };", NSStringFromClass(self.class), self, self.originalURL, _proxyRequest];
 }
 
-- (NSURLRequest *)restoreOriginalURLRequest {
+- (NSURLRequest *)restoreURLFromProxyURLRequest {
     return [_proxyRequest mcs_requestWithRedirectURL:self.originalURL];
 }
 @end

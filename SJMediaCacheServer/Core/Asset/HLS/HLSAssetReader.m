@@ -54,7 +54,7 @@
     self = [super init];
     if ( self ) {
         mAsset = asset;
-        mRequest = [request restoreOriginalURLRequest];
+        mRequest = [request restoreURLFromProxyURLRequest];
         mDataType = [request requestDataType];
         _networkTaskPriority = networkTaskPriority;
         _readDataDecoder = readDataDecoder;

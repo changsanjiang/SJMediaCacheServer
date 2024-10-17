@@ -318,18 +318,18 @@
     /// ../../video/name.m3u8
     ///
     else if ( [self hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
-        NSURL *curDir = URL.mcs_URLByDeletingLastPathComponentAndQuery;
+        NSURL *curDir = URL.mcs_URLByRemovingLastPathComponentAndQuery;
         NSURL *parentDir = curDir;
         NSString *subpath = self;
         while ( [subpath hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
-            parentDir = parentDir.mcs_URLByDeletingLastPathComponentAndQuery;
+            parentDir = parentDir.mcs_URLByRemovingLastPathComponentAndQuery;
             subpath = [subpath substringFromIndex:HLS_PREFIX_DIR_PARENT.length];
         }
         url = [parentDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     /// ./video/name.m3u8
     else if ( [self hasPrefix:HLS_PREFIX_DIR_CURRENT] ) {
-        NSURL *curDir = URL.mcs_URLByDeletingLastPathComponentAndQuery;
+        NSURL *curDir = URL.mcs_URLByRemovingLastPathComponentAndQuery;
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_CURRENT.length];
         url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
@@ -343,7 +343,7 @@
         url = self;
     }
     else {
-        NSURL *curDir = URL.mcs_URLByDeletingLastPathComponentAndQuery;
+        NSURL *curDir = URL.mcs_URLByRemovingLastPathComponentAndQuery;
         NSString *subpath = self;
         url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }

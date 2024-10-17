@@ -105,8 +105,8 @@
 
 /// 获取或创建 asset;
 - (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL {
-    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
-    NSString *name = [MCSURL.shared assetNameForURL:URL];
+    MCSAssetType type = [MCSURL.shared getAssetTypeBy:URL];
+    NSString *name = [MCSURL.shared getAssetNameBy:URL];
     @synchronized (self) {
         return [self _ensureAssetWithName:name type:type];
     }
@@ -128,41 +128,14 @@
 
 /// 查询 asset 的数据是否已全部保存;
 - (BOOL)isAssetStoredForURL:(NSURL *)URL {
-    NSString *name = [MCSURL.shared assetNameForURL:URL];
-    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
+    NSString *name = [MCSURL.shared getAssetNameBy:URL];
+    MCSAssetType type = [MCSURL.shared getAssetTypeBy:URL];
     @synchronized (self) {
         return [self _queryAssetForName:name type:type].isStored;
     }
 }
  
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
-//    NSURL *proxyURL = proxyRequest.URL;
-//    NSURL *URL = [MCSURL.shared URLWithProxyURL:proxyURL];
-//    MCSAssetType type = [MCSURL.shared assetTypeForURL:proxyURL];
-//    NSMutableURLRequest *request = [proxyRequest mcs_requestWithRedirectURL:URL];
-//    id<MCSAssetReader> reader = nil;
-//    switch ( type ) {
-//        case MCSAssetTypeFILE: {
-//            FILEAsset *asset = [self assetWithURL:proxyURL];
-//            reader = [FILEAssetReader.alloc initWithAsset:asset request:request networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
-//            break;
-//        }
-//        case MCSAssetTypeHLS: {
-//#warning next ... 打开注释
-//            // If proxyURL has a playlist suffix, the proxyRequest may be requesting a sub-asset
-//            BOOL isPlaylistRequest = [proxyURL.lastPathComponent hasSuffix:HLS_SUFFIX_INDEX];
-//            HLSAsset *asset = [self assetWithURL:isPlaylistRequest ? URL : proxyURL];
-//            if ( isPlaylistRequest ) {
-//                HLSAsset *root = [self assetWithURL:proxyURL];
-//                BOOL isRootAsset = root != asset;
-//                if ( isRootAsset ) asset.root = root;
-//            }
-//            MCSDataType dataType = [MCSURL.shared dataTypeForProxyURL:proxyURL];
-//            reader = [HLSAssetReader.alloc initWithAsset:asset request:request dataType:dataType networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
-//            break;
-//        }
-//    }
-    
     id<MCSAsset> asset = [self assetWithURL:proxyRequest.URL];
     id<MCSAssetReader> reader = [asset readerWithRequest:[MCSRequest.alloc initWithProxyRequest:proxyRequest] networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
     if ( reader != nil ) {
@@ -177,8 +150,8 @@
 
 - (void)removeAssetForURL:(NSURL *)URL {
     if ( URL.absoluteString.length == 0 ) return;
-    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
-    NSString *name = [MCSURL.shared assetNameForURL:URL];
+    MCSAssetType type = [MCSURL.shared getAssetTypeBy:URL];
+    NSString *name = [MCSURL.shared getAssetNameBy:URL];
     @synchronized (self) {
         id<MCSAsset> asset = [self _queryAssetForName:name type:type];
         if ( asset != nil ) [self _removeAssetsInArray:@[asset]];

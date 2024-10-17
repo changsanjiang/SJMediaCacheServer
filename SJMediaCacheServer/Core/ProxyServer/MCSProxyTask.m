@@ -28,7 +28,7 @@
     NSParameterAssert(request.URL.absoluteString.length != 0);
     self = [super init];
 #ifdef DEBUG
-    MCSProxyTaskDebugLog(@"%@: <%p>.init { URL: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, [MCSURL.shared URLWithProxyURL:request.URL], request.URL, request.allHTTPHeaderFields);
+    MCSProxyTaskDebugLog(@"%@: <%p>.init { URL: %@, proxyURL: %@, headers: %@ };\n", NSStringFromClass(self.class), self, [MCSURL.shared restoreURLFromProxyURL:request.URL], request.URL, request.allHTTPHeaderFields);
 #endif
     
     _request = request;

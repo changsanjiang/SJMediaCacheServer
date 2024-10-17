@@ -10,7 +10,7 @@
 #import "MCSConsts.h"
 #include <CommonCrypto/CommonCrypto.h>
 
-static NSString * const mcsproxy = @"mcsproxy";
+static NSString * const MCS_PROXY_FLAG = @"mcsproxy";
 
 static inline NSString *
 MCSMD5(NSString *str) {
@@ -51,67 +51,80 @@ MCSMD5(NSString *str) {
     return instance;
 }
 
-- (NSString *)proxyPath {
-    return mcsproxy;
-}
-
-- (NSURL *)proxyURLWithURL:(NSURL *)URL {
+- (NSURL *)generateProxyURLFromURL:(NSURL *)originalURL {
     NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
-    
+
+    // hls 内部代理请求
+    // format: mcsproxy/asset/name.extension?url=base64EncodedUrl
+    if ( [originalURL.path containsString:MCS_PROXY_FLAG] ) return originalURL;
+    if ( [originalURL.host isEqualToString:_serverURL.host] ) return originalURL;
+
     NSURL *serverURL = _serverURL;
-    if ( [URL.host isEqualToString:serverURL.host] )
-        return URL;
-    
     NSURLComponents *components = [NSURLComponents componentsWithURL:serverURL resolvingAgainstBaseURL:NO];
-    components.path = URL.path;
-    NSString *url = [self encodeUrl:URL.absoluteString];
-    [components setQuery:[NSString stringWithFormat:@"url=%@", url]];
+    [components setQuery:[NSString stringWithFormat:@"url=%@", [self encode:originalURL.absoluteString]]];
+    components.path = originalURL.path;
     return components.URL;
 }
 
-- (NSURL *)URLWithProxyURL:(NSURL *)proxyURL {
-    NSURLComponents *components = [NSURLComponents componentsWithURL:proxyURL resolvingAgainstBaseURL:NO];
-    for ( NSURLQueryItem *query in components.queryItems ) {
-        if ( [query.name isEqualToString:@"url"] ) {
-            NSString *url = [self decodeUrl:query.value];
-            return [NSURL URLWithString:url];
+- (NSURL *)restoreURLFromProxyURL:(NSURL *)proxyURL {
+    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
+
+    if ( [proxyURL.host isEqualToString:_serverURL.host] ) {
+        NSURLComponents *components = [NSURLComponents componentsWithURL:proxyURL resolvingAgainstBaseURL:NO];
+        for ( NSURLQueryItem *query in components.queryItems ) {
+            if ( [query.name isEqualToString:@"url"] ) {
+                NSString *url = [self decode:query.value];
+                return [NSURL URLWithString:url];
+            }
         }
     }
     return proxyURL;
 }
 
-// 此处的URL参数可能为代理URL也可能为原始URL
-- (NSString *)assetNameForURL:(NSURL *)URL {
+// URL: `proxyURL or originalURL`
+- (NSString *)getAssetNameBy:(NSURL *)URL {
     NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
 
     NSParameterAssert(URL.host);
     
-    NSString *url = URL.absoluteString;
-    
-    // 判断是否为代理URL
-    if ( [URL.host isEqualToString:_serverURL.host] ) {
+    if ( [URL.path containsString:MCS_PROXY_FLAG] ) {
         // 包含 mcsproxy 为 HLS 内部资源的请求, 此处返回path后面资源的名字
-        if ( [url containsString:mcsproxy] ) {
-            // format: mcsproxy/asset/name.extension?url=base64EncodedUrl
-            return URL.path.stringByDeletingLastPathComponent.lastPathComponent;
-        }
-        else {
-            // 不包含 mcsproxy 时, 将代理URL转换为原始的URL
-            URL = [self URLWithProxyURL:URL];
-            url = URL.absoluteString;
-        }
+        // format: mcsproxy/asset/name.extension?url=base64EncodedUrl
+        return URL.path.stringByDeletingLastPathComponent.lastPathComponent;
     }
-
-    NSString *str = self.resolveAssetIdentifier != nil ? self.resolveAssetIdentifier(URL) : url;
-    NSParameterAssert(str);
-    return MCSMD5(str);
+    
+    // assetName 正常情况下是 originalURL 的 md5 值
+    // 不包含 mcsproxy 时, 将代理URL转换为原始的URL
+    NSURL *originalURL = [self restoreURLFromProxyURL:URL];
+    NSString *assetIdentifier = self.resolveAssetIdentifier != nil ? self.resolveAssetIdentifier(originalURL) : originalURL.absoluteString;
+    NSParameterAssert(assetIdentifier);
+    NSString *assetName = MCSMD5(assetIdentifier);
+    return assetName;
 }
 
-- (MCSAssetType)assetTypeForURL:(NSURL *)URL {
+- (MCSAssetType)getAssetTypeBy:(NSURL *)URL {
+    NSURL *originalURL = [self restoreURLFromProxyURL:URL];
+    if ( _resolveAssetType != nil ) return _resolveAssetType(originalURL);
+    
     return [URL.path containsString:HLS_SUFFIX_INDEX] ||
            [URL.path containsString:HLS_SUFFIX_TS] ||
            [URL.path containsString:HLS_SUFFIX_AES_KEY] ? MCSAssetTypeHLS : MCSAssetTypeFILE;
 }
+
+- (NSString *)encode:(NSString *)url {
+    return [[url dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+}
+
+- (NSString *)decode:(NSString *)url {
+    return [NSString.alloc initWithData:[NSData.alloc initWithBase64EncodedString:url options:0] encoding:NSUTF8StringEncoding];
+}
+
+
+
+
+
+
+
 
 - (MCSDataType)dataTypeForProxyURL:(NSURL *)proxyURL {
     NSString *last = proxyURL.lastPathComponent;
@@ -137,33 +150,13 @@ MCSMD5(NSString *str) {
 
 - (NSURL *)proxyURLWithRelativePath:(NSString *)path inAsset:(NSString *)assetName {
     // format: mcsproxy/asset/path
-    return [_serverURL URLByAppendingPathComponent:[NSString stringWithFormat:@"%@/%@/%@", mcsproxy, assetName, path]];
+    return [_serverURL URLByAppendingPathComponent:[NSString stringWithFormat:@"%@/%@/%@", MCS_PROXY_FLAG, assetName, path]];
 }
 
-- (NSString *)encodeUrl:(NSString *)url {
-    return [[url dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
-}
-
-- (NSString *)decodeUrl:(NSString *)url {
-    return [NSString.alloc initWithData:[NSData.alloc initWithBase64EncodedString:url options:0] encoding:NSUTF8StringEncoding];
-}
 
 - (NSURLQueryItem *)encodedURLQueryItemWithUrl:(NSString *)url {
-    return [NSURLQueryItem.alloc initWithName:@"url" value:[self encodeUrl:url]];
+    return [NSURLQueryItem.alloc initWithName:@"url" value:[self encode:url]];
 }
-
-
-
-//typedef NS_OPTIONS(NSUInteger, MCSDataType) {
-//    MCSDataTypeHLSMask                = 0xFF,
-//    MCSDataTypeHLSPlaylist            = 1,
-//    MCSDataTypeHLSAESKey              = 2,
-//    MCSDataTypeHLSSegment        = 3, // ts
-//    MCSDataTypeHLS                    = 1 << MCSDataTypeHLSPlaylist | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSSegment,
-//
-//    MCSDataTypeFILEMask      = 0xFF00,
-//    MCSDataTypeFILE          = 1 << 8,
-//};
 
 - (NSString *)proxyFilenameWithOriginalURL:(NSURL *)originalURL dataType:(MCSDataType)dataType {
     NSString *name = originalURL.mcs_fname;
@@ -177,40 +170,17 @@ MCSMD5(NSString *str) {
 - (NSString *)HLS_proxyURIWithURL:(NSString *)url suffix:(NSString *)suffix inAsset:(NSString *)asset {
     NSString *fname = [self nameWithUrl:url suffix:suffix];
     NSURLQueryItem *query = [self encodedURLQueryItemWithUrl:url];
-    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?%@=%@", mcsproxy, asset, fname, query.name, query.value];
+    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?%@=%@", MCS_PROXY_FLAG, asset, fname, query.name, query.value];
     return URI;
 }
 
 - (NSURL *)HLS_URLWithProxyURI:(NSString *)proxyURI {
-    return [self URLWithProxyURL:[NSURL URLWithString:proxyURI]];
+    return [self restoreURLFromProxyURL:[NSURL URLWithString:proxyURI]];
 }
 
 - (NSURL *)HLS_proxyURLWithProxyURI:(NSString *)uri {
     NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
     
     return [_serverURL mcs_URLByAppendingPathComponent:uri];
-}
-@end
-
-
-@implementation NSURL (MCSExtended)
-- (NSURL *)mcs_URLByAppendingPathComponent:(NSString *)pathComponent {
-    if ( [pathComponent isEqualToString:@"/"] )
-        return self;
-    NSString *url = self.absoluteString;
-    while ( [url hasSuffix:@"/"] ) url = [url substringToIndex:url.length - 1];
-    NSString *path = pathComponent;
-    while ( [path hasPrefix:@"/"] ) path = [path substringFromIndex:1];
-    return [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@", url, path]];
-}
-
-- (NSURL *)mcs_URLByDeletingLastPathComponentAndQuery {
-    NSString *query = self.query;
-    if ( query.length != 0 ) {
-        NSString *absoluteString = self.absoluteString;
-        NSString *url = [absoluteString substringToIndex:absoluteString.length - query.length - 1];
-        return [NSURL URLWithString:url].URLByDeletingLastPathComponent;
-    }
-    return self.URLByDeletingLastPathComponent;
 }
 @end

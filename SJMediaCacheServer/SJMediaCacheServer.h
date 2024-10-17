@@ -194,16 +194,15 @@ extern NSString *const MCSPlayBackRequestFailureUserInfoKey;
 
 
 @interface SJMediaCacheServer (Convert)
-
-/// Access metrics in this block. This may not be executed in main thread.
-@property (nonatomic, copy, nullable) void (^didFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics) API_AVAILABLE(ios(10.0));
+/// A block that returns the type of asset referenced by the URL.
+///
+@property (nonatomic, copy, nullable) MCSAssetType (^resolveAssetType)(NSURL *URL); // 返回这个URL指向的资源类型
 
 /// Resolve the identifier of the asset referenced by the URL.
 ///
-///     The asset identifier represents a unique asset. When different URLs references the same asset, you can return the same identifier in the block.
+///     The asset identifier represents a unique asset. When different URLs reference the same asset, you can return the same identifier in the block.
 ///
-///     This identifier will be used to identify the local cache. The same identifier will references the same cache.
-///
+///     This identifier will be used to identify the local cache. The same identifier will reference the same cache.
 @property (nonatomic, copy, nullable) NSString *(^resolveAssetIdentifier)(NSURL *URL); // URL参数不固定时, 请设置该block返回一个唯一标识符
 
 /// Encode the received data.
@@ -217,6 +216,9 @@ extern NSString *const MCSPlayBackRequestFailureUserInfoKey;
 ///     This block will be invoked when the reader reads the data, where you can perform some decoding operations on the data.
 ///
 @property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对读取的数据进行解码
+
+/// Access metrics in this block. This may not be executed in main thread.
+@property (nonatomic, copy, nullable) void (^didFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics) API_AVAILABLE(ios(10.0));
 
 @end
 

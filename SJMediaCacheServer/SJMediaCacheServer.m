@@ -65,7 +65,7 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 
     // proxy URL
     if ( _server.isRunning || [_server start] )
-        return [MCSURL.shared proxyURLWithURL:URL];
+        return [MCSURL.shared generateProxyURLFromURL:URL];
 
     // param URL
     return URL;
@@ -92,7 +92,7 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 - (void)server:(MCSProxyServer *)server performTask:(id<MCSProxyTask>)task failure:(NSError *)error {
     NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] initWithCapacity:2];
     NSURL *proxyURL = task.request.URL;
-    NSURL *URL = [MCSURL.shared URLWithProxyURL:proxyURL];
+    NSURL *URL = [MCSURL.shared restoreURLFromProxyURL:proxyURL];
     userInfo[MCSPlayBackRequestURLUserInfoKey] = URL;
     userInfo[MCSPlayBackRequestFailureUserInfoKey] = error;
     
@@ -176,12 +176,11 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 
 @implementation SJMediaCacheServer (Convert)
 
-- (void)setDidFinishCollectingMetrics:(void (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
-    MCSDownload.shared.didFinishCollectingMetrics = didFinishCollectingMetrics;
+- (void)setResolveAssetType:(MCSAssetType (^)(NSURL * _Nonnull))resolveAssetType {
+    MCSURL.shared.resolveAssetType = resolveAssetType;
 }
-
-- (void (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
-    return MCSDownload.shared.didFinishCollectingMetrics;
+- (MCSAssetType (^)(NSURL * _Nonnull))resolveAssetType {
+    return MCSURL.shared.resolveAssetType;
 }
 
 - (void)setResolveAssetIdentifier:(NSString * _Nonnull (^)(NSURL * _Nonnull))resolveAssetIdentifier {
@@ -203,6 +202,14 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 }
 - (NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))readDataDecoder {
     return MCSAssetManager.shared.readDataDecoder;
+}
+
+- (void)setDidFinishCollectingMetrics:(void (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
+    MCSDownload.shared.didFinishCollectingMetrics = didFinishCollectingMetrics;
+}
+
+- (void (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
+    return MCSDownload.shared.didFinishCollectingMetrics;
 }
 @end
 
