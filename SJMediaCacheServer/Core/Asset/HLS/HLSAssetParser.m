@@ -172,21 +172,21 @@
         [[playlistContents mcs_URIs] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(HLS_EXT_X_URI * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             NSString *URI = [playlistContents substringWithRange:obj.range];
             NSString *originalUrl = [URI mcs_restoreOriginalUrl:sourceURL];
-            NSString *suffix = nil;
+            NSString *extension = nil;
             switch ( obj.type ) {
                 case MCSDataTypeHLSPlaylist:
-                    suffix = HLS_SUFFIX_INDEX;
+                    extension = HLS_EXTENSION_PLAYLIST;
                     break;
                 case MCSDataTypeHLSAESKey:
-                    suffix = HLS_SUFFIX_AES_KEY;
+                    extension = HLS_EXTENSION_AES_KEY;
                     break;
                 case MCSDataTypeHLSSegment:
-                    suffix = HLS_SUFFIX_TS;
+                    extension = HLS_EXTENSION_SEGMENT;
                     break;
                 default: break;
             }
-            if ( suffix.length != 0 ) {
-                NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:originalUrl suffix:suffix inAsset:assetName];
+            if ( extension.length != 0 ) {
+                NSString *proxy = [MCSURL.shared generateProxyURIFromHLSOriginalUrl:originalUrl extension:extension forAsset:assetName];
                 [playlistContents replaceCharactersInRange:obj.range withString:proxy];
             }
         }];

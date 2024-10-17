@@ -15,6 +15,7 @@
 #import "MCSResponse.h"
 #import "MCSConsts.h"
 #import "MCSUtils.h"
+#import "MCSURL.h"
 
 @interface HLSAssetReader ()<MCSAssetContentReaderDelegate> {
     MCSDataType mDataType;
@@ -54,8 +55,8 @@
     self = [super init];
     if ( self ) {
         mAsset = asset;
-        mRequest = [request restoreURLFromProxyURLRequest];
-        mDataType = [request requestDataType];
+        mRequest = [request restoreOriginalRequest];
+        mDataType = [MCSURL.shared dataTypeForHLSProxyURL:request.proxyRequest.URL];
         _networkTaskPriority = networkTaskPriority;
         _readDataDecoder = readDataDecoder;
         _delegate = delegate;

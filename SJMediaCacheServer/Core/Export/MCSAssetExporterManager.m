@@ -505,7 +505,7 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
     
     __block BOOL isRemoved = NO;
     [self _lockInBlock:^{
-        NSString *name = [MCSURL.shared getAssetNameBy:URL];
+        NSString *name = [MCSURL.shared assetNameForURL:URL];
         MCSAssetExporter *_Nullable exporter = [self _exporterInCachesForName:name];
         if ( exporter != nil ) {
             [exporter willBeRemoved];
@@ -580,7 +580,7 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
     __block MCSAssetExportStatus status = MCSAssetExportStatusUnknown;
     if ( URL.absoluteString.length != 0 ) {
         [self _lockInBlock:^{
-            NSString *name = [MCSURL.shared getAssetNameBy:URL];
+            NSString *name = [MCSURL.shared assetNameForURL:URL];
             MCSAssetExporter *exporter = [self _exporterInCachesForName:name];
             status = exporter.status;
         }];
@@ -594,7 +594,7 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
     __block float progress = 0.0f;
     if ( URL.absoluteString.length != 0 ) {
         [self _lockInBlock:^{
-            NSString *name = [MCSURL.shared getAssetNameBy:URL];
+            NSString *name = [MCSURL.shared assetNameForURL:URL];
             MCSAssetExporter *exporter = [self _exporterInCachesForName:name];
             progress = exporter.progress;
         }];
@@ -608,7 +608,7 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
 - (void)synchronizeForExporterWithAssetURL:(NSURL *)URL {
     if ( URL.absoluteString.length != 0 ) {
         [self _lockInBlock:^{
-            NSString *name = [MCSURL.shared getAssetNameBy:URL];
+            NSString *name = [MCSURL.shared assetNameForURL:URL];
             MCSAssetExporter *exporter = [self _exporterInCachesForName:name];
             [exporter synchronize];
         }];
@@ -640,10 +640,10 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
 }
 
 - (MCSAssetExporter *)_exportAssetWithURL:(NSURL *)URL {
-    NSString *name = [MCSURL.shared getAssetNameBy:URL];
+    NSString *name = [MCSURL.shared assetNameForURL:URL];
     MCSAssetExporter *exporter = [self _exporterInCachesForName:name];
     if ( exporter == nil ) {
-        MCSAssetType type = [MCSURL.shared getAssetTypeBy:URL];
+        MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
         exporter = [MCSAssetExporter.alloc initWithURLString:URL.absoluteString name:name type:type];
         [MCSAssetCacheManager.shared setProtected:YES forCacheWithURL:URL];
         [_sqlite3 save:exporter error:NULL];

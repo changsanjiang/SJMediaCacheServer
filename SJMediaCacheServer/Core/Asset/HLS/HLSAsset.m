@@ -153,7 +153,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 }
 
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL {
-    return [mProvider getAESKeyFilePath:[MCSURL.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_AES_KEY]];
+    return [mProvider getAESKeyFilePath:[MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:URL.absoluteString extension:HLS_EXTENSION_AES_KEY]];
 }
 
 - (NSUInteger)tsCount {
@@ -233,7 +233,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 //            isUpdated = YES;
 //        }
         
-        NSString *name = [MCSURL.shared nameWithUrl:response.URL.absoluteString suffix:HLS_SUFFIX_TS];
+        NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:response.URL.absoluteString extension:HLS_EXTENSION_SEGMENT];
         
         if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
             content = [mProvider createTsContentWithName:name totalLength:response.totalLength rangeInAsset:response.range];
@@ -251,7 +251,8 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 }
  
 - (nullable id<HLSAssetTsContent>)TsContentForRequest:(NSURLRequest *)request {
-    NSString *name = [MCSURL.shared nameWithUrl:request.URL.absoluteString suffix:HLS_SUFFIX_TS];
+    NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:request.URL.absoluteString extension:HLS_EXTENSION_SEGMENT];
+    
     __block id<HLSAssetTsContent>ts = nil;
     @synchronized (self) {
         // range
@@ -285,7 +286,8 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 /// 该操作将会对 content 进行一次 readwriteRetain, 请在不需要时, 调用一次 readwriteRelease.
 ///
 - (nullable id<HLSAssetTsContent>)TsContentReadwriteForRequest:(NSURLRequest *)request {
-    NSString *name = [MCSURL.shared nameWithUrl:request.URL.absoluteString suffix:HLS_SUFFIX_TS];
+    NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:request.URL.absoluteString extension:HLS_EXTENSION_SEGMENT];
+    
     __block id<HLSAssetTsContent>_ts = nil;
     @synchronized (self) {
         // range
@@ -364,7 +366,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 //            isUpdated = YES;
 //        }
         
-        NSString *name = [MCSURL.shared nameWithUrl:response.URL.absoluteString suffix:HLS_SUFFIX_TS];
+        NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:response.URL.absoluteString extension:HLS_EXTENSION_SEGMENT];
         
         if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
             content = [mProvider createTsContentWithName:name totalLength:response.totalLength rangeInAsset:response.range];

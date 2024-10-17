@@ -105,8 +105,8 @@
 
 /// 获取或创建 asset;
 - (nullable __kindof id<MCSAsset> )assetWithURL:(NSURL *)URL {
-    MCSAssetType type = [MCSURL.shared getAssetTypeBy:URL];
-    NSString *name = [MCSURL.shared getAssetNameBy:URL];
+    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
+    NSString *name = [MCSURL.shared assetNameForURL:URL];
     @synchronized (self) {
         return [self _ensureAssetWithName:name type:type];
     }
@@ -128,8 +128,8 @@
 
 /// 查询 asset 的数据是否已全部保存;
 - (BOOL)isAssetStoredForURL:(NSURL *)URL {
-    NSString *name = [MCSURL.shared getAssetNameBy:URL];
-    MCSAssetType type = [MCSURL.shared getAssetTypeBy:URL];
+    NSString *name = [MCSURL.shared assetNameForURL:URL];
+    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
     @synchronized (self) {
         return [self _queryAssetForName:name type:type].isStored;
     }
@@ -150,8 +150,8 @@
 
 - (void)removeAssetForURL:(NSURL *)URL {
     if ( URL.absoluteString.length == 0 ) return;
-    MCSAssetType type = [MCSURL.shared getAssetTypeBy:URL];
-    NSString *name = [MCSURL.shared getAssetNameBy:URL];
+    MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
+    NSString *name = [MCSURL.shared assetNameForURL:URL];
     @synchronized (self) {
         id<MCSAsset> asset = [self _queryAssetForName:name type:type];
         if ( asset != nil ) [self _removeAssetsInArray:@[asset]];
@@ -476,13 +476,13 @@
             if ( [parser isVariantItem:item] ) {
                 subAssets = NSMutableArray.array;
 
-                NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
+                NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
                 if ( asset != nil ) [subAssets addObject:asset];
                 
                 NSArray<id<HLSURIItem>> *renditionsItems = [parser renditionsItemsForVariantItem:item];
                 for ( id<HLSURIItem> item in renditionsItems ) {
-                    NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
+                    NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                     HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
                     if ( asset != nil ) [subAssets addObject:asset];
                 }

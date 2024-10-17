@@ -14,12 +14,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly) NSURLRequest *proxyRequest;
 
-- (NSURLRequest *)restoreURLFromProxyURLRequest;
+- (NSURLRequest *)restoreOriginalRequest;
 @end
 
 
 @interface MCSRequest (Extensions)
 @property (nonatomic, strong, readonly) NSURL *originalURL;
-@property (nonatomic, readonly) MCSDataType requestDataType;
 @end
 NS_ASSUME_NONNULL_END

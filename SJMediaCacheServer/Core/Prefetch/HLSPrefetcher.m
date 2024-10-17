@@ -290,7 +290,7 @@
     }
     
     // prepare for reader
-    NSURL *proxyURL = [MCSURL.shared HLS_proxyURLWithProxyURI:_cur.URI];
+    NSURL *proxyURL = [MCSURL.shared generateProxyURLFromHLSProxyURI:_cur.URI];
     NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:_cur.HTTPAdditionalHeaders];
     _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
     [_reader prepare];
@@ -310,7 +310,7 @@
     __block NSError *error = nil;
     for ( id<HLSURIItem> item in _renditionsItems ) {
         dispatch_group_enter(group);
-        NSURL *URL = [MCSURL.shared HLS_URLWithProxyURI:item.URI];
+        NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
         HLSRenditionsPrefetcher *prefetcher = [HLSRenditionsPrefetcher.alloc initWithURL:URL numberOfPreloadedFiles:_itemProvider.curTsIndex + 1 progress:^(float progress) {
             float allProgress = 0;
             for ( HLSRenditionsPrefetcher *prefetcher in prefetchers ) {

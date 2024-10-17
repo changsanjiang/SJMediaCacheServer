@@ -34,7 +34,7 @@
 }
 
 - (NSString *)getPlaylistRelativePath {
-    return [NSString stringWithFormat:@"index%@", HLS_SUFFIX_INDEX];
+    return [NSString stringWithFormat:@"index.%@", HLS_EXTENSION_PLAYLIST];
 }
 
 - (NSString *)getAESKeyFilePath:(NSString *)name {
