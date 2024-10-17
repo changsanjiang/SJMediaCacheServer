@@ -12,6 +12,85 @@
 #import "MCSError.h"
 #import "MCSAssetContent.h"
 #import "NSFileManager+MCS.h"
+#import "HLSAssetParser.h"
+
+@interface HLSAssetPlaylistContentReader ()<HLSAssetParserDelegate> {
+    HLSAsset *mAsset;
+    NSURLRequest *mRequest;
+    float mPriority;
+    HLSAssetParser *mTempParser;
+}
+@end
+
+@implementation HLSAssetPlaylistContentReader
+
+- (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate {
+    self = [super initWithAsset:asset delegate:delegate];
+    if ( self ) {
+        mAsset = asset;
+        mRequest = request;
+        mPriority = priority;
+    }
+    return self;
+}
+
+- (void)prepareContent {
+    HLSAssetParser *_Nullable parser = mAsset.parser;
+    if ( parser != nil ) {
+        [self _createContentWithParser:parser];
+    }
+    else {
+        mTempParser = [HLSAssetParser.alloc initWithAsset:mAsset request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:mPriority delegate:self];
+        [mTempParser prepare];
+    }
+}
+
+#pragma mark - HLSAssetParserDelegate
+
+- (void)parserParseDidFinish:(HLSAssetParser *)parser {
+    @synchronized (self) {
+        [self _createContentWithParser:parser];
+    }
+}
+
+- (void)parser:(HLSAssetParser *)parser anErrorOccurred:(NSError *)error {
+    [self abortWithError:error];
+}
+
+#pragma mark - mark
+
+- (void)didAbortWithError:(NSError *)error {
+    
+}
+
+#pragma mark - mark
+
+/// unlocked
+- (void)_createContentWithParser:(HLSAssetParser *)parser {
+    switch ( self.status ) {
+        case MCSReaderStatusFinished:
+        case MCSReaderStatusAborted:
+        case MCSReaderStatusReadyToRead:
+            break;
+        case MCSReaderStatusUnknown:
+        case MCSReaderStatusPreparing: {
+            if ( mAsset.parser == nil ) {
+                mAsset.parser = parser;
+            }
+            
+            NSString *filepath = mAsset.indexFilepath;
+            UInt64 fileSize = (UInt64)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
+            MCSAssetContent *content = [MCSAssetContent.alloc initWithFilepath:filepath startPositionInAsset:0 length:fileSize];
+            [content readwriteRetain];
+            [self contentDidReady:content range:NSMakeRange(0, fileSize)];
+        }
+            break;
+    }
+}
+@end
+
+
+#pragma mark -
 
 @implementation HLSAssetAESKeyContentReader {
     HLSAsset *mAsset;
@@ -92,84 +171,6 @@
 }
 @end
 
+@implementation HLSAssetMediaSegmentContentReader
 
-#pragma mark - mark
-
-#import "HLSAssetParser.h"
-
-@interface HLSAssetIndexContentReader ()<HLSAssetParserDelegate> {
-    HLSAsset *mAsset;
-    NSURLRequest *mRequest;
-    float mPriority;
-    HLSAssetParser *mTempParser;
-}
 @end
-
-@implementation HLSAssetIndexContentReader
-
-- (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate {
-    self = [super initWithAsset:asset delegate:delegate];
-    if ( self ) {
-        mAsset = asset;
-        mRequest = request;
-        mPriority = priority;
-    }
-    return self;
-}
-
-- (void)prepareContent {
-    HLSAssetParser *_Nullable parser = mAsset.parser;
-    if ( parser != nil ) {
-        [self _createContentWithParser:parser];
-    }
-    else {
-        mTempParser = [HLSAssetParser.alloc initWithAsset:mAsset request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:mPriority delegate:self];
-        [mTempParser prepare];
-    }
-}
-
-#pragma mark - HLSAssetParserDelegate
-
-- (void)parserParseDidFinish:(HLSAssetParser *)parser {
-    @synchronized (self) {
-        [self _createContentWithParser:parser];
-    }
-}
-
-- (void)parser:(HLSAssetParser *)parser anErrorOccurred:(NSError *)error {
-    [self abortWithError:error];
-}
-
-#pragma mark - mark
-
-- (void)didAbortWithError:(NSError *)error {
-    
-}
-
-#pragma mark - mark
-
-/// unlocked
-- (void)_createContentWithParser:(HLSAssetParser *)parser {
-    switch ( self.status ) {
-        case MCSReaderStatusFinished:
-        case MCSReaderStatusAborted:
-        case MCSReaderStatusReadyToRead:
-            break;
-        case MCSReaderStatusUnknown:
-        case MCSReaderStatusPreparing: {
-            if ( mAsset.parser == nil ) {
-                mAsset.parser = parser;
-            }
-            
-            NSString *filepath = mAsset.indexFilepath;
-            UInt64 fileSize = (UInt64)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
-            MCSAssetContent *content = [MCSAssetContent.alloc initWithFilepath:filepath startPositionInAsset:0 length:fileSize];
-            [content readwriteRetain];
-            [self contentDidReady:content range:NSMakeRange(0, fileSize)];
-        }
-            break;
-    }
-}
-@end
-
-

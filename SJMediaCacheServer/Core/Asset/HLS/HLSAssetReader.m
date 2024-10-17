@@ -50,18 +50,20 @@
     return self;
 }
 
-- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
+- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
-#ifdef DEBUG
-        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, request.URL, asset, request.allHTTPHeaderFields);
-#endif
         mAsset = asset;
-        mRequest = request;
+        mRequest = [request restoreOriginalURLRequest];
+        mDataType = [request requestDataType];
         _networkTaskPriority = networkTaskPriority;
         _readDataDecoder = readDataDecoder;
         _delegate = delegate;
         [mAsset readwriteRetain];
+        
+#ifdef DEBUG
+        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, mRequest.URL, asset, mRequest.allHTTPHeaderFields);
+#endif
     }
     return self;
 }
@@ -93,14 +95,12 @@
         mStatus = MCSReaderStatusPreparing;
         MCSAssetReaderDebugLog(@"%@: <%p>.prepare { asset: %@, request: %@ };\n", NSStringFromClass(self.class), self, mAsset.name, mRequest);
         [self _notifyObserversWithStatus:mStatus];
-        
-        
-        
+
         if ( mDataType == MCSDataTypeHLSMediaSegment || mDataType == MCSDataTypeHLSAESKey ) {
             if ( mAsset.parser == nil ) {
                 [self _abortWithError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
                     MCSErrorUserInfoObjectKey : mRequest,
-                    MCSErrorUserInfoReasonKey : @"解析器为空, 索引文件可能未解析!"
+                    MCSErrorUserInfoReasonKey : @"HLS playlist is not parsed!"
                 }]];
                 return;
             }
@@ -108,7 +108,7 @@
         
         switch ( mDataType ) {
             case MCSDataTypeHLSPlaylist: {
-                mReader = [HLSAssetIndexContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
+                mReader = [HLSAssetPlaylistContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
             }
                 break;
             case MCSDataTypeHLSAESKey: {
@@ -131,7 +131,7 @@
             default: {
                 [self _abortWithError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
                     MCSErrorUserInfoObjectKey : mRequest,
-                    MCSErrorUserInfoReasonKey : @"不支持的格式!"
+                    MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"Unsupported request data type %ld", mDataType]
                 }]];
             }
                 return;

@@ -15,6 +15,10 @@ NS_ASSUME_NONNULL_BEGIN
 FOUNDATION_EXPORT UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT;
 FOUNDATION_EXPORT UInt64 const HLS_ASSET_MEDIA_SEGMENT_PLACEMENT_OFFSET;
 
+@protocol HLSAssetPlaylistContent <MCSAssetContent>
+@property (nonatomic, readonly) UInt64 totalLength;
+@end
+
 @protocol HLSAssetTsContent <MCSAssetContent>
 @property (nonatomic, copy, readonly) NSString *name; // `ts name`
 @property (nonatomic, readonly) NSRange rangeInAsset; // #EXT-X-BYTERANGE:1544984@1007868

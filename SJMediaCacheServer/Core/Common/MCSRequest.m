@@ -20,6 +20,10 @@
     return [MCSURL.shared URLWithProxyURL:_proxyRequest.URL];
 }
 
+- (MCSDataType)requestDataType {
+    return [MCSURL.shared dataTypeForProxyURL:_proxyRequest.URL];
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"%@:<%p> { originalURL: %@, proxyRequest: %@ };", NSStringFromClass(self.class), self, self.originalURL, _proxyRequest];
 }

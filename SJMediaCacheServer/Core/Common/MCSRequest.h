@@ -20,5 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSRequest (Extensions)
 @property (nonatomic, strong, readonly) NSURL *originalURL;
+@property (nonatomic, readonly) MCSDataType requestDataType;
 @end
 NS_ASSUME_NONNULL_END

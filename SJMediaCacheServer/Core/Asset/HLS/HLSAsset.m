@@ -14,6 +14,7 @@
 #import "HLSAssetContentProvider.h"
 #import "HLSAssetReader.h"
 #import "MCSRootDirectory.h"
+#import "MCSRequest.h"
 
 UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 
