@@ -25,23 +25,18 @@ MCSMD5(NSString *str) {
             result[12], result[13], result[14], result[15]];
 }
 
-
-@interface NSString (MCSFileManagerExtended)
-- (NSString *)mcs_fname;
-@end
-
 @implementation NSString (MCSFileManagerExtended)
 - (NSString *)mcs_fname {
     return MCSMD5(self);
 }
 @end
 
-@interface NSURL (MCSFileManagerExtended)
-- (NSString *)mcs_fname;
-@end
 @implementation NSURL (MCSFileManagerExtended)
 - (NSString *)mcs_fname {
     return self.absoluteString.mcs_fname;
+}
+- (NSString *)mcs_extension {
+    return self.path.pathExtension;
 }
 @end
 
@@ -127,7 +122,7 @@ MCSMD5(NSString *str) {
         return MCSDataTypeHLSAESKey;
 
     if ( [last containsString:HLS_SUFFIX_TS] )
-        return MCSDataTypeHLSMediaSegment;
+        return MCSDataTypeHLSSegment;
     
     return MCSDataTypeFILE;
 }
@@ -157,6 +152,24 @@ MCSMD5(NSString *str) {
     return [NSURLQueryItem.alloc initWithName:@"url" value:[self encodeUrl:url]];
 }
 
+
+
+//typedef NS_OPTIONS(NSUInteger, MCSDataType) {
+//    MCSDataTypeHLSMask                = 0xFF,
+//    MCSDataTypeHLSPlaylist            = 1,
+//    MCSDataTypeHLSAESKey              = 2,
+//    MCSDataTypeHLSSegment        = 3, // ts
+//    MCSDataTypeHLS                    = 1 << MCSDataTypeHLSPlaylist | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSSegment,
+//
+//    MCSDataTypeFILEMask      = 0xFF00,
+//    MCSDataTypeFILE          = 1 << 8,
+//};
+
+- (NSString *)proxyFilenameWithOriginalURL:(NSURL *)originalURL dataType:(MCSDataType)dataType {
+    NSString *name = originalURL.mcs_fname;
+    NSString *extension = originalURL.mcs_extension;
+    return extension.length > 0 ? [NSString stringWithFormat:@"%@_%ld.%@", name, dataType, extension] : name;
+}
 @end
 
 @implementation MCSURL (HLS)

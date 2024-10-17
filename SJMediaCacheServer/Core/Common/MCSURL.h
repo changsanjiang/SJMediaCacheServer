@@ -27,6 +27,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)nameWithUrl:(NSString *)url suffix:(NSString *)suffix;
 
 - (NSURL *)proxyURLWithRelativePath:(NSString *)path inAsset:(NSString *)assetName;
+
+
+
+
+
+
+- (NSString *)proxyFilenameWithOriginalURL:(NSURL *)originalURL dataType:(MCSDataType)dataType;
 @end
 
 

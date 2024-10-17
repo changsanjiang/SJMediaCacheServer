@@ -15,53 +15,62 @@
 #define HLS_PREFIX_FILENAME2 @"hlsr" // range
 
 @implementation HLSAssetContentProvider {
-    NSString *_directory;
+    NSString *mRootDir;
 }
 
 - (instancetype)initWithDirectory:(NSString *)directory {
     self = [super init];
     if ( self ) {
-        _directory = directory;
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:_directory] ) {
-            [NSFileManager.defaultManager createDirectoryAtPath:_directory withIntermediateDirectories:YES attributes:nil error:NULL];
+        mRootDir = directory;
+        if ( ![NSFileManager.defaultManager fileExistsAtPath:mRootDir] ) {
+            [NSFileManager.defaultManager createDirectoryAtPath:mRootDir withIntermediateDirectories:YES attributes:nil error:NULL];
         }
     }
     return self;
 }
 
-- (NSString *)indexFilepath {
-    return [_directory stringByAppendingPathComponent:self.indexFileRelativePath];
+- (NSString *)getPlaylistFilePath {
+    return [mRootDir stringByAppendingPathComponent:self.getPlaylistRelativePath];
 }
 
-- (NSString *)indexFileRelativePath {
+- (NSString *)getPlaylistRelativePath {
     return [NSString stringWithFormat:@"index%@", HLS_SUFFIX_INDEX];
 }
 
-- (NSString *)AESKeyFilepathWithName:(NSString *)AESKeyName {
-    return [_directory stringByAppendingPathComponent:AESKeyName];
+- (NSString *)getAESKeyFilePath:(NSString *)name {
+    return [mRootDir stringByAppendingPathComponent:name];
 }
+
+
+
+
+
+
+
+
+
 
 - (nullable NSArray<id<HLSAssetTsContent>> *)loadTsContentsWithParser:(HLSAssetParser *)parser {
     NSMutableArray<id<HLSAssetTsContent>> *m = nil;
-    for ( NSString *filename in [NSFileManager.defaultManager contentsOfDirectoryAtPath:_directory error:NULL] ) {
+    for ( NSString *filename in [NSFileManager.defaultManager contentsOfDirectoryAtPath:mRootDir error:NULL] ) {
         if ( ![filename hasPrefix:HLS_PREFIX_FILENAME] )
             continue;
         if ( m == nil )
             m = NSMutableArray.array;
-        NSString *filepath = [self _TsContentFilepathForFilename:filename];
+        NSString *filePath = [self _TsContentFilePathForFilename:filename];
         NSString *name = [self _TsNameForFilename:filename];
         id<HLSAssetTsContent>ts = nil;
         long long totalLength = [self _TsTotalLengthForFilename:filename];
         if      ( [filename hasPrefix:HLS_PREFIX_FILENAME2] ) {
-            long long length = (long long)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
+            long long length = (long long)[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
             NSRange range = [self _TsRangeForFilename:filename];
 #warning next ...
-//            ts = [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength length:length rangeInAsset:range];
+//            ts = [HLSAssetTsContent.alloc initWithName:name filePath:filePath totalLength:totalLength length:length rangeInAsset:range];
         }
         else if ( [filename hasPrefix:HLS_PREFIX_FILENAME1] ) {
-            long long length = (long long)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
+            long long length = (long long)[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
 #warning next ...
-//            ts = [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength length:length];
+//            ts = [HLSAssetTsContent.alloc initWithName:name filePath:filePath totalLength:totalLength length:length];
         }
         
         if ( ts != nil )
@@ -74,11 +83,11 @@
     NSUInteger number = 0;
     do {
         NSString *filename = [self _TsFilenameWithName:name totalLength:totalLength number:number];
-        NSString *filepath = [self _TsContentFilepathForFilename:filename];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-            [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+        NSString *filePath = [self _TsContentFilePathForFilename:filename];
+        if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+            [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
 #warning next ...
-//            return [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength];
+//            return [HLSAssetTsContent.alloc initWithName:name filePath:filePath totalLength:totalLength];
         }
         number += 1;
     } while (true);
@@ -93,23 +102,23 @@
     NSUInteger number = 0;
     do {
         NSString *filename = [self _TsFilenameWithName:name totalLength:totalLength rangeInAsset:range number:number];
-        NSString *filepath = [self _TsContentFilepathForFilename:filename];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-            [NSFileManager.defaultManager createFileAtPath:filepath contents:nil attributes:nil];
+        NSString *filePath = [self _TsContentFilePathForFilename:filename];
+        if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+            [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
 #warning next ...
-//            return [HLSAssetTsContent.alloc initWithName:name filepath:filepath totalLength:totalLength rangeInAsset:range];
+//            return [HLSAssetTsContent.alloc initWithName:name filePath:filePath totalLength:totalLength rangeInAsset:range];
         }
         number += 1;
     } while (true);
     return nil;
 }
 
-- (nullable NSString *)TsContentFilepath:(HLSAssetTsContent *)content {
-    return content.filepath;
+- (nullable NSString *)TsContentFilePath:(HLSAssetTsContent *)content {
+    return content.filePath;
 }
 
 - (void)removeTsContent:(HLSAssetTsContent *)content {
-    [NSFileManager.defaultManager removeItemAtPath:content.filepath error:NULL];
+    [NSFileManager.defaultManager removeItemAtPath:content.filePath error:NULL];
 }
 
 #pragma mark - mark
@@ -126,8 +135,8 @@
 
 #pragma mark -
 
-- (nullable NSString *)_TsContentFilepathForFilename:(NSString *)filename {
-    return [_directory stringByAppendingPathComponent:filename];
+- (nullable NSString *)_TsContentFilePathForFilename:(NSString *)filename {
+    return [mRootDir stringByAppendingPathComponent:filename];
 }
 
 - (NSString *)_TsNameForFilename:(NSString *)filename {

@@ -100,8 +100,8 @@
     }
 }
 
-- (nullable NSString *)filepathForContent:(id<MCSAssetContent>)content {
-    return [mProvider contentFilepath:content];
+- (nullable NSString *)filePathForContent:(id<MCSAssetContent>)content {
+    return [mProvider contentFilePath:content];
 }
 
 - (nullable NSString *)pathExtension {
@@ -122,7 +122,7 @@
         case MCSDataTypeHLSMask:
         case MCSDataTypeHLSPlaylist:
         case MCSDataTypeHLSAESKey:
-        case MCSDataTypeHLSMediaSegment:
+        case MCSDataTypeHLSSegment:
         case MCSDataTypeHLS:
         case MCSDataTypeFILEMask:
             /* return */

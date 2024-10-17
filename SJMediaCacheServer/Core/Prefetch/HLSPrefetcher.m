@@ -51,7 +51,7 @@
         item = [parser itemAtIndex:nextIndex];
         if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantItem:item] )
             continue;
-        if ( item.type == MCSDataTypeHLSMediaSegment )
+        if ( item.type == MCSDataTypeHLSSegment )
             _curTsIndex = (_curTsIndex == NSNotFound) ? 0 : (_curTsIndex + 1);
         _curFragmentIndex = nextIndex;
         break;
@@ -211,7 +211,7 @@
 
 - (void)reader:(id<MCSAssetReader>)reader didReceiveResponse:(id<MCSResponse>)response {
     @synchronized (self) {
-        if ( _cur.type == MCSDataTypeHLSMediaSegment ) {
+        if ( _cur.type == MCSDataTypeHLSSegment ) {
             _tsResponsedSize += response.range.length;
         }
     }
@@ -226,7 +226,7 @@
             CGFloat progress = 0;
             
             // `Ts reader`
-            if ( _cur.type == MCSDataTypeHLSMediaSegment ) {
+            if ( _cur.type == MCSDataTypeHLSSegment ) {
                 _tsLoadedLength += length;
 
                 NSInteger totalLength = reader.response.range.length;

@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)contentProviderWithDirectory:(NSString *)directory;
 - (nullable NSArray<id<MCSAssetContent>> *)contents;
 - (nullable id<MCSAssetContent>)createContentAtOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension;
-- (nullable NSString *)contentFilepath:(id<MCSAssetContent>)content;
+- (nullable NSString *)contentFilePath:(id<MCSAssetContent>)content;
 - (void)removeContent:(id<MCSAssetContent>)content;
 @end
 NS_ASSUME_NONNULL_END

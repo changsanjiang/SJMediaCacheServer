@@ -13,7 +13,7 @@
 #import "MCSMimeType.h"
  
 @implementation MCSAssetContent {
-    NSString *mFilepath;
+    NSString *mFilePath;
     UInt64 mLength;
     UInt64 mStartPositionInAsset;
     NSHashTable<id<MCSAssetContentObserver>> *_Nullable mObservers;
@@ -22,10 +22,10 @@
     NSFileHandle *_Nullable mReader;
 }
 
-- (instancetype)initWithMimeType:(NSString *)mimeType filepath:(NSString *)filepath startPositionInAsset:(UInt64)position length:(UInt64)length {
+- (instancetype)initWithMimeType:(NSString *)mimeType filePath:(NSString *)filePath startPositionInAsset:(UInt64)position length:(UInt64)length {
     self = [super init];
     if ( self ) {
-        mFilepath = filepath;
+        mFilePath = filePath;
         mStartPositionInAsset = position;
         mLength = length;
         _mimeType = mimeType;
@@ -33,17 +33,17 @@
     return self;
 }
 
-- (instancetype)initWithFilepath:(NSString *)filepath startPositionInAsset:(UInt64)position length:(UInt64)length {
-    return [self initWithMimeType:MCSMimeTypeFromFileAtPath(filepath) filepath:filepath startPositionInAsset:position length:length];
+- (instancetype)initWithFilePath:(NSString *)filePath startPositionInAsset:(UInt64)position length:(UInt64)length {
+    return [self initWithMimeType:MCSMimeTypeFromFileAtPath(filePath) filePath:filePath startPositionInAsset:position length:length];
 }
 
-- (instancetype)initWithFilepath:(NSString *)filepath startPositionInAsset:(UInt64)position {
-    return [self initWithFilepath:filepath startPositionInAsset:position length:0];
+- (instancetype)initWithFilePath:(NSString *)filePath startPositionInAsset:(UInt64)position {
+    return [self initWithFilePath:filePath startPositionInAsset:position length:0];
 }
 
 - (NSString *)description {
     @synchronized (self) {
-        return [NSString stringWithFormat:@"%@: <%p> { startPosisionInAsset: %llu, lenth: %llu, readwriteCount: %ld, filepath: %@ };\n", NSStringFromClass(self.class), self, mStartPositionInAsset, mLength, (long)self.readwriteCount, mFilepath];
+        return [NSString stringWithFormat:@"%@: <%p> { startPosisionInAsset: %llu, lenth: %llu, readwriteCount: %ld, filePath: %@ };\n", NSStringFromClass(self.class), self, mStartPositionInAsset, mLength, (long)self.readwriteCount, mFilePath];
     }
 }
 
@@ -81,7 +81,7 @@
             return nil;
         
         // create reader
-        if ( mReader == nil ) mReader = [NSFileHandle mcs_fileHandleForReadingFromURL:[NSURL fileURLWithPath:mFilepath] error:&error];
+        if ( mReader == nil ) mReader = [NSFileHandle mcs_fileHandleForReadingFromURL:[NSURL fileURLWithPath:mFilePath] error:&error];
         
         // read data
         if ( mReader != nil ) {
@@ -114,7 +114,7 @@
         @synchronized (self) {
             /// create writer
             if ( mWriter == nil ) {
-                mWriter = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:mFilepath] error:&error];
+                mWriter = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:mFilePath] error:&error];
             }
             
             // rewind
@@ -145,7 +145,7 @@
         @synchronized (self) {
             /// create writer
             if ( mWriter == nil ) {
-                NSFileHandle *writer = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:mFilepath] error:&error];
+                NSFileHandle *writer = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:mFilePath] error:&error];
                 if ( writer != nil ) {
                     if ( [writer mcs_seekToEndReturningOffset:NULL error:&error] ) {
                         mWriter = writer;
@@ -222,7 +222,7 @@
 
 
 @implementation MCSAssetContent (Internal)
-- (NSString *)filepath {
-    return mFilepath;
+- (NSString *)filePath {
+    return mFilePath;
 }
 @end

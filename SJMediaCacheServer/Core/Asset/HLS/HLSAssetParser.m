@@ -73,7 +73,7 @@
 @interface HLSURIItem : NSObject<HLSURIItem>
 - (instancetype)initWithType:(MCSDataType)type URI:(NSString *)URI HTTPAdditionalHeaders:(nullable NSDictionary *)HTTPAdditionalHeaders;
 /// MCSDataTypeHLSAESKey    = 2,
-/// MCSDataTypeHLSMediaSegment        = 3,
+/// MCSDataTypeHLSSegment        = 3,
 @property (nonatomic) MCSDataType type;
 @property (nonatomic, copy) NSString *URI;
 @property (nonatomic, copy, nullable) NSDictionary *HTTPAdditionalHeaders;
@@ -118,12 +118,16 @@
     }
     return self;
 }
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { type: %ld, range: %@ }", self.class, self, _type, NSStringFromRange(_range)];
+}
 @end
 
 @interface NSString (MCSHLSContents)
 - (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern contentsURL:(NSURL *)contentsURL options:(NSRegularExpressionOptions)options;
 - (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern atIndex:(NSInteger)index contentsURL:(NSURL *)contentsURL options:(NSRegularExpressionOptions)options;
-- (NSString *)mcs_convertToUrlByContentsURL:(NSURL *)contentsURL;
+- (NSString *)mcs_restoreOriginalUrl:(NSURL *)contentsURL;
 
 - (nullable NSArray<HLSURIItem *> *)mcs_URIItems;
 - (nullable NSArray<HLS_EXT_X_URI *> *)mcs_URIs;
@@ -136,8 +140,8 @@
 @end
 
 @interface HLSAssetParser () {
-    NSArray<HLSURIItem *> *_Nullable _URIItems;
-    NSArray<HLSURIItem *> *_Nullable _mediaSegments; // ts array
+    NSArray<HLSURIItem *> *_Nullable mAllItems;
+    NSArray<HLSURIItem *> *_Nullable mSegments; // ts array
 }
 @end
 
@@ -167,7 +171,7 @@
         }
         [[playlistContents mcs_URIs] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(HLS_EXT_X_URI * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             NSString *URI = [playlistContents substringWithRange:obj.range];
-            NSString *url = [URI mcs_convertToUrlByContentsURL:sourceURL];
+            NSString *originalUrl = [URI mcs_restoreOriginalUrl:sourceURL];
             NSString *suffix = nil;
             switch ( obj.type ) {
                 case MCSDataTypeHLSPlaylist:
@@ -176,14 +180,13 @@
                 case MCSDataTypeHLSAESKey:
                     suffix = HLS_SUFFIX_AES_KEY;
                     break;
-                case MCSDataTypeHLSMediaSegment:
-#warning next .. 文件后缀
+                case MCSDataTypeHLSSegment:
                     suffix = HLS_SUFFIX_TS;
                     break;
                 default: break;
             }
             if ( suffix.length != 0 ) {
-                NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:url suffix:suffix inAsset:assetName];
+                NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:originalUrl suffix:suffix inAsset:assetName];
                 [playlistContents replaceCharactersInRange:obj.range withString:proxy];
             }
         }];
@@ -207,25 +210,33 @@
 
 - (instancetype)initWithProxyPlaylist:(NSString *)playlist {
     self = [super init];
-    _URIItems = [playlist mcs_URIItems];
-    NSMutableArray<HLSURIItem *> *_Nullable mediaSegments = NSMutableArray.array;
-    for ( HLSURIItem *item in _URIItems ) {
-        if ( item.type == MCSDataTypeHLSMediaSegment ) [mediaSegments addObject:item];
+    mAllItems = [playlist mcs_URIItems];
+    NSMutableArray<HLSURIItem *> *_Nullable segments = NSMutableArray.array;
+    for ( HLSURIItem *item in mAllItems ) {
+        if ( item.type == MCSDataTypeHLSSegment ) [segments addObject:item];
     }
-    _mediaSegments = mediaSegments.count != 0 ? mediaSegments.copy : nil;
+    mSegments = segments.count != 0 ? segments.copy : nil;
     return self;
 }
 
 - (NSUInteger)allItemsCount {
-    return _URIItems.count;
+    return mAllItems.count;
 }
 
-- (NSUInteger)mediaSegmentCount {
-    return _mediaSegments.count;
+- (NSUInteger)segmentsCount {
+    return mSegments.count;
+}
+
+- (nullable NSArray<id<HLSURIItem>> *)allItems {
+    return mAllItems;
+}
+
+- (nullable NSArray<id<HLSURIItem>> *)segments {
+    return mSegments;
 }
 
 - (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index {
-    return _URIItems.count ? _URIItems[index] : nil;
+    return mAllItems.count ? mAllItems[index] : nil;
 }
 
 - (BOOL)isVariantItem:(id<HLSURIItem>)item {
@@ -248,10 +259,6 @@
         return m.count > 0 ? m : nil;
     }
     return nil;
-}
-
-- (nullable NSArray<id<HLSURIItem>> *)mediaSegments {
-    return _mediaSegments;
 }
 @end
 
@@ -286,14 +293,14 @@
 //        The range at index 0 always matches the range property.  Additional ranges, if any, will have indexes from 1 to numberOfRanges-1. rangeWithName: can be used with named regular expression capture groups
         NSRange range = [obj rangeAtIndex:index];
         NSString *matched = [self substringWithRange:range];
-        NSString *url = [matched mcs_convertToUrlByContentsURL:contentsURL];
+        NSString *url = [matched mcs_restoreOriginalUrl:contentsURL];
         [m addObject:url];
     }];
     return m.count != 0 ? m.copy : nil;
 }
 
 /// 将路径转换为url
-- (NSString *)mcs_convertToUrlByContentsURL:(NSURL *)URL {
+- (NSString *)mcs_restoreOriginalUrl:(NSURL *)URL {
     static NSString *const HLS_PREFIX_LOCALHOST = @"http://localhost";
     static NSString *const HLS_PREFIX_DIR_ROOT = @"/";
     static NSString *const HLS_PREFIX_DIR_PARENT = @"../";
@@ -471,7 +478,7 @@
                     headers = @{
                         @"Range" : [NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)bytesRange.location, NSMaxRange(bytesRange) - 1]
                     };
-                [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSMediaSegment URI:URI HTTPAdditionalHeaders:headers]];
+                [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSSegment URI:URI HTTPAdditionalHeaders:headers]];
                 tsFlag = NO;
             }
         }
@@ -530,7 +537,7 @@
         else if ( tsFlag ) {
             if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
                 NSRange URIRange = NSMakeRange(linePos, line.length);
-                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSMediaSegment inRange:URIRange];
+                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSSegment inRange:URIRange];
                 [m addObject:obj];
                 tsFlag = NO;
             }

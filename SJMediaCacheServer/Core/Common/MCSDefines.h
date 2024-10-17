@@ -19,8 +19,8 @@ typedef NS_OPTIONS(NSUInteger, MCSDataType) {
     MCSDataTypeHLSMask                = 0xFF,
     MCSDataTypeHLSPlaylist            = 1,
     MCSDataTypeHLSAESKey              = 2,
-    MCSDataTypeHLSMediaSegment        = 3, // ts
-    MCSDataTypeHLS                    = 1 << MCSDataTypeHLSPlaylist | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSMediaSegment,
+    MCSDataTypeHLSSegment        = 3, // ts
+    MCSDataTypeHLS                    = 1 << MCSDataTypeHLSPlaylist | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSSegment,
 
     MCSDataTypeFILEMask      = 0xFF00,
     MCSDataTypeFILE          = 1 << 8,

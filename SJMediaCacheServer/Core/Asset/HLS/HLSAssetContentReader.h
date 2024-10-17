@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@interface HLSAssetMediaSegmentContentReader : MCSAssetContentReader
+@interface HLSAssetSegmentContentReader : MCSAssetContentReader
 
 - (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<MCSAssetContentReaderDelegate>)delegate;
 

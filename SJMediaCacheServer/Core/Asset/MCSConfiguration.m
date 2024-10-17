@@ -41,8 +41,8 @@
             [self _setValue:value forHTTPAdditionalHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSAESKey fallThrough:fallThrough];
             if ( !fallThrough ) break;
         }
-        case MCSDataTypeHLSMediaSegment: {
-            [self _setValue:value forHTTPAdditionalHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSMediaSegment fallThrough:fallThrough];
+        case MCSDataTypeHLSSegment: {
+            [self _setValue:value forHTTPAdditionalHeaderField:HTTPHeaderField ofType:MCSDataTypeHLSSegment fallThrough:fallThrough];
             if ( !fallThrough ) break;
         }
     }
@@ -51,7 +51,7 @@
         case MCSDataTypeHLSMask:
         case MCSDataTypeHLSPlaylist:
         case MCSDataTypeHLSAESKey:
-        case MCSDataTypeHLSMediaSegment:
+        case MCSDataTypeHLSSegment:
         case MCSDataTypeHLS:
         case MCSDataTypeFILEMask:
             break;

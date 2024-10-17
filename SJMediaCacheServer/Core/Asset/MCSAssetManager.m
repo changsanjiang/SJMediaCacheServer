@@ -333,8 +333,6 @@
 ///
 /// unlocked
 - (nullable __kindof id<MCSAsset> )_ensureAssetWithName:(NSString *)name type:(MCSAssetType)type {
-#warning next ...
-    if ( type == MCSAssetTypeHLS ) return nil;
     return [self _queryAssetForName:name type:type] ?: [self _createAssetWithName:name type:type];
 }
 

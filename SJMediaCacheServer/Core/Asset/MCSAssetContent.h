@@ -14,9 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Used for existing files
 /// @param position 不是文件偏移量, 是该内容在整个资源中的位置
-- (instancetype)initWithFilepath:(NSString *)filepath startPositionInAsset:(UInt64)position length:(UInt64)length;
+- (instancetype)initWithFilePath:(NSString *)filePath startPositionInAsset:(UInt64)position length:(UInt64)length;
 /// Used for new files
-- (instancetype)initWithFilepath:(NSString *)filepath startPositionInAsset:(UInt64)position;
+- (instancetype)initWithFilePath:(NSString *)filePath startPositionInAsset:(UInt64)position;
 
 - (nullable NSData *)readDataAtPosition:(UInt64)positionInAsset capacity:(UInt64)capacity error:(out NSError **)error;
 @property (nonatomic, readonly) UInt64 startPositionInAsset;
@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)registerObserver:(id<MCSAssetContentObserver>)observer;
 - (void)removeObserver:(id<MCSAssetContentObserver>)observer;
 
-- (instancetype)initWithMimeType:(NSString *)mimeType filepath:(NSString *)filepath startPositionInAsset:(UInt64)position length:(UInt64)length;
+- (instancetype)initWithMimeType:(NSString *)mimeType filePath:(NSString *)filePath startPositionInAsset:(UInt64)position length:(UInt64)length;
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
 @end
@@ -34,6 +34,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 @interface MCSAssetContent (Internal)
-@property (nonatomic, strong, readonly) NSString *filepath;
+@property (nonatomic, strong, readonly) NSString *filePath;
 @end
 NS_ASSUME_NONNULL_END

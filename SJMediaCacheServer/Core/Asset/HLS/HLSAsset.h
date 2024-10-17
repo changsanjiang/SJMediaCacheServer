@@ -21,19 +21,25 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isStored;
 @property (nonatomic, strong, readonly, nullable) HLSAssetParser *parser; 
 
-- (NSString *)indexFilepath;
-- (NSString *)indexFileRelativePath;
-- (NSString *)AESKeyFilepathWithURL:(NSURL *)URL;
+- (NSString *)playlistFilePath;
+- (NSString *)getPlaylistRelativePath;
+- (NSString *)AESKeyFilePathWithURL:(NSURL *)URL;
 - (nullable NSArray<id<HLSAssetTsContent>> *)TsContents;
 - (nullable id<HLSAssetTsContent>)TsContentReadwriteForRequest:(NSURLRequest *)request;
 
 
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response;
-- (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 - (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(MCSAssetContentNode *node, BOOL *stop))block;
 
 
-- (nullable id<MCSAssetContent>)createPlaylistContent:(NSString *)proxyPlaylist error:(out NSError **)error; // retained, should release after;
+
+
+- (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
+
 - (nullable id<MCSAssetContent>)getPlaylistContent; // retained, should release after;
+- (nullable id<MCSAssetContent>)createPlaylistContent:(NSString *)proxyPlaylist error:(out NSError **)error; // retained, should release after;
+
+- (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL; // retained, should release after;
+- (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)error; // retained, should release after;
 @end
 NS_ASSUME_NONNULL_END

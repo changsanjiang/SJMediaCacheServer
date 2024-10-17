@@ -18,12 +18,18 @@
 #import "MCSAssetContent.h"
 #import "NSFileManager+MCS.h"
 
+
+// 1. 如何从proxyURL中知道将要请求的数据的类型 MCSDataType
+
+
 UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 
 @interface HLSAsset () {
     MCSConfiguration *mConfiguration;
     HLSAssetContentProvider *mProvider;
     id<MCSAssetContent> _Nullable mPlaylistContent;
+    NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mAESKeyContents; // { filename: content }
+    
     HLSAssetParser *_Nullable mParser;
     NSMutableArray<id<HLSAssetTsContent>> *mTsContents;
     BOOL mPrepared;
@@ -65,12 +71,40 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
         mConfiguration = MCSConfiguration.alloc.init;
         NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
         mProvider = [HLSAssetContentProvider.alloc initWithDirectory:directory];
-        NSString *proxyPlaylistFilePath = [mProvider indexFilepath];
+        
+        // playlist 与 aes key 都属于小文件, 目录中只要存在对应文件就说明已下载完毕;
+        
+        // find proxy playlist file
+        NSString *proxyPlaylistFilePath = [mProvider getPlaylistFilePath];
         if ( [NSFileManager.defaultManager fileExistsAtPath:proxyPlaylistFilePath] ) {
             NSError *error = nil;
             mParser = [HLSAssetParser.alloc initWithProxyPlaylist:[NSString stringWithContentsOfFile:proxyPlaylistFilePath encoding:NSUTF8StringEncoding error:&error]];
-            if ( mParser != nil ) mPlaylistContent = [MCSAssetContent.alloc initWithFilepath:proxyPlaylistFilePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
+            if ( mParser != nil ) {
+                mPlaylistContent = [MCSAssetContent.alloc initWithFilePath:proxyPlaylistFilePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
+                
+                // find existing contents
+                [mParser.allItems enumerateObjectsUsingBlock:^(id<HLSURIItem>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                    switch (obj.type) {
+                        case MCSDataTypeHLSAESKey: {
+                            
+                        }
+                            break;
+                        case MCSDataTypeHLSSegment: {
+                            
+                        }
+                            break;
+                        case MCSDataTypeHLSPlaylist:
+                        case MCSDataTypeHLS:
+                        case MCSDataTypeHLSMask:
+                        case MCSDataTypeFILEMask:
+                        case MCSDataTypeFILE:
+                            break;
+                    }
+                }];
+            }
         }
+        
+        
         
 #warning next ...
 //        mTsContents = [(mProvider.TsContents ?: @[]) mutableCopy];
@@ -110,21 +144,21 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
     }
 }
 
-- (NSString *)indexFilepath {
-    return [mProvider indexFilepath];
+- (NSString *)playlistFilePath {
+    return [mProvider getPlaylistFilePath];
 }
 
-- (NSString *)indexFileRelativePath {
-    return [mProvider indexFileRelativePath];
+- (NSString *)getPlaylistRelativePath {
+    return [mProvider getPlaylistRelativePath];
 }
 
-- (NSString *)AESKeyFilepathWithURL:(NSURL *)URL {
-    return [mProvider AESKeyFilepathWithName:[MCSURL.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_AES_KEY]];
+- (NSString *)AESKeyFilePathWithURL:(NSURL *)URL {
+    return [mProvider getAESKeyFilePath:[MCSURL.shared nameWithUrl:URL.absoluteString suffix:HLS_SUFFIX_AES_KEY]];
 }
 
 - (NSUInteger)tsCount {
     @synchronized (self) {
-        return mParser.mediaSegmentCount;
+        return mParser.segmentsCount;
     }
 }
 
@@ -142,21 +176,8 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 }
 
 
-
-- (nullable id<MCSAssetContent>)createPlaylistContent:(NSString *)proxyPlaylist error:(out NSError **)errorPtr {
-    @synchronized (self) {
-        if ( mPlaylistContent == nil ) {
-            NSError *error = nil;
-            NSString *filePath = [mProvider indexFilepath];
-            NSData *data = [proxyPlaylist dataUsingEncoding:NSUTF8StringEncoding];
-            if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
-                mParser = [HLSAssetParser.alloc initWithProxyPlaylist:proxyPlaylist];
-                mPlaylistContent = [MCSAssetContent.alloc initWithFilepath:filePath startPositionInAsset:0 length:data.length];
-            }
-            if ( error != nil && errorPtr != NULL ) *errorPtr = error;
-        }
-        return mPlaylistContent != nil ? [mPlaylistContent readwriteRetain] : nil;
-    }
+- (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
+    return [HLSAssetReader.alloc initWithAsset:self request:request networkTaskPriority:networkTaskPriority readDataDecoder:readDataDecoder delegate:delegate];
 }
 
 - (nullable id<MCSAssetContent>)getPlaylistContent {
@@ -165,6 +186,34 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
     }
 }
 
+- (nullable id<MCSAssetContent>)createPlaylistContent:(NSString *)proxyPlaylist error:(out NSError **)errorPtr {
+    @synchronized (self) {
+        if ( mPlaylistContent == nil ) {
+            NSError *error = nil;
+            NSString *filePath = [mProvider getPlaylistFilePath];
+            NSData *data = [proxyPlaylist dataUsingEncoding:NSUTF8StringEncoding];
+            if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+                mParser = [HLSAssetParser.alloc initWithProxyPlaylist:proxyPlaylist];
+                mPlaylistContent = [MCSAssetContent.alloc initWithFilePath:filePath startPositionInAsset:0 length:data.length];
+            }
+            if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+        }
+        return mPlaylistContent != nil ? [mPlaylistContent readwriteRetain] : nil;
+    }
+}
+
+- (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL {
+    @synchronized (self) {
+        NSString *filename = [MCSURL.shared proxyFilenameWithOriginalURL:originalURL dataType:MCSDataTypeHLSAESKey];
+        
+        return nil;
+    }
+}
+- (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)error {
+    @synchronized (self) {
+        return nil;
+    }
+}
 
 
 
@@ -285,7 +334,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
         case MCSDataTypeHLSPlaylist:
         case MCSDataTypeHLSAESKey:
         case MCSDataTypeHLS:
-        case MCSDataTypeHLSMediaSegment:
+        case MCSDataTypeHLSSegment:
             break;
     }
     
@@ -302,7 +351,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
         case MCSDataTypeFILE:
             /* return */
             return nil;
-        case MCSDataTypeHLSMediaSegment:
+        case MCSDataTypeHLSSegment:
             break;
     }
     
@@ -364,7 +413,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
         [mTsContents removeObjectsInArray:deletes];
     }
     
-    if ( mTsContents.count == mParser.mediaSegmentCount ) {
+    if ( mTsContents.count == mParser.segmentsCount ) {
         BOOL isStoredAllContents = YES;
         for ( id<HLSAssetTsContent>content in mTsContents ) {
             if ( content.length != content.totalLength ) {
