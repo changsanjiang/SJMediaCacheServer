@@ -8,12 +8,14 @@
 
 #import "FILEAsset.h"
 #import "FILEAssetContentProvider.h"
+#import "FILEAssetReader.h"
 #import "MCSUtils.h"
 #import "MCSConsts.h"
 #import "MCSConfiguration.h"
 #import "MCSRootDirectory.h"
 #import "NSFileHandle+MCS.h"
 #import "MCSAssetManager.h"
+#import "MCSRequest.h"
 
 @interface FILEAsset () {
     MCSConfiguration *mConfiguration;
@@ -148,6 +150,10 @@
     
     if ( shouldNotify ) [MCSAssetManager.shared assetMetadataDidLoad:self];
     return content;
+}
+
+- (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
+    return [FILEAssetReader.alloc initWithAsset:self request:request networkTaskPriority:networkTaskPriority readDataDecoder:readDataDecoder delegate:delegate];
 }
 
 - (void)readwriteCountDidChange:(NSInteger)count {

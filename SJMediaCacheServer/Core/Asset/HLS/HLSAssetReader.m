@@ -50,21 +50,35 @@
     return self;
 }
 
+- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
+    self = [super init];
+    if ( self ) {
+#ifdef DEBUG
+        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, request.URL, asset, request.allHTTPHeaderFields);
+#endif
+        mAsset = asset;
+        mRequest = request;
+        _networkTaskPriority = networkTaskPriority;
+        _readDataDecoder = readDataDecoder;
+        _delegate = delegate;
+        [mAsset readwriteRetain];
+    }
+    return self;
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, mRequest.mcs_description];
 }
 
 - (void)dealloc {
-    mcs_queue_sync(^{
-        _delegate = nil;
-        [mObservers removeAllObjects];
-        [self _abortWithError:nil];
-        MCSAssetReaderDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
-    });
+    _delegate = nil;
+    [mObservers removeAllObjects];
+    [self _abortWithError:nil];
+    MCSAssetReaderDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
 
 - (void)prepare {
-    mcs_queue_sync(^{
+    @synchronized (self) {
         switch ( mStatus ) {
             case MCSReaderStatusPreparing:
             case MCSReaderStatusFinished:
@@ -79,6 +93,8 @@
         mStatus = MCSReaderStatusPreparing;
         MCSAssetReaderDebugLog(@"%@: <%p>.prepare { asset: %@, request: %@ };\n", NSStringFromClass(self.class), self, mAsset.name, mRequest);
         [self _notifyObserversWithStatus:mStatus];
+        
+        
         
         if ( mDataType == MCSDataTypeHLSMediaSegment || mDataType == MCSDataTypeHLSAESKey ) {
             if ( mAsset.parser == nil ) {
@@ -121,7 +137,7 @@
                 return;
         }
         [mReader prepare];
-    });
+    }
 }
 
 - (NSData *)readDataOfLength:(NSUInteger)length {

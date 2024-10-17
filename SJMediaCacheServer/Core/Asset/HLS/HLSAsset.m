@@ -15,7 +15,10 @@
 #import "HLSAssetReader.h"
 #import "MCSRootDirectory.h"
 
+UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
+
 @interface HLSAsset () {
+    MCSConfiguration *mConfiguration;
     HLSAssetContentProvider *mProvider;
     NSMutableArray<id<HLSAssetTsContent>> *mTsContents;
     BOOL mPrepared;
@@ -28,7 +31,6 @@
 
 @implementation HLSAsset
 @synthesize id = _id;
-@synthesize configuration = _configuration;
 @synthesize parser = _parser;
 @synthesize isStored = _isStored;
 
@@ -46,9 +48,7 @@
 
 - (instancetype)initWithName:(NSString *)name {
     self = [super init];
-    if ( self ) {
-        _name = name.copy;
-    }
+    _name = name.copy;
     return self;
 }
 
@@ -58,15 +58,18 @@
         if ( mPrepared )
             return;
         mPrepared = YES;
-        
+        mConfiguration = MCSConfiguration.alloc.init;
         NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
-        _configuration = MCSConfiguration.alloc.init;
         mProvider = [HLSAssetContentProvider.alloc initWithDirectory:directory];
         _parser = [HLSAssetParser parserInAsset:self];
 #warning next ...
 //        mTsContents = [(mProvider.TsContents ?: @[]) mutableCopy];
         [self _mergeContents];
     }
+}
+
+- (id<MCSConfiguration>)configuration {
+    return mConfiguration;
 }
 
 - (NSString *)path {
@@ -232,6 +235,24 @@
         }
     }
     return _ts;
+}
+
+
+- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType2:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response {
+    switch ( dataType ) {
+        case MCSDataTypeFILEMask:
+        case MCSDataTypeFILE:
+        case MCSDataTypeHLSMask:
+            /* return */
+            return nil;
+        case MCSDataTypeHLSPlaylist:
+        case MCSDataTypeHLSAESKey:
+        case MCSDataTypeHLS:
+        case MCSDataTypeHLSMediaSegment:
+            break;
+    }
+    
+    return nil;
 }
 
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response {

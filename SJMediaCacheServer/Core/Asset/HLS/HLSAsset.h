@@ -10,6 +10,7 @@
 #import "HLSAssetParser.h"
 #import "HLSAssetDefines.h"
 #import "MCSReadwrite.h"
+#import "MCSAssetContentNode.h"
 
 NS_ASSUME_NONNULL_BEGIN
 @interface HLSAsset : MCSReadwrite<MCSAsset>
@@ -25,6 +26,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)AESKeyFilepathWithURL:(NSURL *)URL;
 - (nullable NSArray<id<HLSAssetTsContent>> *)TsContents;
 - (nullable id<HLSAssetTsContent>)TsContentReadwriteForRequest:(NSURLRequest *)request;
+
+
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response;
+- (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(MCSAssetContentNode *node, BOOL *stop))block;
 @end
+
+
+// 需要有index文件后才能继续操作node
+// 那index文件就有了默认的placement
+
+//@interface <#class name#> : <#superclass#>
+//
+//@end
 NS_ASSUME_NONNULL_END

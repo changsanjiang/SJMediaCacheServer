@@ -35,20 +35,21 @@
 @end
 
 @implementation FILEAssetReader
-- (instancetype)initWithAsset:(FILEAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
+- (instancetype)initWithAsset:(FILEAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
-#ifdef DEBUG
-        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, request.URL, asset, request.allHTTPHeaderFields);
-#endif
         mAsset = asset;
-        mRequest = request;
+        mRequest = [request restoreOriginalURLRequest];
         mDelegate = delegate;
         mNetworkTaskPriority = networkTaskPriority;
         mReadDataDecoder = readDataDecoder;
         mCurrentReaderIndex = NSNotFound;
         mFixedRange = MCSNSRangeUndefined;
         [mAsset readwriteRetain];
+        
+#ifdef DEBUG
+        MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, mRequest.URL, asset, mRequest.allHTTPHeaderFields);
+#endif
     }
     return self;
 }
@@ -61,7 +62,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, mRequest.mcs_description];
+    return [NSString stringWithFormat:@"%@:<%p> { request: %@\n };", NSStringFromClass(self.class), self, mRequest];
 }
 
 - (void)prepare {

@@ -22,5 +22,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<HLSAssetTsContent>)createTsContentWithName:(NSString *)name totalLength:(NSUInteger)totalLength rangeInAsset:(NSRange)range;
 - (nullable NSString *)TsContentFilepath:(id<HLSAssetTsContent>)content;
 - (void)removeTsContent:(id<HLSAssetTsContent>)content;
+
+
+//content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension];
+//[content readwriteRetain];
+//if ( content != nil ) [mNodeList attachContentToNode:content placement:content.startPositionInAsset];
+- (nullable id<MCSAssetContent>)createContentWithType:(MCSDataType)dataType pathExtension:(nullable NSString *)pathExtension;
 @end
 NS_ASSUME_NONNULL_END

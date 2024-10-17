@@ -27,7 +27,7 @@ MCSResponseGetContentRange(NSHTTPURLResponse *response) {
     }
     else if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
         NSDictionary *responseHeaders = response.allHeaderFields;
-        NSString *bytes = responseHeaders[@"Content-Range"] ?: responseHeaders[@"content-range"];
+        NSString *bytes = responseHeaders[@"Content-Range"];
         if ( bytes.length != 0 ) {
             NSString *prefix = @"bytes ";
             NSString *rangeString = [bytes substringWithRange:NSMakeRange(prefix.length, bytes.length - prefix.length)];

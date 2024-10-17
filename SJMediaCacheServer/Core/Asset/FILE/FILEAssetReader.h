@@ -8,12 +8,13 @@
 
 #import "MCSInterfaces.h"
 #import "MCSAssetDefines.h"
+#import "MCSRequest.h"
 @class FILEAsset;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface FILEAssetReader : NSObject<MCSAssetReader>
-- (instancetype)initWithAsset:(FILEAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate;
+- (instancetype)initWithAsset:(FILEAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) MCSReaderStatus status;

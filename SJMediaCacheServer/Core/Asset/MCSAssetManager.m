@@ -14,7 +14,6 @@
 #import "MCSAssetUsageLog.h"
 #import "NSFileManager+MCS.h"
  
-#import "FILEAssetReader.h"
 #import "FILEAsset.h"
  
 #import "HLSAssetReader.h"
@@ -24,7 +23,8 @@
 #import "MCSConsts.h"
 
 #import "MCSError.h"
- 
+#import "MCSRequest.h"
+
 #pragma mark - Private
 
 @interface MCSAssetUsageLog (MCSPrivate)
@@ -136,19 +136,19 @@
 }
  
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
-    NSURL *proxyURL = proxyRequest.URL;
-    NSURL *URL = [MCSURL.shared URLWithProxyURL:proxyURL];
-    MCSAssetType type = [MCSURL.shared assetTypeForURL:proxyURL];
-    NSMutableURLRequest *request = [proxyRequest mcs_requestWithRedirectURL:URL];
-    id<MCSAssetReader> reader = nil;
-    switch ( type ) {
-        case MCSAssetTypeFILE: {
-            FILEAsset *asset = [self assetWithURL:proxyURL];
-            reader = [FILEAssetReader.alloc initWithAsset:asset request:request networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
-            break;
-        }
-        case MCSAssetTypeHLS: {
-#warning next ... 打开注释
+//    NSURL *proxyURL = proxyRequest.URL;
+//    NSURL *URL = [MCSURL.shared URLWithProxyURL:proxyURL];
+//    MCSAssetType type = [MCSURL.shared assetTypeForURL:proxyURL];
+//    NSMutableURLRequest *request = [proxyRequest mcs_requestWithRedirectURL:URL];
+//    id<MCSAssetReader> reader = nil;
+//    switch ( type ) {
+//        case MCSAssetTypeFILE: {
+//            FILEAsset *asset = [self assetWithURL:proxyURL];
+//            reader = [FILEAssetReader.alloc initWithAsset:asset request:request networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
+//            break;
+//        }
+//        case MCSAssetTypeHLS: {
+//#warning next ... 打开注释
 //            // If proxyURL has a playlist suffix, the proxyRequest may be requesting a sub-asset
 //            BOOL isPlaylistRequest = [proxyURL.lastPathComponent hasSuffix:HLS_SUFFIX_INDEX];
 //            HLSAsset *asset = [self assetWithURL:isPlaylistRequest ? URL : proxyURL];
@@ -159,9 +159,12 @@
 //            }
 //            MCSDataType dataType = [MCSURL.shared dataTypeForProxyURL:proxyURL];
 //            reader = [HLSAssetReader.alloc initWithAsset:asset request:request dataType:dataType networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
-            break;
-        }
-    }
+//            break;
+//        }
+//    }
+    
+    id<MCSAsset> asset = [self assetWithURL:proxyRequest.URL];
+    id<MCSAssetReader> reader = [asset readerWithRequest:[MCSRequest.alloc initWithProxyRequest:proxyRequest] networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
     if ( reader != nil ) {
         @synchronized (self) {
             if ( mReaders == nil ) mReaders = [NSHashTable.alloc initWithOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsOpaquePersonality capacity:0];

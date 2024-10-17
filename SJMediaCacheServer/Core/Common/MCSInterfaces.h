@@ -13,7 +13,7 @@
 #import "MCSDefines.h"
 #import "NSURLRequest+MCS.h"
 
-@protocol MCSResponse, MCSAsset, MCSConfiguration, MCSAssetReader, MCSAssetContent, MCSDownloadResponse;
+@protocol MCSResponse, MCSAsset, MCSConfiguration, MCSAssetReader, MCSRequest, MCSAssetContent, MCSDownloadResponse;
 @protocol MCSProxyTaskDelegate, MCSAssetReaderDelegate;
 @protocol MCSAssetReaderObserver;
 
@@ -71,6 +71,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isStored;
 - (void)prepare;
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response;
+- (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
+@end
+
+@protocol MCSRequest <NSObject>
+
 @end
 
 #pragma mark -

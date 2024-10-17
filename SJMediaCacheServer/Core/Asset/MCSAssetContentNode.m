@@ -31,6 +31,7 @@
     return mPlacement;
 }
 
+/// content.length 会随着写入随时变化, 这里动态返回当前长度最长的 content;
 - (nullable id<MCSAssetContent>)longestContent {
     id<MCSAssetContent> retv = mContents.firstObject;
     for ( NSInteger i = 1 ; i < mContents.count ; ++ i ) {
