@@ -63,7 +63,7 @@ MCSMD5(NSString *str) {
     // Create proxy URL with encoded original URL as a query parameter.
     NSURLComponents *components = [NSURLComponents componentsWithURL:_serverURL resolvingAgainstBaseURL:NO];
     components.path = [@"/mcsproxy" stringByAppendingPathComponent:originalURL.path];
-    components.query = [NSString stringWithFormat:@"url=%@", [self encode:originalURL.absoluteString]];
+    components.query = [NSString stringWithFormat:@"url=%@", [self encode:originalURL]];
     return components.URL;
 }
 
@@ -122,8 +122,8 @@ MCSMD5(NSString *str) {
 ///
 /// @param url The URL string to encode.
 /// @return The base64-encoded string.
-- (NSString *)encode:(NSString *)url {
-    return [[url dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+- (NSString *)encode:(NSURL *)url {
+    return [[url.absoluteString dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
 }
 
 /// Decodes the base64-encoded string back into a URL string.
@@ -153,15 +153,15 @@ MCSMD5(NSString *str) {
 }
 
 /// The proxyURI format is: mcsproxy/assetName/proxyFilename(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
-- (NSString *)generateProxyURIFromHLSOriginalUrl:(NSString *)url extension:(NSString *)extension forAsset:(NSString *)assetName {
-    NSString *proxyFilename = [self generateProxyFilenameFromHLSOriginalUrl:url extension:extension];
+- (NSString *)generateProxyURIFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension forAsset:(NSString *)assetName {
+    NSString *proxyFilename = [self generateProxyFilenameFromHLSOriginalURL:url extension:extension];
     NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?url=%@", MCS_PROXY_FLAG, assetName, proxyFilename, [self encode:url]];
     return URI;
 }
 
 /// The proxyFilename format is: urlmd5.extension
-- (NSString *)generateProxyFilenameFromHLSOriginalUrl:(NSString *)url extension:(NSString *)extension {
-    NSString *identifier = MCSMD5(url);
+- (NSString *)generateProxyFilenameFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension {
+    NSString *identifier = MCSMD5(url.absoluteString);
     NSString *filename = [NSString stringWithFormat:@"%@.%@", identifier, extension];
     return filename;
 }

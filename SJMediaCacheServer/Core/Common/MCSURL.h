@@ -82,7 +82,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param extension The file extension to be used (e.g., .m3u8, .ts).
 /// @param assetName The asset name associated with the URL.
 /// @return The generated proxy URI.
-- (NSString *)generateProxyURIFromHLSOriginalUrl:(NSString *)url extension:(NSString *)extension forAsset:(NSString *)assetName;
+- (NSString *)generateProxyURIFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension forAsset:(NSString *)assetName;
 
 /// Generates a proxy filename for an HLS original URL.
 ///
@@ -93,7 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param url The original HLS URL.
 /// @param extension The file extension to be used in the filename.
 /// @return The generated proxy filename.
-- (NSString *)generateProxyFilenameFromHLSOriginalUrl:(NSString *)url extension:(NSString *)extension;
+- (NSString *)generateProxyFilenameFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension;
 
 /// Generates a full proxy URL based on the provided proxy URI.
 ///

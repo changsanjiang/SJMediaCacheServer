@@ -37,8 +37,8 @@
     return [NSString stringWithFormat:@"index.%@", HLS_EXTENSION_PLAYLIST];
 }
 
-- (NSString *)getAESKeyFilePath:(NSString *)name {
-    return [mRootDir stringByAppendingPathComponent:name];
+- (NSString *)getAESKeyFilePath:(NSString *)filename {
+    return [mRootDir stringByAppendingPathComponent:filename];
 }
 
 

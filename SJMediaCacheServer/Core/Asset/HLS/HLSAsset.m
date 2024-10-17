@@ -24,6 +24,8 @@
 
 UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 
+static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
+
 @interface HLSAsset () {
     MCSConfiguration *mConfiguration;
     HLSAssetContentProvider *mProvider;
@@ -81,18 +83,21 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
             mParser = [HLSAssetParser.alloc initWithProxyPlaylist:[NSString stringWithContentsOfFile:proxyPlaylistFilePath encoding:NSUTF8StringEncoding error:&error]];
             if ( mParser != nil ) {
                 mPlaylistContent = [MCSAssetContent.alloc initWithFilePath:proxyPlaylistFilePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
-                
                 // find existing contents
                 [mParser.allItems enumerateObjectsUsingBlock:^(id<HLSURIItem>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                     switch (obj.type) {
                         case MCSDataTypeHLSAESKey: {
-                            
+                            NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:obj.URI];
+                            NSString *filename = [MCSURL.shared generateProxyFilenameFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_AES_KEY];
+                            NSString *filePath = [mProvider getAESKeyFilePath:filename];
+                            // playlist 与 aes key 都属于小文件, 目录中只要存在对应文件就说明已下载完毕;
+                            if ( [NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                                if ( mAESKeyContents == nil ) mAESKeyContents = NSMutableDictionary.dictionary;
+                                mAESKeyContents[filename] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
+                            }
                         }
                             break;
-                        case MCSDataTypeHLSSegment: {
-                            
-                        }
-                            break;
+                        case MCSDataTypeHLSSegment:
                         case MCSDataTypeHLSPlaylist:
                         case MCSDataTypeHLS:
                         case MCSDataTypeHLSMask:
@@ -103,8 +108,6 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
                 }];
             }
         }
-        
-        
         
 #warning next ...
 //        mTsContents = [(mProvider.TsContents ?: @[]) mutableCopy];
@@ -153,7 +156,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 }
 
 - (NSString *)AESKeyFilePathWithURL:(NSURL *)URL {
-    return [mProvider getAESKeyFilePath:[MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:URL.absoluteString extension:HLS_EXTENSION_AES_KEY]];
+    return [mProvider getAESKeyFilePath:[MCSURL.shared generateProxyFilenameFromHLSOriginalURL:URL extension:HLS_EXTENSION_AES_KEY]];
 }
 
 - (NSUInteger)tsCount {
@@ -204,14 +207,24 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 
 - (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL {
     @synchronized (self) {
-        NSString *filename = [MCSURL.shared proxyFilenameWithOriginalURL:originalURL dataType:MCSDataTypeHLSAESKey];
-        
-        return nil;
+        NSString *filename = [MCSURL.shared generateProxyFilenameFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_AES_KEY];
+        id<MCSAssetContent> _Nullable content = mAESKeyContents[filename];
+        return content != nil ? [content readwriteRetain] : nil;
     }
 }
-- (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)error {
+- (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)errorPtr {
     @synchronized (self) {
-        return nil;
+        NSString *filename = [MCSURL.shared generateProxyFilenameFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_AES_KEY];
+        id<MCSAssetContent> _Nullable content = mAESKeyContents[filename];
+        NSError *error = nil;
+        if ( content == nil ) {
+            NSString *filePath = [mProvider getAESKeyFilePath:filename];
+            if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+                content = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath startPositionInAsset:0 length:data.length];
+            }
+            if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+        }
+        return content != nil ? [content readwriteRetain] : nil;
     }
 }
 
@@ -233,7 +246,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 //            isUpdated = YES;
 //        }
         
-        NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:response.URL.absoluteString extension:HLS_EXTENSION_SEGMENT];
+        NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalURL:response.URL extension:HLS_EXTENSION_SEGMENT];
         
         if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
             content = [mProvider createTsContentWithName:name totalLength:response.totalLength rangeInAsset:response.range];
@@ -251,7 +264,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 }
  
 - (nullable id<HLSAssetTsContent>)TsContentForRequest:(NSURLRequest *)request {
-    NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:request.URL.absoluteString extension:HLS_EXTENSION_SEGMENT];
+    NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalURL:request.URL extension:HLS_EXTENSION_SEGMENT];
     
     __block id<HLSAssetTsContent>ts = nil;
     @synchronized (self) {
@@ -286,7 +299,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 /// 该操作将会对 content 进行一次 readwriteRetain, 请在不需要时, 调用一次 readwriteRelease.
 ///
 - (nullable id<HLSAssetTsContent>)TsContentReadwriteForRequest:(NSURLRequest *)request {
-    NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:request.URL.absoluteString extension:HLS_EXTENSION_SEGMENT];
+    NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalURL:request.URL extension:HLS_EXTENSION_SEGMENT];
     
     __block id<HLSAssetTsContent>_ts = nil;
     @synchronized (self) {
@@ -366,7 +379,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 //            isUpdated = YES;
 //        }
         
-        NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalUrl:response.URL.absoluteString extension:HLS_EXTENSION_SEGMENT];
+        NSString *name = [MCSURL.shared generateProxyFilenameFromHLSOriginalURL:response.URL extension:HLS_EXTENSION_SEGMENT];
         
         if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
             content = [mProvider createTsContentWithName:name totalLength:response.totalLength rangeInAsset:response.range];

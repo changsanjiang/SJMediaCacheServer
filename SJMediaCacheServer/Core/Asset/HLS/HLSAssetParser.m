@@ -186,7 +186,7 @@
                 default: break;
             }
             if ( extension.length != 0 ) {
-                NSString *proxy = [MCSURL.shared generateProxyURIFromHLSOriginalUrl:originalUrl extension:extension forAsset:assetName];
+                NSString *proxy = [MCSURL.shared generateProxyURIFromHLSOriginalURL:[NSURL URLWithString:originalUrl] extension:extension forAsset:assetName];
                 [playlistContents replaceCharactersInRange:obj.range withString:proxy];
             }
         }];
