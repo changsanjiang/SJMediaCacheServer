@@ -55,7 +55,7 @@ MCSMD5(NSString *str) {
     NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
     
     // If the URL is already a proxy URL or matches the server host, return it as-is.
-    // Format: mcsproxy/assetName/proxyFilename(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
+    // Format: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
     if ( [originalURL.path containsString:MCS_PROXY_FLAG] || [originalURL.host isEqualToString:_serverURL.host] ) {
         return originalURL;
     }
@@ -89,7 +89,7 @@ MCSMD5(NSString *str) {
     
     if ( [URL.path containsString:MCS_PROXY_FLAG] ) {
         // If the URL contains "mcsproxy", return the asset name from the path.
-        // Format: mcsproxy/assetName/proxyFilename(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
+        // Format: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
         return URL.path.stringByDeletingLastPathComponent.lastPathComponent;
     }
     
@@ -152,18 +152,17 @@ MCSMD5(NSString *str) {
                                  userInfo:nil];
 }
 
-/// The proxyURI format is: mcsproxy/assetName/proxyFilename(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
+/// The proxyURI format is: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
 - (NSString *)generateProxyURIFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension forAsset:(NSString *)assetName {
-    NSString *proxyFilename = [self generateProxyFilenameFromHLSOriginalURL:url extension:extension];
-    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?url=%@", MCS_PROXY_FLAG, assetName, proxyFilename, [self encode:url]];
+    NSString *proxyIdentifier = [self generateProxyIdentifierFromHLSOriginalURL:url extension:extension];
+    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?url=%@", MCS_PROXY_FLAG, assetName, proxyIdentifier, [self encode:url]];
     return URI;
 }
 
-/// The proxyFilename format is: urlmd5.extension
-- (NSString *)generateProxyFilenameFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension {
-    NSString *identifier = MCSMD5(url.absoluteString);
-    NSString *filename = [NSString stringWithFormat:@"%@.%@", identifier, extension];
-    return filename;
+/// The proxyIdentifier format is: urlmd5.extension
+- (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension {
+    NSString *identifier = [NSString stringWithFormat:@"%@.%@", MCSMD5(url.absoluteString), extension];
+    return identifier;
 }
 
 - (NSURL *)generateProxyURLFromHLSProxyURI:(NSString *)proxyURI {

@@ -41,5 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL; // retained, should release after;
 - (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)error; // retained, should release after;
+
+- (nullable id<MCSAssetContent>)getSegmentContentWithOriginalURL:(NSURL *)originalURL; // retained, should release after;
 @end
 NS_ASSUME_NONNULL_END

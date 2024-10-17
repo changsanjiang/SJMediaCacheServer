@@ -72,10 +72,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Generates a proxy URI for an HLS original URL.
 ///
-/// The proxyURI format is: mcsproxy/assetName/proxyFilename(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
+/// The proxyURI format is: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
 /// - mcsproxy: The base proxy path.
 /// - assetName: The name of the asset.
-/// - proxyFilename: The filename generated from the original URL's MD5 and its extension.
+/// - proxyIdentifier: The identifier generated from the original URL's MD5 and its extension.
 /// - base64EncodedUrl: The base64-encoded original URL.
 ///
 /// @param url The original HLS URL.
@@ -84,16 +84,16 @@ NS_ASSUME_NONNULL_BEGIN
 /// @return The generated proxy URI.
 - (NSString *)generateProxyURIFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension forAsset:(NSString *)assetName;
 
-/// Generates a proxy filename for an HLS original URL.
+/// Generates a unique proxy identifier from the original HLS URL.
 ///
-/// The proxyFilename format is: urlmd5.extension
-/// - urlmd5: The MD5 hash of the original URL.
-/// - extension: The file extension (e.g., .m3u8, .ts).
+/// The proxyIdentifier format is: urlmd5.extension
+/// - urlmd5: The MD5 hash of the original URL to ensure uniqueness.
+/// - extension: The file extension (e.g., .m3u8, .ts) to identify the file type.
 ///
 /// @param url The original HLS URL.
-/// @param extension The file extension to be used in the filename.
-/// @return The generated proxy filename.
-- (NSString *)generateProxyFilenameFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension;
+/// @param extension The file extension to be used in the identifier.
+/// @return The generated proxy identifier.
+- (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension;
 
 /// Generates a full proxy URL based on the provided proxy URI.
 ///
