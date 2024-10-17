@@ -6,22 +6,15 @@
 //  Copyright © 2020 changsanjiang@gmail.com. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "MCSDefines.h"
-@protocol HLSAssetParserDelegate, HLSURIItem;
-@class HLSAsset;
+@protocol HLSURIItem;
 
 NS_ASSUME_NONNULL_BEGIN
 @interface HLSAssetParser : NSObject
-+ (nullable instancetype)parserInAsset:(HLSAsset *)asset;
++ (nullable NSString *)proxyPlaylistWithAsset:(NSString *)assetName originalPlaylistData:(NSData *)rawData sourceURL:(NSURL *)sourceURL error:(out NSError **)errorPtr;
 
-- (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<HLSAssetParserDelegate>)delegate;
+- (instancetype)initWithProxyPlaylist:(NSString *)playlist;
 
-- (void)prepare;
-
-- (void)close;
-
-@property (nonatomic, weak, readonly, nullable) HLSAsset *asset;
 @property (nonatomic, readonly) NSUInteger allItemsCount;
 @property (nonatomic, readonly) NSUInteger mediaSegmentCount;
 
@@ -29,14 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)isVariantItem:(id<HLSURIItem>)item;
 - (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item;
 - (nullable NSArray<id<HLSURIItem>> *)mediaSegments;
-
-@property (nonatomic, readonly) BOOL isClosed;
-@property (nonatomic, readonly) BOOL isDone;
-@end
-
-@protocol HLSAssetParserDelegate <NSObject>
-- (void)parserParseDidFinish:(HLSAssetParser *)parser;
-- (void)parser:(HLSAssetParser *)parser anErrorOccurred:(NSError *)error;
 @end
 
 @protocol HLSURIItem <NSObject>

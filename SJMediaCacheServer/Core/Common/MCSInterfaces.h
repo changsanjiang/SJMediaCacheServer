@@ -55,7 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MCSReadwriteReference <NSObject>
 @property (nonatomic, readonly) NSInteger readwriteCount; // kvo
 
-- (void)readwriteRetain;
+- (instancetype)readwriteRetain;
 - (void)readwriteRelease;
 @end
 
@@ -129,6 +129,8 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol MCSDownloadTask <NSObject>
+@property (nullable, readonly, copy) NSURLRequest  *originalRequest;  /* NSURLSessionTask; may be nil if this is a stream task */
+@property (nullable, readonly, copy) NSURLRequest  *currentRequest;   /* NSURLSessionTask; may differ from originalRequest due to http server redirection */
 - (void)cancel;
 @end
 

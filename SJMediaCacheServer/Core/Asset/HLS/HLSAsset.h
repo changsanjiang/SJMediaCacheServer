@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
 @property (nonatomic, readonly) NSUInteger tsCount;
 @property (nonatomic, readonly) BOOL isStored;
-@property (nonatomic, strong, nullable) HLSAssetParser *parser; 
+@property (nonatomic, strong, readonly, nullable) HLSAssetParser *parser; 
 
 - (NSString *)indexFilepath;
 - (NSString *)indexFileRelativePath;
@@ -32,14 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 - (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(MCSAssetContentNode *node, BOOL *stop))block;
 
-- (nullable id<MCSAssetContent>)getPlaylistContent;
+
+- (nullable id<MCSAssetContent>)createPlaylistContent:(NSString *)proxyPlaylist error:(out NSError **)error; // retained, should release after;
+- (nullable id<MCSAssetContent>)getPlaylistContent; // retained, should release after;
 @end
-
-
-// 需要有index文件后才能继续操作node
-// 那index文件就有了默认的placement
-
-//@interface <#class name#> : <#superclass#>
-//
-//@end
 NS_ASSUME_NONNULL_END

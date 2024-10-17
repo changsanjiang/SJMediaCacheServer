@@ -15,12 +15,16 @@
 #import "HLSAssetReader.h"
 #import "MCSRootDirectory.h"
 #import "MCSRequest.h"
+#import "MCSAssetContent.h"
+#import "NSFileManager+MCS.h"
 
 UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 
 @interface HLSAsset () {
     MCSConfiguration *mConfiguration;
     HLSAssetContentProvider *mProvider;
+    id<MCSAssetContent> _Nullable mPlaylistContent;
+    HLSAssetParser *_Nullable mParser;
     NSMutableArray<id<HLSAssetTsContent>> *mTsContents;
     BOOL mPrepared;
 }
@@ -32,7 +36,6 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 
 @implementation HLSAsset
 @synthesize id = _id;
-@synthesize parser = _parser;
 @synthesize isStored = _isStored;
 
 + (NSString *)sql_primaryKey {
@@ -62,7 +65,13 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
         mConfiguration = MCSConfiguration.alloc.init;
         NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
         mProvider = [HLSAssetContentProvider.alloc initWithDirectory:directory];
-        _parser = [HLSAssetParser parserInAsset:self];
+        NSString *proxyPlaylistFilePath = [mProvider indexFilepath];
+        if ( [NSFileManager.defaultManager fileExistsAtPath:proxyPlaylistFilePath] ) {
+            NSError *error = nil;
+            mParser = [HLSAssetParser.alloc initWithProxyPlaylist:[NSString stringWithContentsOfFile:proxyPlaylistFilePath encoding:NSUTF8StringEncoding error:&error]];
+            if ( mParser != nil ) mPlaylistContent = [MCSAssetContent.alloc initWithFilepath:proxyPlaylistFilePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
+        }
+        
 #warning next ...
 //        mTsContents = [(mProvider.TsContents ?: @[]) mutableCopy];
         [self _mergeContents];
@@ -79,15 +88,9 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 
 #pragma mark - mark
 
-- (void)setParser:(nullable HLSAssetParser *)parser {
-    @synchronized (self) {
-        _parser = parser;
-    }
-}
-
 - (nullable HLSAssetParser *)parser {
     @synchronized (self) {
-        return _parser;
+        return mParser;
     }
 }
 
@@ -121,7 +124,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
 
 - (NSUInteger)tsCount {
     @synchronized (self) {
-        return _parser.mediaSegmentCount;
+        return mParser.mediaSegmentCount;
     }
 }
 
@@ -137,6 +140,39 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
         return _root;
     }
 }
+
+
+
+- (nullable id<MCSAssetContent>)createPlaylistContent:(NSString *)proxyPlaylist error:(out NSError **)errorPtr {
+    @synchronized (self) {
+        if ( mPlaylistContent == nil ) {
+            NSError *error = nil;
+            NSString *filePath = [mProvider indexFilepath];
+            NSData *data = [proxyPlaylist dataUsingEncoding:NSUTF8StringEncoding];
+            if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+                mParser = [HLSAssetParser.alloc initWithProxyPlaylist:proxyPlaylist];
+                mPlaylistContent = [MCSAssetContent.alloc initWithFilepath:filePath startPositionInAsset:0 length:data.length];
+            }
+            if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+        }
+        return mPlaylistContent != nil ? [mPlaylistContent readwriteRetain] : nil;
+    }
+}
+
+- (nullable id<MCSAssetContent>)getPlaylistContent {
+    @synchronized (self) {
+        return mPlaylistContent != nil ? [mPlaylistContent readwriteRetain] : nil;
+    }
+}
+
+
+
+
+
+
+
+
+
 
 - (nullable id<HLSAssetTsContent>)createTsContentWithResponse:(id<MCSDownloadResponse>)response {
     NSString *TsContentType = response.contentType;
@@ -328,7 +364,7 @@ UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT = 0;
         [mTsContents removeObjectsInArray:deletes];
     }
     
-    if ( mTsContents.count == _parser.mediaSegmentCount ) {
+    if ( mTsContents.count == mParser.mediaSegmentCount ) {
         BOOL isStoredAllContents = YES;
         for ( id<HLSAssetTsContent>content in mTsContents ) {
             if ( content.length != content.totalLength ) {

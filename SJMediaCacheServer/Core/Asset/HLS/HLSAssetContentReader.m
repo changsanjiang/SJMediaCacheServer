@@ -14,11 +14,11 @@
 #import "NSFileManager+MCS.h"
 #import "HLSAssetParser.h"
 
-@interface HLSAssetPlaylistContentReader ()<HLSAssetParserDelegate> {
+@interface HLSAssetPlaylistContentReader () {
     HLSAsset *mAsset;
     NSURLRequest *mRequest;
     float mPriority;
-    HLSAssetParser *mTempParser;
+    id<MCSDownloadTask> _Nullable mTask; // download playlist
 }
 @end
 
@@ -30,62 +30,60 @@
         mAsset = asset;
         mRequest = request;
         mPriority = priority;
+        [mAsset readwriteRetain];
     }
     return self;
 }
 
+- (void)dealloc {
+    [mAsset readwriteRelease];
+}
+
 - (void)prepareContent {
-    HLSAssetParser *_Nullable parser = mAsset.parser;
-    if ( parser != nil ) {
-        [self _createContentWithParser:parser];
+    id<MCSAssetContent> content = [mAsset getPlaylistContent];
+    if ( content != nil ) {
+        [self contentDidReady:content range:NSMakeRange(0, content.length)];
     }
     else {
-        mTempParser = [HLSAssetParser.alloc initWithAsset:mAsset request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:mPriority delegate:self];
-        [mTempParser prepare];
+        mTask = [MCSContents request:mRequest networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable error) {
+            @synchronized (self) {
+                [self _downloadDidCompleteWithCurrentRequest:task.currentRequest data:data error:error];
+            }
+        }];
     }
-}
-
-#pragma mark - HLSAssetParserDelegate
-
-- (void)parserParseDidFinish:(HLSAssetParser *)parser {
-    @synchronized (self) {
-        [self _createContentWithParser:parser];
-    }
-}
-
-- (void)parser:(HLSAssetParser *)parser anErrorOccurred:(NSError *)error {
-    [self abortWithError:error];
-}
-
-#pragma mark - mark
-
-- (void)didAbortWithError:(NSError *)error {
-    
 }
 
 #pragma mark - mark
 
 /// unlocked
-- (void)_createContentWithParser:(HLSAssetParser *)parser {
-    switch ( self.status ) {
-        case MCSReaderStatusFinished:
-        case MCSReaderStatusAborted:
-        case MCSReaderStatusReadyToRead:
-            break;
-        case MCSReaderStatusUnknown:
-        case MCSReaderStatusPreparing: {
-            if ( mAsset.parser == nil ) {
-                mAsset.parser = parser;
-            }
-            
-            NSString *filepath = mAsset.indexFilepath;
-            UInt64 fileSize = (UInt64)[NSFileManager.defaultManager mcs_fileSizeAtPath:filepath];
-            MCSAssetContent *content = [MCSAssetContent.alloc initWithFilepath:filepath startPositionInAsset:0 length:fileSize];
-            [content readwriteRetain];
-            [self contentDidReady:content range:NSMakeRange(0, fileSize)];
-        }
-            break;
+- (void)_downloadDidCompleteWithCurrentRequest:(NSURLRequest *)request data:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
+    if ( self.status == MCSReaderStatusAborted ) return;
+    mTask = nil;
+    if ( downloadError != nil ) {
+        [self abortWithError:[NSError mcs_errorWithCode:MCSDownloadError userInfo:@{
+            MCSErrorUserInfoErrorKey : downloadError,
+            MCSErrorUserInfoReasonKey : @"Playlist download failed!"
+        }]];
+        return;
     }
+    
+    NSError *error = nil;
+    id<MCSAssetContent> content = nil;
+    NSString *proxyPlaylist = [HLSAssetParser proxyPlaylistWithAsset:mAsset.name originalPlaylistData:data sourceURL:request.URL error:&error];
+    if ( error == nil ) {
+        content = [mAsset createPlaylistContent:proxyPlaylist error:&error]; // retain
+    }
+    if ( error != nil ) {
+        [self abortWithError:error];
+        return;
+    }
+    [self contentDidReady:content range:NSMakeRange(0, content.length)];
+}
+
+#pragma mark - mark
+
+- (void)didAbortWithError:(NSError *)error {
+    [mTask cancel];
 }
 @end
 
@@ -130,7 +128,7 @@
 }
 
 - (void)_downloadToFile:(NSString *)filepath {
-    mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority willPerformHTTPRedirection:nil completion:^(NSData * _Nullable data, NSError * _Nullable downloadError) {
+    mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable downloadError) {
         @synchronized (self) {
             [self _downloadDidCompleteWithData:data error:downloadError saveToFile:filepath];
         }
@@ -139,9 +137,8 @@
 
 /// unlocked
 - (void)_downloadDidCompleteWithData:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError saveToFile:(NSString *)filepath {
-    if ( self.status == MCSReaderStatusAborted )
-        return;
-    
+    if ( self.status == MCSReaderStatusAborted ) return;
+
     NSError *writeError = nil;
     if ( downloadError == nil ) {
         @synchronized (HLSAssetAESKeyContentReader.class) {

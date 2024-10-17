@@ -8,7 +8,7 @@
 #import "MCSContents.h"
 #import "MCSDownload.h"
 
-@interface MCSContents()<MCSDownloadTask, MCSDownloadTaskDelegate>
+@interface MCSContents()<MCSDownloadTaskDelegate>
 
 @end
 
@@ -16,29 +16,25 @@
     id _Nullable mStringSelf;
     id<MCSDownloadTask> mTask;
     NSMutableData *mData;
-    void(^mWillPerformHTTPRedirection)(NSURLRequest *newRequest);
-    void(^mCompletionHandler)(NSData *_Nullable data, NSError *_Nullable error);
+    void(^mCompletionHandler)(id<MCSDownloadTask> task, NSData *_Nullable data, NSError *_Nullable error);
 }
 
-+ (id<MCSDownloadTask>)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority willPerformHTTPRedirection:(void(^_Nullable)(NSURLRequest *newRequest))block completion:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler {
-    MCSContents *cts = [MCSContents.alloc initWithWillPerformHTTPRedirection:block completion:completionHandler];
-    [cts startWithRequest:request networkTaskPriority:networkTaskPriority];
-    return cts;
++ (id<MCSDownloadTask>)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority completion:(void(^)(id<MCSDownloadTask> task, NSData *_Nullable data, NSError *_Nullable error))completionHandler {
+    MCSContents *cts = [MCSContents.alloc initWithCompletion:completionHandler];
+    return [cts startWithRequest:request networkTaskPriority:networkTaskPriority];
 }
 
-- (instancetype)initWithWillPerformHTTPRedirection:(void(^_Nullable)(NSURLRequest *newRequest))block completion:(void(^)(NSData *_Nullable data, NSError *_Nullable error))completionHandler {
+- (instancetype)initWithCompletion:(void(^)(id<MCSDownloadTask> task, NSData *_Nullable data, NSError *_Nullable error))completionHandler {
     self = [super init];
-    if ( self ) {
-        mWillPerformHTTPRedirection = block;
-        mCompletionHandler = completionHandler;
-        mData = NSMutableData.data;
-    }
+    mCompletionHandler = completionHandler;
     return self;
 }
 
-- (void)startWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority {
+- (id<MCSDownloadTask>)startWithRequest:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority {
     mStringSelf = self;
+    mData = NSMutableData.data;
     mTask = [MCSDownload.shared downloadWithRequest:request priority:networkTaskPriority delegate:self];
+    return mTask;
 }
 
 - (void)cancel {
@@ -47,9 +43,7 @@
 
 #pragma mark - MCSDownloadTaskDelegate
 
-- (void)downloadTask:(id<MCSDownloadTask>)task willPerformHTTPRedirectionWithNewRequest:(NSURLRequest *)request {
-    if ( mWillPerformHTTPRedirection != nil ) mWillPerformHTTPRedirection(request);
-}
+- (void)downloadTask:(id<MCSDownloadTask>)task willPerformHTTPRedirectionWithNewRequest:(NSURLRequest *)request { }
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didReceiveResponse:(id<MCSDownloadResponse>)response { }
 
@@ -58,7 +52,7 @@
 }
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didCompleteWithError:(NSError *)error {
-    mCompletionHandler(error == nil ? mData : nil, error);
+    mCompletionHandler(task, error == nil ? mData : nil, error);
     mStringSelf = nil;
 }
 @end

@@ -17,6 +17,7 @@ typedef NS_ENUM(NSUInteger, MCSErrorCode) {
     MCSInvalidRequestError,
     MCSInvalidResponseError,
     MCSInvalidParameterError,
+    MCSDownloadError,
     MCSAbortError,
     MCSCancelledError,
 };

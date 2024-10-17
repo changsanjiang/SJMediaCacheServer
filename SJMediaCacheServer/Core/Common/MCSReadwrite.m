@@ -27,11 +27,12 @@
     }
 }
 
-- (void)readwriteRetain {
+- (instancetype)readwriteRetain {
     @synchronized (self) {
         mReadwriteCount += 1;
         [self readwriteCountDidChange:mReadwriteCount];
     }
+    return self;
 }
 
 - (void)readwriteRelease {

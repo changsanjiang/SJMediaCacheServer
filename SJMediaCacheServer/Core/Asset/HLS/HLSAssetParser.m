@@ -8,11 +8,8 @@
 
 #import "HLSAssetParser.h"
 #import "MCSError.h"
-#import "MCSContents.h"
 #import "MCSURL.h"
 #import "NSURLRequest+MCS.h"
-#import "MCSQueue.h"
-#import "HLSAsset.h"
 #import "MCSConsts.h"
 #import "MCSUtils.h"
 
@@ -139,60 +136,96 @@
 @end
 
 @interface HLSAssetParser () {
-    float _networkTaskPriority;
-    BOOL _isCalledPrepare;
-    NSURLRequest *_request;
     NSArray<HLSURIItem *> *_Nullable _URIItems;
-    NSArray<HLSURIItem *> *_Nullable _mediaSegments; // or ts array
-    id<HLSAssetParserDelegate> _Nullable _delegate;
+    NSArray<HLSURIItem *> *_Nullable _mediaSegments; // ts array
 }
 @end
 
 @implementation HLSAssetParser
+//+ (nullable instancetype)parserWithProxyPlaylistAtPath:(NSString *)filePath {
+//    NSError *error = nil;
+//    NSString *content = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:&error];
+//    return [[self alloc] initWithProxyPlaylist:content];
+//}
 
-+ (nullable instancetype)parserInAsset:(HLSAsset *)asset {
-    NSParameterAssert(asset);
-    NSString *filepath = [asset indexFilepath];
-    // 已解析过, 将直接读取本地
-    if ( [NSFileManager.defaultManager fileExistsAtPath:filepath] ) {
-        HLSAssetParser *parser = HLSAssetParser.alloc.init;
-        parser->_asset = asset;
-        [parser _finished];
-        return parser;
++ (nullable NSString *)proxyPlaylistWithAsset:(NSString *)assetName originalPlaylistData:(NSData *)rawData sourceURL:(NSURL *)sourceURL error:(out NSError **)errorPtr {
+    NSString *_Nullable contents = [NSString.alloc initWithData:rawData encoding:NSUTF8StringEncoding] ?: [NSString.alloc initWithData:rawData encoding:1];
+    NSError *error = nil;
+    if ( contents == nil || ![contents hasPrefix:HLS_PREFIX_FILE_FIRST_LINE] ) {
+        error = [NSError mcs_errorWithCode:MCSFileError userInfo:@{
+            MCSErrorUserInfoObjectKey : contents ?: @"",
+            MCSErrorUserInfoReasonKey : @"Empty data or unsupported format!"
+        }];
     }
+    
+    if ( contents != nil ) {
+        NSArray<NSString *> *components = [contents componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet];
+        NSMutableString *playlistContents = NSMutableString.string;
+        for ( NSString *str in components ) {
+            if ( str.length != 0 )
+                [playlistContents appendFormat:@"%@\n", str];
+        }
+        [[playlistContents mcs_URIs] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(HLS_EXT_X_URI * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSString *URI = [playlistContents substringWithRange:obj.range];
+            NSString *url = [URI mcs_convertToUrlByContentsURL:sourceURL];
+            NSString *suffix = nil;
+            switch ( obj.type ) {
+                case MCSDataTypeHLSPlaylist:
+                    suffix = HLS_SUFFIX_INDEX;
+                    break;
+                case MCSDataTypeHLSAESKey:
+                    suffix = HLS_SUFFIX_AES_KEY;
+                    break;
+                case MCSDataTypeHLSMediaSegment:
+#warning next .. 文件后缀
+                    suffix = HLS_SUFFIX_TS;
+                    break;
+                default: break;
+            }
+            if ( suffix.length != 0 ) {
+                NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:url suffix:suffix inAsset:assetName];
+                [playlistContents replaceCharactersInRange:obj.range withString:proxy];
+            }
+        }];
+        ///
+        /// 仅保留最前面的stream
+        ///
+        ///     #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="audio"
+        ///     video.m3u8
+        [[playlistContents mcs_textCheckingResultsByMatchPattern:HLS_REGEX_VARIANT_STREAM options:kNilOptions] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ( idx != 0 ) {
+                [playlistContents deleteCharactersInRange:obj.range];
+            }
+        }];
+        
+        return playlistContents;
+    }
+    
+    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
     return nil;
 }
 
-- (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority delegate:(id<HLSAssetParserDelegate>)delegate {
-    self = [self init];
-    if ( self ) {
-        NSParameterAssert(asset);
-        _asset = asset;
-        _networkTaskPriority = networkTaskPriority;
-        _request = request;
-        _delegate = delegate;
+- (instancetype)initWithProxyPlaylist:(NSString *)playlist {
+    self = [super init];
+    _URIItems = [playlist mcs_URIItems];
+    NSMutableArray<HLSURIItem *> *_Nullable mediaSegments = NSMutableArray.array;
+    for ( HLSURIItem *item in _URIItems ) {
+        if ( item.type == MCSDataTypeHLSMediaSegment ) [mediaSegments addObject:item];
     }
+    _mediaSegments = mediaSegments.count != 0 ? mediaSegments.copy : nil;
     return self;
 }
 
 - (NSUInteger)allItemsCount {
-    @synchronized (self) {
-        return _URIItems.count;
-    }
+    return _URIItems.count;
 }
 
 - (NSUInteger)mediaSegmentCount {
-    @synchronized (self) {
-        return _mediaSegments.count;
-    }
+    return _mediaSegments.count;
 }
 
 - (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index {
-    __block HLSURIItem *item = nil;
-    mcs_queue_sync(^{
-        item = index < _URIItems.count ? _URIItems[index] : nil;
-    });
-    return item;
+    return _URIItems.count ? _URIItems[index] : nil;
 }
 
 - (BOOL)isVariantItem:(id<HLSURIItem>)item {
@@ -218,182 +251,7 @@
 }
 
 - (nullable NSArray<id<HLSURIItem>> *)mediaSegments {
-    @synchronized (self) {
-        return _mediaSegments;
-    }
-}
-
-- (void)prepare {
-    @synchronized (self) {
-        if ( self->_isClosed || self->_isCalledPrepare )
-            return;
-        
-        self->_isCalledPrepare = YES;
-        
-        [self _start];
-    }
-}
-
-- (void)close {
-    @synchronized (self) {
-        [self _close];
-    }
-}
-
-@synthesize isDone = _isDone;
-- (BOOL)isDone {
-    @synchronized (self) {
-        return _isDone;
-    }
-}
-
-@synthesize isClosed = _isClosed;
-- (BOOL)isClosed {
-    @synchronized (self) {
-        return _isClosed;
-    }
-}
-
-#pragma mark -
-
-- (void)_start {
-    
-    NSString *indexFilepath = [_asset indexFilepath];
-    // 已解析过, 将直接读取本地
-    if ( [NSFileManager.defaultManager fileExistsAtPath:indexFilepath] ) {
-        [self _finished];
-        return;
-    }
-    
-    HLSAsset *asset = _asset;
-    
-    if ( asset == nil ) {
-        [self _close];
-        return;
-    }
-    
-    __block NSURLRequest *currRequest = _request;
-    __weak typeof(self) _self = self;
-    [MCSContents request:currRequest networkTaskPriority:_networkTaskPriority willPerformHTTPRedirection:^(NSURLRequest * _Nonnull newRequest) {
-        currRequest = newRequest;
-    } completion:^(NSData * _Nullable data, NSError * _Nullable error) {
-        mcs_queue_sync(^{
-            __strong typeof(_self) self = _self;
-            if ( self == nil ) return;
-            [self _parseContentsWithRequest:currRequest data:data error:error];
-        });
-    }];
-}
-
-- (void)_parseContentsWithRequest:(NSURLRequest *)currRequest data:(NSData *)data error:(NSError *)error {
-    if ( _isClosed ) {
-        return;
-    }
-    
-    HLSAsset *asset = _asset;
-    if ( asset == nil ) {
-        [self _close];
-        return;
-    }
-    
-    if ( error != nil ) {
-        //Just deliver the original error, do not package again
-        [self _onError:error];
-        return;
-    }
-    
-    NSString *_Nullable contents = [NSString.alloc initWithData:data encoding:1];
-    
-    if ( contents == nil || ![contents hasPrefix:HLS_PREFIX_FILE_FIRST_LINE] ) {
-        [self _onError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
-            MCSErrorUserInfoObjectKey : contents ?: @"",
-            MCSErrorUserInfoReasonKey : @"数据为空或格式不正确!"
-        }]];
-        return;
-    }
-    
-    NSArray<NSString *> *components = [contents componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet];
-    NSMutableString *indexFileContents = NSMutableString.string;
-    for ( NSString *str in components ) {
-        if ( str.length != 0 )
-            [indexFileContents appendFormat:@"%@\n", str];
-    }
-    [[indexFileContents mcs_URIs] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(HLS_EXT_X_URI * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSString *URI = [indexFileContents substringWithRange:obj.range];
-        NSString *url = [URI mcs_convertToUrlByContentsURL:currRequest.URL];
-        NSString *suffix = nil;
-        switch ( obj.type ) {
-            case MCSDataTypeHLSPlaylist:
-                suffix = HLS_SUFFIX_INDEX;
-                break;
-            case MCSDataTypeHLSAESKey:
-                suffix = HLS_SUFFIX_AES_KEY;
-                break;
-            case MCSDataTypeHLSMediaSegment:
-                suffix = HLS_SUFFIX_TS;
-                break;
-            default: break;
-        }
-        if ( suffix.length != 0 ) {
-            NSString *proxy = [MCSURL.shared HLS_proxyURIWithURL:url suffix:suffix inAsset:_asset.name];
-            [indexFileContents replaceCharactersInRange:obj.range withString:proxy];
-        }
-    }];
-    ///
-    /// 仅保留最前面的stream
-    ///
-    ///     #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="audio"
-    ///     video.m3u8
-    [[indexFileContents mcs_textCheckingResultsByMatchPattern:HLS_REGEX_VARIANT_STREAM options:kNilOptions] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if ( idx != 0 ) {
-            [indexFileContents deleteCharactersInRange:obj.range];
-        }
-    }];
-    
-    NSString *indexFilepath = [asset indexFilepath];
-    if ( ![NSFileManager.defaultManager fileExistsAtPath:indexFilepath] ) {
-        NSError *_Nullable error = nil;
-        if ( ![indexFileContents writeToFile:indexFilepath atomically:YES encoding:NSUTF8StringEncoding error:&error] ) {
-            [self _onError:error];
-            return;
-        }
-    }
-    
-    [self _finished];
-}
- 
-- (void)_onError:(NSError *)error {
-    [self _close];
-    
-    [_delegate parser:self anErrorOccurred:error];
-}
-
-- (void)_finished {
-    if ( _isClosed )
-        return;
-    
-    NSString *indexFilepath = [_asset indexFilepath];
-    NSError *error = nil;
-    NSString *content = [NSString stringWithContentsOfFile:indexFilepath encoding:NSUTF8StringEncoding error:&error];
-    if ( content == nil ) {
-        [self _onError:error];
-        return;
-    }
-    
-    _URIItems = [content mcs_URIItems];
-    NSMutableArray<HLSURIItem *> *_Nullable TsItems = NSMutableArray.array;
-    for ( HLSURIItem *item in _URIItems ) {
-        if ( item.type == MCSDataTypeHLSMediaSegment ) [TsItems addObject:item];
-    }
-    _mediaSegments = TsItems.count != 0 ? TsItems.copy : nil;
-    _isDone = YES;
-    
-    [_delegate parserParseDidFinish:self];
-}
-
-- (void)_close {
-    if ( _isClosed ) return;
-    _isClosed = YES;
+    return _mediaSegments;
 }
 @end
 

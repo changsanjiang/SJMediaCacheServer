@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSInteger readwriteCount; // kvo
 
-- (void)readwriteRetain;
+- (instancetype)readwriteRetain;
 - (void)readwriteRelease;
 
 @end
