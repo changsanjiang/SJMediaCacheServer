@@ -68,7 +68,6 @@
             NSRange range = MCSResponseRange(contentRange);
             NSUInteger totalLength = contentRange.totalLength;
 
-            NSURL *URL = res.URL;
             NSInteger statusCode = res.statusCode;
             NSString *_Nullable contentType = MCSResponseGetContentType(res);
             NSString *_Nullable pathExtension = MCSSuggestedPathExtension(res);

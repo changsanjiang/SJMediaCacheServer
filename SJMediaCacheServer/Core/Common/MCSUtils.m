@@ -23,7 +23,7 @@ MCSResponseGetContentRange(NSHTTPURLResponse *response) {
     if      ( response.statusCode == MCS_RESPONSE_CODE_OK ) {
         NSUInteger totalLength = MCSResponseGetContentLength(response);
         if ( totalLength != 0 )
-            return (MCSResponseContentRange){0, totalLength, totalLength};
+            return (MCSResponseContentRange){0, totalLength - 1, totalLength};
     }
     else if ( response.statusCode == MCS_RESPONSE_CODE_PARTIAL_CONTENT ) {
         NSDictionary *responseHeaders = response.allHeaderFields;
