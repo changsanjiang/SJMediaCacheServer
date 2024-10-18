@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Generates a proxy URL from an original URL.
 ///
-/// If the original URL already contains PROXY_FLAG or matches the server host, it returns the original URL.
+/// If the original URL already contains PROXY_FLAG, it returns the original URL.
 /// Otherwise, it generates a new proxy URL.
 ///
 /// @param URL The original URL.

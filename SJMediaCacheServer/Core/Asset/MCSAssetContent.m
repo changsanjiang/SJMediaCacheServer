@@ -43,7 +43,7 @@
 
 - (NSString *)description {
     @synchronized (self) {
-        return [NSString stringWithFormat:@"%@: <%p> { startPosisionInAsset: %llu, lenth: %llu, readwriteCount: %ld, filePath: %@ };\n", NSStringFromClass(self.class), self, mStartPositionInAsset, mLength, (long)self.readwriteCount, mFilePath];
+        return [NSString stringWithFormat:@"%@: <%p> { startPositionInAsset: %llu, length: %llu, readwriteCount: %ld, filePath: %@ };\n", NSStringFromClass(self.class), self, mStartPositionInAsset, mLength, (long)self.readwriteCount, mFilePath];
     }
 }
 

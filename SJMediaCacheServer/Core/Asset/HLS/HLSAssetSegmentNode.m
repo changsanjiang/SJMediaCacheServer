@@ -31,7 +31,7 @@
 
 - (nullable id<HLSAssetSegment>)fullContent {
     id<HLSAssetSegment> retv = nil;
-    for ( NSInteger i = 1 ; i < mContents.count ; ++ i ) {
+    for ( NSInteger i = 0 ; i < mContents.count ; ++ i ) {
         id<HLSAssetSegment> content = mContents[i];
         if ( content.length == content.byteRange.length ) {
             retv = content;
@@ -42,14 +42,12 @@
 }
 
 - (nullable id<HLSAssetSegment>)idleContent {
-    UInt64 curLength = 0;
     id<HLSAssetSegment> retv = nil;
-    for ( NSInteger i = 1 ; i < mContents.count ; ++ i ) {
+    for ( NSInteger i = 0 ; i < mContents.count ; ++ i ) {
         id<HLSAssetSegment> content = mContents[i];
         UInt64 length = content.length;
-        if ( content.readwriteCount == 0 && length > curLength ) {
+        if ( content.readwriteCount == 0 && (retv == nil || content.length > retv.length) ) {
             retv = content;
-            curLength = length;
         }
     }
     return retv;
@@ -57,18 +55,6 @@
 
 - (nullable id<HLSAssetSegment>)fullOrIdleContent {
     return self.fullContent ?: self.idleContent;
-}
-
-/// content.length 会随着写入随时变化, 这里动态返回当前长度最长的 content;
-- (nullable id<MCSAssetContent>)longestContent {
-    id<HLSAssetSegment> retv = mContents.firstObject;
-    for ( NSInteger i = 1 ; i < mContents.count ; ++ i ) {
-        id<HLSAssetSegment> content = mContents[i];
-        if ( content.length > retv.length ) {
-            retv = content;
-        }
-    }
-    return retv;
 }
 
 - (void)trimExcessContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<HLSAssetSegment> content, BOOL *stop))predicate {
@@ -93,7 +79,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@: <%p> { identifier: %@, maximumLength: %llu, contents: %lu };\n", NSStringFromClass(self.class), self, mIdentifier, self.longestContent.length, (unsigned long)mContents.count];
+    return [NSString stringWithFormat:@"%@: <%p> { identifier: %@, fullContent: %@, idleContent: %@, contents: %lu };\n", NSStringFromClass(self.class), self, self.fullContent,self.idleContent, (unsigned long)mContents.count];
 }
 @end
 

@@ -54,7 +54,7 @@ MCSMD5(NSString *str) {
 
 - (NSURL *)generateProxyURLFromURL:(NSURL *)originalURL {
     NSString *path = originalURL.path;
-    // If the URL is already a proxy URL or matches the server host, return it as-is.
+    // If the URL is already a proxy URL, return it as-is.
     // Format: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
     BOOL isProxyURL = [path containsString:MCS_PROXY_FLAG] || [path containsString:HLS_PROXY_URI_FLAG];
     if ( isProxyURL ) return originalURL;

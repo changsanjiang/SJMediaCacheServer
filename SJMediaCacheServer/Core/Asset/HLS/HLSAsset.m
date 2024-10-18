@@ -209,8 +209,11 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:originalURL];
         NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
         HLSAssetSegmentNode *node = [mSegmentNodeMap nodeForIdentifier:nodeIdentifier];
-        id<HLSAssetSegment> segment = node.fullOrIdleContent;
-        return segment != nil ? [segment readwriteRetain] : nil;
+        if ( node != nil ) {
+            id<HLSAssetSegment> segment = node.fullOrIdleContent;
+            return segment != nil ? [segment readwriteRetain] : nil;
+        }
+        return nil;
     }
 }
 
@@ -302,7 +305,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     if ( mStored || mParser == nil || self.readwriteCount != 0 ) return;
     
     if ( mParser.segmentsCount != 0 ) {
-        __block BOOL isAllSegmentsCached = YES;
+        __block BOOL isAllSegmentsCached = mParser.segmentsCount == mSegmentNodeMap.count;
         [mSegmentNodeMap enumerateNodesUsingBlock:^(HLSAssetSegmentNode * _Nonnull node, BOOL * _Nonnull stop) {
             [self _trimExcessContentsForNode:node];
             if ( isAllSegmentsCached && node.fullContent == nil ) isAllSegmentsCached = NO;
@@ -325,13 +328,15 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         // 同一段segment可能存在多个文件
         // 删除多余的无用的content
         id<HLSAssetSegment> fullSegment = node.fullContent;
-        [node trimExcessContentsWithTest:^BOOL(id<HLSAssetSegment>  _Nonnull content, BOOL * _Nonnull stop) {
-            if ( content != fullSegment && content.readwriteCount == 0 ) {
-                [mProvider removeSegment:content];
-                return YES;
-            }
-            return NO;
-        }];
+        if ( fullSegment != nil ) {        
+            [node trimExcessContentsWithTest:^BOOL(id<HLSAssetSegment>  _Nonnull content, BOOL * _Nonnull stop) {
+                if ( content != fullSegment && content.readwriteCount == 0 ) {
+                    [mProvider removeSegment:content];
+                    return YES;
+                }
+                return NO;
+            }];
+        }
     }
 }
 @end

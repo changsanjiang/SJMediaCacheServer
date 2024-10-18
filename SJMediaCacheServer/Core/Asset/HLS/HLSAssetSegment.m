@@ -23,4 +23,11 @@
     _totalLength = totalLength;
     return self;
 }
+
+- (NSString *)description {
+    @synchronized (self) {
+        return [NSString stringWithFormat:@"%@: <%p> { totalLength: %llu, byteRange=%@, startPositionInAsset: %llu, length: %llu, readwriteCount: %ld, filePath: %@ };\n", NSStringFromClass(self.class), self, self.totalLength, NSStringFromRange(self.byteRange), self.startPositionInAsset, self.length, (long)self.readwriteCount, self.filePath];
+    }
+}
+
 @end
