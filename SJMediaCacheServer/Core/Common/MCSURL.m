@@ -62,7 +62,7 @@ MCSMD5(NSString *str) {
     NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
     // Create proxy URL with encoded original URL as a query parameter.
     NSURLComponents *components = [NSURLComponents componentsWithURL:_serverURL resolvingAgainstBaseURL:NO];
-    components.path = [MCS_PROXY_FLAG stringByAppendingPathComponent:path];
+    components.path = [@"/url_proxy" stringByAppendingPathComponent:path];
     components.query = [NSString stringWithFormat:@"url=%@", [self encode:originalURL]];
     return components.URL;
 }
