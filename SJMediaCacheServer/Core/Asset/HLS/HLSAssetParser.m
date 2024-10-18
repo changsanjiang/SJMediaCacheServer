@@ -104,13 +104,41 @@
 @end
 
 
+@interface HLSOptionItem : NSObject
+- (instancetype)initWithName:(NSString *)optionName value:(NSString *)optionValue position:(NSUInteger)startPosition;
+@property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, copy, readonly) NSString *value;
+@property (nonatomic, readonly) NSUInteger position;
+@end
+
+@implementation HLSOptionItem
+- (instancetype)initWithName:(NSString *)optionName value:(NSString *)optionValue position:(NSUInteger)startPosition {
+    self = [super init];
+    _name = optionName.copy;
+    _value = optionValue.copy;
+    _position = startPosition;
+    return self;
+}
+@end
+
+
+@interface HLSItem : NSObject
+@property (nonatomic, readonly) HLSItemType type;
+@property (nonatomic, copy, readonly) NSArray<HLSOptionItem *> *options;
+@end
+
+@implementation HLSItem
+
+@end
+
+
 @interface HLS_EXT_X_URI : NSObject
-@property (nonatomic) MCSDataType type;
+@property (nonatomic) HLSItemType type;
 @property (nonatomic) NSRange range;
 @end
 
 @implementation HLS_EXT_X_URI
-- (instancetype)initWithType:(MCSDataType)type inRange:(NSRange)range {
+- (instancetype)initWithType:(HLSItemType)type inRange:(NSRange)range {
     self = [super init];
     if ( self ) {
         _type = type;
@@ -175,16 +203,16 @@
             NSString *originalUrl = [URI mcs_restoreOriginalUrl:resourceURL];
             NSString *extension = nil;
             switch ( obj.type ) {
-                case MCSDataTypeHLSPlaylist:
-                    extension = HLS_EXTENSION_PLAYLIST;
-                    break;
-                case MCSDataTypeHLSAESKey:
+                case HLSItemTypeKey:
                     extension = HLS_EXTENSION_AES_KEY;
                     break;
-                case MCSDataTypeHLSSegment:
+                case HLSItemTypeSegment:
                     extension = HLS_EXTENSION_SEGMENT;
                     break;
-                default: break;
+                case HLSItemTypeVariantStream:
+                case HLSItemTypeRendition:
+                    extension = HLS_EXTENSION_PLAYLIST;
+                    break;
             }
             if ( extension.length != 0 ) {
                 NSString *proxy = [MCSURL.shared generateProxyURIFromHLSOriginalURL:[NSURL URLWithString:originalUrl] extension:extension forAsset:assetName];
@@ -516,13 +544,21 @@
     NSInteger linePos = 0;
     BOOL vsFlag = NO;
     BOOL tsFlag = NO;
+    
+    
+    static NSString *const EXT_X_MEDIA = @"EXT-X-MEDIA";
+    
     for ( NSString *line in lines ) {
+        if ( [line hasPrefix:EXT_X_MEDIA] ) {
+#warning next ...
+        }
+        
         // #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English stereo",LANGUAGE="en",AUTOSELECT=YES,URI="audio.m3u8"
         // #EXT-X-I-FRAME-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=42029000,CODECS="avc1.4d001f",URI="iframe.m3u8"
         if      ( [line hasPrefix:HLS_PREFIX_MEDIA] || [line hasPrefix:HLS_PREFIX_I_FRAME_STREAM] ) {
             NSRange URIRange = [line mcs_rangeByFrontStr:@"URI=\"" rearStr:@"\"" isRearStrOptional:NO];
             URIRange.location += linePos;
-            HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSPlaylist inRange:URIRange];
+            HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:HLSItemTypeRendition inRange:URIRange];
             [m addObject:obj];
         }
         // #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="...",SUBTITLES="...",VIDEO="..."
@@ -532,7 +568,7 @@
         else if ( vsFlag ) {
             if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
                 NSRange URIRange = NSMakeRange(linePos, line.length);
-                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSPlaylist inRange:URIRange];
+                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:HLSItemTypeVariantStream inRange:URIRange];
                 [m addObject:obj];
                 vsFlag = NO;
             }
@@ -549,7 +585,7 @@
         else if ( [line hasPrefix:HLS_PREFIX_AESKEY] ) {
             NSRange URIRange = [line mcs_rangeByFrontStr:@"URI=\"" rearStr:@"\"" isRearStrOptional:NO];
             URIRange.location += linePos;
-            HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSAESKey inRange:URIRange];
+            HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:HLSItemTypeKey inRange:URIRange];
             [m addObject:obj];
         }
         // #EXTINF:10,
@@ -561,7 +597,7 @@
         else if ( tsFlag ) {
             if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
                 NSRange URIRange = NSMakeRange(linePos, line.length);
-                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:MCSDataTypeHLSSegment inRange:URIRange];
+                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:HLSItemTypeSegment inRange:URIRange];
                 [m addObject:obj];
                 tsFlag = NO;
             }
