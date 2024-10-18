@@ -24,7 +24,7 @@
     NSMutableDictionary<NSNumber *, NSError *> *mErrorDictionary;
     NSMutableDictionary<NSNumber *, id<MCSDownloadTaskDelegate>> *mDelegateDictionary;
     UIBackgroundTaskIdentifier mBackgroundTaskIdentifier;
-    id<MCSDownloadResponse>  _Nullable (^mDefaultResponseHandler)(NSURLResponse * _Nonnull);
+    id<MCSDownloadResponse>  _Nullable (^mDefaultResponseHandler)(NSURLSessionTask *task, NSURLResponse * _Nonnull res);
 }
 @end
 
@@ -60,7 +60,7 @@
                                                      name:UIApplicationWillEnterForegroundNotification
                                                    object:[UIApplication sharedApplication]];
         
-        mDefaultResponseHandler = ^id<MCSDownloadResponse> _Nullable (NSURLResponse *response) {
+        mDefaultResponseHandler = ^id<MCSDownloadResponse> _Nullable (NSURLSessionTask *task, NSURLResponse *response) {
             if ( ![response isKindOfClass:NSHTTPURLResponse.class] ) return nil;
             NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
             MCSResponseContentRange contentRange = MCSResponseGetContentRange(res);
@@ -72,7 +72,7 @@
             NSInteger statusCode = res.statusCode;
             NSString *_Nullable contentType = MCSResponseGetContentType(res);
             NSString *_Nullable pathExtension = MCSSuggestedPathExtension(res);
-            return [MCSDownloadResponse.alloc initWithURL:URL statusCode:statusCode pathExtension:pathExtension totalLength:totalLength range:range contentType:contentType];
+            return [MCSDownloadResponse.alloc initWithOriginalRequest:task.originalRequest currentRequest:task.currentRequest statusCode:statusCode pathExtension:pathExtension totalLength:totalLength range:range contentType:contentType];
         };
         _responseHandler = mDefaultResponseHandler;
     }
@@ -83,7 +83,7 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void)setResponseHandler:(id<MCSDownloadResponse>  _Nullable (^_Nullable)(NSURLResponse * _Nonnull))responseHandler {
+- (void)setResponseHandler:(id<MCSDownloadResponse>  _Nullable (^)(NSURLSessionTask * _Nonnull, NSURLResponse * _Nonnull))responseHandler {
     _responseHandler = responseHandler ?: mDefaultResponseHandler;
 }
 
@@ -124,7 +124,7 @@
     MCSDownloaderDebugLog(@"%@: <%p>.didReceiveResponse { task: %lu, response: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)task.taskIdentifier, response);
     
     NSNumber *key = @(task.taskIdentifier);
-    id<MCSDownloadResponse> _Nullable downloadRes = self.responseHandler(response);
+    id<MCSDownloadResponse> _Nullable downloadRes = self.responseHandler(task, response);
     if ( downloadRes == nil ) {
         NSHTTPURLResponse *httpRes = [response isKindOfClass:NSHTTPURLResponse.class] ? response : nil;
         NSError *error = [NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
@@ -203,15 +203,22 @@
 
 
 @implementation MCSDownloadResponse
-- (instancetype)initWithURL:(NSURL *)URL statusCode:(NSInteger)statusCode pathExtension:(NSString *_Nullable)pathExtension totalLength:(NSUInteger)totalLength range:(NSRange)range contentType:(NSString *_Nullable)contentType {
+- (instancetype)initWithOriginalRequest:(NSURLRequest *)originalRequest
+                         currentRequest:(NSURLRequest *)currentRequest
+                             statusCode:(NSInteger)statusCode
+                          pathExtension:(NSString *_Nullable)pathExtension
+                            totalLength:(NSUInteger)totalLength
+                                  range:(NSRange)range
+                            contentType:(NSString *_Nullable)contentType {
     self = [super initWithTotalLength:totalLength range:range contentType:contentType];
-    _URL = URL;
+    _originalRequest = originalRequest;
+    _currentRequest = currentRequest;
     _statusCode = statusCode;
     _pathExtension = pathExtension;
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, statusCode: %ld, pathExtension: %@, totalLength: %lu, range: %@, contentType: %@ };\n", NSStringFromClass(self.class), self, _URL, _statusCode, _pathExtension, (unsigned long)self.totalLength, NSStringFromRange(self.range), self.contentType];
+    return [NSString stringWithFormat:@"%@:<%p> { originalRequest: %@, currentRequest: %@, statusCode: %ld, pathExtension: %@, totalLength: %lu, range: %@, contentType: %@ };\n", NSStringFromClass(self.class), self, _originalRequest, _currentRequest, _statusCode, _pathExtension, (unsigned long)self.totalLength, NSStringFromRange(self.range), self.contentType];
 }
 @end

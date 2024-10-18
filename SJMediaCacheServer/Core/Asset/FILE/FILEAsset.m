@@ -20,7 +20,7 @@
 @interface FILEAsset () {
     MCSConfiguration *mConfiguration;
     FILEAssetContentProvider *mProvider;
-    MCSAssetContentNodeList *mNodeList;
+    FILEAssetContentNodeList *mNodeList;
     BOOL mPrepared;
     BOOL mMetadataReady;
     BOOL mAssembled; // 文件组合完成; 已得到完整文件;
@@ -62,7 +62,7 @@
             mConfiguration = MCSConfiguration.alloc.init;
             NSString *directory = [MCSRootDirectory assetPathForFilename:self.name];
             mProvider = [FILEAssetContentProvider contentProviderWithDirectory:directory];
-            mNodeList = [MCSAssetContentNodeList.alloc init];
+            mNodeList = [FILEAssetContentNodeList.alloc init];
             [mProvider.contents enumerateObjectsUsingBlock:^(id<MCSAssetContent>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 [mNodeList attachContentToNode:obj placement:obj.startPositionInAsset];
             }];
@@ -88,7 +88,7 @@
 /// 遍历内容节点
 ///
 /// 在获取某个节点的 content 之后, 如要使用请在回调块中调用 readwriteRetain 以防 content 被删除;
-- (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(MCSAssetContentNode *node, BOOL *stop))block {
+- (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(FILEAssetContentNode *node, BOOL *stop))block {
     @synchronized (self) {
         [mNodeList enumerateNodesUsingBlock:block];
     }
@@ -170,10 +170,10 @@
 - (void)_restructureContents {
     if ( mAssembled || !mMetadataReady || self.readwriteCount != 0 ) return;
     UInt64 capacity = 1 * 1024 * 1024;
-    MCSAssetContentNode *curNode = mNodeList.head;
+    FILEAssetContentNode *curNode = mNodeList.head;
     while ( curNode != nil ) {
         [self _trimExcessContentsForNode:curNode];
-        MCSAssetContentNode *nextNode = curNode.next;
+        FILEAssetContentNode *nextNode = curNode.next;
         if ( nextNode == nil ) break;
         [self _trimExcessContentsForNode:nextNode];
         
@@ -218,7 +218,7 @@
 }
 
 /// unlocked
-- (void)_trimExcessContentsForNode:(MCSAssetContentNode *)node {
+- (void)_trimExcessContentsForNode:(FILEAssetContentNode *)node {
     if ( node.numberOfContents > 1 ) {
         // 同一段位置可能存在多个文件
         // 删除多余的无用的content

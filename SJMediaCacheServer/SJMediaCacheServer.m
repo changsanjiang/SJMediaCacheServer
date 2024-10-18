@@ -116,24 +116,28 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 - (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize {
     if ( URL == nil )
         return nil;
+    [self setActive:YES];
     return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize];
 }
 
 - (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
     if ( URL == nil )
         return nil;
+    [self setActive:YES];
     return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize progress:progressBlock completed:completionBlock];
 }
 
 - (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
     if ( URL == nil )
         return nil;
+    [self setActive:YES];
     return [MCSPrefetcherManager.shared prefetchWithURL:URL progress:progressBlock completed:completionBlock];
 }
 
 - (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
     if ( URL == nil )
         return nil;
+    [self setActive:YES];
     return [MCSPrefetcherManager.shared prefetchWithURL:URL numberOfPreloadedFiles:num progress:progressBlock completed:completionBlock];
 }
 
@@ -322,6 +326,7 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 }
 
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL resumes:(BOOL)resumes {
+    [self setActive:YES];
     id<MCSAssetExporter> exporter = [MCSAssetExporterManager.shared exportAssetWithURL:URL];
     if ( resumes ) [exporter resume];
     return exporter;

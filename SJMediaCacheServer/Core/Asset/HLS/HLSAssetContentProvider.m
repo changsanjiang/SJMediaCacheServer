@@ -8,11 +8,11 @@
 #import "HLSAssetContentProvider.h"
 #import "MCSConsts.h"
 #import "NSFileManager+MCS.h"
-#import "HLSAssetTsContent.h"
+#import "HLSAssetSegment.h"
 
-#define HLS_PREFIX_FILENAME   @"hls"
-#define HLS_PREFIX_FILENAME1  HLS_PREFIX_FILENAME
-#define HLS_PREFIX_FILENAME2 @"hlsr" // range
+#define SEGMENT_FILE_NAME_PREFIX   @"hls"
+#define SEGMENT_FILE_NAME_PREFIX1  SEGMENT_FILE_NAME_PREFIX
+#define SEGMENT_FILE_NAME_PREFIX2  @"hlsr" // byte range
 
 @implementation HLSAssetContentProvider {
     NSString *mRootDir;
@@ -30,125 +30,91 @@
 }
 
 - (NSString *)getPlaylistFilePath {
-    return [mRootDir stringByAppendingPathComponent:self.getPlaylistRelativePath];
-}
-
-- (NSString *)getPlaylistRelativePath {
-    return [NSString stringWithFormat:@"index.%@", HLS_EXTENSION_PLAYLIST];
+    return [mRootDir stringByAppendingPathComponent:[NSString stringWithFormat:@"index.%@", HLS_EXTENSION_PLAYLIST]];
 }
 
 - (NSString *)getAESKeyFilePath:(NSString *)filename {
     return [mRootDir stringByAppendingPathComponent:filename];
 }
 
-
-
-
-
-
-
-
-
-
-- (nullable NSArray<id<HLSAssetTsContent>> *)loadTsContentsWithParser:(HLSAssetParser *)parser {
-    NSMutableArray<id<HLSAssetTsContent>> *m = nil;
+- (nullable NSArray<NSString *> *)loadSegmentFilenames {
+    NSMutableArray<NSString *> *m = nil;
     for ( NSString *filename in [NSFileManager.defaultManager contentsOfDirectoryAtPath:mRootDir error:NULL] ) {
-        if ( ![filename hasPrefix:HLS_PREFIX_FILENAME] )
-            continue;
-        if ( m == nil )
-            m = NSMutableArray.array;
-        NSString *filePath = [self _TsContentFilePathForFilename:filename];
-        NSString *name = [self _TsNameForFilename:filename];
-        id<HLSAssetTsContent>ts = nil;
-        long long totalLength = [self _TsTotalLengthForFilename:filename];
-        if      ( [filename hasPrefix:HLS_PREFIX_FILENAME2] ) {
-            long long length = (long long)[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
-            NSRange range = [self _TsRangeForFilename:filename];
-#warning next ...
-//            ts = [HLSAssetTsContent.alloc initWithName:name filePath:filePath totalLength:totalLength length:length rangeInAsset:range];
+        if ( [filename hasPrefix:SEGMENT_FILE_NAME_PREFIX] ) {
+            if ( m == nil ) m = NSMutableArray.array;
+            [m addObject:filename];
         }
-        else if ( [filename hasPrefix:HLS_PREFIX_FILENAME1] ) {
-            long long length = (long long)[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
-#warning next ...
-//            ts = [HLSAssetTsContent.alloc initWithName:name filePath:filePath totalLength:totalLength length:length];
-        }
-        
-        if ( ts != nil )
-            [m addObject:ts];
     }
     return m;
 }
 
-- (nullable id<HLSAssetTsContent>)createTsContentWithName:(NSString *)name totalLength:(NSUInteger)totalLength {
+- (NSString *)getSegmentIdentifierByFilename:(NSString *)filename byteRange:(NSRange *)byteRangePtr {
+    return [self getSegmentIdentifierByFilename:filename totalLength:NULL byteRange:byteRangePtr];
+}
+
+// _FILE_NAME1(__prefix__, __segmentTotalLength__, __number__, __ID__)
+// _FILE_NAME2(__prefix__, __resourceTotalLength__, __location__, __length__, __number__, __ID__)
+- (NSString *)getSegmentIdentifierByFilename:(NSString *)filename totalLength:(UInt64 *)totalLengthPtr byteRange:(NSRange *)byteRangePtr {
+    // separator: @"_"
+    NSArray<NSString *> *components = [filename componentsSeparatedByString:@"_"];
+    if ( totalLengthPtr != NULL ) {
+        *totalLengthPtr = [components[1] longLongValue];
+    }
+    
+    if ( components.count == 6 ) { // has byte range
+        if ( byteRangePtr != NULL ) {
+            NSUInteger location = [components[2] longLongValue];
+            NSUInteger length = [components[3] longLongValue];
+            *byteRangePtr = NSMakeRange(location, length);
+        }
+    }
+    return components.lastObject;
+}
+
+- (id<HLSAssetSegment>)getSegmentByFilename:(NSString *)filename mimeType:(nullable NSString *)mimeType {
+    NSString *filePath = [mRootDir stringByAppendingPathComponent:filename];
+    UInt64 totalLength = 0;
+    NSRange byteRange = { NSNotFound, NSNotFound };
+    [self getSegmentIdentifierByFilename:filename totalLength:&totalLength byteRange:&byteRange];
+    BOOL isSubrange = byteRange.location != NSNotFound;
+    UInt64 length = [NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
+    return !isSubrange ? [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength length:length] :
+                         [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength length:length byteRange:byteRange];
+}
+
+- (nullable id<HLSAssetSegment>)createSegmentWithIdentifier:(NSString *)identifier mimeType:(nullable NSString *)mimeType totalLength:(NSUInteger)totalLength {
+    return [self createSegmentWithIdentifier:identifier mimeType:mimeType totalLength:totalLength byteRange:NSMakeRange(NSNotFound, NSNotFound)];
+}
+
+- (nullable id<HLSAssetSegment>)createSegmentWithIdentifier:(NSString *)identifier mimeType:(nullable NSString *)mimeType totalLength:(NSUInteger)totalLength byteRange:(NSRange)byteRange {
+    BOOL isSubrange = byteRange.location != NSNotFound;
     NSUInteger number = 0;
     do {
-        NSString *filename = [self _TsFilenameWithName:name totalLength:totalLength number:number];
-        NSString *filePath = [self _TsContentFilePathForFilename:filename];
+        NSString *filename = !isSubrange ? [self _generateSegmentFilenameForIdentifier:identifier totalLength:totalLength number:number] :
+                                           [self _generateSegmentFilenameForIdentifier:identifier totalLength:totalLength number:number byteRange:byteRange];
+        NSString *filePath = [mRootDir stringByAppendingPathComponent:filename];
         if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
             [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
-#warning next ...
-//            return [HLSAssetTsContent.alloc initWithName:name filePath:filePath totalLength:totalLength];
+            return !isSubrange ? [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength] :
+                                 [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength byteRange:byteRange];
         }
         number += 1;
     } while (true);
-    return nil;
 }
 
-/// #EXTINF:3.951478,
-/// #EXT-X-BYTERANGE:1544984@1007868
-///
-/// range
-- (nullable id<HLSAssetTsContent>)createTsContentWithName:(NSString *)name totalLength:(NSUInteger)totalLength rangeInAsset:(NSRange)range {
-    NSUInteger number = 0;
-    do {
-        NSString *filename = [self _TsFilenameWithName:name totalLength:totalLength rangeInAsset:range number:number];
-        NSString *filePath = [self _TsContentFilePathForFilename:filename];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
-            [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
-#warning next ...
-//            return [HLSAssetTsContent.alloc initWithName:name filePath:filePath totalLength:totalLength rangeInAsset:range];
-        }
-        number += 1;
-    } while (true);
-    return nil;
-}
-
-- (nullable NSString *)TsContentFilePath:(HLSAssetTsContent *)content {
-    return content.filePath;
-}
-
-- (void)removeTsContent:(HLSAssetTsContent *)content {
+- (void)removeSegment:(HLSAssetSegment *)content {
     [NSFileManager.defaultManager removeItemAtPath:content.filePath error:NULL];
 }
 
 #pragma mark - mark
 
-- (NSString *)_TsFilenameWithName:(NSString *)name totalLength:(long long)totalLength number:(NSInteger)number {
-    // _FILE_NAME1(__prefix__, __totalLength__, __number__, __TsName__)
-    return [NSString stringWithFormat:@"%@_%lld_%ld_%@", HLS_PREFIX_FILENAME1, totalLength, (long)number, name];
+- (NSString *)_generateSegmentFilenameForIdentifier:(NSString *)identifier totalLength:(long long)totalLength number:(NSInteger)number {
+    // _FILE_NAME1(__prefix__, __segmentTotalLength__, __number__, __ID__)
+    return [NSString stringWithFormat:@"%@_%lld_%ld_%@", SEGMENT_FILE_NAME_PREFIX1, totalLength, (long)number, identifier];
 }
 
-- (NSString *)_TsFilenameWithName:(NSString *)name totalLength:(NSUInteger)totalLength rangeInAsset:(NSRange)range number:(NSInteger)number {
-    // _FILE_NAME2(__prefix__, __totalLength__, __offset__, __number__, __TsName__)
-    return [NSString stringWithFormat:@"%@_%lu_%lu_%lu_%ld_%@", HLS_PREFIX_FILENAME2, (unsigned long)totalLength, (unsigned long)range.location, (unsigned long)range.length, (long)number, name];
-}
-
-#pragma mark -
-
-- (nullable NSString *)_TsContentFilePathForFilename:(NSString *)filename {
-    return [mRootDir stringByAppendingPathComponent:filename];
-}
-
-- (NSString *)_TsNameForFilename:(NSString *)filename {
-    return [filename componentsSeparatedByString:@"_"].lastObject;
-}
-
-- (long long)_TsTotalLengthForFilename:(NSString *)filename {
-    return [[filename componentsSeparatedByString:@"_"][1] longLongValue];;
-}
-
-- (NSRange)_TsRangeForFilename:(NSString *)filename {
-    NSArray<NSString *> *contents = [filename componentsSeparatedByString:@"_"];
-    return NSMakeRange(contents[2].longLongValue, contents[3].longLongValue);
+- (NSString *)_generateSegmentFilenameForIdentifier:(NSString *)identifier totalLength:(NSUInteger)totalLength number:(NSInteger)number byteRange:(NSRange)range {
+    // _FILE_NAME2(__prefix__, __resourceTotalLength__, __location__, __length__, __number__, __ID__)
+    return [NSString stringWithFormat:@"%@_%lu_%lu_%lu_%ld_%@", SEGMENT_FILE_NAME_PREFIX2, (unsigned long)totalLength, (unsigned long)range.location, (unsigned long)range.length, (long)number, identifier];
 }
 @end

@@ -13,6 +13,7 @@
 #import "MCSAssetContent.h"
 #import "NSFileManager+MCS.h"
 #import "HLSAssetParser.h"
+#import "MCSUtils.h"
 
 @interface HLSAssetPlaylistContentReader () {
     HLSAsset *mAsset;
@@ -26,11 +27,9 @@
 
 - (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate {
     self = [super initWithAsset:asset delegate:delegate];
-    if ( self ) {
-        mAsset = asset;
-        mRequest = request;
-        mPriority = priority;
-    }
+    mAsset = asset;
+    mRequest = request;
+    mPriority = priority;
     return self;
 }
 
@@ -69,7 +68,7 @@
     
     id<MCSAssetContent> content = nil;
     if ( error == nil ) {
-        NSString *proxyPlaylist = [HLSAssetParser proxyPlaylistWithAsset:mAsset.name originalPlaylistData:data sourceURL:request.URL error:&error];
+        NSString *proxyPlaylist = [HLSAssetParser proxyPlaylistWithAsset:mAsset.name originalPlaylistData:data resourceURL:request.URL error:&error];
         if ( error == nil ) {
             content = [mAsset createPlaylistContent:proxyPlaylist error:&error]; // retain
         }
@@ -95,11 +94,9 @@
 
 - (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate {
     self = [super initWithAsset:asset delegate:delegate];
-    if ( self ) {
-        mAsset = asset;
-        mRequest = request;
-        mPriority = priority;
-    }
+    mAsset = asset;
+    mRequest = request;
+    mPriority = priority;
     return self;
 }
 
@@ -150,8 +147,4 @@
     }
     [self contentDidReady:content range:NSMakeRange(0, content.length)];
 }
-@end
-
-@implementation HLSAssetSegmentContentReader
-
 @end

@@ -10,7 +10,6 @@
 #import "HLSAssetParser.h"
 #import "HLSAssetDefines.h"
 #import "MCSReadwrite.h"
-#import "MCSAssetContentNode.h"
 
 NS_ASSUME_NONNULL_BEGIN
 @interface HLSAsset : MCSReadwrite<MCSAsset>
@@ -21,18 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isStored;
 @property (nonatomic, strong, readonly, nullable) HLSAssetParser *parser; 
 
-- (NSString *)playlistFilePath;
-- (NSString *)getPlaylistRelativePath;
-- (NSString *)AESKeyFilePathWithURL:(NSURL *)URL;
-- (nullable NSArray<id<HLSAssetTsContent>> *)TsContents;
-- (nullable id<HLSAssetTsContent>)TsContentReadwriteForRequest:(NSURLRequest *)request;
-
-
-- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response;
-- (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(MCSAssetContentNode *node, BOOL *stop))block;
-
-
-
+- (nullable NSArray<id<HLSAssetSegment>> *)TsContents;
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
@@ -42,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL; // retained, should release after;
 - (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)error; // retained, should release after;
 
-- (nullable id<MCSAssetContent>)getSegmentContentWithOriginalURL:(NSURL *)originalURL; // retained, should release after;
+- (nullable id<HLSAssetSegment>)getSegmentContentWithOriginalURL:(NSURL *)originalURL byteRange:(NSRange)byteRange; // retained, should release after;
+- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response; // This method is used only for creating segment content; retained, should release after;
+
 @end
 NS_ASSUME_NONNULL_END

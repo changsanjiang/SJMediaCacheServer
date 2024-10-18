@@ -11,14 +11,9 @@
 #import "MCSAssetDefines.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
-FOUNDATION_EXPORT UInt64 const HLS_ASSET_PLAYLIST_NODE_PLACEMENT;
-FOUNDATION_EXPORT UInt64 const HLS_ASSET_MEDIA_SEGMENT_PLACEMENT_OFFSET;
-
-@protocol HLSAssetTsContent <MCSAssetContent>
-@property (nonatomic, copy, readonly) NSString *name; // `ts name`
-@property (nonatomic, readonly) NSRange rangeInAsset; // #EXT-X-BYTERANGE:1544984@1007868
-@property (nonatomic, readonly) UInt64 totalLength; // `asset(EXT-X-BYTERANGE) or ts` total length
+@protocol HLSAssetSegment <MCSAssetContent>
+@property (nonatomic, readonly) UInt64 totalLength; // segment file totalLength or #EXT-X-BYTERANGE:1544984@1007868
+@property (nonatomic, readonly) NSRange byteRange; // segment file {0, totalLength} or #EXT-X-BYTERANGE:1544984@1007868
 @end
 NS_ASSUME_NONNULL_END
 #endif /* HLSAssetDefines_h */

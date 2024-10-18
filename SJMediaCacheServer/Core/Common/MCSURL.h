@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Generates a proxy URL from an original URL.
 ///
-/// If the original URL already contains MCS_PROXY_FLAG or matches the server host, it returns the original URL.
+/// If the original URL already contains PROXY_FLAG or matches the server host, it returns the original URL.
 /// Otherwise, it generates a new proxy URL.
 ///
 /// @param URL The original URL.
@@ -45,7 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSURL *)restoreURLFromProxyURL:(NSURL *)proxyURL; // 还原URL
 
 /// Retrieves the asset name based on the provided URL.
-/// If the URL contains "mcsproxy", it is considered an internal HLS resource request, and the asset name is extracted.
+/// If the URL contains HLS_PROXY_URI_FLAG, it is considered an internal HLS resource request, and the asset name is extracted.
 /// Otherwise, the original URL is restored and the asset name is determined based on its MD5 hash.
 ///
 /// @param URL The URL for which to retrieve the asset name.

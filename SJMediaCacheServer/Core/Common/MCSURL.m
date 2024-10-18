@@ -10,7 +10,8 @@
 #import "MCSConsts.h"
 #include <CommonCrypto/CommonCrypto.h>
 
-static NSString * const MCS_PROXY_FLAG = @"mcsproxy";
+static NSString * const MCS_PROXY_FLAG = @"url_proxy";
+static NSString * const HLS_PROXY_URI_FLAG = @"mcsproxy";
 
 static inline NSString *
 MCSMD5(NSString *str) {
@@ -52,25 +53,24 @@ MCSMD5(NSString *str) {
 }
 
 - (NSURL *)generateProxyURLFromURL:(NSURL *)originalURL {
-    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
-    
+    NSString *path = originalURL.path;
     // If the URL is already a proxy URL or matches the server host, return it as-is.
     // Format: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
-    if ( [originalURL.path containsString:MCS_PROXY_FLAG] || [originalURL.host isEqualToString:_serverURL.host] ) {
-        return originalURL;
-    }
+    BOOL isProxyURL = [path containsString:MCS_PROXY_FLAG] || [path containsString:HLS_PROXY_URI_FLAG];
+    if ( isProxyURL ) return originalURL;
 
+    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
     // Create proxy URL with encoded original URL as a query parameter.
     NSURLComponents *components = [NSURLComponents componentsWithURL:_serverURL resolvingAgainstBaseURL:NO];
-    components.path = [@"/mcsproxy" stringByAppendingPathComponent:originalURL.path];
+    components.path = [MCS_PROXY_FLAG stringByAppendingPathComponent:path];
     components.query = [NSString stringWithFormat:@"url=%@", [self encode:originalURL]];
     return components.URL;
 }
 
 - (NSURL *)restoreURLFromProxyURL:(NSURL *)proxyURL {
-    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
-
-    if ( [proxyURL.host isEqualToString:_serverURL.host] ) {
+    NSString *path = proxyURL.path;
+    BOOL isProxyURL = [path containsString:MCS_PROXY_FLAG] || [path containsString:HLS_PROXY_URI_FLAG];
+    if ( isProxyURL ) {
         NSURLComponents *components = [NSURLComponents componentsWithURL:proxyURL resolvingAgainstBaseURL:NO];
         for ( NSURLQueryItem *queryItem in components.queryItems ) {
             if ( [queryItem.name isEqualToString:@"url"] ) {
@@ -84,11 +84,8 @@ MCSMD5(NSString *str) {
 }
 
 - (NSString *)assetNameForURL:(NSURL *)URL {
-    NSAssert(_serverURL != nil, @"The serverURL can't be nil!");
-    NSParameterAssert(URL.host);
-    
-    if ( [URL.path containsString:MCS_PROXY_FLAG] ) {
-        // If the URL contains "mcsproxy", return the asset name from the path.
+    if ( [URL.path containsString:HLS_PROXY_URI_FLAG] ) {
+        // If the URL contains HLS_PROXY_URI_FLAG, return the asset name from the path.
         // Format: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
         return URL.path.stringByDeletingLastPathComponent.lastPathComponent;
     }
@@ -155,7 +152,7 @@ MCSMD5(NSString *str) {
 /// The proxyURI format is: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
 - (NSString *)generateProxyURIFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension forAsset:(NSString *)assetName {
     NSString *proxyIdentifier = [self generateProxyIdentifierFromHLSOriginalURL:url extension:extension];
-    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?url=%@", MCS_PROXY_FLAG, assetName, proxyIdentifier, [self encode:url]];
+    NSString *URI = [NSString stringWithFormat:@"%@/%@/%@?url=%@", HLS_PROXY_URI_FLAG, assetName, proxyIdentifier, [self encode:url]];
     return URI;
 }
 

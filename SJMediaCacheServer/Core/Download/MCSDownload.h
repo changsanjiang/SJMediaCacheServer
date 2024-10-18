@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)shared;
 
 @property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request);
-@property (nonatomic, copy, null_resettable) id<MCSDownloadResponse> _Nullable(^responseHandler)(NSURLResponse *res);
+@property (nonatomic, copy, null_resettable) id<MCSDownloadResponse> _Nullable(^responseHandler)(NSURLSessionTask *task, NSURLResponse *res);
 @property (nonatomic, copy, nullable) NSData *(^receivedDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
 
 @property (nonatomic, copy, nullable) void (^didFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics);
@@ -30,15 +30,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 @interface MCSDownloadResponse : MCSResponse<MCSDownloadResponse>
-- (instancetype)initWithURL:(NSURL *)URL
-                 statusCode:(NSInteger)statusCode
-              pathExtension:(NSString *_Nullable)pathExtension
-                totalLength:(NSUInteger)totalLength
-                      range:(NSRange)range
-                contentType:(NSString *_Nullable)contentType;
+- (instancetype)initWithOriginalRequest:(NSURLRequest *)originalRequest
+                         currentRequest:(NSURLRequest *)currentRequest
+                             statusCode:(NSInteger)statusCode
+                          pathExtension:(NSString *_Nullable)pathExtension
+                            totalLength:(NSUInteger)totalLength
+                                  range:(NSRange)range
+                            contentType:(NSString *_Nullable)contentType;
+@property (nonatomic, copy, readonly) NSURLRequest  *originalRequest;  /* NSURLSessionTask; may be nil if this is a stream task */
+@property (nonatomic, copy, readonly) NSURLRequest  *currentRequest;   /* NSURLSessionTask; may differ from originalRequest due to http server redirection */
+
 @property (nonatomic, readonly) NSInteger statusCode;
 @property (nonatomic, copy, readonly) NSString *pathExtension;
-@property (nonatomic, copy, readonly) NSURL *URL;
 
 - (instancetype)initWithTotalLength:(NSUInteger)totalLength NS_UNAVAILABLE;
 - (instancetype)initWithTotalLength:(NSUInteger)totalLength contentType:(nullable NSString *)contentType  NS_UNAVAILABLE;

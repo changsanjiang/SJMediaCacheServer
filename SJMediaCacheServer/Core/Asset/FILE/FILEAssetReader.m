@@ -262,7 +262,7 @@
         
         __block NSRange curr = fixed;
         NSMutableArray<id<MCSAssetContentReader>> *contentReaders = NSMutableArray.array;
-        [mAsset enumerateContentNodesUsingBlock:^(MCSAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
+        [mAsset enumerateContentNodesUsingBlock:^(FILEAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
             id<MCSAssetContent> content = node.longestContent;
             NSRange available = NSMakeRange(content.startPositionInAsset, content.length);
             NSRange intersection = NSIntersectionRange(curr, available);
@@ -346,7 +346,7 @@
         case MCSReaderStatusPreparing:
         case MCSReaderStatusReadyToRead: {
             mStatus = MCSReaderStatusAborted;
-            [self _clean];
+            [self _clear];
             [mDelegate reader:self didAbortWithError:error];
             MCSAssetReaderDebugLog(@"%@: <%p>.abort { error: %@ };\n", NSStringFromClass(self.class), self, error);
             [self _notifyObserversWithStatus:MCSReaderStatusAborted];
@@ -367,7 +367,7 @@
         case MCSReaderStatusUnknown:
         case MCSReaderStatusPreparing:
         case MCSReaderStatusReadyToRead: {
-            [self _clean];
+            [self _clear];
             mStatus = MCSReaderStatusFinished;
             MCSAssetReaderDebugLog(@"%@: <%p>.finished;\n", NSStringFromClass(self.class), self);
             [self _notifyObserversWithStatus:MCSReaderStatusFinished];
@@ -379,13 +379,13 @@
 /// 清理
 ///
 /// unlocked
-- (void)_clean {
+- (void)_clear {
     [mContentReaders makeObjectsPerformSelector:@selector(abortWithError:) withObject:nil];
     mContentReaders = nil;
 
     [mAsset readwriteRelease];
     
-    MCSAssetReaderDebugLog(@"%@: <%p>.clean;\n", NSStringFromClass(self.class), self);
+    MCSAssetReaderDebugLog(@"%@: <%p>.clear;\n", NSStringFromClass(self.class), self);
 }
 
 /// 通知

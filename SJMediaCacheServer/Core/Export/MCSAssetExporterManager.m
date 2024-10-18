@@ -279,7 +279,7 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
         if ( totalLength != 0 ) {
             __block id<MCSAssetContent> prev = nil;
             __block UInt64 length = 0;
-            [asset enumerateContentNodesUsingBlock:^(MCSAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
+            [asset enumerateContentNodesUsingBlock:^(FILEAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
                 id<MCSAssetContent> cur = node.longestContent;
                 length += cur.length;
                 UInt64 prevPosition = prev.startPositionInAsset + prev.length;
@@ -326,31 +326,31 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
 }
 
 - (float)_calculateProgressWithHLSAsset:(HLSAsset *)asset {
-    if ( asset.parser != nil && asset.tsCount == 0 )
-        return 1.0f;
-    
-    if ( asset.TsContents.count != 0 ) {
-        NSMutableArray<id<HLSAssetTsContent>> *contents = [asset.TsContents mutableCopy];
-        [contents sortUsingComparator:^NSComparisonResult(id<HLSAssetTsContent>obj1, id<HLSAssetTsContent>obj2) {
-            if ( [obj1.name isEqualToString:obj2.name] && NSEqualRanges(obj1.rangeInAsset, obj2.rangeInAsset) ) {
-                if ( obj1.length == obj2.length )
-                    return NSOrderedSame;
-                return obj1.length > obj2.length ? NSOrderedAscending : NSOrderedDescending;
-            }
-            return NSOrderedSame;
-        }];
-        
-        float progress = 0;
-        id<HLSAssetTsContent>pre = nil;
-        for ( id<HLSAssetTsContent>content in contents ) {
-            if ( pre == nil || !([content.name isEqualToString:pre.name] && NSEqualRanges(content.rangeInAsset, pre.rangeInAsset)) ) {
-                progress += content.length * 1.0 / content.rangeInAsset.length;
-            }
-            pre = content;
-        }
-        
-        return progress / asset.tsCount;
-    }
+//    if ( asset.parser != nil && asset.tsCount == 0 )
+//        return 1.0f;
+//    
+//    if ( asset.TsContents.count != 0 ) {
+//        NSMutableArray<id<HLSAssetSegment>> *contents = [asset.TsContents mutableCopy];
+//        [contents sortUsingComparator:^NSComparisonResult(id<HLSAssetSegment>obj1, id<HLSAssetSegment>obj2) {
+//            if ( [obj1.name isEqualToString:obj2.name] && NSEqualRanges(obj1.byteRange, obj2.byteRange) ) {
+//                if ( obj1.length == obj2.length )
+//                    return NSOrderedSame;
+//                return obj1.length > obj2.length ? NSOrderedAscending : NSOrderedDescending;
+//            }
+//            return NSOrderedSame;
+//        }];
+//        
+//        float progress = 0;
+//        id<HLSAssetSegment>pre = nil;
+//        for ( id<HLSAssetSegment>content in contents ) {
+//            if ( pre == nil || !([content.name isEqualToString:pre.name] && NSEqualRanges(content.byteRange, pre.byteRange)) ) {
+//                progress += content.length * 1.0 / content.byteRange.length;
+//            }
+//            pre = content;
+//        }
+//        
+//        return progress / asset.tsCount;
+//    }
     return 0.0f;
 }
 @end

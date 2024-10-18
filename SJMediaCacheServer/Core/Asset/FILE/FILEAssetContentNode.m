@@ -1,21 +1,21 @@
 //
-//  MCSAssetContentNode.m
+//  FILEAssetContentNode.m
 //  SJMediaCacheServer
 //
 //  Created by db on 2024/10/16.
 //
 
-#import "MCSAssetContentNode.h"
+#import "FILEAssetContentNode.h"
 
-@interface MCSAssetContentNode ()
+@interface FILEAssetContentNode ()
 - (instancetype)initWithContent:(id<MCSAssetContent>)content placement:(UInt64)placement;
-@property (nonatomic, unsafe_unretained, nullable) MCSAssetContentNode *prev;
-@property (nonatomic, unsafe_unretained, nullable) MCSAssetContentNode *next;
+@property (nonatomic, unsafe_unretained, nullable) FILEAssetContentNode *prev;
+@property (nonatomic, unsafe_unretained, nullable) FILEAssetContentNode *next;
 - (void)addContent:(id<MCSAssetContent>)content;
 - (void)removeContentAtIndex:(NSInteger)index;
 @end
 
-@implementation MCSAssetContentNode {
+@implementation FILEAssetContentNode {
     UInt64 mPlacement;
     NSMutableArray<id<MCSAssetContent>> *mContents;
 }
@@ -70,8 +70,8 @@
 @end
 
 
-@implementation MCSAssetContentNodeList {
-    NSMutableDictionary<NSNumber *, MCSAssetContentNode *> *mNodes;
+@implementation FILEAssetContentNodeList {
+    NSMutableDictionary<NSNumber *, FILEAssetContentNode *> *mNodes;
 }
 
 - (instancetype)init {
@@ -87,7 +87,7 @@
 /// 将内容 content 附加到某个节点, 如果该节点不存在, 则创建一个新节点并将其插入到链表中;
 - (void)attachContentToNode:(id<MCSAssetContent>)content placement:(UInt64)placement {
     NSNumber *curNodeKey = @(placement);
-    MCSAssetContentNode *curNode = mNodes[curNodeKey];
+    FILEAssetContentNode *curNode = mNodes[curNodeKey];
     if ( curNode != nil ) {
         [curNode addContent:content];
         return;
@@ -95,7 +95,7 @@
     
     // create new node
     //
-    curNode = [MCSAssetContentNode.alloc initWithContent:content placement:placement];
+    curNode = [FILEAssetContentNode.alloc initWithContent:content placement:placement];
     mNodes[curNodeKey] = curNode;
     
     if ( _head == nil ) {
@@ -127,8 +127,8 @@
     }
     
     // 寻找合适的前后节点
-    MCSAssetContentNode *prevNode = _tail;
-    MCSAssetContentNode *nextNode = nil;
+    FILEAssetContentNode *prevNode = _tail;
+    FILEAssetContentNode *nextNode = nil;
 
     while ( prevNode != nil && prevNode.placement > placement ) {
         nextNode = prevNode;
@@ -147,9 +147,9 @@
     }
 }
 
-- (void)enumerateNodesUsingBlock:(void(NS_NOESCAPE ^)(MCSAssetContentNode *node, BOOL *stop))block {
+- (void)enumerateNodesUsingBlock:(void(NS_NOESCAPE ^)(FILEAssetContentNode *node, BOOL *stop))block {
     BOOL stop = NO;
-    MCSAssetContentNode *cur = _head;
+    FILEAssetContentNode *cur = _head;
     while ( cur != nil ) {
         block(cur, &stop);
         cur = cur.next;
@@ -157,9 +157,9 @@
     }
 }
 
-- (void)removeNode:(MCSAssetContentNode *)node {
-    MCSAssetContentNode *prevNode = node.prev;
-    MCSAssetContentNode *nextNode = node.next;
+- (void)removeNode:(FILEAssetContentNode *)node {
+    FILEAssetContentNode *prevNode = node.prev;
+    FILEAssetContentNode *nextNode = node.next;
     nextNode.prev = prevNode;
     prevNode.next = nextNode;
 

@@ -123,14 +123,15 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Download
 
 @protocol MCSDownloadResponse <MCSResponse>
-@property (nonatomic, copy, readonly) NSURL *URL;
+@property (nonatomic, copy, readonly) NSURLRequest  *originalRequest;  /* NSURLSessionTask; may be nil if this is a stream task */
+@property (nonatomic, copy, readonly) NSURLRequest  *currentRequest;   /* NSURLSessionTask; may differ from originalRequest due to http server redirection */
 @property (nonatomic, readonly) NSInteger statusCode;
 @property (nonatomic, copy, readonly, nullable) NSString *pathExtension;
 @end
 
 @protocol MCSDownloadTask <NSObject>
-@property (nullable, readonly, copy) NSURLRequest  *originalRequest;  /* NSURLSessionTask; may be nil if this is a stream task */
-@property (nullable, readonly, copy) NSURLRequest  *currentRequest;   /* NSURLSessionTask; may differ from originalRequest due to http server redirection */
+@property (readonly, copy) NSURLRequest  *originalRequest;  /* NSURLSessionTask; may be nil if this is a stream task */
+@property (readonly, copy) NSURLRequest  *currentRequest;   /* NSURLSessionTask; may differ from originalRequest due to http server redirection */
 - (void)cancel;
 @end
 

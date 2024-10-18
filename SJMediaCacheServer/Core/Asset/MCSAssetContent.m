@@ -22,7 +22,7 @@
     NSFileHandle *_Nullable mReader;
 }
 
-- (instancetype)initWithMimeType:(NSString *)mimeType filePath:(NSString *)filePath startPositionInAsset:(UInt64)position length:(UInt64)length {
+- (instancetype)initWithMimeType:(nullable NSString *)mimeType filePath:(NSString *)filePath startPositionInAsset:(UInt64)position length:(UInt64)length {
     self = [super init];
     if ( self ) {
         mFilePath = filePath;

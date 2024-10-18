@@ -9,7 +9,7 @@
 #import "MCSInterfaces.h"
 #import "MCSAssetDefines.h"
 #import "MCSReadwrite.h"
-#import "MCSAssetContentNode.h"
+#import "FILEAssetContentNode.h"
 
 NS_ASSUME_NONNULL_BEGIN
 @interface FILEAsset : MCSReadwrite<MCSAsset>
@@ -24,6 +24,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
 - (nullable NSString *)filePathForContent:(id<MCSAssetContent>)content;
-- (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(MCSAssetContentNode *node, BOOL *stop))block;
+- (void)enumerateContentNodesUsingBlock:(void(NS_NOESCAPE ^)(FILEAssetContentNode *node, BOOL *stop))block;
 @end
 NS_ASSUME_NONNULL_END

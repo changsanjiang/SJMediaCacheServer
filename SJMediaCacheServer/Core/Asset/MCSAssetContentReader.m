@@ -217,7 +217,7 @@
         case MCSReaderStatusPreparing:
         case MCSReaderStatusReadyToRead: {
             _mStatus = MCSReaderStatusAborted;
-            [self _clean];
+            [self _clear];
             [self didAbortWithError:error];
             [_delegate reader:self didAbortWithError:error];
             MCSContentReaderDebugLog(@"%@: <%p>.abort { error: %@ };\n", NSStringFromClass(self.class), self, error);
@@ -236,14 +236,14 @@
         case MCSReaderStatusPreparing:
         case MCSReaderStatusReadyToRead: {
             _mStatus = MCSReaderStatusFinished;
-            [self _clean];
+            [self _clear];
             MCSContentReaderDebugLog(@"%@: <%p>.finished { range: %@ , file: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(_mRange), _mContent);
         }
             break;
     }
 }
 
-- (void)_clean {
+- (void)_clear {
     [_mContent removeObserver:self];
     [_mContent readwriteRelease];
     [_mContent closeRead];

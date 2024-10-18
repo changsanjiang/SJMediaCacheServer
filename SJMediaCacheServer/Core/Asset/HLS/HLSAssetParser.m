@@ -142,6 +142,7 @@
 @interface HLSAssetParser () {
     NSArray<HLSURIItem *> *_Nullable mAllItems;
     NSArray<HLSURIItem *> *_Nullable mSegments; // ts array
+    NSArray<HLSURIItem *> *_Nullable mAESKeys;
 }
 @end
 
@@ -152,7 +153,7 @@
 //    return [[self alloc] initWithProxyPlaylist:content];
 //}
 
-+ (nullable NSString *)proxyPlaylistWithAsset:(NSString *)assetName originalPlaylistData:(NSData *)rawData sourceURL:(NSURL *)sourceURL error:(out NSError **)errorPtr {
++ (nullable NSString *)proxyPlaylistWithAsset:(NSString *)assetName originalPlaylistData:(NSData *)rawData resourceURL:(NSURL *)resourceURL error:(out NSError **)errorPtr {
     NSString *_Nullable contents = [NSString.alloc initWithData:rawData encoding:NSUTF8StringEncoding] ?: [NSString.alloc initWithData:rawData encoding:1];
     NSError *error = nil;
     if ( contents == nil || ![contents hasPrefix:HLS_PREFIX_FILE_FIRST_LINE] ) {
@@ -171,7 +172,7 @@
         }
         [[playlistContents mcs_URIs] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(HLS_EXT_X_URI * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             NSString *URI = [playlistContents substringWithRange:obj.range];
-            NSString *originalUrl = [URI mcs_restoreOriginalUrl:sourceURL];
+            NSString *originalUrl = [URI mcs_restoreOriginalUrl:resourceURL];
             NSString *extension = nil;
             switch ( obj.type ) {
                 case MCSDataTypeHLSPlaylist:
@@ -211,11 +212,30 @@
 - (instancetype)initWithProxyPlaylist:(NSString *)playlist {
     self = [super init];
     mAllItems = [playlist mcs_URIItems];
-    NSMutableArray<HLSURIItem *> *_Nullable segments = NSMutableArray.array;
+    NSMutableArray<HLSURIItem *> *_Nullable segments = nil;
+    NSMutableArray<HLSURIItem *> *_Nullable aesKeys = nil;
     for ( HLSURIItem *item in mAllItems ) {
-        if ( item.type == MCSDataTypeHLSSegment ) [segments addObject:item];
+        switch (item.type) {
+            case MCSDataTypeHLSAESKey: {
+                if ( aesKeys == nil ) aesKeys = NSMutableArray.array;
+                [aesKeys addObject:item];
+            }
+                break;
+            case MCSDataTypeHLSSegment: {
+                if ( segments == nil ) segments = NSMutableArray.array;
+                [segments addObject:item];
+            }
+                break;
+            case MCSDataTypeHLSPlaylist:
+            case MCSDataTypeHLSMask:
+            case MCSDataTypeHLS:
+            case MCSDataTypeFILEMask:
+            case MCSDataTypeFILE:
+                break;
+        }
     }
-    mSegments = segments.count != 0 ? segments.copy : nil;
+    mSegments = segments != nil ? segments.copy : nil;
+    mAESKeys = aesKeys != nil ? aesKeys.copy : nil;
     return self;
 }
 
@@ -233,6 +253,10 @@
 
 - (nullable NSArray<id<HLSURIItem>> *)segments {
     return mSegments;
+}
+
+- (nullable NSArray<id<HLSURIItem>> *)aesKeys {
+    return mAESKeys;
 }
 
 - (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index {
