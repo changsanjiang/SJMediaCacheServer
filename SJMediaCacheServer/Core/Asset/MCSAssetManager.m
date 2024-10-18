@@ -473,15 +473,15 @@
         NSMutableArray<HLSAsset *> *subAssets = nil;
         for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
             id<HLSURIItem> item = [parser itemAtIndex:i];
-            if ( [parser isVariantItem:item] ) {
+            if ( [parser isVariantStream:item] ) {
                 subAssets = NSMutableArray.array;
 
                 NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
                 if ( asset != nil ) [subAssets addObject:asset];
                 
-                NSArray<id<HLSURIItem>> *renditionsItems = [parser renditionsItemsForVariantItem:item];
-                for ( id<HLSURIItem> item in renditionsItems ) {
+                NSArray<id<HLSURIItem>> *renditionMedias = [parser renditionMediasForVariantItem:item];
+                for ( id<HLSURIItem> item in renditionMedias ) {
                     NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                     HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
                     if ( asset != nil ) [subAssets addObject:asset];

@@ -79,7 +79,7 @@
 @property (nonatomic, copy, nullable) NSDictionary *HTTPAdditionalHeaders;
 
 // #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=3359000,RESOLUTION=608x1080,CODECS="avc1.4d001f,mp4a.40.5",AUDIO="...",SUBTITLES="...",VIDEO="..."
-@property (nonatomic) BOOL isVariantItem;
+@property (nonatomic) BOOL isVariantStream;
 @property (nonatomic, copy, nullable) NSString *groupId;
 @property (nonatomic, strong, nullable) HLSURIItem *audioRenditions;
 @property (nonatomic, strong, nullable) HLSURIItem *videoRenditions;
@@ -99,7 +99,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { type: %lu, URI: %@, HTTPAdditionalHeaders: %@\n };", NSStringFromClass(self.class), self, (unsigned long)_type, _URI, _HTTPAdditionalHeaders];
+    return [NSString stringWithFormat:@"%@:<%p> { type: %lu, URI: %@, HTTPAdditionalHeaders: %@, groupId: %@, audioRenditions: %@, videoRenditions: %@, subtitleRenditions: %@, closedCaptionsRenditions: %@ };", NSStringFromClass(self.class), self, (unsigned long)_type, _URI, _HTTPAdditionalHeaders, _groupId, _audioRenditions, _videoRenditions, _subtitleRenditions, _closedCaptionsRenditions];
 }
 @end
 
@@ -263,14 +263,14 @@
     return mAllItems.count ? mAllItems[index] : nil;
 }
 
-- (BOOL)isVariantItem:(id<HLSURIItem>)item {
-    return [(HLSURIItem *)item isVariantItem];
+- (BOOL)isVariantStream:(id<HLSURIItem>)item {
+    return [(HLSURIItem *)item isVariantStream];
 }
 // AUDIO="...",SUBTITLES="...",VIDEO="..."
-- (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item {
+- (nullable NSArray<id<HLSURIItem>> *)renditionMediasForVariantItem:(id<HLSURIItem>)item {
     HLSURIItem *obj = item;
     // https://tools.ietf.org/html/rfc8216#section-4.3.4.2
-    if ( obj.isVariantItem ) {
+    if ( obj.isVariantStream ) {
         NSMutableArray<HLSURIItem *> *m = [NSMutableArray arrayWithCapacity:3];
         if ( obj.audioRenditions != nil )
             [m addObject:obj.audioRenditions];
@@ -447,7 +447,7 @@
             if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
                 NSString *URI = line;
                 HLSURIItem *item = [HLSURIItem.alloc initWithType:MCSDataTypeHLSPlaylist URI:URI HTTPAdditionalHeaders:nil];
-                item.isVariantItem = YES;
+                item.isVariantStream = YES;
                 item.audioRenditions = [audioRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
                     return [obj.groupId isEqualToString:audioGroupId ?: @""];
                 }];

@@ -18,6 +18,7 @@
 #import "MCSRequest.h"
 
 @interface FILEAsset () {
+    NSHashTable<id<MCSAssetObserver>> *mObservers;
     MCSConfiguration *mConfiguration;
     FILEAssetContentProvider *mProvider;
     FILEAssetContentNodeList *mNodeList;
@@ -52,6 +53,10 @@
     self = [super init];
     _name = name.copy;
     return self;
+}
+
+- (void)dealloc {
+    [mObservers removeAllObjects];
 }
 
 - (void)prepare {
@@ -156,6 +161,25 @@
     return [FILEAssetReader.alloc initWithAsset:self request:request networkTaskPriority:networkTaskPriority readDataDecoder:readDataDecoder delegate:delegate];
 }
 
+- (void)registerObserver:(id<MCSAssetObserver>)observer {
+    if ( observer != nil ) {
+        @synchronized (self) {
+            if ( mObservers == nil ) {
+                mObservers = NSHashTable.weakObjectsHashTable;
+            }
+            [mObservers addObject:observer];
+        }
+    }
+}
+
+- (void)removeObserver:(id<MCSAssetObserver>)observer {
+    @synchronized (self) {
+        [mObservers removeObject:observer];
+    }
+}
+
+#pragma mark - mark
+
 - (void)readwriteCountDidChange:(NSInteger)count {
     if ( count == 0 ) {
         @synchronized (self) {
@@ -163,6 +187,8 @@
         }
     }
 }
+
+#pragma mark - mark
 
 /// 拆分重组内容. 将内容按指定字节拆分重组
 ///
@@ -215,6 +241,14 @@
     }
     
     mAssembled = mNodeList.head.longestContent.length == _totalLength;
+    
+    if ( mAssembled ) {
+        for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+            if ( [observer respondsToSelector:@selector(assetDidStore:)] ) {
+                [observer assetDidStore:self];
+            }
+        }
+    }
 }
 
 /// unlocked

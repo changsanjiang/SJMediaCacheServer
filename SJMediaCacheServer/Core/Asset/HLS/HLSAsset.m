@@ -19,10 +19,12 @@
 #import "NSFileManager+MCS.h"
 #import "MCSMimeType.h"
 #import "HLSAssetSegmentNode.h"
+#import "MCSAssetManager.h"
 
 static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 @interface HLSAsset () {
+    NSHashTable<id<MCSAssetObserver>> *mObservers;
     BOOL mStored;
     BOOL mPrepared;
     HLSAssetParser *_Nullable mParser;
@@ -58,6 +60,10 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     self = [super init];
     _name = name.copy;
     return self;
+}
+
+- (void)dealloc {
+    [mObservers removeAllObjects];
 }
 
 - (void)prepare {
@@ -244,6 +250,23 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     }
 }
 
+- (void)registerObserver:(id<MCSAssetObserver>)observer {
+    if ( observer != nil ) {
+        @synchronized (self) {
+            if ( mObservers == nil ) {
+                mObservers = NSHashTable.weakObjectsHashTable;
+            }
+            [mObservers addObject:observer];
+        }
+    }
+}
+
+- (void)removeObserver:(id<MCSAssetObserver>)observer {
+    @synchronized (self) {
+        [mObservers removeObject:observer];
+    }
+}
+
 #pragma mark - readwrite
 
 - (void)readwriteCountDidChange:(NSInteger)count {
@@ -312,11 +335,19 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         }];
         if ( isAllSegmentsCached ) {
             mStored = YES;
+            [self _notifyDidStore];
         }
     }
     else {
         
-        // isVariantItem
+        // isVariantStream
+        
+        [mParser.allItems enumerateObjectsUsingBlock:^(id<HLSURIItem>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ( [mParser isVariantStream:obj] ) {
+                // - (nullable NSArray<id<HLSURIItem>> *)renditionMediasForVariantItem:(id<HLSURIItem>)item;
+
+            }
+        }];
         
         mStored = YES;
     }
@@ -336,6 +367,14 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 }
                 return NO;
             }];
+        }
+    }
+}
+
+- (void)_notifyDidStore {
+    for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+        if ( [observer respondsToSelector:@selector(assetDidStore:)] ) {
+            [observer assetDidStore:self];
         }
     }
 }

@@ -18,8 +18,8 @@
 @property (nonatomic, readonly, nullable) id<HLSURIItem> next;
 @property (nonatomic, readonly) NSUInteger curTsIndex;
 @property (nonatomic, readonly) NSUInteger curFragmentIndex;
-- (BOOL)isVariantItem:(id<HLSURIItem>)item;
-- (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item;
+- (BOOL)isVariantStream:(id<HLSURIItem>)item;
+- (nullable NSArray<id<HLSURIItem>> *)renditionMediasForVariantItem:(id<HLSURIItem>)item;
 @end
 
 @implementation HLSURIItemProvider
@@ -49,7 +49,7 @@
     while ( YES ) {
         nextIndex = (_curFragmentIndex == NSNotFound) ? 0 : (_curFragmentIndex + 1);
         item = [parser itemAtIndex:nextIndex];
-        if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantItem:item] )
+        if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantStream:item] )
             continue;
         if ( item.type == MCSDataTypeHLSSegment )
             _curTsIndex = (_curTsIndex == NSNotFound) ? 0 : (_curTsIndex + 1);
@@ -59,12 +59,12 @@
     return item;
 }
 
-- (BOOL)isVariantItem:(id<HLSURIItem>)item {
-    return [_asset.parser isVariantItem:item];
+- (BOOL)isVariantStream:(id<HLSURIItem>)item {
+    return [_asset.parser isVariantStream:item];
 }
 
-- (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item {
-    return [_asset.parser renditionsItemsForVariantItem:item];
+- (nullable NSArray<id<HLSURIItem>> *)renditionMediasForVariantItem:(id<HLSURIItem>)item {
+    return [_asset.parser renditionMediasForVariantItem:item];
 }
 @end
 
@@ -125,7 +125,7 @@
 @interface HLSPrefetcher ()<MCSAssetReaderDelegate> {
     id<MCSAssetReader>_Nullable _reader;
     id<HLSURIItem> _Nullable _cur;
-    NSArray<id<HLSURIItem>> *_Nullable _renditionsItems;
+    NSArray<id<HLSURIItem>> *_Nullable _renditionMedias;
     NSArray<HLSRenditionsPrefetcher *> *_Nullable _renditionsPrefetchers;
     HLSURIItemProvider *_itemProvider;
     NSUInteger _tsLoadedLength;
@@ -202,7 +202,7 @@
 
 - (float)progress {
     @synchronized (self) {
-        float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionsItems.count != 0 ? 1 : 0));
+        float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionMedias.count != 0 ? 1 : 0));
         return progress;
     }
 }
@@ -247,14 +247,14 @@
             }
             
             if ( _delegate != nil ) {
-                float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionsItems.count != 0 ? 1 : 0));
+                float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionMedias.count != 0 ? 1 : 0));
                 MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
 
                 [_delegate prefetcher:self progressDidChange:progress];
             }
             
             if ( reader.status == MCSReaderStatusFinished ) {
-                _tsProgress == 1 ? [self _prefetchRenditionsItems] : [self _prepareNextFragment];
+                _tsProgress == 1 ? [self _prefetchRenditionMedias] : [self _prepareNextFragment];
             }
         }
     }
@@ -281,12 +281,12 @@
     // All items loaded
     if ( _cur == nil ) {
         _tsProgress = 1.0;
-        [self _prefetchRenditionsItems];
+        [self _prefetchRenditionMedias];
         return;
     }
     
-    if ( [_itemProvider isVariantItem:_cur] ) {
-        _renditionsItems = [_itemProvider renditionsItemsForVariantItem:_cur];
+    if ( [_itemProvider isVariantStream:_cur] ) {
+        _renditionMedias = [_itemProvider renditionMediasForVariantItem:_cur];
     }
     
     // prepare for reader
@@ -298,17 +298,17 @@
     MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, TsIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_itemProvider.curFragmentIndex, _itemProvider.curTsIndex, request);
 }
 
-- (void)_prefetchRenditionsItems {
-    if ( _renditionsItems.count == 0 ) {
+- (void)_prefetchRenditionMedias {
+    if ( _renditionMedias.count == 0 ) {
         [self _completeWithError:nil];
         return;
     }
     
     dispatch_group_t group = dispatch_group_create();
-    NSMutableArray<HLSRenditionsPrefetcher *> *prefetchers = [NSMutableArray arrayWithCapacity:_renditionsItems.count];
+    NSMutableArray<HLSRenditionsPrefetcher *> *prefetchers = [NSMutableArray arrayWithCapacity:_renditionMedias.count];
     _renditionsPrefetchers = prefetchers;
     __block NSError *error = nil;
-    for ( id<HLSURIItem> item in _renditionsItems ) {
+    for ( id<HLSURIItem> item in _renditionMedias ) {
         dispatch_group_enter(group);
         NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
         HLSRenditionsPrefetcher *prefetcher = [HLSRenditionsPrefetcher.alloc initWithURL:URL numberOfPreloadedFiles:_itemProvider.curTsIndex + 1 progress:^(float progress) {
@@ -346,7 +346,7 @@
     if ( !_isCompleted ) {
         _renditionsProgress = allRenditionsProgress;
         
-        float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionsItems.count != 0 ? 1 : 0));
+        float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionMedias.count != 0 ? 1 : 0));
         MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
         
         if ( _delegate != nil ) {

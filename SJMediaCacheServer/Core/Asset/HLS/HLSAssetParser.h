@@ -23,8 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSURIItem>> *aesKeys;
     
 - (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index;
-- (BOOL)isVariantItem:(id<HLSURIItem>)item;
-- (nullable NSArray<id<HLSURIItem>> *)renditionsItemsForVariantItem:(id<HLSURIItem>)item;
+- (BOOL)isVariantStream:(id<HLSURIItem>)item; // #EXT-X-STREAM-INF
+- (nullable NSArray<id<HLSURIItem>> *)renditionMediasForVariantItem:(id<HLSURIItem>)item; // #EXT-X-MEDIA
 @end
 
 @protocol HLSURIItem <NSObject>

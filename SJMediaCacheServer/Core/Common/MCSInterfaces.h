@@ -13,7 +13,7 @@
 #import "MCSDefines.h"
 #import "NSURLRequest+MCS.h"
 
-@protocol MCSResponse, MCSAsset, MCSConfiguration, MCSAssetReader, MCSRequest, MCSAssetContent, MCSDownloadResponse;
+@protocol MCSResponse, MCSAsset, MCSAssetObserver, MCSConfiguration, MCSAssetReader, MCSRequest, MCSAssetContent, MCSDownloadResponse;
 @protocol MCSProxyTaskDelegate, MCSAssetReaderDelegate;
 @protocol MCSAssetReaderObserver;
 
@@ -72,6 +72,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)prepare;
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response;
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
+
+- (void)registerObserver:(id<MCSAssetObserver>)observer;
+- (void)removeObserver:(id<MCSAssetObserver>)observer;
+@end
+
+@protocol MCSAssetObserver <NSObject>
+@optional
+- (void)assetDidStore:(id<MCSAsset>)asset; // 所有相关数据存储完成的回调
 @end
 
 @protocol MCSRequest <NSObject>

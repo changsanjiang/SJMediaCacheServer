@@ -84,10 +84,15 @@ MCSMD5(NSString *str) {
 }
 
 - (NSString *)assetNameForURL:(NSURL *)URL {
-    if ( [URL.path containsString:HLS_PROXY_URI_FLAG] ) {
-        // If the URL contains HLS_PROXY_URI_FLAG, return the asset name from the path.
-        // Format: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
-        return URL.path.stringByDeletingLastPathComponent.lastPathComponent;
+    NSString *path = URL.path;
+    if ( [path containsString:HLS_PROXY_URI_FLAG] ) {
+        // If proxyURL has a playlist extension, the proxyRequest may be requesting an other-asset.
+        // http://127.0.0.1:54035/url_proxy/mcsproxy/10128c87f266894b6fdc22a6132fe359/9a4a28626646975d34a7ca5bf7140571.m3u8?url=xxx.m3u8
+        if ( ![path.pathExtension isEqualToString:HLS_EXTENSION_PLAYLIST] ) {
+            // If the URL contains HLS_PROXY_URI_FLAG, return the asset name from the path.
+            // Format: mcsproxy/assetName/proxyIdentifier(urlmd5.extension)?url=base64EncodedUrl(originalUrl)
+            return path.stringByDeletingLastPathComponent.lastPathComponent;
+        }
     }
     
     // Otherwise, restore the original URL from the proxy URL.
