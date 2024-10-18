@@ -69,6 +69,11 @@ typedef NS_ENUM(NSUInteger, HLSRenditionMediaType) {
 // other NAME, LANGUAGE ...
 @end
 
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",URI="audio_eng.m3u8"
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Spanish",LANGUAGE="es",URI="audio_spa.m3u8"
+///
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="subs_eng.m3u8"
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="subs_spa.m3u8"
 @protocol HLSRenditionMediaGroup <NSObject>
 @property (nonatomic, copy, readonly) NSString *groupId;
 @property (nonatomic, readonly) HLSRenditionMediaType mediaType;
