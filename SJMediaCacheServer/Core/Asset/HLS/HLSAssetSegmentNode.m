@@ -79,7 +79,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@: <%p> { identifier: %@, fullContent: %@, idleContent: %@, contents: %lu };\n", NSStringFromClass(self.class), self, self.fullContent,self.idleContent, (unsigned long)mContents.count];
+    return [NSString stringWithFormat:@"%@: <%p> { identifier: %@, fullContent: %@, idleContent: %@, contents: %lu };\n", NSStringFromClass(self.class), self, self.identifier, self.fullContent, self.idleContent, (unsigned long)mContents.count];
 }
 @end
 
