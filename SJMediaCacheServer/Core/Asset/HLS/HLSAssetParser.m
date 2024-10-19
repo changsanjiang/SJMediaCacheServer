@@ -325,9 +325,13 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
     NSArray<id<HLSItem>> *_Nullable mAllItems;
     NSArray<id<HLSKey>> *_Nullable mKeys;
     NSArray<id<HLSSegment>> *_Nullable mSegments;
-    NSArray<id<HLSVariantStream>> *_Nullable mVariantStreams;
+//    NSArray<id<HLSVariantStream>> *_Nullable mVariantStreams;
 //    NSArray<id<HLSIFrameStream>> *_Nullable mIFrameStreams;
-    NSDictionary<NSString *, id<HLSRenditionGroup>> *_Nullable mGroups;
+//    NSDictionary<NSString *, id<HLSRenditionGroup>> *_Nullable mGroups;
+    id<HLSVariantStream> _Nullable mSelectedVariantStream;
+    id<HLSRendition> _Nullable mSelectedAudioRendition;
+    id<HLSRendition> _Nullable mSelectedVideoRendition;
+    id<HLSRendition> _Nullable mSelectedSubtitlesRendition;
 }
 @end
 
@@ -685,8 +689,11 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
         NSMutableArray<__kindof HLSItem *> *allItems = NSMutableArray.array;
         __block NSMutableArray<id<HLSKey>> *_Nullable keys;
         __block NSMutableArray<id<HLSSegment>> *_Nullable segments;
-        __block NSMutableArray<id<HLSVariantStream>> *_Nullable variantStreams;
         __block NSMutableDictionary<NSString *, HLSRenditionGroup *> *_Nullable groups;
+        __block id<HLSVariantStream> _Nullable selectedVariantStream;
+        __block id<HLSRendition> _Nullable selectedAudioRendition;
+        __block id<HLSRendition> _Nullable selectedVideoRendition;
+        __block id<HLSRendition> _Nullable selectedSubtitlesRendition;
         [parsingItems enumerateObjectsUsingBlock:^(__kindof HLSItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             switch ( obj.itemType ) {
                 case HLSItemTypeKey: {
@@ -701,9 +708,9 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
                     [allItems addObject:obj];
                     break;
                 }
+                    // If there are variant streams in the m3u8, only one can be selected.
                 case HLSItemTypeVariantStream: {
-                    if ( variantStreams == nil ) variantStreams = NSMutableArray.array;
-                    [variantStreams addObject:obj];
+                    selectedVariantStream = obj;
                     [allItems addObject:obj];
                     break;
                 }
@@ -722,16 +729,28 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
                         groups[key] = group;
                     }
                     [group addRendition:rendition];
-                    [allItems addObject:obj];
                     break;
                 }
             }
         }];
-        if ( parsingItems.count > 0 ) mAllItems = parsingItems.copy;
         if ( keys != nil ) mKeys = keys.copy;
         if ( segments != nil ) mSegments = segments.copy;
-        if ( variantStreams != nil ) mVariantStreams = variantStreams.copy;
-        if ( groups != nil ) mGroups = groups.copy;
+//        if ( variantStreams != nil ) mVariantStreams = variantStreams.copy;
+//        if ( groups != nil ) mGroups = groups.copy;
+        if ( selectedVariantStream != nil ) {
+            mSelectedVariantStream = selectedVariantStream;
+            NSString *audioGroupID = selectedVariantStream.audioGroupID;
+            NSString *videoGroupID = selectedVariantStream.videoGroupID;
+            NSString *subtitlesGroupID = selectedVariantStream.subtitlesGroupID;
+            // consider old versions
+            if ( audioGroupID != nil ) mSelectedAudioRendition = groups[[audioGroupID stringByAppendingFormat:@"_%ld", HLSRenditionTypeAudio]].renditions.firstObject;
+            if ( videoGroupID != nil ) mSelectedVideoRendition = groups[[videoGroupID stringByAppendingFormat:@"_%ld", HLSRenditionTypeVideo]].renditions.firstObject;
+            if ( subtitlesGroupID != nil ) mSelectedSubtitlesRendition = groups[[subtitlesGroupID stringByAppendingFormat:@"_%ld", HLSRenditionTypeSubtitles]].renditions.firstObject;
+            if ( mSelectedAudioRendition != nil ) [allItems addObject:mSelectedAudioRendition];
+            if ( mSelectedVideoRendition != nil ) [allItems addObject:mSelectedVideoRendition];
+            if ( mSelectedSubtitlesRendition != nil ) [allItems addObject:mSelectedSubtitlesRendition];
+        }
+        if ( parsingItems.count > 0 ) mAllItems = allItems.copy;
     }
     return self;
 }
@@ -756,15 +775,31 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
     return mSegments;
 }
 
-- (nullable NSArray<id<HLSVariantStream>> *)variantStreams {
-    return mVariantStreams;
+//- (nullable NSArray<id<HLSVariantStream>> *)variantStreams {
+//    return mVariantStreams;
+//}
+//
+//- (nullable id<HLSRenditionGroup>)renditionGroupBy:(NSString *)groupId type:(HLSRenditionType)type {
+//    if ( mGroups != nil ) {
+//        NSString *key = [groupId stringByAppendingFormat:@"_%ld", type];
+//        return mGroups[key];
+//    }
+//    return nil;
+//}
+
+- (nullable id<HLSVariantStream>)variantStream {
+    return mSelectedVariantStream;
 }
 
-- (nullable id<HLSRenditionGroup>)renditionGroupBy:(NSString *)groupId type:(HLSRenditionType)type {
-    if ( mGroups != nil ) {
-        NSString *key = [groupId stringByAppendingFormat:@"_%ld", type];
-        return mGroups[key];
-    }
-    return nil;
+- (nullable id<HLSRendition>)audioRendition {
+    return mSelectedAudioRendition;
+}
+
+- (nullable id<HLSRendition>)videoRendition {
+    return mSelectedVideoRendition;
+}
+
+- (nullable id<HLSRendition>)subtitlesRendition {
+    return mSelectedSubtitlesRendition;
 }
 @end

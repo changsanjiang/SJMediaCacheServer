@@ -26,7 +26,25 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSItem>> *allItems;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSKey>> *keys;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSSegment>> *segments;
-@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSVariantStream>> *variantStreams;
-- (nullable id<HLSRenditionGroup>)renditionGroupBy:(NSString *)groupId type:(HLSRenditionType)type;
-@end
+
+/// Represents the selected variant stream. If there are variant streams in the m3u8, only one can be selected.
+/// The selection is made through HLSVariantStreamSelectionHandler.
+@property (nonatomic, strong, readonly, nullable) id<HLSVariantStream> variantStream;
+/// Represents the selected audio rendition. If there are audio renditions in the m3u8, only one can be selected.
+/// The selection is made through HLSRenditionSelectionHandler.
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> audioRendition;
+/// Represents the selected video rendition. If there are video renditions in the m3u8, only one can be selected.
+/// The selection is made through HLSRenditionSelectionHandler.
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> videoRendition;
+/// Represents the selected subtitles rendition. If there are subtitles renditions in the m3u8, only one can be selected.
+/// The selection is made through HLSRenditionSelectionHandler.
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> subtitlesRendition;
+
+// only one can be selected;
+//@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSVariantStream>> *variantStreams;
+//- (nullable id<HLSRenditionGroup>)renditionGroupBy:(NSString *)groupId type:(HLSRenditionType)type;@end
+
+// In the proxy playlist, the content related to iframe streams will be removed,
+// and no proxy content will be generated for it.
+//@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSIFrameStream>> *iframeStreams;
 NS_ASSUME_NONNULL_END
