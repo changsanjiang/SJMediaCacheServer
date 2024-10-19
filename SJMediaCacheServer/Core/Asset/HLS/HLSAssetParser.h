@@ -47,4 +47,5 @@ NS_ASSUME_NONNULL_BEGIN
 // In the proxy playlist, the content related to iframe streams will be removed,
 // and no proxy content will be generated for it.
 //@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSIFrameStream>> *iframeStreams;
+@end
 NS_ASSUME_NONNULL_END
