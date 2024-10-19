@@ -673,12 +673,16 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
     NSString *key = [groupId stringByAppendingFormat:@"_%ld", renditionType];
     id<HLSRenditionGroup> group = groups[key];
     NSParameterAssert(group != nil);
-    if ( group.renditions.count > 1 ) {
+    NSArray<id<HLSRendition>> *renditions = group.renditions;
+    if ( renditions.count > 1 ) {
         if ( renditionSelectionHandler != nil ) {
             return renditionSelectionHandler(renditionType, group, originalURL, currentURL);
         }
     }
-    return group.renditions.firstObject;
+    
+    return [renditions mcs_firstOrNull:^BOOL(id<HLSRendition>  _Nonnull obj) {
+        return obj.isDefault; // select default rendition
+    }] ?: renditions.firstObject; // or first;
 }
 
 - (instancetype)initWithProxyPlaylist:(NSString *)playlist {
