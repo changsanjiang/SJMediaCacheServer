@@ -47,24 +47,29 @@
     id<HLSItem> item = nil;
     HLSAssetParser *parser = _asset.parser;
     while ( YES ) {
-        nextIndex = (_curFragmentIndex == NSNotFound) ? 0 : (_curFragmentIndex + 1);
-        item = [parser itemAtIndex:nextIndex];
-        if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantStream:item] )
-            continue;
-        if ( item.type == MCSDataTypeHLSSegment )
-            _curTsIndex = (_curTsIndex == NSNotFound) ? 0 : (_curTsIndex + 1);
-        _curFragmentIndex = nextIndex;
+#warning next...
+//        nextIndex = (_curFragmentIndex == NSNotFound) ? 0 : (_curFragmentIndex + 1);
+//        item = [parser itemAtIndex:nextIndex];
+//        if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantStream:item] )
+//            continue;
+//        if ( item.type == MCSDataTypeHLSSegment )
+//            _curTsIndex = (_curTsIndex == NSNotFound) ? 0 : (_curTsIndex + 1);
+//        _curFragmentIndex = nextIndex;
         break;
     }
     return item;
 }
 
 - (BOOL)isVariantStream:(id<HLSItem>)item {
-    return [_asset.parser isVariantStream:item];
+#warning next...
+//    return [_asset.parser isVariantStream:item];
+    return NO;
 }
 
 - (nullable NSArray<id<HLSItem>> *)renditionMediasForVariantItem:(id<HLSItem>)item {
-    return [_asset.parser renditionMediasForVariantItem:item];
+#warning next...
+//    return [_asset.parser renditionMediasForVariantItem:item];
+    return nil;
 }
 @end
 
@@ -211,9 +216,10 @@
 
 - (void)reader:(id<MCSAssetReader>)reader didReceiveResponse:(id<MCSResponse>)response {
     @synchronized (self) {
-        if ( _cur.type == MCSDataTypeHLSSegment ) {
-            _tsResponsedSize += response.range.length;
-        }
+#warning next ...
+//        if ( _cur.type == MCSDataTypeHLSSegment ) {
+//            _tsResponsedSize += response.range.length;
+//        }
     }
 }
 
@@ -225,26 +231,27 @@
             HLSAsset *asset = reader.asset;
             CGFloat progress = 0;
             
-            // `Ts reader`
-            if ( _cur.type == MCSDataTypeHLSSegment ) {
-                _tsLoadedLength += length;
-
-                NSInteger totalLength = reader.response.range.length;
-                // size mode
-                if ( _preloadSize != 0 ) {
-                    NSUInteger all = _preloadSize > _tsResponsedSize ? _preloadSize : _tsResponsedSize;
-                    progress = _tsLoadedLength * 1.0 / all;
-                }
-                // num mode
-                else {
-                    CGFloat curProgress = (reader.offset - reader.response.range.location) * 1.0 / totalLength;
-                    NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
-                    progress = (_itemProvider.curTsIndex + curProgress) / all;
-                }
-
-                if ( progress > 1 ) progress = 1;
-                _tsProgress = progress;
-            }
+#warning next ...
+//            // `Ts reader`
+//            if ( _cur.type == MCSDataTypeHLSSegment ) {
+//                _tsLoadedLength += length;
+//
+//                NSInteger totalLength = reader.response.range.length;
+//                // size mode
+//                if ( _preloadSize != 0 ) {
+//                    NSUInteger all = _preloadSize > _tsResponsedSize ? _preloadSize : _tsResponsedSize;
+//                    progress = _tsLoadedLength * 1.0 / all;
+//                }
+//                // num mode
+//                else {
+//                    CGFloat curProgress = (reader.offset - reader.response.range.location) * 1.0 / totalLength;
+//                    NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
+//                    progress = (_itemProvider.curTsIndex + curProgress) / all;
+//                }
+//
+//                if ( progress > 1 ) progress = 1;
+//                _tsProgress = progress;
+//            }
             
             if ( _delegate != nil ) {
                 float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionMedias.count != 0 ? 1 : 0));
@@ -290,12 +297,13 @@
     }
     
     // prepare for reader
-    NSURL *proxyURL = [MCSURL.shared generateProxyURLFromHLSProxyURI:_cur.URI];
-    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:_cur.HTTPAdditionalHeaders];
-    _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
-    [_reader prepare];
-    
-    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, TsIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_itemProvider.curFragmentIndex, _itemProvider.curTsIndex, request);
+#warning next ...
+//    NSURL *proxyURL = [MCSURL.shared generateProxyURLFromHLSProxyURI:_cur.URI];
+//    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:_cur.HTTPAdditionalHeaders];
+//    _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
+//    [_reader prepare];
+//    
+//    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, TsIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_itemProvider.curFragmentIndex, _itemProvider.curTsIndex, request);
 }
 
 - (void)_prefetchRenditionMedias {

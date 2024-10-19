@@ -468,31 +468,32 @@
 
 @implementation HLSAsset (MCSAssetManagerExtended)
 - (nullable NSArray<HLSAsset *> *)subAssets {
-    HLSAssetParser *parser = self.parser;
-    if ( parser != nil ) {
-        NSMutableArray<HLSAsset *> *subAssets = nil;
-        for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
-            id<HLSItem> item = [parser itemAtIndex:i];
-            if ( [parser isVariantStream:item] ) {
-                subAssets = NSMutableArray.array;
-
-                NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
-                HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
-                if ( asset != nil ) [subAssets addObject:asset];
-                
-                NSArray<id<HLSItem>> *renditionMedias = [parser renditionMediasForVariantItem:item];
-                for ( id<HLSItem> item in renditionMedias ) {
-                    NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
-                    HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
-                    if ( asset != nil ) [subAssets addObject:asset];
-                }
-                
-                // break
-                break;
-            }
-        }
-        return subAssets.copy;
-    }
+#warning next...
+//    HLSAssetParser *parser = self.parser;
+//    if ( parser != nil ) {
+//        NSMutableArray<HLSAsset *> *subAssets = nil;
+//        for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
+//            id<HLSItem> item = [parser itemAtIndex:i];
+//            if ( [parser isVariantStream:item] ) {
+//                subAssets = NSMutableArray.array;
+//
+//                NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
+//                HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
+//                if ( asset != nil ) [subAssets addObject:asset];
+//                
+//                NSArray<id<HLSItem>> *renditionMedias = [parser renditionMediasForVariantItem:item];
+//                for ( id<HLSItem> item in renditionMedias ) {
+//                    NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
+//                    HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
+//                    if ( asset != nil ) [subAssets addObject:asset];
+//                }
+//                
+//                // break
+//                break;
+//            }
+//        }
+//        return subAssets.copy;
+//    }
     return nil;
 }
 @end

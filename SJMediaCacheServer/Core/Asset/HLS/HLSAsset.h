@@ -16,16 +16,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) MCSAssetType type;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
-@property (nonatomic, readonly) NSUInteger tsCount;
+@property (nonatomic, strong, readonly, nullable) HLSAssetParser *parser;
 @property (nonatomic, readonly) BOOL isStored;
-@property (nonatomic, strong, readonly, nullable) HLSAssetParser *parser; 
 
+@property (nonatomic, copy, nullable) HLSVariantStreamSelectionHandler variantStreamSelectionHandler;
+@property (nonatomic, copy, nullable) HLSRenditionSelectionHandler renditionSelectionHandler;
+
+@property (nonatomic, readonly) NSUInteger tsCount;
 - (nullable NSArray<id<HLSAssetSegment>> *)TsContents;
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
 - (nullable id<MCSAssetContent>)getPlaylistContent; // retained, should release after;
-- (nullable id<MCSAssetContent>)createPlaylistContent:(NSString *)proxyPlaylist error:(out NSError **)error; // retained, should release after;
+- (nullable id<MCSAssetContent>)createPlaylistContentWithOriginalURL:(NSURL *)originalURL currentURL:(NSURL *)currentURL playlist:(NSData *)rawData error:(out NSError **)error; // retained, should release after;
 
 - (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL; // retained, should release after;
 - (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)error; // retained, should release after;

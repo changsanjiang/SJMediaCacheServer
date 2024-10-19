@@ -163,15 +163,18 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     }
 }
 
-- (nullable id<MCSAssetContent>)createPlaylistContent:(NSString *)proxyPlaylist error:(out NSError **)errorPtr {
+- (nullable id<MCSAssetContent>)createPlaylistContentWithOriginalURL:(NSURL *)originalURL currentURL:(NSURL *)currentURL playlist:(NSData *)rawData error:(out NSError **)errorPtr {
     @synchronized (self) {
         if ( mPlaylistContent == nil ) {
             NSError *error = nil;
-            NSString *filePath = [mProvider getPlaylistFilePath];
-            NSData *data = [proxyPlaylist dataUsingEncoding:NSUTF8StringEncoding];
-            if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
-                mParser = [HLSAssetParser.alloc initWithProxyPlaylist:proxyPlaylist];
-                if ( mParser != nil ) [self _onPlaylist:filePath];
+            NSString *proxyPlaylist = [HLSAssetParser proxyPlaylistWithAsset:self.name originalURL:originalURL currentURL:currentURL playlist:rawData variantStreamSelectionHandler:_variantStreamSelectionHandler renditionSelectionHandler:_renditionSelectionHandler error:&error];
+            if ( proxyPlaylist != nil ) {
+                NSData *data = [proxyPlaylist dataUsingEncoding:NSUTF8StringEncoding];
+                NSString *filePath = [mProvider getPlaylistFilePath];
+                if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+                    mParser = [HLSAssetParser.alloc initWithProxyPlaylist:proxyPlaylist];
+                    if ( mParser != nil ) [self _onPlaylist:filePath];
+                }
             }
             if ( error != nil && errorPtr != NULL ) *errorPtr = error;
         }

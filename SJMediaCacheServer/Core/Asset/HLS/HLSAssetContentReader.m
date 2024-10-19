@@ -12,7 +12,6 @@
 #import "MCSError.h"
 #import "MCSAssetContent.h"
 #import "NSFileManager+MCS.h"
-#import "HLSAssetParser.h"
 #import "MCSUtils.h"
 
 @interface HLSAssetPlaylistContentReader () {
@@ -41,7 +40,7 @@
     else {
         mTask = [MCSContents request:mRequest networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable error) {
             @synchronized (self) {
-                [self _downloadDidCompleteWithCurrentRequest:task.currentRequest data:data error:error];
+                [self _downloadDidCompleteWithTask:task data:data error:error];
             }
         }];
     }
@@ -54,7 +53,7 @@
 #pragma mark - mark
 
 /// unlocked
-- (void)_downloadDidCompleteWithCurrentRequest:(NSURLRequest *)request data:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
+- (void)_downloadDidCompleteWithTask:(id<MCSDownloadTask>)task data:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
     if ( self.status == MCSReaderStatusAborted ) return;
     mTask = nil;
     
@@ -68,10 +67,7 @@
     
     id<MCSAssetContent> content = nil;
     if ( error == nil ) {
-        NSString *proxyPlaylist = [HLSAssetParser proxyPlaylistWithAsset:mAsset.name originalPlaylistData:data resourceURL:request.URL error:&error];
-        if ( error == nil ) {
-            content = [mAsset createPlaylistContent:proxyPlaylist error:&error]; // retain
-        }
+        content = [mAsset createPlaylistContentWithOriginalURL:task.originalRequest.URL currentURL:task.currentRequest.URL playlist:data error:&error]; // retain;
     }
     
     if ( error != nil ) {
