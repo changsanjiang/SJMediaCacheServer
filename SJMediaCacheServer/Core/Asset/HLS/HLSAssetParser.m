@@ -724,6 +724,7 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
                     break;
                 }
                 case HLSItemTypeRendition: {
+                    // consider lib old versions
                     if ( groups == nil ) groups = NSMutableDictionary.dictionary;
                     HLSRendition *rendition = obj;
                     NSString *key = [rendition.groupId stringByAppendingFormat:@"_%ld", rendition.renditionType];
@@ -746,7 +747,7 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
             NSString *audioGroupID = selectedVariantStream.audioGroupID;
             NSString *videoGroupID = selectedVariantStream.videoGroupID;
             NSString *subtitlesGroupID = selectedVariantStream.subtitlesGroupID;
-            // consider old versions
+            // consider lib old versions
             if ( audioGroupID != nil ) mSelectedAudioRendition = groups[[audioGroupID stringByAppendingFormat:@"_%ld", HLSRenditionTypeAudio]].renditions.firstObject;
             if ( videoGroupID != nil ) mSelectedVideoRendition = groups[[videoGroupID stringByAppendingFormat:@"_%ld", HLSRenditionTypeVideo]].renditions.firstObject;
             if ( subtitlesGroupID != nil ) mSelectedSubtitlesRendition = groups[[subtitlesGroupID stringByAppendingFormat:@"_%ld", HLSRenditionTypeSubtitles]].renditions.firstObject;
