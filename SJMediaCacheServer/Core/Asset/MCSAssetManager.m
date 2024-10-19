@@ -472,7 +472,7 @@
     if ( parser != nil ) {
         NSMutableArray<HLSAsset *> *subAssets = nil;
         for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
-            id<HLSURIItem> item = [parser itemAtIndex:i];
+            id<HLSItem> item = [parser itemAtIndex:i];
             if ( [parser isVariantStream:item] ) {
                 subAssets = NSMutableArray.array;
 
@@ -480,8 +480,8 @@
                 HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
                 if ( asset != nil ) [subAssets addObject:asset];
                 
-                NSArray<id<HLSURIItem>> *renditionMedias = [parser renditionMediasForVariantItem:item];
-                for ( id<HLSURIItem> item in renditionMedias ) {
+                NSArray<id<HLSItem>> *renditionMedias = [parser renditionMediasForVariantItem:item];
+                for ( id<HLSItem> item in renditionMedias ) {
                     NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                     HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
                     if ( asset != nil ) [subAssets addObject:asset];

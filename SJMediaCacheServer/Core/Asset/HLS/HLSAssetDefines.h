@@ -15,61 +15,59 @@ typedef NS_ENUM(NSUInteger, HLSItemType) {
     HLSItemTypeKey,
     HLSItemTypeSegment,
     HLSItemTypeVariantStream,
+    HLSItemTypeIFrameStream, // ignored;
     HLSItemTypeRendition,
 };
 
-@protocol HLSURIItem <NSObject>
-@property (nonatomic, copy, readonly) NSString *URI;
-@end
-
-typedef NS_ENUM(NSUInteger, HLSKeyMethod) {
-    HLSKeyMethodNone,        // "NONE"
-    HLSKeyMethodAES128,      // "AES-128"
-    HLSKeyMethodSampleAES    // "SAMPLE-AES"
-};
-
-/// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.4
+@protocol HLSItem <NSObject>
+/// 因为需要代理请求, 所以 Playlist 中我们关注更多的是这些 URI;
 ///
-/// #EXT-X-KEY:METHOD=NONE 这种情况下, 不需要 URI 和 IV, 表示后续的媒体段不加密;
-/// #EXT-X-KEY:METHOD=AES-128,URI="https://example.com/key",IV=0x1a2b3c4d5e6f7g8h9i0jklmnopqrst
-/// #EXT-X-KEY:METHOD=AES-128,URI="https://example.com/key"
-/// #EXT-X-KEY:METHOD=SAMPLE-AES,URI="https://example.com/key",KEYFORMAT="com.apple.streamingkeydelivery",KEYFORMATVERSIONS="1"
-/// #EXT-X-KEY:METHOD=SAMPLE-AES,URI="https://drm.example.com/widevine-key",KEYFORMAT="com.widevine.alpha",KEYFORMATVERSIONS="1/2"
-@protocol HLSKey <HLSURIItem> // #EXT-X-KEY
-@property (nonatomic, readonly) HLSKeyMethod method;                            // 加密方法
-@property (nonatomic, copy, readonly, nullable) NSString *IV;                   // 可选的初始化向量
-@property (nonatomic, copy, readonly, nullable) NSString *keyFormat;            // 可选的密钥格式
-@property (nonatomic, copy, readonly, nullable) NSString *keyFormatVersions;    // 可选的密钥格式版本
+/// 某些 Tag 无 URI 配置, 例如 CLOSED-CAPTIONS 通常嵌入在视频流中;
+@property (nonatomic, copy, readonly, nullable) NSString *URI;
 @end
 
+@protocol HLSKey <HLSItem> // #EXT-X-KEY
 
-/// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.1
-@protocol HLSSegment <HLSURIItem> // #EXTINF
-/// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.2
-@property (nonatomic, copy, readonly, nullable) NSString *byteRange; // #EXT-X-BYTERANGE
 @end
 
-
-/// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.2
-@protocol HLSVariantStreamItem <HLSURIItem> // #EXT-X-STREAM-INF
-@property (nonatomic, readonly) NSUInteger bandwidth;
-@property (nonatomic, copy, readonly) NSString *resolution;
-@property (nonatomic, copy, readonly, nullable) NSString *audioGroupID;
-@property (nonatomic, copy, readonly, nullable) NSString *videoGroupID;
-// other group id "SUBTITLES, CLOSED-CAPTIONS"
+@protocol HLSSegment <HLSItem> // #EXTINF
+@property (nonatomic, readonly) NSTimeInterval duration;
+@property (nonatomic, readonly) NSRange byteRange; // #EXT-X-BYTERANGE or { NSNotFound, NSNotFound }
 @end
 
+@protocol HLSVariantStream <HLSItem> // #EXT-X-STREAM-INF
+@property (nonatomic, readonly) NSUInteger bandwidth;               // REQUIRED: BANDWIDTH attribute
+@property (nonatomic, readonly) NSUInteger averageBandwidth;        // OPTIONAL: AVERAGE-BANDWIDTH attribute
+@property (nonatomic, copy, readonly, nullable) NSString *codecs;   // OPTIONAL: CODECS attribute
+@property (nonatomic, copy, readonly, nullable) NSString *resolution; // OPTIONAL: RESOLUTION attribute
+@property (nonatomic, copy, readonly, nullable) NSString *frameRate; // OPTIONAL: FRAME-RATE attribute
+@property (nonatomic, copy, readonly, nullable) NSString *audioGroupID; // OPTIONAL: AUDIO group ID
+@property (nonatomic, copy, readonly, nullable) NSString *videoGroupID; // OPTIONAL: VIDEO group ID
+@property (nonatomic, copy, readonly, nullable) NSString *subtitlesGroupID; // OPTIONAL: SUBTITLES group ID
+@property (nonatomic, copy, readonly, nullable) NSString *closedCaptionsGroupID; // OPTIONAL: CLOSED-CAPTIONS group ID
+@end
+
+// ignored;
+@protocol HLSIFrameStream <HLSItem> // #EXT-X-I-FRAME-STREAM-INF
+@property (nonatomic, readonly) NSUInteger bandwidth;             // REQUIRED: BANDWIDTH attribute
+@property (nonatomic, copy, readonly, nullable) NSString *codecs;   // OPTIONAL: CODECS attribute
+@property (nonatomic, copy, readonly, nullable) NSString *resolution; // OPTIONAL: RESOLUTION attribute
+@property (nonatomic, copy, readonly, nullable) NSString *videoGroupID; // OPTIONAL: VIDEO group ID
+@end
 
 /// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.1
 /// valid strings are AUDIO, VIDEO, SUBTITLES, and CLOSED-CAPTIONS.
 typedef NS_ENUM(NSUInteger, HLSRenditionType) {
     HLSRenditionTypeAudio,
     HLSRenditionTypeVideo,
-    // other SUBTITLES, CLOSED-CAPTIONS
+    HLSRenditionTypeSubtitles,
+    HLSRenditionTypeClosedCaptions, // ignored; 通常嵌入在视频流中无需代理;
 };
  
 /// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.1
-@protocol HLSRendition <HLSURIItem> // #EXT-X-MEDIA
+@protocol HLSRendition <HLSItem> // #EXT-X-MEDIA
+@property (nonatomic, readonly) HLSRenditionType renditionType;
+@property (nonatomic, copy, readonly) NSString *groupId;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy, readonly, nullable) NSString *language;
 /// If the value is YES, then the client SHOULD play this Rendition of
@@ -80,18 +78,6 @@ typedef NS_ENUM(NSUInteger, HLSRenditionType) {
 @property (nonatomic, readonly) BOOL isAutoSelect;
 @end
 
-/// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.1.1
-///
-/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",URI="audio_eng.m3u8"
-/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Spanish",LANGUAGE="es",URI="audio_spa.m3u8"
-///
-/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="subs_eng.m3u8"
-/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="subs_spa.m3u8"
-///
-/// A set of one or more EXT-X-MEDIA tags with the same GROUP-ID value
-/// and the same TYPE value defines a Group of Renditions.  Each member
-/// of the Group MUST be an alternative Rendition of the same content;
-/// otherwise, playback errors can occur.
 @protocol HLSRenditionGroup <NSObject>
 @property (nonatomic, copy, readonly) NSString *groupId;
 @property (nonatomic, readonly) HLSRenditionType renditionType;
@@ -102,13 +88,53 @@ typedef NS_ENUM(NSUInteger, HLSRenditionType) {
 @property (nonatomic, readonly) NSUInteger allItemsCount;
 @property (nonatomic, readonly) NSUInteger segmentsCount;
 
-@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSURIItem>> *allItems;
+@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSItem>> *allItems;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSKey>> *keys;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSSegment>> *segments;
-@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSVariantStreamItem>> *variantStreams;
-- (nullable id<HLSRenditionGroup>)mediaGroupBy:(NSString *)groupId mediaType:(HLSRenditionType)mediaType;
-@property (nonatomic, strong, readonly, nullable) id<HLSVariantStreamItem> defaultVariantStream;
+
+// In the proxy playlist, the content related to iframe streams will be removed,
+// and no proxy content will be generated for it.
+//@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSIFrameStream>> *iframeStreams;
+
+/// Represents the selected variant stream. If there are variant streams in the m3u8, only one can be selected.
+/// The selection is made through HLSVariantStreamSelectionHandler.
+@property (nonatomic, strong, readonly, nullable) id<HLSVariantStream> variantStream;
+/// Represents the selected audio rendition. If there are audio renditions in the m3u8, only one can be selected.
+/// The selection is made through HLSRenditionSelectionHandler.
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> audioRendition;
+/// Represents the selected video rendition. If there are video renditions in the m3u8, only one can be selected.
+/// The selection is made through HLSRenditionSelectionHandler.
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> videoRendition;
+/// Represents the selected subtitles rendition. If there are subtitles renditions in the m3u8, only one can be selected.
+/// The selection is made through HLSRenditionSelectionHandler.
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> subtitlesRendition;
+// only one can be selected;
+//@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSVariantStream>> *variantStreams;
+//- (nullable id<HLSRenditionGroup>)renditionGroupBy:(NSString *)groupId type:(HLSRenditionType)type;
+
 @end
+
+#pragma mark - mark
+
+/// 选一个媒体进行代理
+///
+/// 变体流 二选一, 选 low 还是 high;
+///
+/// #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360,CODECS="avc1.4d401e,mp4a.40.2",AUDIO="audio-group"
+/// https://example.com/low/index.m3u8
+///
+/// #EXT-X-STREAM-INF:BANDWIDTH=3000000,AVERAGE-BANDWIDTH=2500000,RESOLUTION=1280x720,FRAME-RATE=60,CODECS="avc1.4d4028,mp4a.40.2",AUDIO="audio-group",SUBTITLES="subs-group"
+/// https://example.com/high/index.m3u8
+typedef id<HLSVariantStream> _Nonnull (^HLSVariantStreamSelectionHandler)(NSArray<id<HLSVariantStream>> *variantStreams, NSURL *originalURL, NSURL *currentURL);
+
+/// AUDIO 二选一
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",URI="audio_eng.m3u8"
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Spanish",LANGUAGE="es",URI="audio_spa.m3u8"
+///
+/// SUBTITLES 二选一
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="subs_eng.m3u8"
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="subs_spa.m3u8"
+typedef id<HLSRendition> _Nonnull (^HLSRenditionSelectionHandler)(HLSRenditionType renditionType, id<HLSRenditionGroup> renditionGroup, NSURL *originalURL, NSURL *currentURL);
 
 #pragma mark - mark
 

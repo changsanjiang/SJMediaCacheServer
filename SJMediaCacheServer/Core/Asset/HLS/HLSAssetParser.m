@@ -12,347 +12,265 @@
 #import "NSURLRequest+MCS.h"
 #import "MCSConsts.h"
 #import "MCSUtils.h"
+#import "NSArray+MCS.h"
 
 // https://tools.ietf.org/html/rfc8216
 
-#define HLS_PREFIX_TAG                  @"#"
-#define HLS_SUFFIX_CONTINUE             @"\\"
+static NSString *const EXT_X_KEY = @"#EXT-X-KEY:";
+static NSString *const EXTINF = @"#EXTINF:";
+static NSString *const EXT_X_BYTERANGE = @"#EXT-X-BYTERANGE:";
+static NSString *const EXT_X_MEDIA = @"#EXT-X-MEDIA:";
+static NSString *const EXT_X_STREAM_INF = @"#EXT-X-STREAM-INF:";
+static NSString *const EXT_X_I_FRAME_STREAM_INF = @"EXT-X-I-FRAME-STREAM-INF:";
 
-#define HLS_PREFIX_FILE_FIRST_LINE      @"#EXTM3U"
-#define HLS_PREFIX_TS_DURATION          @"#EXTINF:"
-#define HLS_PREFIX_TS_BYTERANGE         @"#EXT-X-BYTERANGE:"
-#define HLS_PREFIX_AESKEY               @"#EXT-X-KEY:METHOD=AES-128"
-#define HLS_PREFIX_MEDIA                @"#EXT-X-MEDIA:"
-#define HLS_PREFIX_VARIANT_STREAM       @"#EXT-X-STREAM-INF:"
-#define HLS_PREFIX_I_FRAME_STREAM       @"#EXT-X-I-FRAME-STREAM-INF:"
+static NSString *const HLS_ATTR_URI = @"URI";
+static NSString *const HLS_ATTR_TYPE = @"TYPE";
+static NSString *const HLS_ATTR_GROUP_ID = @"GROUP-ID";
+static NSString *const HLS_ATTR_NAME = @"NAME";
+static NSString *const HLS_ATTR_LANGUAGE = @"LANGUAGE";
+static NSString *const HLS_ATTR_DEFAULT = @"DEFAULT";
+static NSString *const HLS_ATTR_AUTOSELECT = @"AUTOSELECT";
+static NSString *const HLS_ATTR_BANDWIDTH = @"BANDWIDTH";
+static NSString *const HLS_ATTR_CODECS = @"CODECS";
+static NSString *const HLS_ATTR_RESOLUTION = @"RESOLUTION";
+static NSString *const HLS_ATTR_VIDEO = @"VIDEO";
+static NSString *const HLS_ATTR_AUDIO = @"AUDIO";
+static NSString *const HLS_ATTR_SUBTITLES = @"SUBTITLES";
+static NSString *const HLS_ATTR_CLOSED_CAPTIONS = @"CLOSED-CAPTIONS";
+static NSString *const HLS_ATTR_AVERAGE_BANDWIDTH = @"AVERAGE-BANDWIDTH";
+static NSString *const HLS_ATTR_FRAME_RATE = @"FRAME-RATE";
 
-// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English stereo",LANGUAGE="en",AUTOSELECT=YES,URI="audio.m3u8"
-#define HLS_MEDIA_TYPE_AUDIO            @"AUDIO"
-#define HLS_MEDIA_TYPE_VIDEO            @"VIDEO"
-#define HLS_MEDIA_TYPE_SUBTITLES        @"SUBTITLES"
-#define HLS_MEDIA_TYPE_CLOSED_CAPTIONS  @"CLOSED-CAPTIONS"
+static NSString *const HLS_CTX_BYTERANGE_PREV_END = @"BYTERANGE_PREV_END";
+static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
 
-#define HLS_REGEX_MEDIA_URI             @"#EXT-X-MEDIA:.+URI=\"(.*)\"[^\\s]*"
-#define HLS_INDEX_MEDIA_URI             1
-#define HLS_REGEX_MEDIA_TYPE_AND_GROUP_ID @"TYPE=([^,]+)|GROUP-ID=\\\"([^\\\"]+)\\\""
-#define HLS_INDEX_MEDIA_TYPE            1
-#define HLS_INDEX_MEDIA_GROUP_ID        2
-
-// #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=3359000,RESOLUTION=608x1080,CODECS="avc1.4d001f,mp4a.40.5",AUDIO="...",SUBTITLES="...",VIDEO="..."
-// video.m3u8
-#define HLS_REGEX_VARIANT_STREAM        @"#EXT-X-STREAM-INF.+\\s(.+)\\s"
-#define HLS_INDEX_VARIANT_STREAM        1
-#define HLS_REGEX_RENDITIONS            @"AUDIO=\"([^\"]+)\"|VIDEO=\"([^\"]+)\"|SUBTITLES=\"([^\"]+)\"|CLOSED-CAPTIONS=\"([^\"]+)\""
-#define HLS_INDEX_RENDITIONS_AUDIO      1
-#define HLS_INDEX_RENDITIONS_VIDEO      2
-#define HLS_INDEX_RENDITIONS_SUBTITLES  3
-#define HLS_INDEX_RENDITIONS_CLOSED_CAPTIONS  4
-
-// #EXT-X-I-FRAME-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=42029000,CODECS="avc1.4d001f",URI="iframe.m3u8"
-#define HLS_REGEX_I_FRAME_STREAM        @"#EXT-X-I-FRAME-STREAM-INF:.+URI=\"(.*)\"[^\\s]*"
-#define HLS_INDEX_I_FRAME_STREAM        1
-
-// #EXT-X-KEY:METHOD=AES-128,URI="...",IV=...
-#define HLS_REGEX_AESKEY                @"#EXT-X-KEY:METHOD=AES-128,URI=\"(.*)\""
-#define HLS_INDEX_AESKEY_URI            1
-
-// #EXTINF:10,
-// #EXT-X-BYTERANGE:1007868@0
-// 000000.ts
-// #EXT-X-BYTERANGE:1234567
-#define HLS_REGEX_TS_BYTERANGE_START    @"#EXT-X-BYTERANGE:.+@(.+)"
-#define HLS_REGEX_TS_BYTERANGE_LENGTH   @"#EXT-X-BYTERANGE:([^@]+)"
-#define HLS_INDEX_TS_BYTERANGE_START    1
-#define HLS_INDEX_TS_BYTERANGE_LENGTH   1
- 
-@interface NSString (MCSRegexMatching)
-- (nullable NSArray<NSValue *> *)mcs_rangesByMatchingPattern:(NSString *)pattern options:(NSRegularExpressionOptions)options;
-- (nullable NSArray<NSTextCheckingResult *> *)mcs_textCheckingResultsByMatchPattern:(NSString *)pattern options:(NSRegularExpressionOptions)options;
-@end
-
-@interface HLSURIItem : NSObject<HLSURIItem>
-- (instancetype)initWithType:(MCSDataType)type URI:(NSString *)URI HTTPAdditionalHeaders:(nullable NSDictionary *)HTTPAdditionalHeaders;
-/// MCSDataTypeHLSAESKey    = 2,
-/// MCSDataTypeHLSSegment        = 3,
-@property (nonatomic) MCSDataType type;
-@property (nonatomic, copy) NSString *URI;
-@property (nonatomic, copy, nullable) NSDictionary *HTTPAdditionalHeaders;
-
-// #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=3359000,RESOLUTION=608x1080,CODECS="avc1.4d001f,mp4a.40.5",AUDIO="...",SUBTITLES="...",VIDEO="..."
-@property (nonatomic) BOOL isVariantStream;
-@property (nonatomic, copy, nullable) NSString *groupId;
-@property (nonatomic, strong, nullable) HLSURIItem *audioRenditions;
-@property (nonatomic, strong, nullable) HLSURIItem *videoRenditions;
-@property (nonatomic, strong, nullable) HLSURIItem *subtitleRenditions;
-@property (nonatomic, strong, nullable) HLSURIItem *closedCaptionsRenditions;
-@end
-
-@implementation HLSURIItem
-- (instancetype)initWithType:(MCSDataType)type URI:(NSString *)URI HTTPAdditionalHeaders:(nullable NSDictionary *)HTTPAdditionalHeaders {
-    self = [super init];
-    if ( self ) {
-        _type = type;
-        _URI = URI.copy;
-        _HTTPAdditionalHeaders = HTTPAdditionalHeaders.copy;
-    }
-    return self;
-}
-
-- (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { type: %lu, URI: %@, HTTPAdditionalHeaders: %@, groupId: %@, audioRenditions: %@, videoRenditions: %@, subtitleRenditions: %@, closedCaptionsRenditions: %@ };", NSStringFromClass(self.class), self, (unsigned long)_type, _URI, _HTTPAdditionalHeaders, _groupId, _audioRenditions, _videoRenditions, _subtitleRenditions, _closedCaptionsRenditions];
-}
-@end
-
-
-@interface HLSOptionItem : NSObject
-- (instancetype)initWithName:(NSString *)optionName value:(NSString *)optionValue position:(NSUInteger)startPosition;
-@property (nonatomic, copy, readonly) NSString *name;
-@property (nonatomic, copy, readonly) NSString *value;
-@property (nonatomic, readonly) NSUInteger position;
-@end
-
-@implementation HLSOptionItem
-- (instancetype)initWithName:(NSString *)optionName value:(NSString *)optionValue position:(NSUInteger)startPosition {
-    self = [super init];
-    _name = optionName.copy;
-    _value = optionValue.copy;
-    _position = startPosition;
-    return self;
-}
-@end
-
-
-@interface HLSItem : NSObject
-@property (nonatomic, readonly) HLSItemType type;
-@property (nonatomic, copy, readonly) NSArray<HLSOptionItem *> *options;
+@interface HLSItem : NSObject<HLSItem>
+@property (nonatomic, copy, nullable) NSString *URI;
+@property (nonatomic) NSUInteger URIStartPosition;
+@property (nonatomic) NSUInteger startPosition;
+@property (nonatomic) NSUInteger length;
 @end
 
 @implementation HLSItem
-
-@end
-
-
-@interface HLS_EXT_X_URI : NSObject
-@property (nonatomic) HLSItemType type;
-@property (nonatomic) NSRange range;
-@end
-
-@implementation HLS_EXT_X_URI
-- (instancetype)initWithType:(HLSItemType)type inRange:(NSRange)range {
-    self = [super init];
-    if ( self ) {
-        _type = type;
-        _range = range;
-    }
-    return self;
-}
-
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { type: %ld, range: %@ }", self.class, self, _type, NSStringFromRange(_range)];
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, URLStartPosition: %ld }", self.class, self, _URI, _URIStartPosition];
 }
 @end
 
-@interface NSString (MCSHLSContents)
-- (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern contentsURL:(NSURL *)contentsURL options:(NSRegularExpressionOptions)options;
-- (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern atIndex:(NSInteger)index contentsURL:(NSURL *)contentsURL options:(NSRegularExpressionOptions)options;
-- (NSString *)mcs_restoreOriginalUrl:(NSURL *)contentsURL;
-
-- (nullable NSArray<HLSURIItem *> *)mcs_URIItems;
-- (nullable NSArray<HLS_EXT_X_URI *> *)mcs_URIs;
-
-@property (nonatomic, readonly) BOOL mcs_hasVariantStream;
+@interface HLSItem (Subclass)
+@property (nonatomic, readonly) HLSItemType itemType;
+@property (nonatomic, strong, readonly, nullable) NSString *fileExtension;
 @end
 
-@interface NSArray<ObjectType> (HLSURIItems)
-- (nullable ObjectType)mcs_firstObject:(BOOL(^)(ObjectType obj))block;
+@interface HLSKey : HLSItem<HLSKey>
+//typedef NS_ENUM(NSUInteger, HLSKeyMethod) {
+//    HLSKeyMethodNone,        // "NONE"
+//    HLSKeyMethodAES128,      // "AES-128"
+//    HLSKeyMethodSampleAES    // "SAMPLE-AES"
+//};
+//@property (nonatomic, readonly) HLSKeyMethod method;                            // ignored; 加密方法
+//@property (nonatomic, copy, readonly, nullable) NSString *IV;                   // ignored; 可选的初始化向量
+//@property (nonatomic, copy, readonly, nullable) NSString *keyFormat;            // ignored; 可选的密钥格式
+//@property (nonatomic, copy, readonly, nullable) NSString *keyFormatVersions;    // ignored; 可选的密钥格式版本
 @end
 
-@interface HLSAssetParser () {
-    NSArray<HLSURIItem *> *_Nullable mAllItems;
-    NSArray<HLSURIItem *> *_Nullable mSegments; // ts array
-    NSArray<HLSURIItem *> *_Nullable mAESKeys;
+@implementation HLSKey
+- (HLSItemType)itemType {
+    return HLSItemTypeKey;
+}
+- (NSString *)fileExtension {
+    return HLS_EXTENSION_KEY;
 }
 @end
 
-@implementation HLSAssetParser
-//+ (nullable instancetype)parserWithProxyPlaylistAtPath:(NSString *)filePath {
-//    NSError *error = nil;
-//    NSString *content = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:&error];
-//    return [[self alloc] initWithProxyPlaylist:content];
-//}
 
-+ (nullable NSString *)proxyPlaylistWithAsset:(NSString *)assetName originalPlaylistData:(NSData *)rawData resourceURL:(NSURL *)resourceURL error:(out NSError **)errorPtr {
-    NSString *_Nullable contents = [NSString.alloc initWithData:rawData encoding:NSUTF8StringEncoding] ?: [NSString.alloc initWithData:rawData encoding:1];
-    NSError *error = nil;
-    if ( contents == nil || ![contents hasPrefix:HLS_PREFIX_FILE_FIRST_LINE] ) {
-        error = [NSError mcs_errorWithCode:MCSFileError userInfo:@{
-            MCSErrorUserInfoObjectKey : contents ?: @"",
-            MCSErrorUserInfoReasonKey : @"Empty data or unsupported format!"
-        }];
-    }
-    
-    if ( contents != nil ) {
-        NSArray<NSString *> *components = [contents componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet];
-        NSMutableString *playlistContents = NSMutableString.string;
-        for ( NSString *str in components ) {
-            if ( str.length != 0 )
-                [playlistContents appendFormat:@"%@\n", str];
-        }
-        [[playlistContents mcs_URIs] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(HLS_EXT_X_URI * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            NSString *URI = [playlistContents substringWithRange:obj.range];
-            NSString *originalUrl = [URI mcs_restoreOriginalUrl:resourceURL];
-            NSString *extension = nil;
-            switch ( obj.type ) {
-                case HLSItemTypeKey:
-                    extension = HLS_EXTENSION_AES_KEY;
-                    break;
-                case HLSItemTypeSegment:
-                    extension = HLS_EXTENSION_SEGMENT;
-                    break;
-                case HLSItemTypeVariantStream:
-                case HLSItemTypeRendition:
-                    extension = HLS_EXTENSION_PLAYLIST;
-                    break;
-            }
-            if ( extension.length != 0 ) {
-                NSString *proxy = [MCSURL.shared generateProxyURIFromHLSOriginalURL:[NSURL URLWithString:originalUrl] extension:extension forAsset:assetName];
-                [playlistContents replaceCharactersInRange:obj.range withString:proxy];
-            }
-        }];
-        ///
-        /// 仅保留最前面的stream
-        ///
-        ///     #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="audio"
-        ///     video.m3u8
-        [[playlistContents mcs_textCheckingResultsByMatchPattern:HLS_REGEX_VARIANT_STREAM options:kNilOptions] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSTextCheckingResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ( idx != 0 ) {
-                [playlistContents deleteCharactersInRange:obj.range];
-            }
-        }];
-        
-        return playlistContents;
-    }
-    
-    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
-    return nil;
-}
+/// #EXTINF: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.1
+/// #EXT-X-BYTERANGE: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.2
+@interface HLSSegment : HLSItem<HLSSegment>
+@property (nonatomic) NSTimeInterval duration;
+@property (nonatomic) NSRange byteRange; // #EXT-X-BYTERANGE or { NSNotFound, NSNotFound }
+@end
 
-- (instancetype)initWithProxyPlaylist:(NSString *)playlist {
+@implementation HLSSegment
+- (instancetype)init {
     self = [super init];
-    mAllItems = [playlist mcs_URIItems];
-    NSMutableArray<HLSURIItem *> *_Nullable segments = nil;
-    NSMutableArray<HLSURIItem *> *_Nullable aesKeys = nil;
-    for ( HLSURIItem *item in mAllItems ) {
-        switch (item.type) {
-            case MCSDataTypeHLSAESKey: {
-                if ( aesKeys == nil ) aesKeys = NSMutableArray.array;
-                [aesKeys addObject:item];
-            }
-                break;
-            case MCSDataTypeHLSSegment: {
-                if ( segments == nil ) segments = NSMutableArray.array;
-                [segments addObject:item];
-            }
-                break;
-            case MCSDataTypeHLSPlaylist:
-            case MCSDataTypeHLSMask:
-            case MCSDataTypeHLS:
-            case MCSDataTypeFILEMask:
-            case MCSDataTypeFILE:
-                break;
-        }
-    }
-    mSegments = segments != nil ? segments.copy : nil;
-    mAESKeys = aesKeys != nil ? aesKeys.copy : nil;
+    _byteRange = (NSRange){ NSNotFound, NSNotFound };
     return self;
 }
-
-- (NSUInteger)allItemsCount {
-    return mAllItems.count;
+- (HLSItemType)itemType {
+    return HLSItemTypeSegment;
 }
-
-- (NSUInteger)segmentsCount {
-    return mSegments.count;
+- (NSString *)fileExtension {
+    return HLS_EXTENSION_SEGMENT;
 }
-
-- (nullable NSArray<id<HLSURIItem>> *)allItems {
-    return mAllItems;
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, URLStartPosition: %ld, duration: %lf, byteRange: %@ }", self.class, self, self.URI, self.URIStartPosition, _duration, NSStringFromRange(_byteRange)];
 }
+@end
 
-- (nullable NSArray<id<HLSURIItem>> *)segments {
-    return mSegments;
-}
+/// #EXT-X-STREAM-INF: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.2
+@interface HLSVariantStream : HLSItem<HLSVariantStream>
+@property (nonatomic) NSUInteger bandwidth;               // REQUIRED: BANDWIDTH attribute
+@property (nonatomic) NSUInteger averageBandwidth;        // OPTIONAL: AVERAGE-BANDWIDTH attribute
+@property (nonatomic, copy, nullable) NSString *codecs;   // OPTIONAL: CODECS attribute
+@property (nonatomic, copy, nullable) NSString *resolution; // OPTIONAL: RESOLUTION attribute
+@property (nonatomic, copy, nullable) NSString *frameRate; // OPTIONAL: FRAME-RATE attribute
+@property (nonatomic, copy, nullable) NSString *audioGroupID; // OPTIONAL: AUDIO group ID
+@property (nonatomic, copy, nullable) NSString *videoGroupID; // OPTIONAL: VIDEO group ID
+@property (nonatomic, copy, nullable) NSString *subtitlesGroupID; // OPTIONAL: SUBTITLES group ID
+@property (nonatomic, copy, nullable) NSString *closedCaptionsGroupID; // OPTIONAL: CLOSED-CAPTIONS group ID
+@end
 
-- (nullable NSArray<id<HLSURIItem>> *)aesKeys {
-    return mAESKeys;
+@implementation HLSVariantStream
+- (HLSItemType)itemType {
+    return HLSItemTypeVariantStream;
 }
+- (NSString *)fileExtension {
+    return HLS_EXTENSION_PLAYLIST;
+}
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, URLStartPosition: %ld, bandwidth: %lu, averageBandwidth: %lu, codecs: %@, resolution: %@, frameRate: %@, audioGroupID: %@, videoGroupID: %@, subtitlesGroupID: %@, closedCaptionsGroupID: %@ }", self.class, self, self.URI, self.URIStartPosition, _bandwidth, _averageBandwidth, _codecs, _resolution, _frameRate, _audioGroupID, _videoGroupID, _subtitlesGroupID, _closedCaptionsGroupID];
+}
+@end
 
-- (nullable id<HLSURIItem>)itemAtIndex:(NSUInteger)index {
-    return mAllItems.count ? mAllItems[index] : nil;
-}
+@interface HLSIFrameStream : HLSItem<HLSIFrameStream>
+@property (nonatomic) NSUInteger bandwidth;             // REQUIRED: BANDWIDTH attribute
+@property (nonatomic, copy, nullable) NSString *codecs;   // OPTIONAL: CODECS attribute
+@property (nonatomic, copy, nullable) NSString *resolution; // OPTIONAL: RESOLUTION attribute
+@property (nonatomic, copy, nullable) NSString *videoGroupID; // OPTIONAL: VIDEO group ID
+@end
 
-- (BOOL)isVariantStream:(id<HLSURIItem>)item {
-    return [(HLSURIItem *)item isVariantStream];
+@implementation HLSIFrameStream
+- (HLSItemType)itemType {
+    return HLSItemTypeIFrameStream;
 }
-// AUDIO="...",SUBTITLES="...",VIDEO="..."
-- (nullable NSArray<id<HLSURIItem>> *)renditionMediasForVariantItem:(id<HLSURIItem>)item {
-    HLSURIItem *obj = item;
-    // https://tools.ietf.org/html/rfc8216#section-4.3.4.2
-    if ( obj.isVariantStream ) {
-        NSMutableArray<HLSURIItem *> *m = [NSMutableArray arrayWithCapacity:3];
-        if ( obj.audioRenditions != nil )
-            [m addObject:obj.audioRenditions];
-        if ( obj.videoRenditions != nil )
-            [m addObject:obj.videoRenditions];
-        if ( obj.subtitleRenditions != nil )
-            [m addObject:obj.subtitleRenditions];
-        if ( obj.closedCaptionsRenditions != nil )
-            [m addObject:obj.closedCaptionsRenditions];
-        return m.count > 0 ? m : nil;
+- (NSString *)fileExtension {
+    return HLS_EXTENSION_PLAYLIST;
+}
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, URLStartPosition: %ld, bandwidth: %lu, codecs: %@, resolution: %@, videoGroupID: %@ }", self.class, self, self.URI, self.URIStartPosition, _bandwidth, _codecs, _resolution, _videoGroupID];
+}
+@end
+
+/// #EXT-X-MEDIA: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.1
+@interface HLSRendition : HLSItem<HLSRendition>
+@property (nonatomic) HLSRenditionType renditionType;
+@property (nonatomic, copy) NSString *groupId;
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, copy, nullable) NSString *language;
+@property (nonatomic) BOOL isDefault;
+@property (nonatomic) BOOL isAutoSelect;
+@end
+
+@implementation HLSRendition
+- (HLSItemType)itemType {
+    return HLSItemTypeRendition;
+}
+- (NSString *)fileExtension {
+    switch ( _renditionType ) {
+        case HLSRenditionTypeAudio:
+        case HLSRenditionTypeVideo:
+            return HLS_EXTENSION_PLAYLIST;
+        case HLSRenditionTypeSubtitles:
+            return HLS_EXTENSION_SUBTITLES;
+        case HLSRenditionTypeClosedCaptions:
+            return nil; // no file, ignored;
+    }
+}
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, URLStartPosition: %ld, renditionType: %ld, groupId: %@, name: %@, language: %@, isDefault: %d, isAutoSelect: %d }", self.class, self, self.URI, self.URIStartPosition, _renditionType, _groupId, _name, _language, _isDefault, _isAutoSelect];
+}
+@end
+
+/// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.1.1
+///
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",URI="audio_eng.m3u8"
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Spanish",LANGUAGE="es",URI="audio_spa.m3u8"
+///
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="subs_eng.m3u8"
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="subs_spa.m3u8"
+///
+/// A set of one or more EXT-X-MEDIA tags with the same GROUP-ID value
+/// and the same TYPE value defines a Group of Renditions.  Each member
+/// of the Group MUST be an alternative Rendition of the same content;
+/// otherwise, playback errors can occur.
+@interface HLSRenditionGroup : HLSItem<HLSRenditionGroup>
+@property (nonatomic, copy) NSString *groupId;
+@property (nonatomic) HLSRenditionType renditionType;
+@property (nonatomic, copy, readonly) NSArray<id<HLSRendition>> *renditions; // HLSRenditionType
+@end
+
+@implementation HLSRenditionGroup {
+    NSMutableArray<id<HLSRendition>> *mRenditions;
+}
+- (instancetype)init {
+    self = [super init];
+    mRenditions = NSMutableArray.array;
+    return self;
+}
+- (void)addRendition:(id<HLSRendition>)rendition {
+    [mRenditions addObject:rendition];
+}
+- (NSArray<id<HLSRendition>> *)renditions {
+    return mRenditions;
+}
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@:<%p> { groupId: %@, renditionType: %ld, renditions: %@ }", self.class, self, _groupId, _renditionType, mRenditions];
+}
+@end
+
+@interface NSString (HLS)
+/// 如果value前后包含双引号, 则引号会被去除;
+///
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",URI="audio_eng.m3u8"
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Spanish",LANGUAGE="es",URI="audio_spa.m3u8"
+///
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="subs_eng.m3u8"
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="subs_spa.m3u8"
+- (nullable NSString *)hls_findValueForAttribute:(NSString *)attribute startPos:(NSUInteger *)startPosPtr;
+- (HLSRenditionType)hls_toRenditionType;
+- (BOOL)hls_toBOOL;
+- (NSString *)hls_restoreOriginalUrl:(NSURL *)URL; // 将路径转换为原始url
+@end
+
+@implementation NSString (HLS)
+- (nullable NSString *)hls_findValueForAttribute:(NSString *)name startPos:(NSUInteger *)startPosPtr {
+    NSArray<NSString *> *attributePairs = [self componentsSeparatedByString:@","];
+    NSString *prefix = [name stringByAppendingString:@"="];
+    __block NSUInteger startPos = 0;
+    NSString *pair = [attributePairs mcs_firstOrNull:^BOOL(NSString * _Nonnull obj) {
+        if ( [obj hasPrefix:prefix] ) return YES;
+        startPos += obj.length + 1; // + @",".length();
+        return NO;
+    }];
+    if ( pair != nil ) {
+        startPos += prefix.length;
+        NSArray<NSString *> *keyValue = [pair componentsSeparatedByString:@"="];
+        NSString *value = keyValue[1];
+        if ( [value hasPrefix:@"\""] ) { // 移除双引号;
+            startPos += 1; // @"\"".length();
+            value = [value stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
+        }
+        if ( startPosPtr != NULL ) *startPosPtr = startPos;
+        return value;
     }
     return nil;
 }
-@end
 
-@implementation NSString (MCSRegexMatching)
-- (nullable NSArray<NSValue *> *)mcs_rangesByMatchingPattern:(NSString *)pattern options:(NSRegularExpressionOptions)options {
-    NSMutableArray<NSValue *> *m = NSMutableArray.array;
-    for ( NSTextCheckingResult *result in [self mcs_textCheckingResultsByMatchPattern:pattern options:options])
-        [m addObject:[NSValue valueWithRange:result.range]];
-    return m.count != 0 ? m.copy : nil;
+/// https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.1
+/// valid strings are AUDIO, VIDEO, SUBTITLES, and CLOSED-CAPTIONS.
+- (HLSRenditionType)hls_toRenditionType {
+    if ( [self isEqualToString:HLS_ATTR_AUDIO] ) return HLSRenditionTypeAudio;
+    if ( [self isEqualToString:HLS_ATTR_VIDEO] ) return HLSRenditionTypeVideo;
+    if ( [self isEqualToString:HLS_ATTR_SUBTITLES] ) return HLSRenditionTypeSubtitles;
+    return HLSRenditionTypeClosedCaptions;
 }
 
-- (nullable NSArray<NSTextCheckingResult *> *)mcs_textCheckingResultsByMatchPattern:(NSString *)pattern options:(NSRegularExpressionOptions)options {
-    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:options error:NULL];
-    NSMutableArray<NSTextCheckingResult *> *m = NSMutableArray.array;
-    [regex enumerateMatchesInString:self options:kNilOptions range:NSMakeRange(0, self.length) usingBlock:^(NSTextCheckingResult * _Nullable result, NSMatchingFlags flags, BOOL * _Nonnull stop) {
-        if ( result != nil ) {
-            [m addObject:result];
-        }
-    }];
-    return m.count != 0 ? m.copy : nil;
-}
-@end
-
-@implementation NSString (MCSHLSContents)
-- (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern contentsURL:(NSURL *)contentsURL options:(NSRegularExpressionOptions)options {
-    return [self mcs_urlsByMatchingPattern:pattern atIndex:0 contentsURL:contentsURL options:options];
+- (BOOL)hls_toBOOL {
+    if ( [self isEqualToString:@"YES"] ) return YES;
+    return NO;
 }
 
-- (nullable NSArray<NSString *> *)mcs_urlsByMatchingPattern:(NSString *)pattern atIndex:(NSInteger)index contentsURL:(NSURL *)contentsURL options:(NSRegularExpressionOptions)options {
-    NSMutableArray<NSString *> *m = NSMutableArray.array;
-    [[self mcs_textCheckingResultsByMatchPattern:pattern options:options] enumerateObjectsUsingBlock:^(NSTextCheckingResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-//        The range at index 0 always matches the range property.  Additional ranges, if any, will have indexes from 1 to numberOfRanges-1. rangeWithName: can be used with named regular expression capture groups
-        NSRange range = [obj rangeAtIndex:index];
-        NSString *matched = [self substringWithRange:range];
-        NSString *url = [matched mcs_restoreOriginalUrl:contentsURL];
-        [m addObject:url];
-    }];
-    return m.count != 0 ? m.copy : nil;
-}
-
-/// 将路径转换为url
-- (NSString *)mcs_restoreOriginalUrl:(NSURL *)URL {
+- (NSString *)hls_restoreOriginalUrl:(NSURL *)resourceURL {
     static NSString *const HLS_PREFIX_LOCALHOST = @"http://localhost";
     static NSString *const HLS_PREFIX_DIR_ROOT = @"/";
     static NSString *const HLS_PREFIX_DIR_PARENT = @"../";
@@ -362,7 +280,7 @@
     /// /video/name.m3u8
     ///
     if      ( [self hasPrefix:HLS_PREFIX_DIR_ROOT] ) {
-        NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", URL.scheme, URL.host]];
+        NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", resourceURL.scheme, resourceURL.host]];
         NSString *subpath = self;
         url = [rootDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
@@ -370,7 +288,7 @@
     /// ../../video/name.m3u8
     ///
     else if ( [self hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
-        NSURL *curDir = URL.mcs_URLByRemovingLastPathComponentAndQuery;
+        NSURL *curDir = resourceURL.mcs_URLByRemovingLastPathComponentAndQuery;
         NSURL *parentDir = curDir;
         NSString *subpath = self;
         while ( [subpath hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
@@ -381,13 +299,13 @@
     }
     /// ./video/name.m3u8
     else if ( [self hasPrefix:HLS_PREFIX_DIR_CURRENT] ) {
-        NSURL *curDir = URL.mcs_URLByRemovingLastPathComponentAndQuery;
+        NSURL *curDir = resourceURL.mcs_URLByRemovingLastPathComponentAndQuery;
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_CURRENT.length];
         url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     /// http://localhost
     else if ( [self hasPrefix:HLS_PREFIX_LOCALHOST] ) {
-        NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", URL.scheme, URL.host]];
+        NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", resourceURL.scheme, resourceURL.host]];
         NSString *subpath = [self substringFromIndex:HLS_PREFIX_LOCALHOST.length];
         url = [rootDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
@@ -395,284 +313,458 @@
         url = self;
     }
     else {
-        NSURL *curDir = URL.mcs_URLByRemovingLastPathComponentAndQuery;
+        NSURL *curDir = resourceURL.mcs_URLByRemovingLastPathComponentAndQuery;
         NSString *subpath = self;
         url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
     }
     return url;
 }
+@end
 
-- (nullable NSArray<HLSURIItem *> *)mcs_URIItems {
-    NSArray<NSString *> *lines = [self componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet];
-    NSMutableArray<HLSURIItem *> *m = NSMutableArray.array;
-    NSMutableArray<HLSURIItem *> *audioRenditionsArray = nil;
-    NSMutableArray<HLSURIItem *> *videoRenditionsArray = nil;
-    NSMutableArray<HLSURIItem *> *subtitleRenditionsArray = nil;
-    NSMutableArray<HLSURIItem *> *closedCaptionsRenditionsArray = nil;
-    BOOL tsFlag = NO;
-    BOOL vsFlag = NO;
-    NSString *audioGroupId = nil;
-    NSString *videoGroupId = nil;
-    NSString *subtitleGroupId = nil;
-    NSString *closedCaptionsGroupId = nil;
-    NSRange bytesRange = NSMakeRange(0, 0);
-    NSUInteger bytesNextPosition = 0;
-    for ( NSString *line in lines ) {
-        // #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English stereo",LANGUAGE="en",AUTOSELECT=YES,URI="audio.m3u8"
-        if      ( [line hasPrefix:HLS_PREFIX_MEDIA] ) {
-            NSArray<NSTextCheckingResult *> *results = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_MEDIA_TYPE_AND_GROUP_ID options:kNilOptions];
-            NSTextCheckingResult *typeCheckingResult = results.firstObject;
-            NSRange typeRange = [typeCheckingResult rangeAtIndex:HLS_INDEX_MEDIA_TYPE];
-            NSString *type = [line substringWithRange:typeRange];
-            
-            NSTextCheckingResult *groupIdCheckingResult = results.lastObject;
-            NSRange groupIdRange = [groupIdCheckingResult rangeAtIndex:HLS_INDEX_MEDIA_GROUP_ID];
-            NSString *groupId = [line substringWithRange:groupIdRange];
-            
-            NSTextCheckingResult *URICheckingResult = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_MEDIA_URI options:kNilOptions].firstObject;
-            NSRange URIRange = [URICheckingResult rangeAtIndex:HLS_INDEX_MEDIA_URI];
-            NSString *URI = [line substringWithRange:URIRange];
-            
-            HLSURIItem *item = [HLSURIItem.alloc initWithType:MCSDataTypeHLSPlaylist URI:URI HTTPAdditionalHeaders:nil];
-            item.groupId = groupId;
-            if      ( [type isEqualToString:HLS_MEDIA_TYPE_AUDIO] ) {
-                if ( audioRenditionsArray == nil )
-                    audioRenditionsArray = NSMutableArray.array;
-                [audioRenditionsArray addObject:item];
-            }
-            else if ( [type isEqualToString:HLS_MEDIA_TYPE_VIDEO] ) {
-                if ( videoRenditionsArray == nil )
-                    videoRenditionsArray = NSMutableArray.array;
-                [videoRenditionsArray addObject:item];
-            }
-            else if ( [type isEqualToString:HLS_MEDIA_TYPE_SUBTITLES] ) {
-                if ( subtitleRenditionsArray == nil )
-                    subtitleRenditionsArray = NSMutableArray.array;
-                [subtitleRenditionsArray addObject:item];
-            }
-            else if ( [type isEqualToString:HLS_MEDIA_TYPE_CLOSED_CAPTIONS] ) {
-                if ( closedCaptionsRenditionsArray == nil )
-                    closedCaptionsRenditionsArray = NSMutableArray.array;
-                [closedCaptionsRenditionsArray addObject:item];
-            }
-        }
-        // #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="...",SUBTITLES="...",VIDEO="..."
-        else if ( [line hasPrefix:HLS_PREFIX_VARIANT_STREAM] ) {
-            vsFlag = YES;
-            audioGroupId = videoGroupId = subtitleGroupId = closedCaptionsGroupId = nil;
-            for ( NSTextCheckingResult *result in [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_RENDITIONS options:kNilOptions] ) {
-                NSRange audioGroupIdRange = [result rangeAtIndex:HLS_INDEX_RENDITIONS_AUDIO];
-                NSRange videoGroupIdRange = [result rangeAtIndex:HLS_INDEX_RENDITIONS_VIDEO];
-                NSRange subtitleGroupIdRange = [result rangeAtIndex:HLS_INDEX_RENDITIONS_SUBTITLES];
-                NSRange closedCaptionsGroupIdRange = [result rangeAtIndex:HLS_INDEX_RENDITIONS_CLOSED_CAPTIONS];
-                if ( audioGroupIdRange.length != 0 ) audioGroupId = [line substringWithRange:audioGroupIdRange];
-                if ( videoGroupIdRange.length != 0 ) videoGroupId = [line substringWithRange:videoGroupIdRange];
-                if ( subtitleGroupIdRange.length != 0 ) subtitleGroupId = [line substringWithRange:subtitleGroupIdRange];
-                if ( closedCaptionsGroupIdRange.length != 0 ) closedCaptionsGroupId = [line substringWithRange:closedCaptionsGroupIdRange];
-            }
-        }
-        else if ( vsFlag ) {
-            if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
-                NSString *URI = line;
-                HLSURIItem *item = [HLSURIItem.alloc initWithType:MCSDataTypeHLSPlaylist URI:URI HTTPAdditionalHeaders:nil];
-                item.isVariantStream = YES;
-                item.audioRenditions = [audioRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
-                    return [obj.groupId isEqualToString:audioGroupId ?: @""];
-                }];
-                item.videoRenditions = [videoRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
-                    return [obj.groupId isEqualToString:videoGroupId ?: @""];
-                }];
-                item.subtitleRenditions = [subtitleRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
-                    return [obj.groupId isEqualToString:subtitleGroupId ?: @""];
-                }];
-                item.closedCaptionsRenditions = [closedCaptionsRenditionsArray mcs_firstObject:^BOOL(HLSURIItem *obj) {
-                    return [obj.groupId isEqualToString:closedCaptionsGroupId ?: @""];
-                }];
-                [m addObject:item];
-                vsFlag = NO;
-            }
-        }
-        //    #EXT-X-KEY:METHOD=AES-128,URI="key1.php"
-        //
-        //    #EXTINF:2.833,
-        //    example/0.ts
-        //    #EXTINF:15.0,
-        //    example/1.ts
-        //
-        //    #EXT-X-KEY:METHOD=AES-128,URI="key2.php"
-        //
-        else if ( [line hasPrefix:HLS_PREFIX_AESKEY] ) {
-            NSTextCheckingResult *result = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_AESKEY options:kNilOptions].firstObject;
-            NSRange range = [result rangeAtIndex:HLS_INDEX_AESKEY_URI];
-            NSString *URI = [line substringWithRange:range];
-            [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSAESKey URI:URI HTTPAdditionalHeaders:nil]];
-        }
-        else if ( [line hasPrefix:HLS_PREFIX_TS_DURATION] ) {
-            tsFlag = YES;
-        }
-        else if ( tsFlag ) {
-            if      ( [line hasPrefix:HLS_PREFIX_TS_BYTERANGE] ) {
-                NSTextCheckingResult *startCheckingResult = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_TS_BYTERANGE_START options:kNilOptions].firstObject;
-                NSRange startRange = [startCheckingResult rangeAtIndex:HLS_INDEX_TS_BYTERANGE_START];
-                long long start = startRange.length != 0 ? [line substringWithRange:startRange].longLongValue : bytesNextPosition;
-                
-                NSTextCheckingResult *lengthCheckingResult = [line mcs_textCheckingResultsByMatchPattern:HLS_REGEX_TS_BYTERANGE_LENGTH options:kNilOptions].firstObject;
-                NSRange lengthRange = [lengthCheckingResult rangeAtIndex:HLS_INDEX_TS_BYTERANGE_LENGTH];
-                long long length = [line substringWithRange:lengthRange].longLongValue;
-                
-                bytesRange = NSMakeRange(start, length);
-                bytesNextPosition = start + length;
-            }
-            else if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
-                NSString *URI = line;
-                NSDictionary *headers = nil;
-                if ( bytesRange.length != 0 )
-                    headers = @{
-                        @"Range" : [NSString stringWithFormat:@"bytes=%lu-%lu", (unsigned long)bytesRange.location, NSMaxRange(bytesRange) - 1]
-                    };
-                [m addObject:[HLSURIItem.alloc initWithType:MCSDataTypeHLSSegment URI:URI HTTPAdditionalHeaders:headers]];
-                tsFlag = NO;
-            }
-        }
-    }
-    return m.count != 0 ? m.copy : nil;
-}
-
-- (nullable NSArray<HLS_EXT_X_URI *> *)mcs_URIs {
-    NSArray<NSString *> *lines = [self componentsSeparatedByString:@"\n"];
-    NSMutableArray<HLS_EXT_X_URI *> *m = NSMutableArray.array;
-    NSInteger linePos = 0;
-    BOOL vsFlag = NO;
-    BOOL tsFlag = NO;
-    
-    
-    static NSString *const EXT_X_MEDIA = @"EXT-X-MEDIA";
-    
-    for ( NSString *line in lines ) {
-        if ( [line hasPrefix:EXT_X_MEDIA] ) {
-#warning next ...
-        }
-        
-        // #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English stereo",LANGUAGE="en",AUTOSELECT=YES,URI="audio.m3u8"
-        // #EXT-X-I-FRAME-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=42029000,CODECS="avc1.4d001f",URI="iframe.m3u8"
-        if      ( [line hasPrefix:HLS_PREFIX_MEDIA] || [line hasPrefix:HLS_PREFIX_I_FRAME_STREAM] ) {
-            NSRange URIRange = [line mcs_rangeByFrontStr:@"URI=\"" rearStr:@"\"" isRearStrOptional:NO];
-            URIRange.location += linePos;
-            HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:HLSItemTypeRendition inRange:URIRange];
-            [m addObject:obj];
-        }
-        // #EXT-X-STREAM-INF:BANDWIDTH=928000,CODECS="avc1.42c00d,mp4a.40.2",RESOLUTION=480x270,AUDIO="...",SUBTITLES="...",VIDEO="..."
-        else if ( [line hasPrefix:HLS_PREFIX_VARIANT_STREAM] ) {
-            vsFlag = YES;
-        }
-        else if ( vsFlag ) {
-            if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
-                NSRange URIRange = NSMakeRange(linePos, line.length);
-                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:HLSItemTypeVariantStream inRange:URIRange];
-                [m addObject:obj];
-                vsFlag = NO;
-            }
-        }
-        //    #EXT-X-KEY:METHOD=AES-128,URI="key1.php"
-        //
-        //    #EXTINF:2.833,
-        //    example/0.ts
-        //    #EXTINF:15.0,
-        //    example/1.ts
-        //
-        //    #EXT-X-KEY:METHOD=AES-128,URI="key2.php"
-        //
-        else if ( [line hasPrefix:HLS_PREFIX_AESKEY] ) {
-            NSRange URIRange = [line mcs_rangeByFrontStr:@"URI=\"" rearStr:@"\"" isRearStrOptional:NO];
-            URIRange.location += linePos;
-            HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:HLSItemTypeKey inRange:URIRange];
-            [m addObject:obj];
-        }
-        // #EXTINF:10,
-        // #EXT-X-BYTERANGE:1007868@0
-        // 000000.ts
-        else if ( [line hasPrefix:HLS_PREFIX_TS_DURATION] ) {
-            tsFlag = YES;
-        }
-        else if ( tsFlag ) {
-            if ( ![line hasPrefix:HLS_PREFIX_TAG] && ![line hasSuffix:HLS_SUFFIX_CONTINUE] ) {
-                NSRange URIRange = NSMakeRange(linePos, line.length);
-                HLS_EXT_X_URI *obj = [HLS_EXT_X_URI.alloc initWithType:HLSItemTypeSegment inRange:URIRange];
-                [m addObject:obj];
-                tsFlag = NO;
-            }
-        }
-        
-        linePos += line.length + 1/* \n */;
-    }
-    return m.count != 0 ? m.copy : nil;
-}
-
-- (NSRange)mcs_rangeByFrontStr:(NSString *)front rearStr:(NSString *)rear isRearStrOptional:(BOOL)isRearStrOptional {
-    NSRange retv = NSMakeRange(NSNotFound, NSNotFound);
-    NSRange frontRange = [self rangeOfString:front];
-    if ( frontRange.length != NSNotFound ) {
-        BOOL isRetvValid = NO;
-        NSString *rearStr = [self substringFromIndex:NSMaxRange(frontRange)];
-        NSRange rearRange = [rearStr rangeOfString:rear];
-        if ( rearRange.length != NSNotFound ) {
-            retv = NSMakeRange(NSMaxRange(frontRange), rearRange.location);
-            isRetvValid = YES;
-        }
-        
-        if ( !isRetvValid && (isRearStrOptional || rear.length == 0 ) ) {
-            retv = NSMakeRange(NSMaxRange(frontRange), self.length - NSMaxRange(frontRange));
-        }
-    }
-    return retv;
-}
-
-- (BOOL)mcs_hasVariantStream {
-    return [self mcs_textCheckingResultsByMatchPattern:HLS_PREFIX_VARIANT_STREAM options:kNilOptions] != nil;
+@interface HLSAssetParser () {
+    NSArray<id<HLSItem>> *_Nullable mAllItems;
+    NSArray<id<HLSKey>> *_Nullable mKeys;
+    NSArray<id<HLSSegment>> *_Nullable mSegments;
+    NSArray<id<HLSVariantStream>> *_Nullable mVariantStreams;
+//    NSArray<id<HLSIFrameStream>> *_Nullable mIFrameStreams;
+    NSDictionary<NSString *, id<HLSRenditionGroup>> *_Nullable mGroups;
 }
 @end
 
+@implementation HLSAssetParser
++ (nullable NSString *)proxyPlaylistWithAsset:(NSString *)assetName
+                                  originalURL:(NSURL *)originalURL
+                                   currentURL:(NSURL *)currentURL
+                                     playlist:(NSData *)rawData
+                variantStreamSelectionHandler:(nullable HLSVariantStreamSelectionHandler)variantStreamSelectionHandler
+                    renditionSelectionHandler:(nullable HLSRenditionSelectionHandler)renditionSelectionHandler
+                                        error:(out NSError **)errorPtr {
+    NSString *_Nullable playlist = [NSString.alloc initWithData:rawData encoding:NSUTF8StringEncoding] ?: [NSString.alloc initWithData:rawData encoding:1];
+    NSError *error = nil;
+    if ( playlist == nil || ![playlist hasPrefix:@"#EXT"] ) {
+        error = [NSError mcs_errorWithCode:MCSFileError userInfo:@{
+            MCSErrorUserInfoObjectKey : playlist ?: @"",
+            MCSErrorUserInfoReasonKey : @"Empty data or unsupported format!"
+        }];
+    }
+    
+    NSMutableString *_Nullable proxyPlaylist = nil;;
+    if ( playlist != nil ) {
+        NSMutableArray<__kindof HLSItem *> *parsingItems = NSMutableArray.array;
+        proxyPlaylist = (NSMutableString *)[self parse:playlist shouldTrim:YES parsingItems:parsingItems];
+        
+        __block NSMutableArray<id<HLSVariantStream>> *_Nullable variantStreams;
+        __block NSMutableDictionary<NSString *, HLSRenditionGroup *> *_Nullable renditionGroups;
+        [parsingItems enumerateObjectsUsingBlock:^(__kindof HLSItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            switch ( obj.itemType ) {
+                case HLSItemTypeKey:
+                case HLSItemTypeSegment:
+                case HLSItemTypeIFrameStream:
+                    break;
+                case HLSItemTypeVariantStream: {
+                    if ( variantStreams == nil ) variantStreams = NSMutableArray.array;
+                    [variantStreams addObject:obj];
+                    break;
+                }
+                case HLSItemTypeRendition: {
+                    if ( renditionGroups == nil ) renditionGroups = NSMutableDictionary.dictionary;
+                    HLSRendition *rendition = obj;
+                    NSString *key = [rendition.groupId stringByAppendingFormat:@"_%ld", rendition.renditionType];
+                    HLSRenditionGroup *group = renditionGroups[key];
+                    if ( group == nil ) {
+                        group = [HLSRenditionGroup.alloc init];
+                        renditionGroups[key] = group;
+                    }
+                    [group addRendition:rendition];
+                    break;
+                }
+            }
+        }];
+        
+        // selected variant stream
+        id<HLSVariantStream> _Nullable selectedVariantStream = nil;
+        // selected renditions
+        id<HLSRendition> _Nullable selectedAudioRendition = nil;
+        id<HLSRendition> _Nullable selectedVideoRendition = nil;
+        id<HLSRendition> _Nullable selectedSubtitlesRendition = nil;
+        if ( variantStreams != nil ) {
+            selectedVariantStream = [self selectVariantStreamInArray:variantStreams originalURL:originalURL currentURL:currentURL variantStreamSelectionHandler:variantStreamSelectionHandler];
+            NSParameterAssert(selectedVariantStream != nil);
+            NSString *audioGroupID = selectedVariantStream.audioGroupID;
+            NSString *videoGroupID = selectedVariantStream.videoGroupID;
+            NSString *subtitlesGroupID = selectedVariantStream.subtitlesGroupID;
+//            if ( audioGroupID != nil ) {
+//                NSString *key = [audioGroupID stringByAppendingFormat:@"_%ld", HLSRenditionTypeAudio];
+//                HLSRenditionGroup *group = renditionGroups[key];
+//                NSParameterAssert(group != nil);
+//                selectedAudioRendition = 
+//                    group.renditions.count > 1 ? [self selectRenditionInGroup:group originalURL:originalURL currentURL:currentURL renditionSelectionHandler:renditionSelectionHandler] :
+//                                                 group.renditions.firstObject;
+//            }
+            if ( audioGroupID != nil ) selectedAudioRendition = [self selectRenditionInGroups:renditionGroups
+                                                                                      groupId:audioGroupID
+                                                                                renditionType:HLSRenditionTypeAudio
+                                                                                  originalURL:originalURL
+                                                                                   currentURL:currentURL
+                                                                    renditionSelectionHandler:renditionSelectionHandler];
+            if ( videoGroupID != nil ) selectedVideoRendition = [self selectRenditionInGroups:renditionGroups
+                                                                                      groupId:videoGroupID
+                                                                                renditionType:HLSRenditionTypeVideo
+                                                                                  originalURL:originalURL
+                                                                                   currentURL:currentURL
+                                                                    renditionSelectionHandler:renditionSelectionHandler];
+            if ( subtitlesGroupID != nil ) selectedSubtitlesRendition = [self selectRenditionInGroups:renditionGroups
+                                                                                              groupId:subtitlesGroupID
+                                                                                        renditionType:HLSRenditionTypeSubtitles
+                                                                                          originalURL:originalURL
+                                                                                           currentURL:currentURL
+                                                                            renditionSelectionHandler:renditionSelectionHandler];
+        }
+        
+        [parsingItems enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(__kindof HLSItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            BOOL shouldRemove = NO;
+            switch (obj.itemType) {
+                case HLSItemTypeKey:
+                case HLSItemTypeSegment:
+                    break;
+                case HLSItemTypeVariantStream: {
+                    // remove unselected variant streams
+                    shouldRemove = obj != selectedVariantStream;
+                    break;
+                }
+                case HLSItemTypeRendition: {
+                    // remove unselected renditions
+                    shouldRemove = !(obj == selectedAudioRendition || obj == selectedVideoRendition || obj == selectedSubtitlesRendition);
+                    break;
+                }
+                case HLSItemTypeIFrameStream: {
+                    // remove iframe streams
+                    shouldRemove = YES;
+                    break;
+                }
+            }
+            
+            // remove contents
+            if ( shouldRemove ) {
+                [proxyPlaylist replaceCharactersInRange:NSMakeRange(obj.startPosition, obj.length) withString:@""];
+                return; // return;
+            }
+            
+            // replace URI with proxy url
+            NSString *URI = obj.URI;
+            if ( URI == nil ) return;
+            NSString *extension = obj.fileExtension;
+            if ( extension == nil ) return;
+            NSString *originalUrl = [URI hls_restoreOriginalUrl:currentURL];
+            NSString *proxy = [MCSURL.shared generateProxyURIFromHLSOriginalURL:[NSURL URLWithString:originalUrl] extension:extension forAsset:assetName];
+            [proxyPlaylist replaceCharactersInRange:NSMakeRange(obj.URIStartPosition, URI.length) withString:proxy];
+        }];
+    }
+    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+    return proxyPlaylist != nil ? proxyPlaylist.copy : nil;
+}
 
-@implementation NSArray (HLSURIItems)
-- (nullable id)mcs_firstObject:(BOOL(^)(id obj))block {
-    for ( id obj in self ) {
-        if ( block(obj) )
-            return obj;
++ (NSString *)parse:(NSString *)playlist shouldTrim:(BOOL)shouldTrim parsingItems:(NSMutableArray<__kindof HLSItem *> *)parsingItems {
+    NSMutableString *_Nullable trimmedPlaylist = NSMutableString.string;
+    NSMutableDictionary *ctx = NSMutableDictionary.dictionary;
+    NSArray *lines = [playlist componentsSeparatedByString:@"\n"];
+    NSInteger lastLineIndex = lines.count - 1;
+    __block NSUInteger offset = 0;
+    [lines enumerateObjectsUsingBlock:^(NSString *line, NSUInteger idx, BOOL * _Nonnull stop) {
+        // 去除行首尾的空白字符; 每一行要么是一个标签(以 #EXT 开头), 要么是一个 URI
+        NSString *trimmedLine = shouldTrim ? [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] : line;
+        // 跳过空行和注释
+        if      ( [trimmedLine hasPrefix:@"#EXT"] ) [self handleTag:trimmedLine offset:offset parsingItems:parsingItems context:ctx]; // 这是一个标签行
+        else if ( ![trimmedLine isEqualToString:@""] ) [self handleURI:trimmedLine offset:offset context:ctx]; // 这是一个 URI 行
+        if ( shouldTrim ) idx != lastLineIndex ? [trimmedPlaylist appendFormat:@"%@\n", trimmedLine] : [trimmedPlaylist appendString:trimmedLine];
+        offset += trimmedLine.length + 1; // + @"\n"
+    }];
+    return shouldTrim ? trimmedPlaylist : playlist;
+}
+
+/// offset: filePointer offset
++ (void)handleTag:(NSString *)tagLine offset:(NSUInteger)offset parsingItems:(NSMutableArray<__kindof HLSItem *> *)parsingItems context:(NSMutableDictionary *)ctx {
+    /// #EXTINF:8.766667,
+    /// #EXT-X-BYTERANGE:9194528@9662832
+    /// segment.ts
+    if      ( [tagLine hasPrefix:EXTINF] ) {
+        HLSSegment *segment = [HLSSegment.alloc init];
+        NSString *duration = [tagLine substringFromIndex:EXTINF.length];
+        segment.duration = duration.doubleValue;
+        segment.startPosition = offset;
+        [parsingItems addObject:segment];
+        ctx[HLS_CTX_LAST_ITEM] = segment;
+    }
+    /// #EXTINF:8.766667,
+    /// #EXT-X-BYTERANGE:9194528@9662832
+    /// segment.ts
+    else if ( [tagLine hasPrefix:EXT_X_BYTERANGE] ) {
+        HLSSegment *segment = ctx[HLS_CTX_LAST_ITEM];
+        NSParameterAssert([segment isKindOfClass:HLSSegment.class]);
+        NSString *byteRange = [tagLine substringFromIndex:EXT_X_BYTERANGE.length];
+        NSNumber *prevEnd = ctx[HLS_CTX_BYTERANGE_PREV_END];
+        segment.byteRange = [self parseByteRange:byteRange prevEnd:prevEnd.longLongValue];
+        ctx[HLS_CTX_BYTERANGE_PREV_END] = @(NSMaxRange(segment.byteRange));
+    }
+    /// #EXT-X-KEY: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.4
+    ///
+    /// #EXT-X-KEY:METHOD=NONE 这种情况下, 不需要 URI 和 IV, 表示后续的媒体段不加密;
+    /// #EXT-X-KEY:METHOD=AES-128,URI="https://example.com/key",IV=0x1a2b3c4d5e6f7g8h9i0jklmnopqrst
+    /// #EXT-X-KEY:METHOD=AES-128,URI="https://example.com/key"
+    /// #EXT-X-KEY:METHOD=SAMPLE-AES,URI="https://example.com/key",KEYFORMAT="com.apple.streamingkeydelivery",KEYFORMATVERSIONS="1"
+    /// #EXT-X-KEY:METHOD=SAMPLE-AES,URI="https://drm.example.com/widevine-key",KEYFORMAT="com.widevine.alpha",KEYFORMATVERSIONS="1/2"
+    else if ( [tagLine hasPrefix:EXT_X_KEY] ) {
+        NSString *attributesString = [tagLine substringFromIndex:EXT_X_KEY.length];
+        NSUInteger startPos = 0; // URI startPos
+        NSString *URI = [attributesString hls_findValueForAttribute:HLS_ATTR_URI startPos:&startPos];
+        if ( URI != nil ) {
+            HLSKey *key = [HLSKey.alloc init];
+            key.URI = URI;
+            key.URIStartPosition = EXT_X_KEY.length + startPos + offset;
+            key.startPosition = offset;
+            key.length = tagLine.length;
+            [parsingItems addObject:key];
+        }
+    }
+    /// #EXT-X-MEDIA: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.1
+    ///
+    /// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",URI="audio_eng.m3u8"
+    /// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Spanish",LANGUAGE="es",URI="audio_spa.m3u8"
+    ///
+    /// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="subs_eng.m3u8"
+    /// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="subs_spa.m3u8"
+    else if ( [tagLine hasPrefix:EXT_X_MEDIA] ) {
+        NSString *attributesString = [tagLine substringFromIndex:EXT_X_MEDIA.length];
+        HLSRenditionType renditionType = [[attributesString hls_findValueForAttribute:HLS_ATTR_TYPE startPos:NULL] hls_toRenditionType];
+        NSString *groupId = [attributesString hls_findValueForAttribute:HLS_ATTR_GROUP_ID startPos:NULL];
+        NSString *name = [attributesString hls_findValueForAttribute:HLS_ATTR_NAME startPos:NULL];
+        NSString *language = [attributesString hls_findValueForAttribute:HLS_ATTR_LANGUAGE startPos:NULL];
+        BOOL isDefault = [attributesString hls_findValueForAttribute:HLS_ATTR_DEFAULT startPos:NULL];
+        BOOL isAutoSelect = [attributesString hls_findValueForAttribute:HLS_ATTR_AUTOSELECT startPos:NULL];
+        NSUInteger startPos = 0;
+        NSString *URI = renditionType != HLSRenditionTypeClosedCaptions ? [attributesString hls_findValueForAttribute:HLS_ATTR_URI startPos:&startPos] : nil;
+        HLSRendition *rendition = [HLSRendition.alloc init];
+        rendition.renditionType = renditionType;
+        rendition.groupId = groupId;
+        rendition.name = name;
+        rendition.language = language;
+        rendition.isDefault = isDefault;
+        rendition.isAutoSelect = isAutoSelect;
+        rendition.startPosition = offset;
+        rendition.length = tagLine.length;
+        if ( renditionType != HLSRenditionTypeClosedCaptions ) {
+            rendition.URI = URI;
+            rendition.URIStartPosition = EXT_X_MEDIA.length + startPos + offset;
+        }
+        [parsingItems addObject:rendition];
+    }
+    /// #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360,CODECS="avc1.4d401e,mp4a.40.2",AUDIO="audio-group"
+    /// https://example.com/low/index.m3u8
+    ///
+    /// #EXT-X-STREAM-INF:BANDWIDTH=3000000,AVERAGE-BANDWIDTH=2500000,RESOLUTION=1280x720,FRAME-RATE=60,CODECS="avc1.4d4028,mp4a.40.2",AUDIO="audio-group",SUBTITLES="subs-group"
+    /// https://example.com/high/index.m3u8
+    else if ( [tagLine hasPrefix:EXT_X_STREAM_INF] ) {
+        NSString *attributesString = [tagLine substringFromIndex:EXT_X_STREAM_INF.length];
+        NSUInteger bandwidth = [[attributesString hls_findValueForAttribute:HLS_ATTR_BANDWIDTH startPos:NULL] longLongValue];
+        NSUInteger averageBandwidth = [[attributesString hls_findValueForAttribute:HLS_ATTR_AVERAGE_BANDWIDTH startPos:NULL] longLongValue];
+        NSString *codecs = [attributesString hls_findValueForAttribute:HLS_ATTR_CODECS startPos:NULL];
+        NSString *resolution = [attributesString hls_findValueForAttribute:HLS_ATTR_RESOLUTION startPos:NULL];
+        NSString *frameRate = [attributesString hls_findValueForAttribute:HLS_ATTR_FRAME_RATE startPos:NULL];
+        NSString *audioGroupID = [attributesString hls_findValueForAttribute:HLS_ATTR_AUDIO startPos:NULL];
+        NSString *videoGroupID = [attributesString hls_findValueForAttribute:HLS_ATTR_VIDEO startPos:NULL];
+        NSString *subtitlesGroupID = [attributesString hls_findValueForAttribute:HLS_ATTR_SUBTITLES startPos:NULL];
+        NSString *closedCaptionsGroupID = [attributesString hls_findValueForAttribute:HLS_ATTR_CLOSED_CAPTIONS startPos:NULL];
+        HLSVariantStream *variantSteam = [HLSVariantStream.alloc init];
+        variantSteam.bandwidth = bandwidth;
+        variantSteam.averageBandwidth = averageBandwidth;
+        variantSteam.codecs = codecs;
+        variantSteam.resolution = resolution;
+        variantSteam.frameRate = frameRate;
+        variantSteam.audioGroupID = audioGroupID;
+        variantSteam.videoGroupID = videoGroupID;
+        variantSteam.subtitlesGroupID = subtitlesGroupID;
+        variantSteam.closedCaptionsGroupID = closedCaptionsGroupID;
+        variantSteam.startPosition = offset;
+        [parsingItems addObject:variantSteam];
+        ctx[HLS_CTX_LAST_ITEM] = variantSteam;
+    }
+    /// #EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=86000,URI="iframe-stream-1.m3u8"
+    /// #EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=150000,RESOLUTION=1920x1080,CODECS="avc1.4d001f",URI="iframe-stream-2.m3u8"
+    /// #EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=250000,RESOLUTION=1280x720,CODECS="avc1.42c01e",VIDEO="video-group-1",URI="iframe-stream-3.m3u8"
+    /// #EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=500000,RESOLUTION=854x480,CODECS="avc1.64001f",PROGRAM-ID=1,URI="iframe-stream-4.m3u8"
+    /// #EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=1000000,RESOLUTION=3840x2160,CODECS="hev1.1.6.L120.90",URI="iframe-stream-5.m3u8"
+    else if ( [tagLine hasPrefix:EXT_X_I_FRAME_STREAM_INF] ) {
+        NSString *attributesString = [tagLine substringFromIndex:EXT_X_I_FRAME_STREAM_INF.length];
+        NSUInteger bandwidth = [[attributesString hls_findValueForAttribute:HLS_ATTR_BANDWIDTH startPos:NULL] longLongValue];
+        NSString *codecs = [attributesString hls_findValueForAttribute:HLS_ATTR_CODECS startPos:NULL];
+        NSString *resolution = [attributesString hls_findValueForAttribute:HLS_ATTR_RESOLUTION startPos:NULL];
+        NSString *videoGroupID = [attributesString hls_findValueForAttribute:HLS_ATTR_VIDEO startPos:NULL];
+        NSUInteger startPos = 0;
+        NSString *URI = [attributesString hls_findValueForAttribute:HLS_ATTR_URI startPos:&startPos];
+        HLSIFrameStream *iframeStream = [HLSIFrameStream.alloc init];
+        iframeStream.bandwidth = bandwidth;
+        iframeStream.codecs = codecs;
+        iframeStream.resolution = resolution;
+        iframeStream.videoGroupID = videoGroupID;
+        iframeStream.URI = URI;
+        iframeStream.URIStartPosition = EXT_X_I_FRAME_STREAM_INF.length + startPos + offset;
+        iframeStream.startPosition = offset;
+        iframeStream.length = tagLine.length;
+        [parsingItems addObject:iframeStream];
+    }
+}
+
++ (void)handleURI:(NSString *)URI offset:(NSUInteger)offset context:(NSMutableDictionary *)ctx {
+    HLSItem *item = ctx[HLS_CTX_LAST_ITEM];
+    /// #EXTINF:8.766667,
+    /// #EXT-X-BYTERANGE:9194528@9662832
+    /// segment.ts
+    ///
+    ///
+    /// #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360,CODECS="avc1.4d401e,mp4a.40.2",AUDIO="audio-group"
+    /// https://example.com/low/index.m3u8
+    ///
+    if ( item != nil && item.URI == nil ) {
+        item.URI = URI;
+        item.URIStartPosition = offset;
+        item.length = offset + URI.length - item.startPosition;
+        ctx[HLS_CTX_LAST_ITEM] = nil;
+    }
+}
+
+/// #EXT-X-BYTERANGE:<n>[@<o>]
++ (NSRange)parseByteRange:(NSString *)byteRange prevEnd:(NSUInteger)previousEnd {
+    // 拆分 n 和 o, 分隔符是 "@"
+    NSArray<NSString *> *components = [byteRange componentsSeparatedByString:@"@"];
+    // 解析 n（字节长度）
+    NSUInteger length = (NSUInteger)[components[0] integerValue];
+    NSUInteger location;
+    if (components.count > 1) {
+        // 如果有 o, 解析 o（字节偏移量）
+        location = (NSUInteger)[components[1] integerValue];
+    } else {
+        // 如果没有 o, 使用前一个片段的末尾作为起点
+        location = previousEnd;
+    }
+    // 返回解析的 NSRange
+    return NSMakeRange(location, length);
+}
+
++ (id<HLSVariantStream>)selectVariantStreamInArray:(NSArray<id<HLSVariantStream>> *)streams 
+                                       originalURL:(NSURL *)originalURL
+                                        currentURL:(NSURL *)currentURL
+                     variantStreamSelectionHandler:(nullable HLSVariantStreamSelectionHandler)variantStreamSelectionHandler {
+    if ( variantStreamSelectionHandler != nil ) {
+        return variantStreamSelectionHandler(streams, originalURL, currentURL);
+    }
+    return streams[streams.count / 2]; // select middle stream
+}
+
++ (id<HLSRendition>)selectRenditionInGroups:(NSDictionary<NSString *, id<HLSRenditionGroup>> *)groups
+                                    groupId:(NSString *)groupId
+                              renditionType:(HLSRenditionType)renditionType
+                                originalURL:(NSURL *)originalURL
+                                 currentURL:(NSURL *)currentURL
+                  renditionSelectionHandler:(nullable HLSRenditionSelectionHandler)renditionSelectionHandler {
+    NSString *key = [groupId stringByAppendingFormat:@"_%ld", renditionType];
+    id<HLSRenditionGroup> group = groups[key];
+    NSParameterAssert(group != nil);
+    if ( group.renditions.count > 1 ) {
+        if ( renditionSelectionHandler != nil ) {
+            return renditionSelectionHandler(renditionType, group, originalURL, currentURL);
+        }
+    }
+    return group.renditions.firstObject;
+}
+
+- (instancetype)initWithProxyPlaylist:(NSString *)playlist {
+    self = [super init];
+    NSMutableArray<__kindof HLSItem *> *parsingItems = NSMutableArray.array;
+    [HLSAssetParser parse:playlist shouldTrim:NO parsingItems:parsingItems];
+    if ( parsingItems.count != 0 ) {
+        NSMutableArray<__kindof HLSItem *> *allItems = NSMutableArray.array;
+        __block NSMutableArray<id<HLSKey>> *_Nullable keys;
+        __block NSMutableArray<id<HLSSegment>> *_Nullable segments;
+        __block NSMutableArray<id<HLSVariantStream>> *_Nullable variantStreams;
+        __block NSMutableDictionary<NSString *, HLSRenditionGroup *> *_Nullable groups;
+        [parsingItems enumerateObjectsUsingBlock:^(__kindof HLSItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            switch ( obj.itemType ) {
+                case HLSItemTypeKey: {
+                    if ( keys == nil ) keys = NSMutableArray.array;
+                    [keys addObject:obj];
+                    [allItems addObject:obj];
+                    break;
+                }
+                case HLSItemTypeSegment: {
+                    if ( segments == nil ) segments = NSMutableArray.array;
+                    [segments addObject:obj];
+                    [allItems addObject:obj];
+                    break;
+                }
+                case HLSItemTypeVariantStream: {
+                    if ( variantStreams == nil ) variantStreams = NSMutableArray.array;
+                    [variantStreams addObject:obj];
+                    [allItems addObject:obj];
+                    break;
+                }
+                case HLSItemTypeIFrameStream: {
+    //                if ( iframeStreams == nil ) iframeStreams = NSMutableArray.array;
+    //                [iframeStreams addObject:obj];
+                    break;
+                }
+                case HLSItemTypeRendition: {
+                    if ( groups == nil ) groups = NSMutableDictionary.dictionary;
+                    HLSRendition *rendition = obj;
+                    NSString *key = [rendition.groupId stringByAppendingFormat:@"_%ld", rendition.renditionType];
+                    HLSRenditionGroup *group = groups[key];
+                    if ( group == nil ) {
+                        group = [HLSRenditionGroup.alloc init];
+                        groups[key] = group;
+                    }
+                    [group addRendition:rendition];
+                    [allItems addObject:obj];
+                    break;
+                }
+            }
+        }];
+        if ( parsingItems.count > 0 ) mAllItems = parsingItems.copy;
+        if ( keys != nil ) mKeys = keys.copy;
+        if ( segments != nil ) mSegments = segments.copy;
+        if ( variantStreams != nil ) mVariantStreams = variantStreams.copy;
+        if ( groups != nil ) mGroups = groups.copy;
+    }
+    return self;
+}
+
+- (NSUInteger)allItemsCount {
+    return mAllItems != nil ? mAllItems.count : 0;
+}
+
+- (NSUInteger)segmentsCount {
+    return mSegments != nil ? mSegments.count : 0;
+}
+
+- (nullable NSArray<id<HLSItem>> *)allItems {
+    return mAllItems;
+}
+
+- (nullable NSArray<id<HLSKey>> *)keys {
+    return mKeys;
+}
+
+- (nullable NSArray<id<HLSSegment>> *)segments {
+    return mSegments;
+}
+
+- (nullable NSArray<id<HLSVariantStream>> *)variantStreams {
+    return mVariantStreams;
+}
+
+- (nullable id<HLSRenditionGroup>)renditionGroupBy:(NSString *)groupId type:(HLSRenditionType)type {
+    if ( mGroups != nil ) {
+        NSString *key = [groupId stringByAppendingFormat:@"_%ld", type];
+        return mGroups[key];
     }
     return nil;
 }
 @end
-
-/**
-
- https://www.toptal.com/apple/introduction-to-http-live-streaming-hls
- 
- Here is an example of such an M3U8 file:
-
- ```
- #EXTM3U
- #EXT-X-STREAM-INF:BANDWIDTH=1296,RESOLUTION=640x360
- https://.../640x360_1200.m3u8
- #EXT-X-STREAM-INF:BANDWIDTH=264,RESOLUTION=416x234
- https://.../416x234_200.m3u8
- #EXT-X-STREAM-INF:BANDWIDTH=464,RESOLUTION=480x270
- https://.../480x270_400.m3u8
- #EXT-X-STREAM-INF:BANDWIDTH=1628,RESOLUTION=960x540
- https://.../960x540_1500.m3u8
- #EXT-X-STREAM-INF:BANDWIDTH=2628,RESOLUTION=1280x720
- https://.../1280x720_2500.m3u8
- 
-
- 
-    #EXT-X-STREAM-INF:BANDWIDTH=1296,RESOLUTION=640x360
-    https://.../640x360_1200.m3u8
- 
-    These are called variants of the same video prepared for different network speeds and screen resolutions. This specific M3U8 file (640x360_1200.m3u8) contains the video file chunks of the video resized to 640x360 pixels and prepared for bitrates of 1296kbps. Note that the reported bitrate must take into account both the video and audio streams in the video.
-
-    The video player will usually start playing from the first stream variant (in the previous example this is 640x360_1200.m3u8). For that reason, you must take special care to decide which variant will be the first in the list. The order of the other variants isn’t important.
-
-    If the first .ts file takes too long to download (causing “buffering”, i.e. waiting for the next chunk) the video player will switch to a to a stream with a smaller bitrate. And, of course, if it’s loaded fast enough it means that it can switch to a better quality variant, but only if it makes sense for the resolution of the display.
- 
-    If the first stream in the index M3U8 list isn’t the best one, the client will need one or two cycles until it settles with the right variant.
-
- */

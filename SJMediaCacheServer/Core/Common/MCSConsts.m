@@ -11,7 +11,8 @@ NSNotificationName const MCSFileWriteOutOfSpaceErrorNotification = @"MCSFileWrit
 
 NSString *const HLS_EXTENSION_PLAYLIST   = @"m3u8";
 NSString *const HLS_EXTENSION_SEGMENT    = @"ts";
-NSString *const HLS_EXTENSION_AES_KEY    = @"key";
+NSString *const HLS_EXTENSION_KEY    = @"key";
+NSString *const HLS_EXTENSION_SUBTITLES  = @"vtt";
 
 NSInteger const MCS_RESPONSE_CODE_OK = 200;
 NSInteger const MCS_RESPONSE_CODE_PARTIAL_CONTENT = 206;

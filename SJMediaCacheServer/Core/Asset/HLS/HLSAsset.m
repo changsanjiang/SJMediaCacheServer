@@ -32,7 +32,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     HLSAssetContentProvider *mProvider;
     id<MCSAssetContent> _Nullable mPlaylistContent;
     NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mAESKeyContents; // { identifier: content }
-    NSMutableDictionary<NSString *, id<HLSURIItem>> *_Nullable mSegmentURIItems; // { nodeIdentifier: item }
+    NSMutableDictionary<NSString *, id<HLSItem>> *_Nullable mSegmentURIItems; // { nodeIdentifier: item }
     HLSAssetSegmentNodeMap *mSegmentNodeMap; // ts
 }
 
@@ -100,7 +100,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 #pragma mark - mark
 
 - (NSString *)generateAESKeyIdentifierWithOriginalURL:(NSURL *)originalURL {
-    return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_AES_KEY];
+    return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_KEY];
 }
 
 - (NSString *)generateSegmentIdentifierWithOriginalURL:(NSURL *)originalURL {
@@ -237,7 +237,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:response.originalRequest.URL];
                 NSRange byteRange = MCSRequestRange(MCSRequestGetContentRange(response.originalRequest.allHTTPHeaderFields));
                 NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
-                id<HLSURIItem> item = mSegmentURIItems[nodeIdentifier];
+                id<HLSItem> item = mSegmentURIItems[nodeIdentifier];
                 NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
                 BOOL isSubrange = byteRange.length != NSNotFound;
@@ -284,7 +284,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     // playlist content
     mPlaylistContent = [MCSAssetContent.alloc initWithFilePath:proxyPlaylistFilePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
     // find existing aes contents
-    [mParser.aesKeys enumerateObjectsUsingBlock:^(id<HLSURIItem>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    [mParser.keys enumerateObjectsUsingBlock:^(id<HLSKey>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:obj.URI];
         NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
         NSString *filePath = [mProvider getAESKeyFilePath:identifier];
@@ -296,10 +296,10 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     }];
     if ( mParser.segmentsCount != 0 ) {
         mSegmentURIItems = NSMutableDictionary.dictionary;
-        [mParser.segments enumerateObjectsUsingBlock:^(id<HLSURIItem>  _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {
+        [mParser.segments enumerateObjectsUsingBlock:^(id<HLSSegment>  _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {
             NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
             NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:originalURL];
-            NSRange byteRange = MCSRequestRange(MCSRequestGetContentRange(item.HTTPAdditionalHeaders));
+            NSRange byteRange = item.byteRange;
             NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
             mSegmentURIItems[nodeIdentifier] = item;
         }];
@@ -311,7 +311,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 NSRange byteRange = { NSNotFound, NSNotFound };
                 NSString *segmentIdentifier = [mProvider getSegmentIdentifierByFilename:filename byteRange:&byteRange];
                 NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
-                id<HLSURIItem> item = mSegmentURIItems[nodeIdentifier];
+                id<HLSItem> item = mSegmentURIItems[nodeIdentifier];
                 NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
                 id<HLSAssetSegment> content = [mProvider getSegmentByFilename:filename mimeType:mimeType];
@@ -342,11 +342,11 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         
         // isVariantStream
         
-        [mParser.allItems enumerateObjectsUsingBlock:^(id<HLSURIItem>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ( [mParser isVariantStream:obj] ) {
-                // - (nullable NSArray<id<HLSURIItem>> *)renditionMediasForVariantItem:(id<HLSURIItem>)item;
-
-            }
+        [mParser.allItems enumerateObjectsUsingBlock:^(id<HLSItem>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//            if ( [mParser isVariantStream:obj] ) {
+//                // - (nullable NSArray<id<HLSItem>> *)renditionMediasForVariantItem:(id<HLSItem>)item;
+//
+//            }
         }];
         
         mStored = YES;

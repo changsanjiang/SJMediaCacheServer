@@ -9,19 +9,24 @@
 #import "HLSAssetDefines.h"
 
 NS_ASSUME_NONNULL_BEGIN
-@interface HLSAssetParser : NSObject
-+ (nullable NSString *)proxyPlaylistWithAsset:(NSString *)assetName originalPlaylistData:(NSData *)rawData resourceURL:(NSURL *)resourceURL error:(out NSError **)errorPtr;
+@interface HLSAssetParser : NSObject<HLSParser>
++ (nullable NSString *)proxyPlaylistWithAsset:(NSString *)assetName 
+                                  originalURL:(NSURL *)originalURL
+                                   currentURL:(NSURL *)currentURL
+                                     playlist:(NSData *)rawData
+                variantStreamSelectionHandler:(nullable HLSVariantStreamSelectionHandler)variantStreamSelectionHandler
+                    renditionSelectionHandler:(nullable HLSRenditionSelectionHandler)renditionSelectionHandler
+                                        error:(out NSError **)errorPtr;
 
 - (instancetype)initWithProxyPlaylist:(NSString *)playlist;
 
 @property (nonatomic, readonly) NSUInteger allItemsCount;
 @property (nonatomic, readonly) NSUInteger segmentsCount;
 
-@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSURIItem>> *allItems;
+@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSItem>> *allItems;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSKey>> *keys;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSSegment>> *segments;
-@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSVariantStreamItem>> *variantStreams;
-- (nullable id<HLSRenditionGroup>)mediaGroupBy:(NSString *)groupId mediaType:(HLSRenditionType)mediaType;
-@property (nonatomic, strong, readonly, nullable) id<HLSVariantStreamItem> defaultVariantStream;
+@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSVariantStream>> *variantStreams;
+- (nullable id<HLSRenditionGroup>)renditionGroupBy:(NSString *)groupId type:(HLSRenditionType)type;
 @end
 NS_ASSUME_NONNULL_END

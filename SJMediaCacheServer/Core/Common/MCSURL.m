@@ -117,7 +117,7 @@ MCSMD5(NSString *str) {
     // Check if the URL path contains HLS-specific extensions.
     return ([URL.path.pathExtension isEqualToString:HLS_EXTENSION_PLAYLIST] ||
             [URL.path.pathExtension isEqualToString:HLS_EXTENSION_SEGMENT] ||
-            [URL.path.pathExtension isEqualToString:HLS_EXTENSION_AES_KEY]) ? MCSAssetTypeHLS : MCSAssetTypeFILE;
+            [URL.path.pathExtension isEqualToString:HLS_EXTENSION_KEY]) ? MCSAssetTypeHLS : MCSAssetTypeFILE;
 }
 
 /// Encodes the given URL string into a base64 format.
@@ -143,7 +143,7 @@ MCSMD5(NSString *str) {
     if ( [extension isEqualToString:HLS_EXTENSION_PLAYLIST] )
         return MCSDataTypeHLSPlaylist;
     
-    if ( [extension isEqualToString:HLS_EXTENSION_AES_KEY] )
+    if ( [extension isEqualToString:HLS_EXTENSION_KEY] )
         return MCSDataTypeHLSAESKey;
 
     if ( [extension isEqualToString:HLS_EXTENSION_SEGMENT] )
