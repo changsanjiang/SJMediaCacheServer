@@ -17,7 +17,7 @@
 #import "MCSUtils.h"
 #import "MCSURL.h"
 
-@interface HLSAssetReader ()<MCSAssetContentReaderDelegate> {
+@interface HLSAssetReader ()<MCSAssetContentReaderDelegate, MCSAssetObserver> {
     MCSDataType mDataType;
     MCSReaderStatus mStatus;
     NSURLRequest *mRequest;
@@ -42,6 +42,7 @@
         _readDataDecoder = readDataDecoder;
         _delegate = delegate;
         [mAsset readwriteRetain];
+        [mAsset registerObserver:self];
         
 #ifdef DEBUG
         MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, mRequest.URL, asset, mRequest.allHTTPHeaderFields);
@@ -282,7 +283,18 @@
     }
 }
 
-#pragma mark -
+#pragma mark - MCSAssetObserver
+
+- (void)assetWillClear:(id<MCSAsset>)asset {
+    @synchronized (self) {
+        [self abortWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+            MCSErrorUserInfoObjectKey : asset,
+            MCSErrorUserInfoReasonKey : @"Unable to continue reading the asset because it is about to be cleared."
+        }]];
+    }
+}
+
+#pragma mark - MCSAssetContentReaderDelegate
 
 - (void)readerWasReadyToRead:(id<MCSAssetContentReader>)reader {
     @synchronized (self) {
@@ -304,6 +316,7 @@
                     case MCSDataTypeHLSMask:
                     case MCSDataTypeHLSPlaylist:
                     case MCSDataTypeHLSAESKey:
+                    case MCSDataTypeHLSSubtitles:
                     case MCSDataTypeHLS:
                     case MCSDataTypeFILEMask:
                     case MCSDataTypeFILE:

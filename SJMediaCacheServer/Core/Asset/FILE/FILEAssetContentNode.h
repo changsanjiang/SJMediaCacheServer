@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) FILEAssetContentNode *tail;
 - (void)attachContentToNode:(id<MCSAssetContent>)content placement:(UInt64)placement;
 - (void)removeNode:(FILEAssetContentNode *)node;
+- (void)removeAllNodes;
 - (void)enumerateNodesUsingBlock:(void(NS_NOESCAPE ^)(FILEAssetContentNode *node, BOOL *stop))block;
 @end
 NS_ASSUME_NONNULL_END

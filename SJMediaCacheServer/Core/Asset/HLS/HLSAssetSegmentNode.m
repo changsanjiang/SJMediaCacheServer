@@ -117,4 +117,8 @@
         block(obj, stop);
     }];
 }
+
+- (void)removeAllNodes {
+    [mNodes removeAllObjects];
+}
 @end

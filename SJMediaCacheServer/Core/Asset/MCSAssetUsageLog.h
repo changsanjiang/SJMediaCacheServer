@@ -13,9 +13,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSAssetUsageLog : NSObject<MCSSaveable>
 - (instancetype)initWithAsset:(id<MCSAsset>)asset;
 @property (nonatomic, readonly) NSInteger id;
-@property (nonatomic, readonly) NSInteger asset;
+@property (nonatomic, readonly) NSInteger asset; // associated asset id
 @property (nonatomic, readonly) MCSAssetType assetType;
-@property (nonatomic, readonly) NSUInteger usageCount;
+// removed
+//@property (nonatomic, readonly) NSUInteger usageCount;
+// The updatedTime has been changed to lastReadTime, representing the time of the last read.
 @property (nonatomic, readonly) NSTimeInterval updatedTime;
 @property (nonatomic, readonly) NSTimeInterval createdTime;
 @end

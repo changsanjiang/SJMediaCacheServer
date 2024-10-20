@@ -12,7 +12,8 @@
 @property (nonatomic) NSInteger id;
 @property (nonatomic) NSInteger asset;
 @property (nonatomic) MCSAssetType assetType;
-@property (nonatomic) NSUInteger usageCount;
+//@property (nonatomic) NSUInteger usageCount;
+// The updatedTime has been changed to lastReadTime, representing the time of the last read.
 @property (nonatomic) NSTimeInterval updatedTime;
 @property (nonatomic) NSTimeInterval createdTime;
 @end
@@ -21,9 +22,10 @@
 - (instancetype)initWithAsset:(id<MCSAsset>)asset {
     self = [super init];
     if ( self ) {
-        self.asset = asset.id;
-        self.assetType = asset.type;
-        self.updatedTime = self.createdTime = NSDate.date.timeIntervalSince1970;
+        _asset = asset.id;
+        _assetType = asset.type;
+        _createdTime = NSDate.date.timeIntervalSince1970;
+        _updatedTime = _createdTime;
     }
     return self;
 }

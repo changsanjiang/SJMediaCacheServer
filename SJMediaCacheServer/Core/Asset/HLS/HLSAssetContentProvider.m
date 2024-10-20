@@ -16,21 +16,37 @@
 
 @implementation HLSAssetContentProvider {
     NSString *mRootDir;
+    BOOL mDirCreated;
 }
 
 - (instancetype)initWithDirectory:(NSString *)directory {
     self = [super init];
     if ( self ) {
         mRootDir = directory;
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:mRootDir] ) {
-            [NSFileManager.defaultManager createDirectoryAtPath:mRootDir withIntermediateDirectories:YES attributes:nil error:NULL];
-        }
+        mDirCreated = [NSFileManager.defaultManager fileExistsAtPath:mRootDir];
     }
     return self;
 }
 
 - (NSString *)getPlaylistFilePath {
     return [mRootDir stringByAppendingPathComponent:[NSString stringWithFormat:@"index.%@", HLS_EXTENSION_PLAYLIST]];
+}
+
+- (nullable NSString *)loadPlaylistFilePath {
+    NSString *filePath = [self getPlaylistFilePath];
+    return [NSFileManager.defaultManager fileExistsAtPath:filePath] ? filePath : nil;
+}
+- (nullable NSString *)writeContentsToPlaylist:(NSString *)contents error:(out NSError **)errorPtr {
+    NSError *error = nil;
+    NSData *data = [contents dataUsingEncoding:NSUTF8StringEncoding];
+    if ( [self _createDir:&error] ) {
+        NSString *filePath = [self getPlaylistFilePath];
+        if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+            return filePath;
+        }
+    }
+    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+    return nil;
 }
 
 - (NSString *)getAESKeyFilePath:(NSString *)filename {
@@ -86,31 +102,45 @@
                          [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength length:length byteRange:byteRange];
 }
 
-- (nullable id<HLSAssetSegment>)createSegmentWithIdentifier:(NSString *)identifier mimeType:(nullable NSString *)mimeType totalLength:(NSUInteger)totalLength {
-    return [self createSegmentWithIdentifier:identifier mimeType:mimeType totalLength:totalLength byteRange:NSMakeRange(NSNotFound, NSNotFound)];
+- (nullable id<HLSAssetSegment>)createSegmentWithIdentifier:(NSString *)identifier mimeType:(nullable NSString *)mimeType totalLength:(NSUInteger)totalLength error:(NSError **)error {
+    return [self createSegmentWithIdentifier:identifier mimeType:mimeType totalLength:totalLength byteRange:NSMakeRange(NSNotFound, NSNotFound) error:error];
 }
 
-- (nullable id<HLSAssetSegment>)createSegmentWithIdentifier:(NSString *)identifier mimeType:(nullable NSString *)mimeType totalLength:(NSUInteger)totalLength byteRange:(NSRange)byteRange {
-    BOOL isSubrange = byteRange.location != NSNotFound;
-    NSUInteger number = 0;
-    do {
-        NSString *filename = !isSubrange ? [self _generateSegmentFilenameForIdentifier:identifier totalLength:totalLength number:number] :
-                                           [self _generateSegmentFilenameForIdentifier:identifier totalLength:totalLength number:number byteRange:byteRange];
-        NSString *filePath = [mRootDir stringByAppendingPathComponent:filename];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
-            [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
-            return !isSubrange ? [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength] :
-                                 [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength byteRange:byteRange];
-        }
-        number += 1;
-    } while (true);
+- (nullable id<HLSAssetSegment>)createSegmentWithIdentifier:(NSString *)identifier mimeType:(nullable NSString *)mimeType totalLength:(NSUInteger)totalLength byteRange:(NSRange)byteRange error:(NSError **)errorPtr {
+    NSError *error = nil;
+    if ( [self _createDir:&error] ) {
+        BOOL isSubrange = byteRange.location != NSNotFound;
+        NSUInteger number = 0;
+        do {
+            NSString *filename = !isSubrange ? [self _generateSegmentFilenameForIdentifier:identifier totalLength:totalLength number:number] :
+            [self _generateSegmentFilenameForIdentifier:identifier totalLength:totalLength number:number byteRange:byteRange];
+            NSString *filePath = [mRootDir stringByAppendingPathComponent:filename];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
+                return !isSubrange ? [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength] :
+                [HLSAssetSegment.alloc initWithMimeType:mimeType filePath:filePath totalLength:totalLength byteRange:byteRange];
+            }
+            number += 1;
+        } while (true);
+    }
+    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+    return nil;
 }
 
 - (void)removeSegment:(HLSAssetSegment *)content {
     [NSFileManager.defaultManager removeItemAtPath:content.filePath error:NULL];
 }
 
+- (void)clear {
+    [NSFileManager.defaultManager removeItemAtPath:mRootDir error:NULL];
+}
+
 #pragma mark - mark
+
+- (BOOL)_createDir:(NSError **)errorPtr {
+    if ( !mDirCreated ) mDirCreated = [NSFileManager.defaultManager createDirectoryAtPath:mRootDir withIntermediateDirectories:YES attributes:nil error:errorPtr];
+    return mDirCreated;
+}
 
 - (NSString *)_generateSegmentFilenameForIdentifier:(NSString *)identifier totalLength:(long long)totalLength number:(NSInteger)number {
     // _FILE_NAME1(__prefix__, __segmentTotalLength__, __number__, __ID__)

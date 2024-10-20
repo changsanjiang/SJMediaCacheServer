@@ -695,9 +695,6 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
         __block NSMutableArray<id<HLSSegment>> *_Nullable segments;
         __block NSMutableDictionary<NSString *, HLSRenditionGroup *> *_Nullable groups;
         __block id<HLSVariantStream> _Nullable selectedVariantStream;
-        __block id<HLSRendition> _Nullable selectedAudioRendition;
-        __block id<HLSRendition> _Nullable selectedVideoRendition;
-        __block id<HLSRendition> _Nullable selectedSubtitlesRendition;
         [parsingItems enumerateObjectsUsingBlock:^(__kindof HLSItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             switch ( obj.itemType ) {
                 case HLSItemTypeKey: {

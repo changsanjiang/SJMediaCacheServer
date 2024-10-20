@@ -8,7 +8,7 @@
 
 #import "MCSInterfaces.h"
 #import "MCSURL.h" 
-@class MCSAsset;
+#import "HLSAssetDefines.h"
 
 typedef NSNumber MCSAssetTypeNumber;
 typedef NSNumber MCSAssetIDNumber;
@@ -47,6 +47,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)trimAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
 - (void)trimAssetsForLastReadingTime:(NSTimeInterval)timeLimit notIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets countLimit:(NSInteger)maxCount;
 @end
+
+
+@interface MCSAssetManager (HLSVariantStreamAsset)
+@property (nonatomic, copy, nullable) HLSVariantStreamSelectionHandler variantStreamSelectionHandler;
+@property (nonatomic, copy, nullable) HLSRenditionSelectionHandler renditionSelectionHandler;
+@end
+
 
 @interface MCSAssetManager (Internal)
 - (void)assetMetadataDidLoad:(id<MCSAsset>)asset;

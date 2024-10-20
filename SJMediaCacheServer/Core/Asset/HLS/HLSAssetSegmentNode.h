@@ -23,5 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable HLSAssetSegmentNode *)nodeForIdentifier:(NSString *)identifier;
 - (void)attachContentToNode:(id<HLSAssetSegment>)content identifier:(NSString *)identifier;
 - (void)enumerateNodesUsingBlock:(void(NS_NOESCAPE ^)(HLSAssetSegmentNode *node, BOOL *stop))block;
+- (void)removeAllNodes;
 @end
 NS_ASSUME_NONNULL_END

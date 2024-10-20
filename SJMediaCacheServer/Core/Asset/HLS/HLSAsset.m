@@ -84,11 +84,9 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         mProvider = [HLSAssetContentProvider.alloc initWithDirectory:directory];
         mSegmentNodeMap = [HLSAssetSegmentNodeMap.alloc init];
 
-        // playlist 与 aes key 都属于小文件, 目录中只要存在对应文件就说明已下载完毕;
-        
         // find proxy playlist file
-        NSString *proxyPlaylistFilePath = [mProvider getPlaylistFilePath];
-        if ( [NSFileManager.defaultManager fileExistsAtPath:proxyPlaylistFilePath] ) {
+        NSString *proxyPlaylistFilePath = [mProvider loadPlaylistFilePath];
+        if ( proxyPlaylistFilePath != nil ) {
             NSError *error = nil;
             mParser = [HLSAssetParser.alloc initWithProxyPlaylist:[NSString stringWithContentsOfFile:proxyPlaylistFilePath encoding:NSUTF8StringEncoding error:&error]];
             if ( mParser != nil ) [self _onPlaylist:proxyPlaylistFilePath];
@@ -137,6 +135,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 //@property (nonatomic, readonly) BOOL isMasterAsset;
 
 #pragma mark - mark
+
+#warning next ... identifier 与 extension 的添加问题
 
 - (NSString *)generateAESKeyIdentifierWithOriginalURL:(NSURL *)originalURL {
     return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_KEY];
@@ -213,9 +213,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
             NSError *error = nil;
             NSString *proxyPlaylist = [HLSAssetParser proxyPlaylistWithAsset:self.name originalURL:originalURL currentURL:currentURL playlist:rawData variantStreamSelectionHandler:_variantStreamSelectionHandler renditionSelectionHandler:_renditionSelectionHandler error:&error];
             if ( proxyPlaylist != nil ) {
-                NSData *data = [proxyPlaylist dataUsingEncoding:NSUTF8StringEncoding];
-                NSString *filePath = [mProvider getPlaylistFilePath];
-                if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+                NSString *filePath = [mProvider writeContentsToPlaylist:proxyPlaylist error:&error];
+                if ( filePath != nil ) {
                     mParser = [HLSAssetParser.alloc initWithProxyPlaylist:proxyPlaylist];
                     if ( mParser != nil ) [self _onPlaylist:filePath];
                 }
@@ -298,7 +297,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     }
 }
 
-- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response {
+- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError *__autoreleasing  _Nullable * _Nullable)errorPtr {
     switch ( dataType ) {
         case MCSDataTypeHLSMask:
         case MCSDataTypeHLSPlaylist:
@@ -317,10 +316,49 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
                 BOOL isSubrange = byteRange.length != NSNotFound;
-                content = !isSubrange ? [mProvider createSegmentWithIdentifier:segmentIdentifier mimeType:mimeType totalLength:response.totalLength] :
-                                        [mProvider createSegmentWithIdentifier:segmentIdentifier mimeType:mimeType totalLength:response.totalLength byteRange:byteRange];
-                [mSegmentNodeMap attachContentToNode:content identifier:nodeIdentifier];
-                return [content readwriteRetain];
+                content = !isSubrange ? [mProvider createSegmentWithIdentifier:segmentIdentifier mimeType:mimeType totalLength:response.totalLength error:errorPtr] :
+                                        [mProvider createSegmentWithIdentifier:segmentIdentifier mimeType:mimeType totalLength:response.totalLength byteRange:byteRange error:errorPtr];
+                if ( content != nil ) {
+                    [mSegmentNodeMap attachContentToNode:content identifier:nodeIdentifier];
+                    return [content readwriteRetain];
+                }
+                return nil;
+            }
+        }
+    }
+}
+
+- (void)clear {
+    @synchronized (self) {
+        for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+            if ( [observer respondsToSelector:@selector(assetWillClear:)] ) {
+                [observer assetWillClear:self];
+            }
+        }
+        mStored = NO;
+        mParser = nil;
+        mPlaylistContent = nil;
+        mAESKeyContents = nil;
+        mSegmentURIItems = nil;
+        [mSegmentNodeMap removeAllNodes];
+        if ( mVariantStreamAsset != nil ) {
+            [mVariantStreamAsset clear];
+            mVariantStreamAsset = nil;
+        }
+        if ( mAudioRenditionAsset != nil ) {
+            [mAudioRenditionAsset clear];
+            mAudioRenditionAsset = nil;
+        }
+        if ( mVideoRenditionAsset != nil ) {
+            [mVideoRenditionAsset clear];
+            mVideoRenditionAsset = nil;
+        }
+        mSubtitlesContent = nil;
+        [mProvider clear];
+        
+        for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+            if ( [observer respondsToSelector:@selector(assetDidClear:)] ) {
+                [observer assetDidClear:self];
             }
         }
     }

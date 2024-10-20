@@ -70,8 +70,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
 @property (nonatomic, readonly) BOOL isStored;
 - (void)prepare;
-- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response;
+- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error;
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
+- (void)clear; // 清空本地文件缓存; 请谨慎调用;
 
 - (void)registerObserver:(id<MCSAssetObserver>)observer;
 - (void)removeObserver:(id<MCSAssetObserver>)observer;
@@ -79,7 +80,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MCSAssetObserver <NSObject>
 @optional
+- (void)assetDidRead:(id<MCSAsset>)asset; // asset正在被读取数据
 - (void)assetDidStore:(id<MCSAsset>)asset; // 所有相关数据存储完成的回调
+- (void)assetWillClear:(id<MCSAsset>)asset; // 本地文件缓存被清空前的回调
+- (void)assetDidClear:(id<MCSAsset>)asset; // 本地文件缓存被清空了
 @end
 
 @protocol MCSRequest <NSObject>

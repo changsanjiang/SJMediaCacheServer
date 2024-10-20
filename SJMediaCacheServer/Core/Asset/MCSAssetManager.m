@@ -29,13 +29,13 @@
 
 @interface MCSAssetUsageLog (MCSPrivate)
 @property (nonatomic) NSInteger id;
-@property (nonatomic) NSUInteger usageCount;
-
+@property (nonatomic) NSInteger asset; // associated asset id
+@property (nonatomic) MCSAssetType assetType;
+// removed;
+//@property (nonatomic) NSUInteger usageCount;
+// The updatedTime has been changed to lastReadTime, representing the time of the last read.
 @property (nonatomic) NSTimeInterval updatedTime;
 @property (nonatomic) NSTimeInterval createdTime;
-
-@property (nonatomic) NSInteger asset;
-@property (nonatomic) MCSAssetType assetType;
 @end
   
 @interface HLSAsset (HLSPrivate)
@@ -47,11 +47,10 @@
 
 #pragma mark -
 
-@interface MCSAssetManager ()<MCSAssetReaderObserver> {
+@interface MCSAssetManager ()<MCSAssetReaderObserver, MCSAssetObserver> {
     NSUInteger mCountOfAllAssets;
     NSMutableDictionary<NSString *, id<MCSAsset> > *mAssets;
     NSMutableDictionary<NSString *, MCSAssetUsageLog *> *mUsageLogs;
-    NSHashTable<id<MCSAssetReader>> *_Nullable mReaders;
     SJSQLite3 *mSqlite3;
 }
 @end
@@ -138,13 +137,6 @@
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
     id<MCSAsset> asset = [self assetWithURL:proxyRequest.URL];
     id<MCSAssetReader> reader = [asset readerWithRequest:[MCSRequest.alloc initWithProxyRequest:proxyRequest] networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
-    if ( reader != nil ) {
-        @synchronized (self) {
-            if ( mReaders == nil ) mReaders = [NSHashTable.alloc initWithOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsOpaquePersonality capacity:0];
-            [mReaders addObject:reader];
-        }
-        [reader registerObserver:self];
-    }
     return reader;
 }
 
@@ -225,7 +217,7 @@
             rows = [mSqlite3 exec:[NSString stringWithFormat:
                                    @"SELECT * FROM MCSAssetUsageLog WHERE ( (asset NOT IN (%@) AND assetType = 0) OR (asset NOT IN (%@) AND assetType = 1) ) \
                                                                       AND updatedTime <= %lf \
-                                                                 ORDER BY updatedTime ASC, usageCount ASC \
+                                                                 ORDER BY updatedTime ASC \
                                                                     LIMIT 0, %ld;", s0, s1, timeLimit, (long)countLimit] error:NULL];
         }
         else {
@@ -248,38 +240,19 @@
     }
 }
 
-#pragma mark - MCSAssetReaderObserver
+#pragma mark - MCSAssetObserver
 
-- (void)reader:(id<MCSAssetReader>)reader statusDidChange:(MCSReaderStatus)status {
-    switch ( status ) {
-        case MCSReaderStatusUnknown:
-        case MCSReaderStatusPreparing:
-            break;
-        case MCSReaderStatusReadyToRead: {
-            @synchronized (self) {
-                id<MCSAsset> asset = reader.asset;
-                if ( asset == nil ) return;
-                MCSAssetUsageLog *log = mUsageLogs[asset.name];
-                if ( log == nil ) {
-                    log = (id)[mSqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                        [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
-                        [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
-                    ] orderBy:nil error:NULL].firstObject;
-                    mUsageLogs[asset.name] = log;
-                }
-                log.usageCount += 1;
-                log.updatedTime = NSDate.date.timeIntervalSince1970;
-            }
+- (void)assetDidRead:(id<MCSAsset>)asset {
+    @synchronized (self) {
+        MCSAssetUsageLog *log = mUsageLogs[asset.name];
+        if ( log == nil ) {
+            log = (id)[mSqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
+                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
+                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
+            ] orderBy:nil error:NULL].firstObject;
+            mUsageLogs[asset.name] = log;
         }
-            break;
-        case MCSReaderStatusFinished:
-        case MCSReaderStatusAborted: {
-            [reader removeObserver:self];
-            @synchronized (self) {
-                [mReaders removeObject:reader];
-            }
-        }
-            break;
+        log.updatedTime = NSDate.date.timeIntervalSince1970;
     }
 }
  
@@ -319,14 +292,10 @@
     [self _syncToDatabase:asset]; // save asset
     mCountOfAllAssets += 1;
     [asset prepare];
+    [asset registerObserver:self];
     mAssets[name] = asset;
 
-    MCSAssetUsageLog *log = [mSqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-        [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
-        [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(type)],
-    ] orderBy:nil error:NULL].firstObject;
-    
-    log = [MCSAssetUsageLog.alloc initWithAsset:asset]; // create log
+    MCSAssetUsageLog *log = [MCSAssetUsageLog.alloc initWithAsset:asset]; // create log
     [self _syncToDatabase:log]; // save log
     mUsageLogs[name] = log;
     return asset;
@@ -376,7 +345,14 @@
     
     if ( asset != nil ) {
         [asset prepare];
+        [asset registerObserver:self];
         mAssets[asset.name] = asset;
+        
+        MCSAssetUsageLog *log = [mSqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
+            [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
+            [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(type)],
+        ] orderBy:nil error:NULL].firstObject;
+        mUsageLogs[asset.name] = log;
     }
     return asset;
 }
@@ -422,16 +398,7 @@
     if ( assets == nil || assets.count == 0 ) return;
     assets = assets.copy;
     [assets enumerateObjectsUsingBlock:^(id<MCSAsset>  _Nonnull r, NSUInteger idx, BOOL * _Nonnull stop) {
-        for ( id<MCSAssetReader> reader in MCSAllHashTableObjects(mReaders) ) {
-            if ( reader.asset == r ) {
-                [reader abortWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
-                    MCSErrorUserInfoObjectKey : r,
-                    MCSErrorUserInfoReasonKey : @"资源缓存将要被删除!"
-                }]];
-            }
-        }
-        
-        [NSFileManager.defaultManager removeItemAtPath:r.path error:NULL];
+        [r clear];
         [mSqlite3 removeObjectForClass:r.class primaryKeyValue:@(r.id) error:NULL];
         [mSqlite3 removeAllObjectsForClass:MCSAssetUsageLog.class conditions:@[
             [SJSQLite3Condition conditionWithColumn:@"asset" value:@(r.id)],
@@ -456,7 +423,7 @@
 /// unlocked
 - (void)_syncUsageLogs {
     if ( mUsageLogs.count != 0 ) {
-        [mSqlite3 updateObjects:mUsageLogs.allValues forKeys:@[@"usageCount", @"updatedTime"] error:NULL];
+        [mSqlite3 updateObjects:mUsageLogs.allValues forKeys:@[@"updatedTime"] error:NULL];
         [mUsageLogs removeAllObjects];
     }
 }

@@ -52,7 +52,7 @@
     }];
 }
 
-- (NSInteger)numberOfContents {
+- (NSUInteger)numberOfContents {
     return mContents.count;
 }
 
@@ -168,5 +168,11 @@
     
     NSNumber *nodeKey = @(node.placement);
     [mNodes removeObjectForKey:nodeKey];
+}
+
+- (void)removeAllNodes {
+    [mNodes removeAllObjects];
+    _head = nil;
+    _tail = nil;
 }
 @end

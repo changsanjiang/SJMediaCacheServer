@@ -16,7 +16,7 @@
 #import "MCSUtils.h"
 #import "MCSAssetContentReader.h"
 
-@interface FILEAssetReader ()<MCSAssetContentReaderDelegate> {
+@interface FILEAssetReader ()<MCSAssetContentReaderDelegate, MCSAssetObserver> {
     NSHashTable<id<MCSAssetReaderObserver>> *mObservers;
     MCSReaderStatus mStatus;
     FILEAsset *mAsset;
@@ -46,6 +46,7 @@
         mCurrentReaderIndex = NSNotFound;
         mFixedRange = MCSNSRangeUndefined;
         [mAsset readwriteRetain];
+        [mAsset registerObserver:self];
         
 #ifdef DEBUG
         MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, mRequest.URL, asset, mRequest.allHTTPHeaderFields);
@@ -57,6 +58,7 @@
 - (void)dealloc {
     mDelegate = nil;
     [mObservers removeAllObjects];
+    [mAsset removeObserver:self];
     [self _abortWithError:nil];
     MCSAssetReaderDebugLog(@"%@: <%p>.dealloc;\n", NSStringFromClass(self.class), self);
 }
@@ -398,7 +400,18 @@
         }
     }
 }
-  
+
+#pragma mark - MCSAssetObserver
+
+- (void)assetWillClear:(id<MCSAsset>)asset {
+    @synchronized (self) {
+        [self abortWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+            MCSErrorUserInfoObjectKey : asset,
+            MCSErrorUserInfoReasonKey : @"Unable to continue reading the asset because it is about to be cleared."
+        }]];
+    }
+}
+
 #pragma mark - MCSAssetContentReaderDelegate
 
 - (void)readerWasReadyToRead:(id<MCSAssetContentReader>)reader {

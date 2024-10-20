@@ -162,6 +162,24 @@
     return [FILEAssetReader.alloc initWithAsset:self request:request networkTaskPriority:networkTaskPriority readDataDecoder:readDataDecoder delegate:delegate];
 }
 
+- (void)clear {
+    @synchronized (self) {
+        for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+            if ( [observer respondsToSelector:@selector(assetWillClear:)] ) {
+                [observer assetWillClear:self];
+            }
+        }
+        mAssembled = NO;
+        [mNodeList removeAllNodes];
+        [mProvider clear];
+        for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+            if ( [observer respondsToSelector:@selector(assetDidClear:)] ) {
+                [observer assetDidClear:self];
+            }
+        }
+    }
+}
+
 - (void)registerObserver:(id<MCSAssetObserver>)observer {
     if ( observer != nil ) {
         @synchronized (self) {

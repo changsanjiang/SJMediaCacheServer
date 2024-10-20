@@ -63,6 +63,10 @@
     [NSFileManager.defaultManager removeItemAtPath:content.filePath error:NULL];
 }
 
+- (void)clear {
+    [NSFileManager.defaultManager removeItemAtPath:_directory error:NULL];
+}
+
 #pragma mark - 前缀_偏移量_序号.扩展名
 
 - (nullable NSString *)_contentFilePathForFilename:(NSString *)filename {
