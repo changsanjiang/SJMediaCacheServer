@@ -37,6 +37,10 @@
     return [mRootDir stringByAppendingPathComponent:filename];
 }
 
+- (NSString *)getSubtitlesFilePath:(NSString *)filename {
+    return [mRootDir stringByAppendingPathComponent:filename];
+}
+
 - (nullable NSArray<NSString *> *)loadSegmentFilenames {
     NSMutableArray<NSString *> *m = nil;
     for ( NSString *filename in [NSFileManager.defaultManager contentsOfDirectoryAtPath:mRootDir error:NULL] ) {

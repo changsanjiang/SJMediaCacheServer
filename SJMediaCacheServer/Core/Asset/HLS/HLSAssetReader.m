@@ -78,23 +78,13 @@
         MCSAssetReaderDebugLog(@"%@: <%p>.prepare { asset: %@, request: %@ };\n", NSStringFromClass(self.class), self, mAsset.name, mRequest);
         [self _notifyObserversWithStatus:mStatus];
 
-        if ( mDataType == MCSDataTypeHLSSegment || mDataType == MCSDataTypeHLSAESKey ) {
-            if ( mAsset.parser == nil ) {
-                [self _abortWithError:[NSError mcs_errorWithCode:MCSUnknownError userInfo:@{
-                    MCSErrorUserInfoObjectKey : mRequest,
-                    MCSErrorUserInfoReasonKey : @"HLS playlist is not parsed!"
-                }]];
-                return;
-            }
-        }
-        
         switch ( mDataType ) {
             case MCSDataTypeHLSPlaylist: {
                 mReader = [HLSAssetPlaylistContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
             }
                 break;
             case MCSDataTypeHLSAESKey: {
-                mReader = [HLSAssetAESKeyContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
+                mReader = [HLSAssetKeyContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
             }
                 break;
             case MCSDataTypeHLSSegment: {
@@ -111,6 +101,10 @@
                 else {
                     mReader = [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:mRequest rangeInAsset:content.byteRange contentReadwrite:content networkTaskPriority:_networkTaskPriority dataType:MCSDataTypeHLSSegment delegate:self];
                 }
+            }
+                break;
+            case MCSDataTypeHLSSubtitles: {
+                mReader = [HLSAssetSubtitlesContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
             }
                 break;
             default: {

@@ -32,6 +32,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     HLSAssetContentProvider *mProvider;
     id<MCSAssetContent> _Nullable mPlaylistContent;
     NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mAESKeyContents; // { identifier: content }
+    id<MCSAssetContent> _Nullable mSubtitlesContent;
     NSMutableDictionary<NSString *, id<HLSItem>> *_Nullable mSegmentURIItems; // { nodeIdentifier: item }
     HLSAssetSegmentNodeMap *mSegmentNodeMap; // ts
 }
@@ -101,6 +102,10 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 - (NSString *)generateAESKeyIdentifierWithOriginalURL:(NSURL *)originalURL {
     return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_KEY];
+}
+
+- (NSString *)generateSubtitlesIdentifierWithOriginalURL:(NSURL *)originalURL {
+    return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_SUBTITLES];
 }
 
 - (NSString *)generateSegmentIdentifierWithOriginalURL:(NSURL *)originalURL {
@@ -185,7 +190,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 - (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL {
     @synchronized (self) {
         NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
-        id<MCSAssetContent> _Nullable content = mAESKeyContents[identifier];
+        id<MCSAssetContent> _Nullable content = mAESKeyContents != nil ? mAESKeyContents[identifier] : nil;
         return content != nil ? [content readwriteRetain] : nil;
     }
 }
@@ -193,18 +198,46 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 - (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)errorPtr {
     @synchronized (self) {
         NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
-        id<MCSAssetContent> _Nullable content = mAESKeyContents[identifier];
+        id<MCSAssetContent> _Nullable content = mAESKeyContents != nil ? mAESKeyContents[identifier] : nil;
         NSError *error = nil;
         if ( content == nil ) {
             NSString *filePath = [mProvider getAESKeyFilePath:identifier];
             if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
                 content = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath startPositionInAsset:0 length:data.length];
+                if ( mAESKeyContents == nil ) mAESKeyContents = NSMutableDictionary.dictionary;
+                mAESKeyContents[identifier] = content;
             }
             if ( error != nil && errorPtr != NULL ) *errorPtr = error;
         }
         return content != nil ? [content readwriteRetain] : nil;
     }
 }
+
+- (nullable id<MCSAssetContent>)getSubtitlesContentWithOriginalURL:(NSURL *)originalURL {
+    @synchronized (self) {
+// subtitles only one can be selected;
+//        NSString *identifier = [self generateSubtitlesIdentifierWithOriginalURL:originalURL];
+//        id<MCSAssetContent> _Nullable content = mSubtitlesContents != nil ? mSubtitlesContents[identifier] : nil;
+//        return content != nil ? [content readwriteRetain] : nil;
+        return mSubtitlesContent != nil ? [mSubtitlesContent readwriteRetain] : nil;
+    }
+}
+
+- (nullable id<MCSAssetContent>)createSubtitlesContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)errorPtr {
+    @synchronized (self) {
+        if ( mSubtitlesContent == nil ) {
+            NSString *identifier = [self generateSubtitlesIdentifierWithOriginalURL:originalURL];
+            NSError *error = nil;
+            NSString *filePath = [mProvider getSubtitlesFilePath:identifier];
+            if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+                mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:data.length];
+            }
+            if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+        }
+        return mSubtitlesContent != nil ? [mSubtitlesContent readwriteRetain] : nil;
+    }
+}
+
 
 /// 将返回如下两种content, 如果未满足条件, 则返回nil
 ///
@@ -231,6 +264,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         case MCSDataTypeHLSMask:
         case MCSDataTypeHLSPlaylist:
         case MCSDataTypeHLSAESKey:
+        case MCSDataTypeHLSSubtitles:
         case MCSDataTypeHLS:
         case MCSDataTypeFILEMask:
         case MCSDataTypeFILE: return nil; /* return nil; */
@@ -297,6 +331,18 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
             mAESKeyContents[identifier] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
         }
     }];
+    
+    id<HLSRendition> _Nullable subtitlesRendition = mParser.subtitlesRendition;
+    if ( subtitlesRendition != nil ) {
+        NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:subtitlesRendition.URI];
+        NSString *identifier = [self generateSubtitlesIdentifierWithOriginalURL:originalURL];
+        NSString *filePath = [mProvider getSubtitlesFilePath:identifier];
+        // 同样都是小文件, 目录中只要存在对应文件就说明已下载完毕;
+        if ( [NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+            mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
+        }
+    }
+    
     if ( mParser.segmentsCount != 0 ) {
         mSegmentURIItems = NSMutableDictionary.dictionary;
         [mParser.segments enumerateObjectsUsingBlock:^(id<HLSSegment>  _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {

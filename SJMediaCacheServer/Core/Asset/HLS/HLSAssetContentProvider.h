@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)getAESKeyFilePath:(NSString *)filename;
 
+- (NSString *)getSubtitlesFilePath:(NSString *)filename;
+
 - (nullable NSArray<NSString *> *)loadSegmentFilenames;
 - (NSString *)getSegmentIdentifierByFilename:(NSString *)filename byteRange:(NSRange *)byteRangePtr;
 - (id<HLSAssetSegment>)getSegmentByFilename:(NSString *)filename mimeType:(nullable NSString *)mimeType;

@@ -17,7 +17,14 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@interface HLSAssetAESKeyContentReader : MCSAssetContentReader
+@interface HLSAssetKeyContentReader : MCSAssetContentReader
+
+- (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate;
+
+@end
+
+
+@interface HLSAssetSubtitlesContentReader : MCSAssetContentReader
 
 - (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate;
 

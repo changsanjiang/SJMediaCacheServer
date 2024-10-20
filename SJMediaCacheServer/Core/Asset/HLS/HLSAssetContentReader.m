@@ -81,7 +81,7 @@
 
 #pragma mark -
 
-@implementation HLSAssetAESKeyContentReader {
+@implementation HLSAssetKeyContentReader {
     HLSAsset *mAsset;
     NSURLRequest *mRequest;
     float mPriority;
@@ -128,13 +128,78 @@
     if ( downloadError != nil ) {
         error = [NSError mcs_errorWithCode:MCSDownloadError userInfo:@{
             MCSErrorUserInfoErrorKey : downloadError,
-            MCSErrorUserInfoReasonKey : @"Playlist download failed!"
+            MCSErrorUserInfoReasonKey : @"AES key download failed!"
         }];
     }
     
     id<MCSAssetContent> content = nil;
     if ( error == nil ) {
         content = [mAsset createAESKeyContentWithOriginalURL:mRequest.URL data:data error:&error]; // retain
+    }
+    
+    if ( error != nil ) {
+        [self abortWithError:error];
+        return;
+    }
+    [self contentDidReady:content range:NSMakeRange(0, content.length)];
+}
+@end
+
+
+@implementation HLSAssetSubtitlesContentReader {
+    HLSAsset *mAsset;
+    NSURLRequest *mRequest;
+    float mPriority;
+    id<MCSDownloadTask> _Nullable mTask;
+}
+
+- (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate {
+    self = [super initWithAsset:asset delegate:delegate];
+    mAsset = asset;
+    mRequest = request;
+    mPriority = priority;
+    return self;
+}
+
+- (void)prepareContent {
+    
+    MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };\n", NSStringFromClass(self.class), self, mRequest.mcs_description);
+    
+    id<MCSAssetContent> content = [mAsset getSubtitlesContentWithOriginalURL:mRequest.URL];
+    if ( content != nil ) {
+        [self contentDidReady:content range:NSMakeRange(0, content.length)];
+    }
+    else {
+        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable downloadError) {
+            @synchronized (self) {
+                [self _downloadDidCompleteWithData:data error:downloadError];
+            }
+        }];
+    }
+}
+
+- (void)didAbortWithError:(NSError *)error {
+    [mTask cancel];
+}
+
+#pragma mark - mark
+
+/// unlocked
+- (void)_downloadDidCompleteWithData:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
+    if ( self.status == MCSReaderStatusAborted ) return;
+    mTask = nil;
+    
+    NSError *error = nil;
+    if ( downloadError != nil ) {
+        error = [NSError mcs_errorWithCode:MCSDownloadError userInfo:@{
+            MCSErrorUserInfoErrorKey : downloadError,
+            MCSErrorUserInfoReasonKey : @"Subtitles download failed!"
+        }];
+    }
+    
+    id<MCSAssetContent> content = nil;
+    if ( error == nil ) {
+        content = [mAsset createSubtitlesContentWithOriginalURL:mRequest.URL data:data error:&error]; // retain
     }
     
     if ( error != nil ) {
