@@ -150,6 +150,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_SEGMENT];
 }
 
+/// @param byteRange #EXT-X-BYTERANGE or { NSNotFound, NSNotFound }
 - (NSString *)generateSegmentNodeIdentifierWithSegmentIdentifier:(NSString *)segmentIdentifier requestHeaderByteRange:(NSRange)byteRange {
     return byteRange.location == NSNotFound ? segmentIdentifier : [NSString stringWithFormat:@"%@_%lu_%lu", segmentIdentifier, byteRange.location, byteRange.length];
 }

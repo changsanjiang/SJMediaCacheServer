@@ -38,7 +38,7 @@
         [self contentDidReady:content range:NSMakeRange(0, content.length)];
     }
     else {
-        mTask = [MCSContents request:mRequest networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable error) {
+        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable error) {
             @synchronized (self) {
                 [self _downloadDidCompleteWithTask:task data:data error:error];
             }
@@ -170,7 +170,7 @@
         [self contentDidReady:content range:NSMakeRange(0, content.length)];
     }
     else {
-        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable downloadError) {
+        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSSubtitles]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable downloadError) {
             @synchronized (self) {
                 [self _downloadDidCompleteWithData:data error:downloadError];
             }

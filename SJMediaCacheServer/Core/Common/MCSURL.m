@@ -115,9 +115,11 @@ MCSMD5(NSString *str) {
     }
     
     // Check if the URL path contains HLS-specific extensions.
-    return ([URL.path.pathExtension isEqualToString:HLS_EXTENSION_PLAYLIST] ||
-            [URL.path.pathExtension isEqualToString:HLS_EXTENSION_SEGMENT] ||
-            [URL.path.pathExtension isEqualToString:HLS_EXTENSION_KEY]) ? MCSAssetTypeHLS : MCSAssetTypeFILE;
+    NSString *pathExtensionn = URL.path.pathExtension;
+    return ([pathExtensionn isEqualToString:HLS_EXTENSION_PLAYLIST] ||
+            [pathExtensionn isEqualToString:HLS_EXTENSION_SEGMENT] ||
+            [pathExtensionn isEqualToString:HLS_EXTENSION_KEY] ||
+            [pathExtensionn isEqualToString:HLS_EXTENSION_SUBTITLES] ) ? MCSAssetTypeHLS : MCSAssetTypeFILE;
 }
 
 /// Encodes the given URL string into a base64 format.
@@ -148,6 +150,9 @@ MCSMD5(NSString *str) {
 
     if ( [extension isEqualToString:HLS_EXTENSION_SEGMENT] )
         return MCSDataTypeHLSSegment;
+    
+    if ( [extension isEqualToString:HLS_EXTENSION_SUBTITLES] )
+        return MCSDataTypeHLSSubtitles;
     
     @throw [NSException exceptionWithName:NSGenericException
                                    reason:[NSString stringWithFormat:@"Cannot determine data type for proxy URL: %@", proxyURL.absoluteString]

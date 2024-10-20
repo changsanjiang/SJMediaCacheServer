@@ -342,7 +342,7 @@
             NSUInteger start = mReadRange.location + mHTTPContent.length;
             NSUInteger length = NSMaxRange(mReadRange) - start;
             NSRange newRange = NSMakeRange(start, length);
-            NSMutableURLRequest *newRequest = [[mRequest mcs_requestWithRange:newRange] mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:mDataType]];
+            NSURLRequest *newRequest = [[mRequest mcs_requestWithRange:newRange] mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:mDataType]];
             mTask = [MCSDownload.shared downloadWithRequest:newRequest priority:mNetworkTaskPriority delegate:self];
         }
         [mHTTPContent readwriteRetain]; // retain for read

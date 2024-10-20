@@ -128,6 +128,7 @@
         case MCSDataTypeHLSPlaylist:
         case MCSDataTypeHLSAESKey:
         case MCSDataTypeHLSSegment:
+        case MCSDataTypeHLSSubtitles:
         case MCSDataTypeHLS:
         case MCSDataTypeFILEMask:
             /* return */

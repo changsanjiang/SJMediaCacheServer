@@ -76,7 +76,10 @@
     return [NSMutableURLRequest mcs_requestWithURL:URL headers:self.allHTTPHeaderFields];
 }
 
-- (NSMutableURLRequest *)mcs_requestWithHTTPAdditionalHeaders:(nullable NSDictionary<NSString *,NSString *> *)HTTPAdditionalHeaders {
+- (NSURLRequest *)mcs_requestWithHTTPAdditionalHeaders:(nullable NSDictionary<NSString *,NSString *> *)HTTPAdditionalHeaders {
+    if ( HTTPAdditionalHeaders == nil || HTTPAdditionalHeaders.count == 0 ) {
+        return self;
+    }
     NSMutableURLRequest *request = nil;
     if ( [self isKindOfClass:NSMutableURLRequest.class] ) {
         request = (NSMutableURLRequest *)self;
@@ -85,13 +88,11 @@
         request = [self mutableCopy];
     }
     
-    if ( HTTPAdditionalHeaders != nil ) {
-        NSDictionary *current = request.allHTTPHeaderFields;
-        [HTTPAdditionalHeaders enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-            if ( current[key] == nil )
-                [request setValue:obj forHTTPHeaderField:key];
-        }];
-    }
+    NSDictionary *current = request.allHTTPHeaderFields;
+    [HTTPAdditionalHeaders enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+        if ( current[key] == nil )
+            [request setValue:obj forHTTPHeaderField:key];
+    }];
     return request;
 }
 @end
