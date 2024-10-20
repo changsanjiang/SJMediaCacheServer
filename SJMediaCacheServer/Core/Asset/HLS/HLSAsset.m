@@ -32,9 +32,15 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     HLSAssetContentProvider *mProvider;
     id<MCSAssetContent> _Nullable mPlaylistContent;
     NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mAESKeyContents; // { identifier: content }
-    id<MCSAssetContent> _Nullable mSubtitlesContent;
     NSMutableDictionary<NSString *, id<HLSItem>> *_Nullable mSegmentURIItems; // { nodeIdentifier: item }
     HLSAssetSegmentNodeMap *mSegmentNodeMap; // ts
+    
+    HLSAsset *_Nullable mVariantStreamAsset;
+    HLSAsset *_Nullable mAudioRenditionAsset;
+    HLSAsset *_Nullable mVideoRenditionAsset;
+    id<MCSAssetContent> _Nullable mSubtitlesContent;
+    
+    __weak HLSAsset *_Nullable mMasterAsset;
 }
 
 @property (nonatomic) NSInteger id; // saveable
@@ -97,6 +103,38 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 - (NSString *)path {
     return [MCSRootDirectory assetPathForFilename:_name];
 }
+
+#pragma mark - VariantStream
+
+- (nullable HLSAsset *)selectedVariantStreamAsset {
+    return mVariantStreamAsset;
+}
+
+- (nullable HLSAsset *)selectedAudioRenditionAsset {
+    return mAudioRenditionAsset;
+}
+
+- (nullable HLSAsset *)selectedVideoRenditionAsset {
+    return mVideoRenditionAsset;
+}
+
+- (nullable HLSAsset *)masterAsset {
+    return mMasterAsset;
+}
+
+//@interface HLSAsset (VariantStream)
+//@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedVariantStreamAsset;
+//@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedAudioRenditionAsset;
+//@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedVideoRenditionAsset;
+///// variantStreamAsset.masterAsset;
+///// selectedAudioRenditionAsset.masterAsset;
+///// selectedVideoRenditionAsset.masterAsset;
+//@property (nonatomic, weak, readonly, nullable) HLSAsset *masterAsset;
+//
+//@property (nonatomic, readonly) BOOL isVariantStreamAsset;
+//@property (nonatomic, readonly) BOOL isAudioRenditionAsset;
+//@property (nonatomic, readonly) BOOL isVideoRenditionAsset;
+//@property (nonatomic, readonly) BOOL isMasterAsset;
 
 #pragma mark - mark
 
@@ -306,6 +344,17 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 #pragma mark - readwrite
 
+- (instancetype)readwriteRetain {
+    [super readwriteRetain];
+    if ( mMasterAsset != nil ) [mMasterAsset readwriteRetain];
+    return self;
+}
+
+- (void)readwriteRelease {
+    [super readwriteRelease];
+    if ( mMasterAsset != nil ) [mMasterAsset readwriteRelease];
+}
+
 - (void)readwriteCountDidChange:(NSInteger)count {
     if ( count == 0 ) {
         @synchronized (self) {
@@ -332,17 +381,6 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         }
     }];
     
-    id<HLSRendition> _Nullable subtitlesRendition = mParser.subtitlesRendition;
-    if ( subtitlesRendition != nil ) {
-        NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:subtitlesRendition.URI];
-        NSString *identifier = [self generateSubtitlesIdentifierWithOriginalURL:originalURL];
-        NSString *filePath = [mProvider getSubtitlesFilePath:identifier];
-        // 同样都是小文件, 目录中只要存在对应文件就说明已下载完毕;
-        if ( [NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
-            mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
-        }
-    }
-    
     if ( mParser.segmentsCount != 0 ) {
         mSegmentURIItems = NSMutableDictionary.dictionary;
         [mParser.segments enumerateObjectsUsingBlock:^(id<HLSSegment>  _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -368,6 +406,43 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
             }];
         }
     }
+    else if ( mParser.variantStream != nil ) {
+        //    __weak HLSAsset *_Nullable mVariantStreamAsset;
+        //    __weak HLSAsset *_Nullable mAudioRenditionAsset;
+        //    __weak HLSAsset *_Nullable mVideoRenditionAsset;
+        //    id<MCSAssetContent> _Nullable mSubtitlesContent;
+        
+        id<HLSVariantStream> selectedVariantStream = mParser.variantStream;
+        id<HLSRendition> _Nullable selectedAudioRendition = mParser.audioRendition;
+        id<HLSRendition> _Nullable selectedVideoRendition = mParser.videoRendition;
+        id<HLSRendition> _Nullable selectedSubtitlesRendition = mParser.subtitlesRendition;
+        mVariantStreamAsset = [MCSAssetManager.shared assetWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedVariantStream.URI]];
+        mVariantStreamAsset->mMasterAsset = self;
+        [mVariantStreamAsset prepare];
+        
+        if ( selectedAudioRendition != nil ) {
+            mAudioRenditionAsset = [MCSAssetManager.shared assetWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedAudioRendition.URI]];
+            mAudioRenditionAsset->mMasterAsset = self;
+            [mAudioRenditionAsset prepare];
+        }
+        
+        if ( selectedVideoRendition != nil ) {
+            mVideoRenditionAsset = [MCSAssetManager.shared assetWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedVideoRendition.URI]];
+            mVideoRenditionAsset->mMasterAsset = self;
+            [mVideoRenditionAsset prepare];
+        }
+        
+        if ( selectedSubtitlesRendition != nil ) {
+            NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:selectedSubtitlesRendition.URI];
+            NSString *identifier = [self generateSubtitlesIdentifierWithOriginalURL:originalURL];
+            NSString *filePath = [mProvider getSubtitlesFilePath:identifier];
+            // 同样都是小文件, 目录中只要存在对应文件就说明已下载完毕;
+            if ( [NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
+            }
+        }
+    }
+        
     // trim
     [self _trimExcessSegmentContents];
 }
@@ -376,7 +451,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 - (void)_trimExcessSegmentContents {
     if ( mStored || mParser == nil || self.readwriteCount != 0 ) return;
     
-    if ( mParser.segmentsCount != 0 ) {
+    if      ( mParser.segmentsCount != 0 ) {
         __block BOOL isAllSegmentsCached = mParser.segmentsCount == mSegmentNodeMap.count;
         [mSegmentNodeMap enumerateNodesUsingBlock:^(HLSAssetSegmentNode * _Nonnull node, BOOL * _Nonnull stop) {
             [self _trimExcessContentsForNode:node];
@@ -384,22 +459,32 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         }];
         if ( isAllSegmentsCached ) {
             mStored = YES;
-            [self _notifyDidStore];
         }
     }
+    else if ( mParser.variantStream != nil ) {
+//        /// Represents the selected variant stream. If there are variant streams in the m3u8, only one can be selected.
+//        /// The selection is made through HLSVariantStreamSelectionHandler.
+//        @property (nonatomic, strong, readonly, nullable) id<HLSVariantStream> variantStream;
+//        /// Represents the selected audio rendition. If there are audio renditions in the m3u8, only one can be selected.
+//        /// The selection is made through HLSRenditionSelectionHandler.
+//        @property (nonatomic, strong, readonly, nullable) id<HLSRendition> audioRendition;
+//        /// Represents the selected video rendition. If there are video renditions in the m3u8, only one can be selected.
+//        /// The selection is made through HLSRenditionSelectionHandler.
+//        @property (nonatomic, strong, readonly, nullable) id<HLSRendition> videoRendition;
+//        /// Represents the selected subtitles rendition. If there are subtitles renditions in the m3u8, only one can be selected.
+//        /// The selection is made through HLSRenditionSelectionHandler.
+//        @property (nonatomic, strong, readonly, nullable) id<HLSRendition> subtitlesRendition;
+        BOOL isVariantStreamStored = mVariantStreamAsset.isStored;
+        BOOL isAudioRenditionStored = mAudioRenditionAsset == nil || mAudioRenditionAsset.isStored;
+        BOOL isVideoRenditionStored = mVideoRenditionAsset == nil || mVideoRenditionAsset.isStored;
+        BOOL isSubtitlesRenditionStored = mParser.subtitlesRendition == nil || mSubtitlesContent != nil;
+        mStored = isVariantStreamStored && isAudioRenditionStored && isVideoRenditionStored && isSubtitlesRenditionStored;
+    }
     else {
-        
-        // isVariantStream
-        
-        [mParser.allItems enumerateObjectsUsingBlock:^(id<HLSItem>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-//            if ( [mParser isVariantStream:obj] ) {
-//                // - (nullable NSArray<id<HLSItem>> *)renditionMediasForVariantItem:(id<HLSItem>)item;
-//
-//            }
-        }];
-        
         mStored = YES;
     }
+    
+    if ( mStored ) [self _notifyDidStore];
 }
 
 /// unlocked

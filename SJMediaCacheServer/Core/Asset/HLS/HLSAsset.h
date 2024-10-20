@@ -40,4 +40,49 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response; // This method is used only for creating segment content; retained, should release after;
 
 @end
+
+/// ----- master.m3u8
+/// #EXTM3U
+/// #EXT-X-VERSION:6
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio_group",NAME="English",DEFAULT=YES,AUTOSELECT=YES,LANGUAGE="en",URI="https://example.com/audio/english.m3u8"
+/// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio_group",NAME="Spanish",DEFAULT=NO,AUTOSELECT=YES,LANGUAGE="es",URI="https://example.com/audio/spanish.m3u8"
+/// #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subtitles_group",NAME="English",DEFAULT=NO,AUTOSELECT=YES,URI="https://example.com/subtitles/english.vtt"
+/// #EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=1280x720,AUDIO="audio_group"
+/// 720p_output.m3u8
+/// #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=854x480,AUDIO="audio_group"
+/// 480p_output.m3u8
+///
+/// ----- variant_stream: 720p_output.m3u8
+/// 720p_output.m3u8
+/// #EXTM3U
+/// #EXT-X-VERSION:6
+/// #EXT-X-TARGETDURATION:10
+/// #EXT-X-MEDIA-SEQUENCE:0
+/// #EXT-X-INDEPENDENT-SEGMENTS
+/// #EXTINF:10.0,
+/// 720p_segment_000.ts
+/// #EXT-X-ENDLIST
+///
+/// ----- audio_rendition: english.m3u8
+/// #EXTM3U
+/// #EXT-X-VERSION:6
+/// #EXT-X-TARGETDURATION:10
+/// #EXT-X-MEDIA-SEQUENCE:0
+/// #EXTINF:10.0,
+/// english_segment_000.ts
+/// #EXT-X-ENDLIST
+@interface HLSAsset (VariantStream)
+@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedVariantStreamAsset;
+@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedAudioRenditionAsset;
+@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedVideoRenditionAsset;
+/// variantStreamAsset.masterAsset;
+/// selectedAudioRenditionAsset.masterAsset;
+/// selectedVideoRenditionAsset.masterAsset;
+@property (nonatomic, weak, readonly, nullable) HLSAsset *masterAsset;
+
+//@property (nonatomic, readonly) BOOL isVariantStreamAsset;
+//@property (nonatomic, readonly) BOOL isAudioRenditionAsset;
+//@property (nonatomic, readonly) BOOL isVideoRenditionAsset;
+//@property (nonatomic, readonly) BOOL isMasterAsset;
+@end
 NS_ASSUME_NONNULL_END
