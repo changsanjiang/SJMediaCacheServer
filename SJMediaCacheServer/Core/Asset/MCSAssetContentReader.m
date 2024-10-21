@@ -293,7 +293,6 @@
 #import "MCSDownload.h"
 #import "MCSLogger.h"
 #import "MCSUtils.h"
-#import "MCSQueue.h"
  
 @interface MCSAssetHTTPContentReader ()<MCSDownloadTaskDelegate> {
     id<MCSAsset> mAsset;

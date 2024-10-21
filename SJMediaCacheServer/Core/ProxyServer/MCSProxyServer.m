@@ -9,7 +9,6 @@
 #import "MCSProxyServer.h"
 #import "NSURLRequest+MCS.h"
 #import "MCSLogger.h"
-#import "MCSQueue.h"
 #import "MCSHeartbeatManager.h"
 #import <objc/message.h>
 #if __has_include(<KTVCocoaHTTPServer/KTVCocoaHTTPServer.h>)

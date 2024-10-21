@@ -8,7 +8,6 @@
 #import "MCSAssetContent.h"
 #import "NSFileHandle+MCS.h"
 #import "NSFileManager+MCS.h"
-#import "MCSQueue.h"
 #import "MCSUtils.h"
 #import "MCSMimeType.h"
  

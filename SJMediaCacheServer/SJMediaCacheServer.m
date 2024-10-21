@@ -16,7 +16,6 @@
 #import "MCSLogger.h"
 #import "MCSDownload.h"
 #import "MCSPrefetcherManager.h"
-#import "MCSQueue.h"
 
 NSNotificationName const MCSPlayBackRequestTaskDidFailedNotification = @"MCSPlayBackRequestTaskDidFailedNotification";
 NSString *const MCSPlayBackRequestURLUserInfoKey = @"MCSPlayBackRequestURLUserInfoKey";
@@ -39,8 +38,6 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        mcs_queue_init();
-        
         _server = [MCSProxyServer.alloc init];
         _server.delegate = self;
         

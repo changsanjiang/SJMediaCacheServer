@@ -11,7 +11,6 @@
 #import "MCSLogger.h"
 #import "HLSAsset.h"
 #import "MCSError.h"
-#import "MCSQueue.h"
 #import "MCSResponse.h"
 #import "MCSConsts.h"
 #import "MCSUtils.h"

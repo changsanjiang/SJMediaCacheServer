@@ -38,6 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly) NSInteger countOfAllAssets;
 
 - (UInt64)countOfBytesNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
+- (UInt64)countOfBytesIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
 
 - (void)removeAssetsNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets;
 - (void)removeAssetForURL:(NSURL *)URL;

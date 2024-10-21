@@ -45,7 +45,6 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 @property (nonatomic) NSInteger id; // saveable
 @property (nonatomic, copy) NSString *name; // saveable
-@property (nonatomic, weak, nullable) HLSAsset *root;
 @end
 
 @implementation HLSAsset
@@ -60,7 +59,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 }
 
 + (NSArray<NSString *> *)sql_blacklist {
-    return @[@"readwriteCount", @"isStored", @"configuration", @"contents", @"parser", @"root"];
+    return @[@"readwriteCount", @"isStored", @"configuration", @"contents", @"parser"];
 }
 
 - (instancetype)initWithName:(NSString *)name {
@@ -243,45 +242,16 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 #pragma mark - mark
 
-- (nullable HLSAssetParser *)parser {
-    @synchronized (self) {
-        return mParser;
-    }
-}
-
 - (MCSAssetType)type {
     return MCSAssetTypeHLS;
 }
 
-- (nullable NSArray<id<HLSAssetSegment>> *)TsContents {
-    return nil;
-}
 
 - (BOOL)isStored {
     @synchronized (self) {
         return mStored;
     }
 }
-
-- (NSUInteger)tsCount {
-    @synchronized (self) {
-        return mParser.segmentsCount;
-    }
-}
-
-@synthesize root = _root;
-- (void)setRoot:(nullable HLSAsset *)root {
-    @synchronized (self) {
-        _root = root;
-    }
-}
-
-- (nullable HLSAsset *)root {
-    @synchronized (self) {
-        return _root;
-    }
-}
-
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
     return [HLSAssetReader.alloc initWithAsset:self request:request networkTaskPriority:networkTaskPriority readDataDecoder:readDataDecoder delegate:delegate];

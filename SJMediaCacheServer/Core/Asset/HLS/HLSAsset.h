@@ -16,14 +16,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) MCSAssetType type;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
-@property (nonatomic, strong, readonly, nullable) HLSAssetParser *parser;
 @property (nonatomic, readonly) BOOL isStored;
 
 @property (nonatomic, copy, nullable) HLSVariantStreamSelectionHandler variantStreamSelectionHandler;
 @property (nonatomic, copy, nullable) HLSRenditionSelectionHandler renditionSelectionHandler;
 
-@property (nonatomic, readonly) NSUInteger tsCount;
-- (nullable NSArray<id<HLSAssetSegment>> *)TsContents;
 
 @property (nonatomic, readonly) NSUInteger allItemsCount;
 @property (nonatomic, readonly) NSUInteger segmentsCount;

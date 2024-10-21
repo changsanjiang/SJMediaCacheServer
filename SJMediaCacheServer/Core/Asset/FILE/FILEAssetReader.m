@@ -10,7 +10,6 @@
 #import "FILEAsset.h"
 #import "MCSError.h"
 #import "MCSLogger.h"
-#import "MCSQueue.h"
 #import "MCSResponse.h"
 #import "MCSConsts.h"
 #import "MCSUtils.h"

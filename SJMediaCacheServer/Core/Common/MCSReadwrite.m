@@ -6,7 +6,6 @@
 //
 
 #import "MCSReadwrite.h"
-#import "MCSQueue.h"
 #import "MCSConsts.h"
 
 @implementation MCSReadwrite {
