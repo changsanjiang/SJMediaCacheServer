@@ -12,7 +12,6 @@
 #import "MCSUtils.h"
 #import "MCSAssetManager.h"
 #import "MCSDatabase.h"
-#import "MCSQueue.h"
 #import "HLSAsset.h"
 
 typedef NS_ENUM(NSUInteger, MCSLimit) {
@@ -23,15 +22,15 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     MCSLimitExpires,
 };
 
-/// 已导出的缓存项
-@interface MCSExportedCacheItem : NSObject<MCSSaveable>
+/// 受保护的缓存项
+@interface MCSProtectedCacheItem : NSObject<MCSSaveable>
 - (instancetype)initWithAsset:(id<MCSAsset>)asset;
 @property (nonatomic) NSInteger id;
 @property (nonatomic) NSInteger asset;
 @property (nonatomic) MCSAssetType assetType;
 @end
 
-@implementation MCSExportedCacheItem
+@implementation MCSProtectedCacheItem
 + (NSString *)sql_primaryKey {
     return @"id";
 }
@@ -57,7 +56,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 @interface MCSCacheManager () {
     unsigned long long _cacheSize;
     unsigned long long _freeSize;
-    NSInteger _countOfExportedAssets;
+    NSInteger _countOfProtectedAssets;
     SJSQLite3 *_sqlite3;
 }
 
@@ -79,7 +78,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         _checkInterval = 30;
         _lastTimeLimit = 60;
         _sqlite3 = MCSDatabase();
-        _countOfExportedAssets = [_sqlite3 countOfObjectsForClass:MCSExportedCacheItem.class conditions:nil error:NULL];
+        _countOfProtectedAssets = [_sqlite3 countOfObjectsForClass:MCSProtectedCacheItem.class conditions:nil error:NULL];
         [self _checkCachesRecursively];
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_fileWriteOutOfSpaceErrorWithNote:) name:MCSFileWriteOutOfSpaceErrorNotification object:nil];
@@ -89,108 +88,26 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 #pragma mark -
 
-@synthesize cacheCountLimit = _cacheCountLimit;
-- (void)setCacheCountLimit:(NSUInteger)cacheCountLimit {
-    mcs_queue_sync(^{
-        _cacheCountLimit = cacheCountLimit;
-    });
-}
-
-- (NSUInteger)cacheCountLimit {
-    __block NSUInteger cacheCountLimit = 0;
-    mcs_queue_sync(^{
-        cacheCountLimit = self->_cacheCountLimit;
-    });
-    return cacheCountLimit;
-}
-
-@synthesize maxDiskAgeForCache = _maxDiskAgeForCache;
-- (void)setMaxDiskAgeForCache:(NSTimeInterval)maxDiskAgeForCache {
-    mcs_queue_sync(^{
-        _maxDiskAgeForCache = maxDiskAgeForCache;
-    });
-}
-
-- (NSTimeInterval)maxDiskAgeForCache {
-    __block NSTimeInterval maxDiskAgeForCache = 0;
-    mcs_queue_sync(^{
-        maxDiskAgeForCache = _maxDiskAgeForCache;
-    });
-    return maxDiskAgeForCache;
-}
-
-@synthesize maxDiskSizeForCache = _maxDiskSizeForCache;
-- (void)setMaxDiskSizeForCache:(NSUInteger)maxDiskSizeForCache {
-    mcs_queue_sync(^{
-        _maxDiskSizeForCache = maxDiskSizeForCache;
-    });
-}
-- (NSUInteger)maxDiskSizeForCache {
-    __block NSUInteger maxDiskSizeForCache = 0;
-    mcs_queue_sync(^{
-        maxDiskSizeForCache = self->_maxDiskSizeForCache;
-    });
-    return maxDiskSizeForCache;
-}
-
-@synthesize reservedFreeDiskSpace = _reservedFreeDiskSpace;
-- (void)setReservedFreeDiskSpace:(NSUInteger)reservedFreeDiskSpace {
-    mcs_queue_sync(^{
-        _reservedFreeDiskSpace = reservedFreeDiskSpace;
-    });
-}
-
-- (NSUInteger)reservedFreeDiskSpace {
-    __block NSUInteger reservedFreeDiskSpace = 0;
-    mcs_queue_sync(^{
-        reservedFreeDiskSpace = self->_reservedFreeDiskSpace;
-    });
-    return reservedFreeDiskSpace;
-}
-
-@synthesize checkInterval = _checkInterval;
-- (void)setCheckInterval:(NSTimeInterval)checkInterval {
-    mcs_queue_sync(^{
-        if ( checkInterval != self->_checkInterval ) {
-            self->_checkInterval = checkInterval;
-        }
-    });
-}
-
-- (NSTimeInterval)checkInterval {
-    __block NSUInteger checkInterval = 0;
-    mcs_queue_sync(^{
-        checkInterval = self->_checkInterval;
-    });
-    return checkInterval;
-}
-
 - (UInt64)countOfBytesAllCaches {
     return MCSAssetManager.shared.countOfBytesAllAssets;
 }
 
-- (UInt64)countOfBytesRemovableCaches {
-    __block UInt64 size = 0;
-    mcs_queue_sync(^{
-        size = [MCSAssetManager.shared countOfBytesNotIn:[self _allProtectedAssets]];
-    });
-    return size;
+- (UInt64)countOfBytesUnprotectedCaches {
+    @synchronized (self) {
+        return [MCSAssetManager.shared countOfBytesNotIn:[self _allProtectedAssets]];
+    }
 }
 
-- (BOOL)isRemovableForCacheWithURL:(NSURL *)URL {
+- (BOOL)isProtectedForCacheWithURL:(NSURL *)URL {
     if ( URL == nil )
         return NO;
-    return [self isRemovableForCacheWithAsset:[MCSAssetManager.shared assetWithURL:URL]];
+    return [self isProtectedForCacheWithAsset:[MCSAssetManager.shared assetWithURL:URL]];
 }
 
-- (BOOL)isRemovableForCacheWithAsset:(id<MCSAsset>)asset {
-    __block BOOL isRemovable = NO;
-    if ( asset != nil ) {
-        mcs_queue_sync(^{
-            isRemovable = [self _isRemovableForCacheWithAsset:asset];
-        });
+- (BOOL)isProtectedForCacheWithAsset:(id<MCSAsset>)asset {
+    @synchronized (self) {
+        return [self _isProtectedForCacheWithAsset:asset];
     }
-    return isRemovable;
 }
 
 - (BOOL)removeCacheForURL:(NSURL *)URL {
@@ -200,45 +117,42 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 - (BOOL)removeCacheForAsset:(id<MCSAsset>)asset {
-    __block BOOL isRemoved = NO;
+    BOOL isRemoved = NO;
     if ( asset != nil ) {
-        mcs_queue_sync(^{
-            BOOL isRemovable = [self _isRemovableForCacheWithAsset:asset];
-            if ( isRemovable ) {
+        @synchronized (self) {
+            if ( ![self _isProtectedForCacheWithAsset:asset] ) {
                 [MCSAssetManager.shared removeAsset:asset];
                 isRemoved = YES;
             }
-        });
+        }
     }
     return isRemoved;
 }
 
-- (void)removeAllRemovableCaches {
-    mcs_queue_sync(^{
+- (void)removeUnprotectedCaches {
+    @synchronized (self) {
         NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *protectedAssets = [self _allProtectedAssets];
         [MCSAssetManager.shared removeAssetsNotIn:protectedAssets];
-        _countOfExportedAssets = protectedAssets.count;
-    });
+        _countOfProtectedAssets = protectedAssets.count;
+    }
 }
 
-- (void)setExported:(BOOL)isExported forCacheWithURL:(NSURL *)URL {
-    [self setExported:isExported forCacheWithAsset:[MCSAssetManager.shared assetWithURL:URL]];
+- (void)setProtected:(BOOL)isProtected forCacheWithURL:(NSURL *)URL {
+    [self setProtected:isProtected forCacheWithAsset:[MCSAssetManager.shared assetWithURL:URL]];
 }
 
-- (void)setExported:(BOOL)isExported forCacheWithAsset:(id<MCSAsset>)asset {
-    if ( asset == nil )
-        return;
-    mcs_queue_sync(^{
-        MCSExportedCacheItem *item = (id)[_sqlite3 objectsForClass:MCSExportedCacheItem.class conditions:@[
+- (void)setProtected:(BOOL)isProtected forCacheWithAsset:(id<MCSAsset>)asset {
+    if ( asset != nil ) {
+        MCSProtectedCacheItem *item = (id)[_sqlite3 objectsForClass:MCSProtectedCacheItem.class conditions:@[
             [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)],
             [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)]
         ] orderBy:nil error:NULL].firstObject;
         
-        if ( isExported ) {
+        if ( isProtected ) {
             // save
             if ( item == nil ) {
-                _countOfExportedAssets += 1;
-                item = [MCSExportedCacheItem.alloc initWithAsset:asset];
+                _countOfProtectedAssets += 1;
+                item = [MCSProtectedCacheItem.alloc initWithAsset:asset];
                 [_sqlite3 save:item error:NULL];
             }
             
@@ -248,10 +162,19 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
         // delete
         if ( item != nil ) {
-            _countOfExportedAssets -= 1;
-            [_sqlite3 removeObjectForClass:MCSExportedCacheItem.class primaryKeyValue:@(item.id) error:NULL];
+            _countOfProtectedAssets -= 1;
+            [_sqlite3 removeObjectForClass:MCSProtectedCacheItem.class primaryKeyValue:@(item.id) error:NULL];
         }
-    });
+    }
+}
+
+#pragma mark - note
+
+// 空间不足
+- (void)_fileWriteOutOfSpaceErrorWithNote:(NSNotification *)note {
+    @synchronized (self) {
+        [self _trim];
+    }
 }
 
 #pragma mark -
@@ -260,9 +183,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     if ( _checkInterval == 0 ) return;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_checkInterval * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-        mcs_queue_sync(^{
+        @synchronized (self) {
             [self _trim];
-        });
+        }
         
         [self _checkCachesRecursively];
     });
@@ -281,22 +204,15 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     [self _removeAssetsForLimit:MCSLimitCount];
 }
 
-// 空间不足
-- (void)_fileWriteOutOfSpaceErrorWithNote:(NSNotification *)note {
-    mcs_queue_async(^{
-        [self _trim];
-    });
-}
-
-- (BOOL)_isRemovableForCacheWithAsset:(id<MCSAsset>)asset {
-    return [_sqlite3 objectsForClass:MCSExportedCacheItem.class conditions:@[
+- (BOOL)_isProtectedForCacheWithAsset:(id<MCSAsset>)asset {
+    return [_sqlite3 objectsForClass:MCSProtectedCacheItem.class conditions:@[
         [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)],
         [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)]
     ] orderBy:nil error:NULL].count == 0;
 }
 
 - (void)_removeAssetsForLimit:(MCSLimit)limit {
-    NSInteger count = MCSAssetManager.shared.countOfAllAssets - _countOfExportedAssets;
+    NSInteger count = MCSAssetManager.shared.countOfAllAssets - _countOfProtectedAssets;
 
     switch ( limit ) {
         case MCSLimitNone:
@@ -363,10 +279,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 #pragma mark - mark
 
 - (NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)_allProtectedAssets {
-    NSArray<NSDictionary *> *protectedHLSAssets = [_sqlite3 queryDataForClass:MCSExportedCacheItem.class resultColumns:@[@"asset"] conditions:@[
+    NSArray<NSDictionary *> *protectedHLSAssets = [_sqlite3 queryDataForClass:MCSProtectedCacheItem.class resultColumns:@[@"asset"] conditions:@[
         [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(MCSAssetTypeHLS)]
     ] orderBy:nil error:NULL];
-    NSArray<NSDictionary *> *protectedFILEAssets = [_sqlite3 queryDataForClass:MCSExportedCacheItem.class resultColumns:@[@"asset"] conditions:@[
+    NSArray<NSDictionary *> *protectedFILEAssets = [_sqlite3 queryDataForClass:MCSProtectedCacheItem.class resultColumns:@[@"asset"] conditions:@[
         [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(MCSAssetTypeFILE)]
     ] orderBy:nil error:NULL];
     

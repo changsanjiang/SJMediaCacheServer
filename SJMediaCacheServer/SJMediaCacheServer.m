@@ -275,17 +275,16 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
     return MCSCacheManager.shared.reservedFreeDiskSpace;
 }
 
-- (void)removeAllRemovableCaches {
-    [MCSPrefetcherManager.shared cancelAllPrefetchTasks];
-    [MCSCacheManager.shared removeAllRemovableCaches];
+- (void)removeAllCaches {
+    [MCSCacheManager.shared removeUnprotectedCaches];
 }
 
 - (BOOL)removeCacheForURL:(NSURL *)URL {
     return [MCSCacheManager.shared removeCacheForURL:URL];
 }
 
-- (UInt64)countOfBytesRemovableCaches {
-    return MCSCacheManager.shared.countOfBytesRemovableCaches;
+- (UInt64)countOfBytesAllCaches {
+    return MCSCacheManager.shared.countOfBytesUnprotectedCaches;
 }
 
 - (BOOL)isStoredForURL:(NSURL *)URL {

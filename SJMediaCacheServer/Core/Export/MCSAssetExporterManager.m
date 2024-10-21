@@ -83,7 +83,8 @@
 
 - (UInt64)countOfBytesAllExportedAssets {
     @synchronized (self) {
-        return MCSCacheManager.shared.countOfBytesAllCaches - MCSCacheManager.shared.countOfBytesRemovableCaches;
+        // 暂时可以这么写
+        return MCSCacheManager.shared.countOfBytesAllCaches - MCSCacheManager.shared.countOfBytesUnprotectedCaches;
     }
 }
 
@@ -144,7 +145,7 @@
                 [exporter cancel];
                 mExporters[exporter.name] = nil;
                 [mSqlite3 removeObjectForClass:MCSAssetExporter.class primaryKeyValue:@(exporter.id) error:NULL];
-                [MCSCacheManager.shared setExported:NO forCacheWithURL:URL];
+                [MCSCacheManager.shared setProtected:NO forCacheWithURL:URL];
                 [MCSCacheManager.shared removeCacheForURL:URL];
                 
                 for ( id<MCSAssetExportObserver> observer in MCSAllHashTableObjects(mObservers) ) {
@@ -187,7 +188,7 @@
             for ( MCSAssetExporter *exporter in allExporters ) {
                 [exporter cancel];
                 id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:exporter.name type:exporter.type];
-                [MCSCacheManager.shared setExported:NO forCacheWithAsset:asset];
+                [MCSCacheManager.shared setProtected:NO forCacheWithAsset:asset];
                 [MCSCacheManager.shared removeCacheForAsset:asset];
             }
             [mExporters removeAllObjects];
@@ -254,7 +255,7 @@
     @synchronized (self) {
         if ( status == MCSAssetExportStatusCancelled ) {
             id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:exporter.name type:exporter.type];
-            [MCSCacheManager.shared setExported:NO forCacheWithAsset:asset];
+            [MCSCacheManager.shared setProtected:NO forCacheWithAsset:asset];
             [mSqlite3 removeObjectForClass:MCSAssetExporter.class primaryKeyValue:@(exporter.id) error:NULL];
             mExporters[exporter.name] = nil;
         }
@@ -326,7 +327,7 @@
     if ( exporter == nil ) {
         MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
         exporter = [MCSAssetExporter.alloc initWithURLString:URL.absoluteString name:name type:type];
-        [MCSCacheManager.shared setExported:YES forCacheWithURL:URL];
+        [MCSCacheManager.shared setProtected:YES forCacheWithURL:URL];
         [mSqlite3 save:exporter error:NULL];
         mExporters[name] = exporter;
     }

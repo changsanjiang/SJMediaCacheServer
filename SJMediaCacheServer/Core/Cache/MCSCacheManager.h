@@ -51,25 +51,26 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic) NSTimeInterval lastTimeLimit; // 在删除资源时, 过滤掉指定的时间内读取过的资源
 
-- (void)setExported:(BOOL)isExported forCacheWithURL:(NSURL *)URL;
-- (void)setExported:(BOOL)isExported forCacheWithAsset:(id<MCSAsset>)asset;
+/// NO to mark it as non-removable;
+- (void)setProtected:(BOOL)isProtected forCacheWithURL:(NSURL *)URL;
+- (void)setProtected:(BOOL)isProtected forCacheWithAsset:(id<MCSAsset>)asset;
 
 /// All caches, includes protected caches
 @property (nonatomic, readonly) UInt64 countOfBytesAllCaches;
 /// Protected caches are not included
-@property (nonatomic, readonly) UInt64 countOfBytesRemovableCaches;
+@property (nonatomic, readonly) UInt64 countOfBytesUnprotectedCaches;
 
 /// Return NO if the cache is protected
-- (BOOL)isRemovableForCacheWithURL:(NSURL *)URL;
+- (BOOL)isProtectedForCacheWithURL:(NSURL *)URL;
 /// Return NO if the cache is protected
-- (BOOL)isRemovableForCacheWithAsset:(id<MCSAsset>)asset;
+- (BOOL)isProtectedForCacheWithAsset:(id<MCSAsset>)asset;
 
 /// If the cache for asset is protected, it will not be removed
 - (BOOL)removeCacheForURL:(NSURL *)URL;
 /// If the cache for asset is protected, it will not be removed
 - (BOOL)removeCacheForAsset:(id<MCSAsset>)asset;
 /// If the cache for asset is protected, it will not be removed
-- (void)removeAllRemovableCaches;
+- (void)removeUnprotectedCaches;
 @end
 NS_ASSUME_NONNULL_END
 

@@ -271,23 +271,29 @@ extern NSString *const MCSPlayBackRequestFailureUserInfoKey;
 ///
 @property (nonatomic) NSUInteger reservedFreeDiskSpace; // 剩余磁盘空间限制
 
-/// Protected caches are not included.
+/// Returns the total number of bytes used by all caches.
 ///
-@property (nonatomic, readonly) UInt64 countOfBytesRemovableCaches; // 可被删除的缓存所占用的大小
+/// This property provides the cumulative size of all cached assets in bytes,
+/// excluding any protected assets (e.g., exported assets).
+/// It is updated automatically as caches are added or removed.
+///
+@property (nonatomic, readonly) UInt64 countOfBytesAllCaches; // 可被删除的缓存所占用的大小
 
 /// Removes the cache of the specified URL.
 ///
-///     If the cache for asset is protected, it will not be removed.
+/// If the cache for an asset is protected (e.g., an exported asset), it will not be removed.
 ///
 - (BOOL)removeCacheForURL:(NSURL *)URL; // 删除某个缓存
 
-/// Remove all unprotected caches for assets.
+/// Removes all unprotected caches for assets.
 ///
-///     If the cache for asset is protected, it will not be removed.
+/// If the cache for an asset is protected (e.g., an exported asset), it will not be removed.
 ///
-///     This method may blocks the calling thread until file delete finished.
+/// This method may block the calling thread until the file deletion is finished.
 ///
-- (void)removeAllRemovableCaches; // 删除缓存
+/// Additionally, this method will cancel all reading or writing operations associated with the caches.
+///
+- (void)removeAllCaches;
 
 - (BOOL)isStoredForURL:(NSURL *)URL;
 
