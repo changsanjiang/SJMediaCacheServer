@@ -28,17 +28,17 @@
 @end
 
 @implementation HLSAssetReader
-@synthesize readDataDecoder = _readDataDecoder;
+@synthesize readDataDecryptor = _readDataDecryptor;
 @synthesize response = _response;
 
-- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
+- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecryptor:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecryptor delegate:(id<MCSAssetReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         mAsset = asset;
         mRequest = [request restoreOriginalRequest];
         mDataType = [MCSURL.shared dataTypeForHLSProxyURL:request.proxyRequest.URL];
         _networkTaskPriority = networkTaskPriority;
-        _readDataDecoder = readDataDecoder;
+        _readDataDecryptor = readDataDecryptor;
         _delegate = delegate;
         [mAsset readwriteRetain];
         [mAsset registerObserver:self];
@@ -133,8 +133,8 @@
                     NSUInteger position = mReader.offset;
                     data = [mReader readDataOfLength:length];
                     mOffset = mReader.offset;
-                    if ( data != nil && _readDataDecoder != nil ) {
-                        data = _readDataDecoder(mRequest, position, data);
+                    if ( data != nil && _readDataDecryptor != nil ) {
+                        data = _readDataDecryptor(mRequest, position, data);
                     }
                     return data;
                 }

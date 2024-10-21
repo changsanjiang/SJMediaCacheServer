@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 ///     This block will be invoked when the reader reads the data, where you can perform some decoding operations on the data.
 ///
-@property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+@property (nonatomic, copy, nullable) NSData *(^readDataDecryptor)(NSURLRequest *request, NSUInteger offset, NSData *data);
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 

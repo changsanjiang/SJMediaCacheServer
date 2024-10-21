@@ -142,7 +142,7 @@
 
 - (BOOL)start {
     @synchronized (self) {
-        if ( self.isRunning ) return YES;
+        if ( _localServer.isRunning ) return YES;
         
         if ( ![_localServer start:NULL] ) {
             return NO;

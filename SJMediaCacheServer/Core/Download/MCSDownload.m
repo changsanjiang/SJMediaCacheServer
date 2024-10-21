@@ -45,12 +45,7 @@
         mBackgroundTaskIdentifier = UIBackgroundTaskInvalid;
         mErrorDictionary = [NSMutableDictionary dictionary];
         mDelegateDictionary = [NSMutableDictionary dictionary];
-        mSessionDelegateQueue = [[NSOperationQueue alloc] init];
-        mSessionDelegateQueue.qualityOfService = NSQualityOfServiceUserInteractive;
-        mSessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
-        mSessionConfiguration.timeoutIntervalForRequest = _timeoutInterval;
-        mSessionConfiguration.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
-        mSession = [NSURLSession sessionWithConfiguration:mSessionConfiguration delegate:self delegateQueue:mSessionDelegateQueue];
+        
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidEnterBackground:)
                                                      name:UIApplicationDidEnterBackgroundNotification
@@ -90,12 +85,27 @@
 
 - (nullable id<MCSDownloadTask>)downloadWithRequest:(NSURLRequest *)request priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate {
     if ( request == nil ) return nil;
+    if ( mSession == nil ) {
+        @synchronized (self) {
+            if ( mSession == nil ) {
+                mSessionDelegateQueue = [[NSOperationQueue alloc] init];
+                mSessionDelegateQueue.qualityOfService = NSQualityOfServiceUserInteractive;
+                mSessionConfiguration = _initialSessionConfiguration;
+                if ( mSessionConfiguration == nil ) {
+                    mSessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+                    mSessionConfiguration.timeoutIntervalForRequest = _timeoutInterval;
+                    mSessionConfiguration.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
+                }
+                mSession = [NSURLSession sessionWithConfiguration:mSessionConfiguration delegate:self delegateQueue:mSessionDelegateQueue];
+            }
+        }
+    }
     
     NSMutableURLRequest *req = [request mutableCopy];
     req.cachePolicy = NSURLRequestReloadIgnoringCacheData;
     req.timeoutInterval = _timeoutInterval;
     __auto_type requestHandler = _requestHandler;
-    if ( requestHandler != nil ) req = requestHandler(req);
+    if ( requestHandler != nil ) requestHandler(req);
     
     NSURLSessionTask *task = [mSession dataTaskWithRequest:req];
     @synchronized (self) { mDelegateDictionary[@(task.taskIdentifier)] = delegate; }
@@ -145,9 +155,9 @@
     MCSDownloaderDebugLog(@"%@: <%p>.didReceiveData { task: %lu, dataLength: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)dataTask.taskIdentifier, (unsigned long)data.length);
     id<MCSDownloadTaskDelegate> delegate;
     @synchronized (self) { delegate = mDelegateDictionary[@(dataTask.taskIdentifier)]; }
-    __auto_type receivedDataEncoder = _receivedDataEncoder;
-    if ( receivedDataEncoder != nil ) {
-        NSData *newData = receivedDataEncoder(dataTask.currentRequest, (NSUInteger)(dataTask.countOfBytesReceived - data.length), data);
+    __auto_type receivedDataEncryptor = _receivedDataEncryptor;
+    if ( receivedDataEncryptor != nil ) {
+        NSData *newData = receivedDataEncryptor(dataTask.currentRequest, (NSUInteger)(dataTask.countOfBytesReceived - data.length), data);
         if ( newData.length != data.length ) {
             @throw [NSException exceptionWithName:NSGenericException 
                                            reason:@"The length of the encoded data must be the same as the original data."
@@ -159,7 +169,7 @@
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didFinishCollectingMetrics:(NSURLSessionTaskMetrics *)metrics API_AVAILABLE(ios(10.0)) {
-    __auto_type block = _didFinishCollectingMetrics;
+    __auto_type block = _metricsHandler;
     if ( block != nil) block(session, task, metrics);
 }
 

@@ -8,7 +8,7 @@
 
 #import "SJDemoDownloadRow.h"
 
-@interface SJDemoDownloadRow ()<MCSAssetExportObserver>
+@interface SJDemoDownloadRow ()<MCSExportObserver>
 
 @end
 
@@ -37,15 +37,15 @@
     [SJMediaCacheServer.shared removeExportObserver:self];
 }
 
-#pragma mark - MCSAssetExportObserver
+#pragma mark - MCSExportObserver
 
-- (void)exporter:(id<MCSAssetExporter>)exporter statusDidChange:(MCSAssetExportStatus)status {
+- (void)exporter:(id<MCSExporter>)exporter statusDidChange:(MCSExportStatus)status {
     if ( exporter == _exporter ) {
         [self _refreshCell];
     }
 }
 
-- (void)exporter:(id<MCSAssetExporter>)exporter progressDidChange:(float)progress {
+- (void)exporter:(id<MCSExporter>)exporter progressDidChange:(float)progress {
     if ( exporter == _exporter ) {
         [self _refreshCell];
     }
@@ -78,25 +78,25 @@
     
     NSString *statusStr = nil;
     switch ( _exporter.status ) {
-        case MCSAssetExportStatusUnknown:
+        case MCSExportStatusUnknown:
             statusStr = @"Unknown";
             break;
-        case MCSAssetExportStatusWaiting:
+        case MCSExportStatusWaiting:
             statusStr = @"Waiting";
             break;
-        case MCSAssetExportStatusExporting:
+        case MCSExportStatusExporting:
             statusStr = @"Exporting";
             break;
-        case MCSAssetExportStatusFinished:
+        case MCSExportStatusFinished:
             statusStr = @"Finished(点击播放)";
             break;
-        case MCSAssetExportStatusFailed:
+        case MCSExportStatusFailed:
             statusStr = @"Failed";
             break;
-        case MCSAssetExportStatusSuspended:
+        case MCSExportStatusSuspended:
             statusStr = @"Suspended";
             break;
-        case MCSAssetExportStatusCancelled:
+        case MCSExportStatusCancelled:
             statusStr = @"Cancelled";
             break;
     }

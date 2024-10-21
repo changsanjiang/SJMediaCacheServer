@@ -135,7 +135,7 @@
  
 - (nullable id<MCSAssetReader>)readerWithRequest:(NSURLRequest *)proxyRequest networkTaskPriority:(float)networkTaskPriority delegate:(nullable id<MCSAssetReaderDelegate>)delegate {
     id<MCSAsset> asset = [self assetWithURL:proxyRequest.URL];
-    id<MCSAssetReader> reader = [asset readerWithRequest:[MCSRequest.alloc initWithProxyRequest:proxyRequest] networkTaskPriority:networkTaskPriority readDataDecoder:_readDataDecoder delegate:delegate];
+    id<MCSAssetReader> reader = [asset readerWithRequest:[MCSRequest.alloc initWithProxyRequest:proxyRequest] networkTaskPriority:networkTaskPriority readDataDecryptor:_readDataDecryptor delegate:delegate];
     return reader;
 }
 

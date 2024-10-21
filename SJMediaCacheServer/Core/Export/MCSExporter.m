@@ -1,11 +1,11 @@
 //
-//  MCSAssetExporter.m
+//  MCSExporter.m
 //  SJMediaCacheServer
 //
 //  Created by db on 2024/10/21.
 //
 
-#import "MCSAssetExporter.h"
+#import "MCSExporter.h"
 #import "MCSPrefetcherManager.h"
 #import "MCSAssetManager.h"
 #import "MCSCacheManager.h"
@@ -13,7 +13,7 @@
 #import "HLSAsset.h"
 #import "MCSError.h"
 
-@interface MCSAssetExporter () {
+@interface MCSExporter () {
     id<MCSPrefetchTask> _task;
 }
 @property (nonatomic) NSInteger id;
@@ -22,7 +22,7 @@
 @property (nonatomic, strong) NSString *URLString;
 @end
 
-@implementation MCSAssetExporter
+@implementation MCSExporter
 @synthesize URL = _URL;
 @synthesize status = _status;
 @synthesize progress = _progress;
@@ -42,7 +42,7 @@
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        _status = MCSAssetExportStatusSuspended;
+        _status = MCSExportStatusSuspended;
     }
     return self;
 }
@@ -59,6 +59,10 @@
     return @[@"URL", @"progress"];
 }
 
++ (NSString *)sql_tableName {
+    return @"MCSAssetExporter";
+}
+
 - (NSURL *)URL {
     @synchronized (self) {
         if ( _URL == nil ) _URL = [NSURL URLWithString:_URLString];
@@ -66,7 +70,7 @@
     }
 }
   
-- (MCSAssetExportStatus)status {
+- (MCSExportStatus)status {
     @synchronized (self) {
         return _status;
     }
@@ -74,7 +78,7 @@
 
 - (float)progress {
     @synchronized (self) {
-        return _status == MCSAssetExportStatusFinished ? 1.0 : _progress;
+        return _status == MCSExportStatusFinished ? 1.0 : _progress;
     }
 }
 
@@ -87,15 +91,15 @@
 - (void)resume {
     @synchronized (self) {
         switch ( _status ) {
-            case MCSAssetExportStatusFinished:
-            case MCSAssetExportStatusWaiting:
-            case MCSAssetExportStatusExporting:
-            case MCSAssetExportStatusCancelled:
+            case MCSExportStatusFinished:
+            case MCSExportStatusWaiting:
+            case MCSExportStatusExporting:
+            case MCSExportStatusCancelled:
                 return;
-            case MCSAssetExportStatusUnknown:
-            case MCSAssetExportStatusFailed:
-            case MCSAssetExportStatusSuspended: {
-                _status = MCSAssetExportStatusWaiting;
+            case MCSExportStatusUnknown:
+            case MCSExportStatusFailed:
+            case MCSExportStatusSuspended: {
+                _status = MCSExportStatusWaiting;
                 if ( _URL == nil ) _URL = [NSURL URLWithString:_URLString];
                 __weak typeof(self) _self = self;
                 _task = [MCSPrefetcherManager.shared prefetchWithURL:_URL progress:^(float progress) {
@@ -104,7 +108,7 @@
                     @synchronized (self) {
                         [self _syncProgress];
                     }
-                } completed:^(NSError * _Nullable error) {
+                } completion:^(NSError * _Nullable error) {
                     __strong typeof(_self) self = _self;
                     if ( self == nil ) return;
                     @synchronized (self) {
@@ -128,15 +132,15 @@
 - (void)suspend {
     @synchronized (self) {
         switch ( _status ) {
-            case MCSAssetExportStatusFinished:
-            case MCSAssetExportStatusFailed:
-            case MCSAssetExportStatusCancelled:
-            case MCSAssetExportStatusSuspended:
+            case MCSExportStatusFinished:
+            case MCSExportStatusFailed:
+            case MCSExportStatusCancelled:
+            case MCSExportStatusSuspended:
                 return;
-            case MCSAssetExportStatusUnknown:
-            case MCSAssetExportStatusWaiting:
-            case MCSAssetExportStatusExporting: {
-                _status = MCSAssetExportStatusSuspended;
+            case MCSExportStatusUnknown:
+            case MCSExportStatusWaiting:
+            case MCSExportStatusExporting: {
+                _status = MCSExportStatusSuspended;
                 if ( _task != nil ) {
                     [_task cancel];
                     _task = nil;
@@ -150,15 +154,15 @@
 - (void)cancel {
     @synchronized (self) {
         switch ( _status ) {
-            case MCSAssetExportStatusFinished:
-            case MCSAssetExportStatusCancelled:
+            case MCSExportStatusFinished:
+            case MCSExportStatusCancelled:
                 return;
-            case MCSAssetExportStatusUnknown:
-            case MCSAssetExportStatusFailed:
-            case MCSAssetExportStatusSuspended:
-            case MCSAssetExportStatusWaiting:
-            case MCSAssetExportStatusExporting: {
-                _status = MCSAssetExportStatusCancelled;
+            case MCSExportStatusUnknown:
+            case MCSExportStatusFailed:
+            case MCSExportStatusSuspended:
+            case MCSExportStatusWaiting:
+            case MCSExportStatusExporting: {
+                _status = MCSExportStatusCancelled;
                 if ( _task != nil ) {
                     [_task cancel];
                     _task = nil;
@@ -177,28 +181,28 @@
 
 - (void)_prefetchDidStart {
     switch (_status) {
-        case MCSAssetExportStatusWaiting: {
-            _status = MCSAssetExportStatusExporting;
+        case MCSExportStatusWaiting: {
+            _status = MCSExportStatusExporting;
             [self _notifyStatusChange];
             [self _syncProgress];
         }
             break;
-        case MCSAssetExportStatusUnknown:
-        case MCSAssetExportStatusExporting:
-        case MCSAssetExportStatusFinished:
-        case MCSAssetExportStatusFailed:
-        case MCSAssetExportStatusSuspended:
-        case MCSAssetExportStatusCancelled:
+        case MCSExportStatusUnknown:
+        case MCSExportStatusExporting:
+        case MCSExportStatusFinished:
+        case MCSExportStatusFailed:
+        case MCSExportStatusSuspended:
+        case MCSExportStatusCancelled:
             break;
     }
 }
 
 - (void)_prefetchDidCompleteWithError:(NSError *_Nullable)error {
     switch (_status) {
-        case MCSAssetExportStatusExporting: {
-            _status = error != nil ? MCSAssetExportStatusFailed : MCSAssetExportStatusFinished;
+        case MCSExportStatusExporting: {
+            _status = error != nil ? MCSExportStatusFailed : MCSExportStatusFinished;
             _task = nil;
-            if ( _status == MCSAssetExportStatusFinished ) {
+            if ( _status == MCSExportStatusFinished ) {
                 _progress = 1;
                 [self _notifyProgressChange];
             }
@@ -206,19 +210,19 @@
             [self _notifyComplete:error];
         }
             break;
-        case MCSAssetExportStatusUnknown:
-        case MCSAssetExportStatusWaiting:
-        case MCSAssetExportStatusFinished:
-        case MCSAssetExportStatusFailed:
-        case MCSAssetExportStatusSuspended:
-        case MCSAssetExportStatusCancelled:
+        case MCSExportStatusUnknown:
+        case MCSExportStatusWaiting:
+        case MCSExportStatusFinished:
+        case MCSExportStatusFailed:
+        case MCSExportStatusSuspended:
+        case MCSExportStatusCancelled:
             break;
     }
 }
 
 - (void)_syncProgress {
     switch (_status) {
-        case MCSAssetExportStatusExporting: {
+        case MCSExportStatusExporting: {
             id<MCSAsset> asset = [MCSAssetManager.shared assetWithName:_name type:_type];
             float progress = _progress;
             progress = asset.completeness;
@@ -228,12 +232,12 @@
             }
         }
             break;
-        case MCSAssetExportStatusUnknown:
-        case MCSAssetExportStatusWaiting:
-        case MCSAssetExportStatusFinished:
-        case MCSAssetExportStatusFailed:
-        case MCSAssetExportStatusSuspended:
-        case MCSAssetExportStatusCancelled:
+        case MCSExportStatusUnknown:
+        case MCSExportStatusWaiting:
+        case MCSExportStatusFinished:
+        case MCSExportStatusFailed:
+        case MCSExportStatusSuspended:
+        case MCSExportStatusCancelled:
             break;
     }
 }

@@ -105,20 +105,20 @@
 - (void)_pauseResumeOrPlay:(SJDemoDownloadRow *)row {
     // 这里异步调用, 防止阻塞主线程
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        id<MCSAssetExporter> exporter = row.exporter;
+        id<MCSExporter> exporter = row.exporter;
         switch ( exporter.status ) {
-            case MCSAssetExportStatusUnknown:
-            case MCSAssetExportStatusFailed:
-            case MCSAssetExportStatusSuspended:
+            case MCSExportStatusUnknown:
+            case MCSExportStatusFailed:
+            case MCSExportStatusSuspended:
                 [exporter resume];
                 break;
-            case MCSAssetExportStatusWaiting:
-            case MCSAssetExportStatusExporting:
+            case MCSExportStatusWaiting:
+            case MCSExportStatusExporting:
                 [exporter suspend];
                 break;
-            case MCSAssetExportStatusCancelled:
+            case MCSExportStatusCancelled:
                 break;
-            case MCSAssetExportStatusFinished: {
+            case MCSExportStatusFinished: {
                 // 下载完成后, 获取播放地址进行播放
                 dispatch_async(dispatch_get_main_queue(), ^{
                     NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:exporter.URL];

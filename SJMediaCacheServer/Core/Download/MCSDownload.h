@@ -13,16 +13,14 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSDownload : NSObject<MCSDownloader>
 + (instancetype)shared;
 
-@property (nonatomic, copy, nullable) NSMutableURLRequest *_Nullable(^requestHandler)(NSMutableURLRequest *request);
+@property (nonatomic, strong, nullable) NSURLSessionConfiguration *initialSessionConfiguration;
+@property (nonatomic, copy, nullable) void (^requestHandler)(NSMutableURLRequest *request);
 @property (nonatomic, copy, null_resettable) id<MCSDownloadResponse> _Nullable(^responseHandler)(NSURLSessionTask *task, NSURLResponse *res);
-@property (nonatomic, copy, nullable) NSData *(^receivedDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
-
-@property (nonatomic, copy, nullable) void (^didFinishCollectingMetrics)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics);
+@property (nonatomic, copy, nullable) NSData *(^receivedDataEncryptor)(NSURLRequest *request, NSUInteger offset, NSData *data);
+@property (nonatomic, copy, nullable) void (^metricsHandler)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics);
 @property (nonatomic) NSTimeInterval timeoutInterval; // default value is 30s;
 
 - (nullable id<MCSDownloadTask>)downloadWithRequest:(NSURLRequest *)request priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate;
-
-- (void)customSessionConfig:(nullable void(^)(NSURLSessionConfiguration *))config;
 
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;

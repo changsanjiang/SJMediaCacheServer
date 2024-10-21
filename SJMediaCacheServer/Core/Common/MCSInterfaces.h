@@ -69,11 +69,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSString *path;
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
 @property (nonatomic, readonly) BOOL isStored;
-@property (nonatomic, readonly) float completeness;
+@property (nonatomic, readonly) float completeness; // 完成度
 
 - (void)prepare;
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error;
-- (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
+- (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecryptor:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecryptor delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 - (void)clear; // 清空本地文件缓存; 请谨慎调用;
 
 - (void)registerObserver:(id<MCSAssetObserver>)observer;
@@ -108,7 +108,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)prepare;
 @property (nonatomic, readonly) MCSReaderStatus status;
-@property (nonatomic, copy, readonly, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+@property (nonatomic, copy, readonly, nullable) NSData *(^readDataDecryptor)(NSURLRequest *request, NSUInteger offset, NSData *data);
 @property (nonatomic, weak, readonly, nullable) id<MCSAssetReaderDelegate> delegate;
 @property (nonatomic, strong, readonly, nullable) __kindof id<MCSAsset> asset;
 @property (nonatomic, readonly) MCSDataType contentDataType;

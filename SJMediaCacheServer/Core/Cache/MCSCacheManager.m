@@ -231,24 +231,24 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         }
             break;
         case MCSLimitFreeDiskSpace: {
-            if ( _reservedFreeDiskSpace == 0 )
+            if ( _cacheReservedFreeDiskSpace == 0 )
                 return;
             
-            if ( _freeSize > _reservedFreeDiskSpace )
+            if ( _freeSize > _cacheReservedFreeDiskSpace )
                 return;
         }
             break;
         case MCSLimitExpires: {
-            if ( _maxDiskAgeForCache == 0 )
+            if ( _cacheMaxDiskAge == 0 )
                 return;
         }
             break;
         case MCSLimitCacheDiskSpace: {
-            if ( _maxDiskSizeForCache == 0 )
+            if ( _cacheMaxDiskSize == 0 )
                 return;
             
             // 获取已缓存的数据大小
-            if ( _maxDiskSizeForCache > _cacheSize )
+            if ( _cacheMaxDiskSize > _cacheSize )
                 return;
         }
             break;
@@ -269,7 +269,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         }
             break;
         case MCSLimitExpires: {
-            NSTimeInterval timeLimit = NSDate.date.timeIntervalSince1970 - _maxDiskAgeForCache;
+            NSTimeInterval timeLimit = NSDate.date.timeIntervalSince1970 - _cacheMaxDiskAge;
             [MCSAssetManager.shared trimAssetsForLastReadingTime:timeLimit notIn:protectedAssets];
         }
             break;

@@ -10,7 +10,7 @@
 #import "MCSProxyServer.h"
 #import "MCSAssetManager.h"
 #import "MCSCacheManager.h"
-#import "MCSAssetExporterManager.h"
+#import "MCSExporterManager.h"
 #import "MCSURL.h"
 #import "MCSProxyTask.h"
 #import "MCSLogger.h"
@@ -42,12 +42,9 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
         _server.delegate = self;
         
         self.resolveAssetIdentifier = ^NSString * _Nonnull(NSURL * _Nonnull URL) {
-            NSString *retv = URL.absoluteString;
-            NSString *query = URL.query;
-            if ( query.length != 0 ) {
-                retv = [retv substringToIndex:retv.length - (query.length + 1 /*'?'.length*/)];
-            }
-            return retv;
+            NSURLComponents *components = [NSURLComponents componentsWithURL:URL resolvingAgainstBaseURL:NO];
+            components.query = nil; // ignore query parameters for identifier purposes
+            return components.URL.absoluteString;
         };
     }
     return self;
@@ -117,25 +114,25 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
     return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize];
 }
 
-- (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
+- (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
     if ( URL == nil )
         return nil;
     [self setActive:YES];
-    return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize progress:progressBlock completed:completionBlock];
+    return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize progress:progressBlock completion:completionHandler];
 }
 
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
     if ( URL == nil )
         return nil;
     [self setActive:YES];
-    return [MCSPrefetcherManager.shared prefetchWithURL:URL progress:progressBlock completed:completionBlock];
+    return [MCSPrefetcherManager.shared prefetchWithURL:URL progress:progressBlock completion:completionHandler];
 }
 
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadFileCount:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
     if ( URL == nil )
         return nil;
     [self setActive:YES];
-    return [MCSPrefetcherManager.shared prefetchWithURL:URL numberOfPreloadedFiles:num progress:progressBlock completed:completionBlock];
+    return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadFileCount:num progress:progressBlock completion:completionHandler];
 }
 
 - (void)cancelAllPrefetchTasks {
@@ -147,30 +144,41 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 
 @implementation SJMediaCacheServer (Request)
 
-- (void)setRequestHandler:(NSMutableURLRequest * _Nullable (^)(NSMutableURLRequest * _Nonnull))requestHandler {
+- (void)setSessionConfiguration:(NSURLSessionConfiguration *)sessionConfiguration {
+    MCSDownload.shared.initialSessionConfiguration = sessionConfiguration;
+}
+
+- (nullable NSURLSessionConfiguration *)sessionConfiguration {
+    return MCSDownload.shared.initialSessionConfiguration;
+}
+
+- (void)setRequestHandler:(void (^)(NSMutableURLRequest * _Nonnull))requestHandler {
     MCSDownload.shared.requestHandler = requestHandler;
 }
-- (NSMutableURLRequest * _Nullable (^)(NSMutableURLRequest * _Nonnull))requestHandler {
+- (void (^)(NSMutableURLRequest * _Nonnull))requestHandler {
     return MCSDownload.shared.requestHandler;
 }
 
-- (void)assetURL:(NSURL *)URL setValue:(nullable NSString *)value forHTTPAdditionalHeaderField:(NSString *)field ofType:(MCSDataType)type {
+- (void)setHTTPHeaderField:(NSString *)field withValue:(nullable NSString *)value forAssetURL:(NSURL *)URL ofType:(MCSDataType)type {
     if ( URL == nil )
         return;
     id<MCSAsset> asset = [MCSAssetManager.shared assetWithURL:URL];
     [asset.configuration setValue:value forHTTPAdditionalHeaderField:field ofType:type];
 }
-- (nullable NSDictionary *)assetURL:(NSURL *)URL HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type {
+- (nullable NSDictionary<NSString *, NSString *> *)HTTPAdditionalHeadersForAssetURL:(NSURL *)URL ofType:(MCSDataType)type {
     if ( URL == nil )
         return nil;
     id<MCSAsset> asset = [MCSAssetManager.shared assetWithURL:URL];
     return [asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:type];
 }
 
-- (void)customSessionConfig:(nullable void(^)(NSURLSessionConfiguration *))config {
-    [MCSDownload.shared customSessionConfig:config];
+- (void)setMetricsHandler:(void (^_Nullable)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))metricsHandler {
+    MCSDownload.shared.metricsHandler = metricsHandler;
 }
 
+- (void (^_Nullable)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))metricsHandler {
+    return MCSDownload.shared.metricsHandler;
+}
 @end
 
 
@@ -191,26 +199,18 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
     return MCSURL.shared.resolveAssetIdentifier;
 }
 
-- (void)setWriteDataEncoder:(NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))writeDataEncoder {
-    MCSDownload.shared.receivedDataEncoder = writeDataEncoder;
+- (void)setWriteDataEncryptor:(NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))writeDataEncryptor {
+    MCSDownload.shared.receivedDataEncryptor = writeDataEncryptor;
 }
-- (NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))writeDataEncoder {
-    return MCSDownload.shared.receivedDataEncoder;
-}
-
-- (void)setReadDataDecoder:(NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))readDataDecoder {
-    MCSAssetManager.shared.readDataDecoder = readDataDecoder;
-}
-- (NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))readDataDecoder {
-    return MCSAssetManager.shared.readDataDecoder;
+- (NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))writeDataEncryptor {
+    return MCSDownload.shared.receivedDataEncryptor;
 }
 
-- (void)setDidFinishCollectingMetrics:(void (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
-    MCSDownload.shared.didFinishCollectingMetrics = didFinishCollectingMetrics;
+- (void)setReadDataDecryptor:(NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))readDataDecryptor {
+    MCSAssetManager.shared.readDataDecryptor = readDataDecryptor;
 }
-
-- (void (^)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))didFinishCollectingMetrics {
-    return MCSDownload.shared.didFinishCollectingMetrics;
+- (NSData * _Nonnull (^)(NSURLRequest * _Nonnull, NSUInteger, NSData * _Nonnull))readDataDecryptor {
+    return MCSAssetManager.shared.readDataDecryptor;
 }
 @end
 
@@ -251,25 +251,25 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
     return MCSCacheManager.shared.cacheCountLimit;
 }
 
-- (void)setMaxDiskAgeForCache:(NSTimeInterval)maxDiskAgeForCache {
-    MCSCacheManager.shared.maxDiskAgeForCache = maxDiskAgeForCache;
+- (void)setCacheMaxDiskAge:(NSTimeInterval)cacheMaxDiskAge {
+    MCSCacheManager.shared.cacheMaxDiskAge = cacheMaxDiskAge;
 }
-- (NSTimeInterval)maxDiskAgeForCache {
-    return MCSCacheManager.shared.maxDiskAgeForCache;
-}
-
-- (void)setMaxDiskSizeForCache:(NSUInteger)maxDiskSizeForCache {
-    MCSCacheManager.shared.maxDiskSizeForCache = maxDiskSizeForCache;
-}
-- (NSUInteger)maxDiskSizeForCache {
-    return MCSCacheManager.shared.maxDiskSizeForCache;
+- (NSTimeInterval)cacheMaxDiskAge {
+    return MCSCacheManager.shared.cacheMaxDiskAge;
 }
 
-- (void)setReservedFreeDiskSpace:(NSUInteger)reservedFreeDiskSpace {
-    MCSCacheManager.shared.reservedFreeDiskSpace = reservedFreeDiskSpace;
+- (void)setCacheMaxDiskSize:(NSUInteger)cacheMaxDiskSize {
+    MCSCacheManager.shared.cacheMaxDiskSize = cacheMaxDiskSize;
 }
-- (NSUInteger)reservedFreeDiskSpace {
-    return MCSCacheManager.shared.reservedFreeDiskSpace;
+- (NSUInteger)cacheMaxDiskSize {
+    return MCSCacheManager.shared.cacheMaxDiskSize;
+}
+
+- (void)setCacheReservedFreeDiskSpace:(NSUInteger)cacheReservedFreeDiskSpace {
+    MCSCacheManager.shared.cacheReservedFreeDiskSpace = cacheReservedFreeDiskSpace;
+}
+- (NSUInteger)cacheReservedFreeDiskSpace {
+    return MCSCacheManager.shared.cacheReservedFreeDiskSpace;
 }
 
 - (void)removeAllCaches {
@@ -284,7 +284,7 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
     return MCSCacheManager.shared.countOfBytesUnprotectedCaches;
 }
 
-- (BOOL)isStoredForURL:(NSURL *)URL {
+- (BOOL)isFullyStoredAssetForURL:(NSURL *)URL {
     if ( URL == nil )
         return NO;
     return [MCSAssetManager.shared isAssetStoredForURL:URL];
@@ -293,66 +293,66 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 
 @implementation SJMediaCacheServer (Export)
 
-- (void)registerExportObserver:(id<MCSAssetExportObserver>)observer {
-    [MCSAssetExporterManager.shared registerObserver:observer];
+- (void)registerExportObserver:(id<MCSExportObserver>)observer {
+    [MCSExporterManager.shared registerObserver:observer];
 }
  
-- (void)removeExportObserver:(id<MCSAssetExportObserver>)observer {
-    [MCSAssetExporterManager.shared removeObserver:observer];
+- (void)removeExportObserver:(id<MCSExportObserver>)observer {
+    [MCSExporterManager.shared removeObserver:observer];
 }
 
 - (void)setMaxConcurrentExportCount:(NSInteger)maxConcurrentExportCount {
-    MCSAssetExporterManager.shared.maxConcurrentExportCount = maxConcurrentExportCount;
+    MCSExporterManager.shared.maxConcurrentExportCount = maxConcurrentExportCount;
 }
 
 - (NSInteger)maxConcurrentExportCount {
-    return MCSAssetExporterManager.shared.maxConcurrentExportCount;
+    return MCSExporterManager.shared.maxConcurrentExportCount;
 }
 
-- (nullable NSArray<id<MCSAssetExporter>> *)allExporters {
-    return MCSAssetExporterManager.shared.allExporters;
+- (nullable NSArray<id<MCSExporter>> *)allExporters {
+    return MCSExporterManager.shared.allExporters;
 }
 
-- (nullable NSArray<id<MCSAssetExporter>> *)queryExportersForMask:(MCSAssetExportStatusQueryMask)mask {
-    return [MCSAssetExporterManager.shared queryExportersForMask:mask];
+- (nullable NSArray<id<MCSExporter>> *)exportersForMask:(MCSExportStatusQueryMask)mask {
+    return [MCSExporterManager.shared exportersForMask:mask];
 }
 
-- (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL {
-    return [self exportAssetWithURL:URL resumes:NO];
+- (nullable id<MCSExporter>)exportAssetWithURL:(NSURL *)URL {
+    return [self exportAssetWithURL:URL shouldResume:NO];
 }
 
-- (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL resumes:(BOOL)resumes {
+- (nullable id<MCSExporter>)exportAssetWithURL:(NSURL *)URL shouldResume:(BOOL)shouldResume {
     [self setActive:YES];
-    id<MCSAssetExporter> exporter = [MCSAssetExporterManager.shared exportAssetWithURL:URL];
-    if ( resumes ) [exporter resume];
+    id<MCSExporter> exporter = [MCSExporterManager.shared exportAssetWithURL:URL];
+    if ( shouldResume ) [exporter resume];
     return exporter;
 }
  
-- (MCSAssetExportStatus)exportStatusWithURL:(NSURL *)URL {
-    return [MCSAssetExporterManager.shared statusWithURL:URL];
+- (MCSExportStatus)exportStatusForURL:(NSURL *)URL {
+    return [MCSExporterManager.shared statusForURL:URL];
 }
 
-- (float)exportProgressWithURL:(NSURL *)URL {
-    return [MCSAssetExporterManager.shared progressWithURL:URL];
+- (float)exportProgressForURL:(NSURL *)URL {
+    return [MCSExporterManager.shared progressForURL:URL];
 }
 
-- (void)synchronizeForExporterWithAssetURL:(NSURL *)URL {
-    [MCSAssetExporterManager.shared synchronizeForExporterWithAssetURL:URL];
+- (void)synchronizeProgressForExporterWithURL:(NSURL *)URL {
+    [MCSExporterManager.shared synchronizeProgressForExporterWithURL:URL];
 }
 
-- (void)synchronizeForExporters {
-    [MCSAssetExporterManager.shared synchronize];
+- (void)synchronizeProgressForExporters {
+    [MCSExporterManager.shared synchronize];
 }
 
 - (UInt64)countOfBytesAllExportedAssets {
-    return [MCSAssetExporterManager.shared countOfBytesAllExportedAssets];
+    return [MCSExporterManager.shared countOfBytesAllExportedAssets];
 }
 
 - (void)removeExportAssetWithURL:(NSURL *)URL {
-    [MCSAssetExporterManager.shared removeAssetWithURL:URL];
+    [MCSExporterManager.shared removeAssetWithURL:URL];
 }
 
 - (void)removeAllExportAssets {
-    [MCSAssetExporterManager.shared removeAllAssets];
+    [MCSExporterManager.shared removeAllAssets];
 }
 @end

@@ -23,13 +23,13 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 ///     If 0, there is no expiring limit.  The default value is 0.
 ///
-@property (nonatomic) NSTimeInterval maxDiskAgeForCache; // 保存时长限制
+@property (nonatomic) NSTimeInterval cacheMaxDiskAge; // 保存时长限制
 
 /// The maximum size of the disk cache, in bytes.
 ///
 ///     If 0, there is no cache size limit. The default value is 0.
 ///
-@property (nonatomic) NSUInteger maxDiskSizeForCache; // 缓存占用的磁盘空间限制
+@property (nonatomic) NSUInteger cacheMaxDiskSize; // 缓存占用的磁盘空间限制
 
 /// The maximum length of free disk space the device should reserved, in bytes.
 ///
@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 ///     If 0, there is no disk space limit. The default value is 0.
 ///
-@property (nonatomic) NSUInteger reservedFreeDiskSpace; // 剩余磁盘空间限制
+@property (nonatomic) NSUInteger cacheReservedFreeDiskSpace; // 剩余磁盘空间限制
 
 /// The auto trim check time interval in seconds.
 ///

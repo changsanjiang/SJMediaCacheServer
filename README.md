@@ -36,14 +36,14 @@ pod 'SJMediaCacheServer'
     
     [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
         NSLog(@"%lf", progress);
-    } completed:^(NSError * _Nullable error) {
+    } completion:^(NSError * _Nullable error) {
         NSLog(@"%@", error);
     }];
     
     // The task to cancel the current prefetching.
     id<MCSPrefetchTask> task = [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
         NSLog(@"%lf", progress);
-    } completed:^(NSError * _Nullable error) {
+    } completion:^(NSError * _Nullable error) {
         NSLog(@"%@", error);
     }];
     // cancel 
@@ -77,13 +77,13 @@ pod 'SJMediaCacheServer'
     ///
     ///     This block will be invoked when the download server receives the data, where you can perform some encoding operations on the data.
     ///
-    @property (nonatomic, copy, nullable) NSData *(^writeDataEncoder)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对下载的数据进行编码
+    @property (nonatomic, copy, nullable) NSData *(^writeDataEncryptor)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对下载的数据进行加密
 
     /// Decode the read data.
     ///
     ///     This block will be invoked when the reader reads the data, where you can perform some decoding operations on the data.
     ///
-    @property (nonatomic, copy, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对读取的数据进行解码
+    @property (nonatomic, copy, nullable) NSData *(^readDataDecryptor)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对读取的数据进行解密
 
     @end
 
@@ -113,13 +113,13 @@ pod 'SJMediaCacheServer'
     ///
     ///     If 0, there is no expiring limit.  The default value is 0.
     ///
-    @property (nonatomic) NSTimeInterval maxDiskAgeForCache; // 保存时长限制
+    @property (nonatomic) NSTimeInterval cacheMaxDiskAge; // 保存时长限制
 
     /// The maximum size of the disk cache, in bytes.
     ///
     ///     If 0, there is no cache size limit. The default value is 0.
     ///
-    @property (nonatomic) NSUInteger maxDiskSizeForCache; // 缓存占用的磁盘空间限制
+    @property (nonatomic) NSUInteger cacheMaxDiskSize; // 缓存占用的磁盘空间限制
 
     /// The maximum length of free disk space the device should reserved, in bytes.
     ///
@@ -127,7 +127,7 @@ pod 'SJMediaCacheServer'
     ///
     ///     If 0, there is no disk space limit. The default value is 0.
     ///
-    @property (nonatomic) NSUInteger reservedFreeDiskSpace; // 剩余磁盘空间限制
+    @property (nonatomic) NSUInteger cacheReservedFreeDiskSpace; // 剩余磁盘空间限制
 
     /// Empties the cache. This method may blocks the calling thread until file delete finished.
     ///

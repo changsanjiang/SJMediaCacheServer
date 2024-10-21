@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, nullable) void(^selectedExecuteBlock)(SJDemoDownloadRow *row, NSIndexPath *indexPath);
 
-@property (nonatomic, strong, readonly) id<MCSAssetExporter> exporter;
+@property (nonatomic, strong, readonly) id<MCSExporter> exporter;
 @property (nonatomic, strong, readonly) NSURL *URL;
 @property (nonatomic, strong, readonly) NSString *name;
 

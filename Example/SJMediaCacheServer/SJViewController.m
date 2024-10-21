@@ -137,7 +137,7 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
         
         // progress ...
         NSLog(@"prefetch: progress=%f", progress);
-    } completed:^(NSError * _Nullable error) {
+    } completion:^(NSError * _Nullable error) {
         
         // complete ...
         NSLog(@"prefetch: error: %@", error);

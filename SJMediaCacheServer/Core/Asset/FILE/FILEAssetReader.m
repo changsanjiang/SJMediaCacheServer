@@ -25,7 +25,7 @@
     UInt64 mReadLength;
     id<MCSResponse> mResponse;
     __weak id<MCSAssetReaderDelegate> mDelegate;
-    NSData *(^mReadDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+    NSData *(^mReadDataDecryptor)(NSURLRequest *request, NSUInteger offset, NSData *data);
     float mNetworkTaskPriority;
     NSRange mFixedRange;
 }
@@ -34,14 +34,14 @@
 @end
 
 @implementation FILEAssetReader
-- (instancetype)initWithAsset:(FILEAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate {
+- (instancetype)initWithAsset:(FILEAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecryptor:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecryptor delegate:(id<MCSAssetReaderDelegate>)delegate {
     self = [super init];
     if ( self ) {
         mAsset = asset;
         mRequest = [request restoreOriginalRequest];
         mDelegate = delegate;
         mNetworkTaskPriority = networkTaskPriority;
-        mReadDataDecoder = readDataDecoder;
+        mReadDataDecryptor = readDataDecryptor;
         mCurrentReaderIndex = NSNotFound;
         mFixedRange = MCSNSRangeUndefined;
         [mAsset readwriteRetain];
@@ -102,7 +102,7 @@
                     data = [currentReader readDataOfLength:length];
                     if ( data == nil || data.length == 0 ) return nil;
                     NSUInteger readLength = data.length;
-                    if ( mReadDataDecoder != nil ) data = mReadDataDecoder(mRequest, mContentReaders.firstObject.range.location + mReadLength, data);
+                    if ( mReadDataDecryptor != nil ) data = mReadDataDecryptor(mRequest, mContentReaders.firstObject.range.location + mReadLength, data);
                     mReadLength += readLength;
                 }
                 

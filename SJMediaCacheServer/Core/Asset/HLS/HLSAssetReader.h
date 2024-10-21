@@ -14,11 +14,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface HLSAssetReader : NSObject<MCSAssetReader>
-- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(id<MCSAssetReaderDelegate>)delegate;
+- (instancetype)initWithAsset:(__weak HLSAsset *)asset request:(MCSRequest *)request networkTaskPriority:(float)networkTaskPriority readDataDecryptor:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecryptor delegate:(id<MCSAssetReaderDelegate>)delegate;
 
 - (void)prepare;
 @property (nonatomic, readonly) MCSReaderStatus status;
-@property (nonatomic, copy, readonly, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
+@property (nonatomic, copy, readonly, nullable) NSData *(^readDataDecryptor)(NSURLRequest *request, NSUInteger offset, NSData *data);
 @property (nonatomic, weak, readonly, nullable) id<MCSAssetReaderDelegate> delegate;
 @property (nonatomic, strong, readonly, nullable) id<MCSAsset> asset;
 @property (nonatomic, readonly) float networkTaskPriority;
