@@ -91,5 +91,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly, nullable) id<HLSVariantStream> selectedVariantStream;
 @property (nonatomic, strong, readonly, nullable) id<HLSRendition> selectedAudioRendition;
 @property (nonatomic, strong, readonly, nullable) id<HLSRendition> selectedVideoRendition;
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> selectedSubtitlesRendition;
 @end
 NS_ASSUME_NONNULL_END

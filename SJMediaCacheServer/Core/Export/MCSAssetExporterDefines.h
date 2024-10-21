@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly, nullable) NSArray<id<MCSAssetExporter>> *allExporters;
 
-- (nullable NSArray<id<MCSAssetExporter>> *)exportsForMask:(MCSAssetExportStatusQueryMask)mask;
+- (nullable NSArray<id<MCSAssetExporter>> *)queryExportersForMask:(MCSAssetExportStatusQueryMask)mask;
 
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL;
 - (void)removeAssetWithURL:(NSURL *)URL;

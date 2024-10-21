@@ -32,6 +32,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)synchronizeForExporterWithAssetURL:(NSURL *)URL;
 - (void)synchronize;
 
-- (nullable NSArray<id<MCSAssetExporter>> *)exportsForMask:(MCSAssetExportStatusQueryMask)mask;
+- (nullable NSArray<id<MCSAssetExporter>> *)queryExportersForMask:(MCSAssetExportStatusQueryMask)mask;
 @end
 NS_ASSUME_NONNULL_END

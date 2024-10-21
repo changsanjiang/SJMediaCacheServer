@@ -298,7 +298,7 @@ extern NSString *const MCSPlayBackRequestFailureUserInfoKey;
 ///
 /// The MCSAssetExporterManager manages the exported assets.
 ///
-/// The MCSAssetCacheManager manages the cache generated during playback and the prefetched assets.
+/// The MCSCacheManager manages the cache generated during playback and the prefetched assets.
 ///
 /// So, if you want to remove the an exported asset, you must use MCSAssetExporterManager to remove it.
 ///
@@ -326,7 +326,7 @@ extern NSString *const MCSPlayBackRequestFailureUserInfoKey;
 
 @property (nonatomic, strong, readonly, nullable) NSArray<id<MCSAssetExporter>> *allExporters;
 
-- (nullable NSArray<id<MCSAssetExporter>> *)exportsForMask:(MCSAssetExportStatusQueryMask)mask; // 查询
+- (nullable NSArray<id<MCSAssetExporter>> *)queryExportersForMask:(MCSAssetExportStatusQueryMask)mask; // 查询
 
 /// 
 ///
@@ -350,6 +350,7 @@ extern NSString *const MCSPlayBackRequestFailureUserInfoKey;
 
 @property (nonatomic, readonly) UInt64 countOfBytesAllExportedAssets; // 返回导出资源占用的缓存大小
 
+/// removing both in-progress and exported assets;
 - (void)removeExportAssetWithURL:(NSURL *)URL;
 - (void)removeAllExportAssets;
 @end

@@ -11,6 +11,7 @@
 #import "NSURLRequest+MCS.h"
 #import "MCSUtils.h"
 #import "MCSError.h"
+#import "FILEAsset.h"
 
 @interface FILEPrefetcher () <MCSAssetReaderDelegate>
 @property (nonatomic) BOOL isCalledPrepare;
@@ -65,6 +66,23 @@
          MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
 
          _isCalledPrepare = YES;
+        
+        FILEAsset *asset = [MCSAssetManager.shared assetWithURL:_URL];
+        if ( asset == nil || ![asset isKindOfClass:FILEAsset.class] ) {
+            _isCompleted = YES;
+            [_delegate prefetcher:self didCompleteWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+                MCSErrorUserInfoObjectKey : self,
+                MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"无效的预加载请求: URL=%@", _URL]
+            }]];
+            return;
+        }
+    
+        if ( asset.isStored ) {
+            _isCompleted = YES;
+            _progress = 1;
+            [_delegate prefetcher:self didCompleteWithError:nil];
+            return;
+        }
          
          NSURLRequest *request = [NSURLRequest mcs_requestWithURL:_URL range:NSMakeRange(0, _preloadSize)];
          _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];

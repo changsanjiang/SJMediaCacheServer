@@ -121,6 +121,23 @@
     }
 }
 
+- (float)completeness {
+    @synchronized (self) {
+        if ( mAssembled ) return 1;
+        if ( !mMetadataReady ) return 0;
+        __block id<MCSAssetContent> prev = nil;
+        __block UInt64 length = 0;
+        [mNodeList enumerateNodesUsingBlock:^(FILEAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
+            id<MCSAssetContent> cur = node.longestContent;
+            length += cur.length;
+            UInt64 prevPosition = prev.startPositionInAsset + prev.length;
+            if ( prevPosition > cur.startPositionInAsset ) length -= (prevPosition - cur.startPositionInAsset);
+            prev = cur;
+        }];
+        return length * 1.0f / _totalLength;
+    }
+}
+
 /// 该操作将会对 content 进行一次 readwriteRetain, 请在不需要时, 调用一次 readwriteRelease.
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error {
     @synchronized (self) {

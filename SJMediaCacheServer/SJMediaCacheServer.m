@@ -9,7 +9,7 @@
 #import "SJMediaCacheServer.h"
 #import "MCSProxyServer.h"
 #import "MCSAssetManager.h"
-#import "MCSAssetCacheManager.h"
+#import "MCSCacheManager.h"
 #import "MCSAssetExporterManager.h"
 #import "MCSURL.h"
 #import "MCSProxyTask.h"
@@ -247,45 +247,45 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 
 @implementation SJMediaCacheServer (Cache)
 - (void)setCacheCountLimit:(NSUInteger)cacheCountLimit {
-    MCSAssetCacheManager.shared.cacheCountLimit = cacheCountLimit;
+    MCSCacheManager.shared.cacheCountLimit = cacheCountLimit;
 }
 
 - (NSUInteger)cacheCountLimit {
-    return MCSAssetCacheManager.shared.cacheCountLimit;
+    return MCSCacheManager.shared.cacheCountLimit;
 }
 
 - (void)setMaxDiskAgeForCache:(NSTimeInterval)maxDiskAgeForCache {
-    MCSAssetCacheManager.shared.maxDiskAgeForCache = maxDiskAgeForCache;
+    MCSCacheManager.shared.maxDiskAgeForCache = maxDiskAgeForCache;
 }
 - (NSTimeInterval)maxDiskAgeForCache {
-    return MCSAssetCacheManager.shared.maxDiskAgeForCache;
+    return MCSCacheManager.shared.maxDiskAgeForCache;
 }
 
 - (void)setMaxDiskSizeForCache:(NSUInteger)maxDiskSizeForCache {
-    MCSAssetCacheManager.shared.maxDiskSizeForCache = maxDiskSizeForCache;
+    MCSCacheManager.shared.maxDiskSizeForCache = maxDiskSizeForCache;
 }
 - (NSUInteger)maxDiskSizeForCache {
-    return MCSAssetCacheManager.shared.maxDiskSizeForCache;
+    return MCSCacheManager.shared.maxDiskSizeForCache;
 }
 
 - (void)setReservedFreeDiskSpace:(NSUInteger)reservedFreeDiskSpace {
-    MCSAssetCacheManager.shared.reservedFreeDiskSpace = reservedFreeDiskSpace;
+    MCSCacheManager.shared.reservedFreeDiskSpace = reservedFreeDiskSpace;
 }
 - (NSUInteger)reservedFreeDiskSpace {
-    return MCSAssetCacheManager.shared.reservedFreeDiskSpace;
+    return MCSCacheManager.shared.reservedFreeDiskSpace;
 }
 
 - (void)removeAllRemovableCaches {
     [MCSPrefetcherManager.shared cancelAllPrefetchTasks];
-    [MCSAssetCacheManager.shared removeAllRemovableCaches];
+    [MCSCacheManager.shared removeAllRemovableCaches];
 }
 
 - (BOOL)removeCacheForURL:(NSURL *)URL {
-    return [MCSAssetCacheManager.shared removeCacheForURL:URL];
+    return [MCSCacheManager.shared removeCacheForURL:URL];
 }
 
 - (UInt64)countOfBytesRemovableCaches {
-    return MCSAssetCacheManager.shared.countOfBytesRemovableCaches;
+    return MCSCacheManager.shared.countOfBytesRemovableCaches;
 }
 
 - (BOOL)isStoredForURL:(NSURL *)URL {
@@ -317,8 +317,8 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
     return MCSAssetExporterManager.shared.allExporters;
 }
 
-- (nullable NSArray<id<MCSAssetExporter>> *)exportsForMask:(MCSAssetExportStatusQueryMask)mask {
-    return [MCSAssetExporterManager.shared exportsForMask:mask];
+- (nullable NSArray<id<MCSAssetExporter>> *)queryExportersForMask:(MCSAssetExportStatusQueryMask)mask {
+    return [MCSAssetExporterManager.shared queryExportersForMask:mask];
 }
 
 - (nullable id<MCSAssetExporter>)exportAssetWithURL:(NSURL *)URL {

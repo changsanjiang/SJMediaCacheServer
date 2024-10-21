@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) id<HLSAssetSegment> fullContent; // 内容已填充完毕的content
 @property (nonatomic, readonly, nullable) id<HLSAssetSegment> idleContent; // 当前未读写并且长度最长的content
 @property (nonatomic, readonly, nullable) id<HLSAssetSegment> fullOrIdleContent;
+@property (nonatomic, readonly, nullable) id<HLSAssetSegment> longestContent;
 @property (nonatomic, readonly) NSUInteger numberOfContents;
 - (void)trimExcessContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<HLSAssetSegment> content, BOOL *stop))predicate; // 清理多余无用的 content;
 @end

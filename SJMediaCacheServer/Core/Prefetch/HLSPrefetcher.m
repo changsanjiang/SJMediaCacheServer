@@ -25,15 +25,15 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
 
     id<MCSAssetReader> _Nullable mCurReader;
     
-    NSUInteger mNumberOfPreloadedFiles; // NSNotFound to preload all files;
+    NSUInteger mNumberOfPreloadedFiles; // num mode; NSNotFound to preload all files;
+
+    NSUInteger mPreloadSize; // size mode;
+    UInt64 mPrefetchedLength; // size mode segments length
+
     NSUInteger mNextItemIndex;
     NSUInteger mNextSegmentIndex;
-
-    NSUInteger mPreloadSize;
-    UInt64 mPrefetchedLength;
-    
-    /// variant stream and renditions
-    NSArray<id<MCSPrefetcher>> *_Nullable mAssociatedAssetPrefechers;
+ 
+    NSArray<id<MCSPrefetcher>> *_Nullable mAssociatedAssetPrefechers; // variant stream and renditions
     
     float mProgress;
 }
@@ -91,6 +91,23 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
                 mState = HLSPrefetcherStatePreparing;
                 
                 MCSPrefetcherDebugLog(@"%@: <%p>.prepare { URL: %@, preloadSize: %lu, numberOfPreloadedFiles: %lu };\n", mURL, NSStringFromClass(self.class), self, (unsigned long)mPreloadSize, (unsigned long)mNumberOfPreloadedFiles);
+                
+                HLSAsset *asset = [MCSAssetManager.shared assetWithURL:mURL];
+                if ( asset == nil || ![asset isKindOfClass:HLSAsset.class] ) {
+                    mState = HLSPrefetcherStateCompleted;
+                    [self _notifyComplete:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+                        MCSErrorUserInfoObjectKey : self,
+                        MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"无效的预加载请求: URL=%@", mURL]
+                    }]];
+                    return;
+                }
+            
+                if ( asset.isStored ) {
+                    mState = HLSPrefetcherStateCompleted;
+                    mProgress = 1;
+                    [self _notifyComplete:nil];
+                    return;
+                }
 
                 NSURL *proxyURL = [MCSURL.shared generateProxyURLFromURL:mURL];
                 NSURLRequest *proxyRequest = [NSURLRequest.alloc initWithURL:proxyURL];

@@ -18,7 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) id<MCSConfiguration> configuration;
 @property (nonatomic, copy, readonly, nullable) NSString *pathExtension; // notify
 @property (nonatomic, readonly) NSUInteger totalLength; // notify
-@property (nonatomic, readonly) BOOL isStored; 
+@property (nonatomic, readonly) BOOL isStored;
+@property (nonatomic, readonly) float completeness;
 
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error;
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;

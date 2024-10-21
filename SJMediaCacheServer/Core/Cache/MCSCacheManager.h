@@ -1,5 +1,5 @@
 //
-//  MCSAssetCacheManager.h
+//  MCSCacheManager.h
 //  Pods-SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2021/3/26.
@@ -8,7 +8,7 @@
 #import "MCSInterfaces.h"
 
 NS_ASSUME_NONNULL_BEGIN
-@interface MCSAssetCacheManager : NSObject
+@interface MCSCacheManager : NSObject
 + (instancetype)shared;
 
 /// The maximum number of assets the cache should hold.
@@ -51,8 +51,8 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @property (nonatomic) NSTimeInterval lastTimeLimit; // 在删除资源时, 过滤掉指定的时间内读取过的资源
 
-- (void)setProtected:(BOOL)isProtected forCacheWithURL:(NSURL *)URL;
-- (void)setProtected:(BOOL)isProtected forCacheWithAsset:(id<MCSAsset>)asset;
+- (void)setExported:(BOOL)isExported forCacheWithURL:(NSURL *)URL;
+- (void)setExported:(BOOL)isExported forCacheWithAsset:(id<MCSAsset>)asset;
 
 /// All caches, includes protected caches
 @property (nonatomic, readonly) UInt64 countOfBytesAllCaches;

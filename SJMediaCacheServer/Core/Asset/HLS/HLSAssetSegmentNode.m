@@ -57,6 +57,18 @@
     return self.fullContent ?: self.idleContent;
 }
 
+/// content.length 会随着写入随时变化, 这里动态返回当前长度最长的 content;
+- (nullable id<MCSAssetContent>)longestContent {
+    id<MCSAssetContent> retv = mContents.firstObject;
+    for ( NSInteger i = 1 ; i < mContents.count ; ++ i ) {
+        id<MCSAssetContent> content = mContents[i];
+        if ( content.length > retv.length ) {
+            retv = content;
+        }
+    }
+    return retv;
+}
+
 - (void)trimExcessContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<HLSAssetSegment> content, BOOL *stop))predicate {
     [mContents enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<HLSAssetSegment>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         BOOL shouldRemove = predicate(obj, stop);

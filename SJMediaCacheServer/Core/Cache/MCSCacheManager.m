@@ -1,11 +1,11 @@
 //
-//  MCSAssetCacheManager.m
+//  MCSCacheManager.m
 //  Pods-SJMediaCacheServer_Example
 //
 //  Created by BlueDancer on 2021/3/26.
 //
 
-#import "MCSAssetCacheManager.h"
+#import "MCSCacheManager.h"
 #import "NSFileManager+MCS.h"
 #import "MCSRootDirectory.h"
 #import "MCSConsts.h"
@@ -23,21 +23,25 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     MCSLimitExpires,
 };
 
-/// 受保护的, 不会被删除的缓存
-@interface MCSAssetCacheTmpProtectedItem : NSObject<MCSSaveable>
+/// 已导出的缓存项
+@interface MCSExportedCacheItem : NSObject<MCSSaveable>
 - (instancetype)initWithAsset:(id<MCSAsset>)asset;
 @property (nonatomic) NSInteger id;
 @property (nonatomic) NSInteger asset;
 @property (nonatomic) MCSAssetType assetType;
 @end
 
-@implementation MCSAssetCacheTmpProtectedItem
+@implementation MCSExportedCacheItem
 + (NSString *)sql_primaryKey {
     return @"id";
 }
 
 + (NSArray<NSString *> *)sql_autoincrementlist {
     return @[@"id"];
+}
+
++ (NSString *)sql_tableName {
+    return @"MCSAssetCacheTmpProtectedItem";
 }
 
 - (instancetype)initWithAsset:(id<MCSAsset>)asset {
@@ -50,16 +54,16 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 @end
 
-@interface MCSAssetCacheManager () {
+@interface MCSCacheManager () {
     unsigned long long _cacheSize;
     unsigned long long _freeSize;
-    NSInteger _countOfProtectedAssets;
+    NSInteger _countOfExportedAssets;
     SJSQLite3 *_sqlite3;
 }
 
 @end
 
-@implementation MCSAssetCacheManager
+@implementation MCSCacheManager
 + (instancetype)shared {
     static id obj = nil;
     static dispatch_once_t onceToken;
@@ -75,7 +79,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
         _checkInterval = 30;
         _lastTimeLimit = 60;
         _sqlite3 = MCSDatabase();
-        _countOfProtectedAssets = [_sqlite3 countOfObjectsForClass:MCSAssetCacheTmpProtectedItem.class conditions:nil error:NULL];
+        _countOfExportedAssets = [_sqlite3 countOfObjectsForClass:MCSExportedCacheItem.class conditions:nil error:NULL];
         [self _checkCachesRecursively];
         
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_fileWriteOutOfSpaceErrorWithNote:) name:MCSFileWriteOutOfSpaceErrorNotification object:nil];
@@ -213,28 +217,28 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     mcs_queue_sync(^{
         NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *protectedAssets = [self _allProtectedAssets];
         [MCSAssetManager.shared removeAssetsNotIn:protectedAssets];
-        _countOfProtectedAssets = protectedAssets.count;
+        _countOfExportedAssets = protectedAssets.count;
     });
 }
 
-- (void)setProtected:(BOOL)isProtected forCacheWithURL:(NSURL *)URL {
-    [self setProtected:isProtected forCacheWithAsset:[MCSAssetManager.shared assetWithURL:URL]];
+- (void)setExported:(BOOL)isExported forCacheWithURL:(NSURL *)URL {
+    [self setExported:isExported forCacheWithAsset:[MCSAssetManager.shared assetWithURL:URL]];
 }
 
-- (void)setProtected:(BOOL)isProtected forCacheWithAsset:(id<MCSAsset>)asset {
+- (void)setExported:(BOOL)isExported forCacheWithAsset:(id<MCSAsset>)asset {
     if ( asset == nil )
         return;
     mcs_queue_sync(^{
-        MCSAssetCacheTmpProtectedItem *item = (id)[_sqlite3 objectsForClass:MCSAssetCacheTmpProtectedItem.class conditions:@[
+        MCSExportedCacheItem *item = (id)[_sqlite3 objectsForClass:MCSExportedCacheItem.class conditions:@[
             [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)],
             [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)]
         ] orderBy:nil error:NULL].firstObject;
         
-        if ( isProtected ) {
+        if ( isExported ) {
             // save
             if ( item == nil ) {
-                _countOfProtectedAssets += 1;
-                item = [MCSAssetCacheTmpProtectedItem.alloc initWithAsset:asset];
+                _countOfExportedAssets += 1;
+                item = [MCSExportedCacheItem.alloc initWithAsset:asset];
                 [_sqlite3 save:item error:NULL];
             }
             
@@ -244,8 +248,8 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
         // delete
         if ( item != nil ) {
-            _countOfProtectedAssets -= 1;
-            [_sqlite3 removeObjectForClass:MCSAssetCacheTmpProtectedItem.class primaryKeyValue:@(item.id) error:NULL];
+            _countOfExportedAssets -= 1;
+            [_sqlite3 removeObjectForClass:MCSExportedCacheItem.class primaryKeyValue:@(item.id) error:NULL];
         }
     });
 }
@@ -285,14 +289,14 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 }
 
 - (BOOL)_isRemovableForCacheWithAsset:(id<MCSAsset>)asset {
-    return [_sqlite3 objectsForClass:MCSAssetCacheTmpProtectedItem.class conditions:@[
+    return [_sqlite3 objectsForClass:MCSExportedCacheItem.class conditions:@[
         [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)],
         [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)]
     ] orderBy:nil error:NULL].count == 0;
 }
 
 - (void)_removeAssetsForLimit:(MCSLimit)limit {
-    NSInteger count = MCSAssetManager.shared.countOfAllAssets - _countOfProtectedAssets;
+    NSInteger count = MCSAssetManager.shared.countOfAllAssets - _countOfExportedAssets;
 
     switch ( limit ) {
         case MCSLimitNone:
@@ -359,10 +363,10 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 #pragma mark - mark
 
 - (NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)_allProtectedAssets {
-    NSArray<NSDictionary *> *protectedHLSAssets = [_sqlite3 queryDataForClass:MCSAssetCacheTmpProtectedItem.class resultColumns:@[@"asset"] conditions:@[
+    NSArray<NSDictionary *> *protectedHLSAssets = [_sqlite3 queryDataForClass:MCSExportedCacheItem.class resultColumns:@[@"asset"] conditions:@[
         [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(MCSAssetTypeHLS)]
     ] orderBy:nil error:NULL];
-    NSArray<NSDictionary *> *protectedFILEAssets = [_sqlite3 queryDataForClass:MCSAssetCacheTmpProtectedItem.class resultColumns:@[@"asset"] conditions:@[
+    NSArray<NSDictionary *> *protectedFILEAssets = [_sqlite3 queryDataForClass:MCSExportedCacheItem.class resultColumns:@[@"asset"] conditions:@[
         [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(MCSAssetTypeFILE)]
     ] orderBy:nil error:NULL];
     

@@ -125,6 +125,53 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     }
 }
 
+- (float)completeness {
+    @synchronized (self) {
+        if ( mStored ) return 1;
+        if ( mParser == nil ) return 0;
+        if ( mVariantStreamAsset == nil ) {
+            if ( mParser.segmentsCount == 0 ) {
+                return 1;
+            }
+
+            __block float progressAll = 0;
+            NSUInteger itemsCount = 0;
+            
+            // ignore keys
+//            // keys progress
+//            NSArray<id<HLSKey>> *keys = mParser.keys;
+//            if ( keys.count != 0 ) {
+//                itemsCount += keys.count;
+//                progressAll += mAESKeyContents.count;
+//            }
+            
+            // segments progress
+            itemsCount += mParser.segmentsCount;
+            [mSegmentNodeMap enumerateNodesUsingBlock:^(HLSAssetSegmentNode * _Nonnull node, BOOL * _Nonnull stop) {
+                id<HLSAssetSegment> longestContent = node.longestContent;
+                progressAll += longestContent.length * 1.0f / longestContent.byteRange.length;
+            }];
+            return progressAll / itemsCount;
+        }
+        else {
+            float progressAll = mVariantStreamAsset.completeness;
+            NSUInteger itemsCount = 1;
+            if ( mAudioRenditionAsset != nil ) {
+                itemsCount += 1;
+                progressAll += mAudioRenditionAsset.completeness;
+            }
+            if ( mVideoRenditionAsset != nil ) {
+                itemsCount += 1;
+                progressAll += mVideoRenditionAsset.completeness;
+            }
+            if ( mParser.subtitlesRendition != nil ) {
+                itemsCount += 1;
+                progressAll += mSubtitlesContent != nil ? 1 : 0;
+            }
+            return progressAll / itemsCount;
+        }
+    }
+}
 #pragma mark - VariantStream
 
 - (nullable HLSAsset *)selectedVariantStreamAsset {
@@ -169,19 +216,11 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     }
 }
 
-//@interface HLSAsset (VariantStream)
-//@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedVariantStreamAsset;
-//@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedAudioRenditionAsset;
-//@property (nonatomic, strong, readonly, nullable) HLSAsset *selectedVideoRenditionAsset;
-///// variantStreamAsset.masterAsset;
-///// selectedAudioRenditionAsset.masterAsset;
-///// selectedVideoRenditionAsset.masterAsset;
-//@property (nonatomic, weak, readonly, nullable) HLSAsset *masterAsset;
-//
-//@property (nonatomic, readonly) BOOL isVariantStreamAsset;
-//@property (nonatomic, readonly) BOOL isAudioRenditionAsset;
-//@property (nonatomic, readonly) BOOL isVideoRenditionAsset;
-//@property (nonatomic, readonly) BOOL isMasterAsset;
+- (nullable id<HLSRendition>)selectedSubtitlesRendition {
+    @synchronized (self) {
+        return mParser != nil ? mParser.subtitlesRendition : nil;
+    }
+}
 
 #pragma mark - mark
 
