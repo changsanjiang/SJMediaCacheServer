@@ -229,6 +229,10 @@
     return mAsset;
 }
 
+- (MCSDataType)contentDataType {
+    return mDataType;
+}
+
 #pragma mark - unlocked
 
 - (void)_abortWithError:(nullable NSError *)error {

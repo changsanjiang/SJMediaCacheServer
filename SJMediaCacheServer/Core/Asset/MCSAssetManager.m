@@ -27,17 +27,6 @@
 
 #pragma mark - Private
 
-@interface MCSAssetUsageLog (MCSPrivate)
-@property (nonatomic) NSInteger id;
-@property (nonatomic) NSInteger asset; // associated asset id
-@property (nonatomic) MCSAssetType assetType;
-// removed;
-//@property (nonatomic) NSUInteger usageCount;
-// The updatedTime has been changed to lastReadTime, representing the time of the last read.
-@property (nonatomic) NSTimeInterval updatedTime;
-@property (nonatomic) NSTimeInterval createdTime;
-@end
-  
 @interface HLSAsset (HLSPrivate)
 @property (nonatomic, weak, nullable) HLSAsset *root;
 @end
@@ -53,6 +42,9 @@
     NSMutableDictionary<NSString *, MCSAssetUsageLog *> *mUsageLogs;
     SJSQLite3 *mSqlite3;
 }
+
+@property (nonatomic, copy, nullable) HLSVariantStreamSelectionHandler variantStreamSelectionHandler;
+@property (nonatomic, copy, nullable) HLSRenditionSelectionHandler renditionSelectionHandler;
 @end
 
 @implementation MCSAssetManager
@@ -73,10 +65,15 @@
         mAssets = NSMutableDictionary.dictionary;
         mUsageLogs = NSMutableDictionary.dictionary;
         [self _syncUsageLogsRecursively];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_syncUsageLogs) name:UIApplicationWillTerminateNotification object:nil];
     }
     return self;
 }
- 
+
+- (void)dealloc {
+    [NSNotificationCenter.defaultCenter removeObserver:self];
+}
+
 #pragma mark -
 
 - (UInt64)countOfBytesAllAssets {
@@ -242,17 +239,15 @@
 
 #pragma mark - MCSAssetObserver
 
+- (void)assetDidLoadMetadata:(id<MCSAsset>)asset {
+    @synchronized (self) {
+        [self _syncToDatabase:asset];
+    }
+}
+
 - (void)assetDidRead:(id<MCSAsset>)asset {
     @synchronized (self) {
-        MCSAssetUsageLog *log = mUsageLogs[asset.name];
-        if ( log == nil ) {
-            log = (id)[mSqlite3 objectsForClass:MCSAssetUsageLog.class conditions:@[
-                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)],
-                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)]
-            ] orderBy:nil error:NULL].firstObject;
-            mUsageLogs[asset.name] = log;
-        }
-        log.updatedTime = NSDate.date.timeIntervalSince1970;
+        [mUsageLogs[asset.name] updateLastReadTime:NSDate.date.timeIntervalSince1970];
     }
 }
  
@@ -265,12 +260,6 @@
         }
         [self _syncUsageLogsRecursively];
     });
-}
-
-- (void)assetMetadataDidLoad:(id<MCSAsset>)asset {
-    @synchronized (self) {
-        [self _syncToDatabase:asset];
-    }
 }
 
 #pragma mark - unlocked
@@ -298,6 +287,21 @@
     MCSAssetUsageLog *log = [MCSAssetUsageLog.alloc initWithAsset:asset]; // create log
     [self _syncToDatabase:log]; // save log
     mUsageLogs[name] = log;
+    
+    if ( type == MCSAssetTypeHLS ) {
+        HLSAsset *hls = (HLSAsset *)asset;
+        __weak typeof(self) _self = self;
+        hls.variantStreamSelectionHandler = ^id<HLSVariantStream> _Nullable(NSArray<id<HLSVariantStream>> * _Nonnull variantStreams, NSURL * _Nonnull originalURL, NSURL * _Nonnull currentURL) {
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return nil;
+            return self.variantStreamSelectionHandler != nil ? self.variantStreamSelectionHandler(variantStreams, originalURL, currentURL) : nil;
+        };
+        hls.renditionSelectionHandler = ^id<HLSRendition> _Nullable(HLSRenditionType renditionType, id<HLSRenditionGroup>  _Nonnull renditionGroup, NSURL * _Nonnull originalURL, NSURL * _Nonnull currentURL) {
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return nil;
+            return self.renditionSelectionHandler != nil ? self.renditionSelectionHandler(renditionType, renditionGroup, originalURL, currentURL) : nil;
+        };
+    }
     return asset;
 }
 
@@ -423,44 +427,21 @@
 /// unlocked
 - (void)_syncUsageLogs {
     if ( mUsageLogs.count != 0 ) {
-        [mSqlite3 updateObjects:mUsageLogs.allValues forKeys:@[@"updatedTime"] error:NULL];
-        [mUsageLogs removeAllObjects];
+        __block NSMutableArray<MCSAssetUsageLog *> *changes = nil;
+        [mUsageLogs enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, MCSAssetUsageLog * _Nonnull obj, BOOL * _Nonnull stop) {
+            if ( obj.isUpdated ) {
+                if ( changes == nil ) changes = NSMutableArray.array;
+                [changes addObject:obj];
+            }
+        }];
+        if ( changes != nil ) {
+            [mSqlite3 updateObjects:changes forKeys:@[@"updatedTime"] error:NULL];
+            [changes makeObjectsPerformSelector:@selector(completeSync)];
+        }
     }
 }
  
 - (Class)_assetClassForType:(MCSAssetType)type {
     return type == MCSAssetTypeFILE ? FILEAsset.class : HLSAsset.class;
-}
-@end
-
-@implementation HLSAsset (MCSAssetManagerExtended)
-- (nullable NSArray<HLSAsset *> *)subAssets {
-#warning next...
-//    HLSAssetParser *parser = self.parser;
-//    if ( parser != nil ) {
-//        NSMutableArray<HLSAsset *> *subAssets = nil;
-//        for ( NSInteger i = 0 ; i < parser.allItemsCount ; ++ i ) {
-//            id<HLSItem> item = [parser itemAtIndex:i];
-//            if ( [parser isVariantStream:item] ) {
-//                subAssets = NSMutableArray.array;
-//
-//                NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
-//                HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
-//                if ( asset != nil ) [subAssets addObject:asset];
-//                
-//                NSArray<id<HLSItem>> *renditionMedias = [parser renditionMediasForVariantItem:item];
-//                for ( id<HLSItem> item in renditionMedias ) {
-//                    NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
-//                    HLSAsset *asset = [MCSAssetManager.shared assetWithURL:URL];
-//                    if ( asset != nil ) [subAssets addObject:asset];
-//                }
-//                
-//                // break
-//                break;
-//            }
-//        }
-//        return subAssets.copy;
-//    }
-    return nil;
 }
 @end

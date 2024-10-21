@@ -18,7 +18,9 @@
 @property (nonatomic) NSTimeInterval createdTime;
 @end
 
-@implementation MCSAssetUsageLog
+@implementation MCSAssetUsageLog {
+    BOOL mUpdated;
+}
 - (instancetype)initWithAsset:(id<MCSAsset>)asset {
     self = [super init];
     if ( self ) {
@@ -36,5 +38,16 @@
 
 + (NSArray<NSString *> *)sql_autoincrementlist {
     return @[@"id"];
+}
+
+- (BOOL)isUpdated {
+    return mUpdated;
+}
+- (void)updateLastReadTime:(NSTimeInterval)lastReadTime {
+    mUpdated = YES;
+    _updatedTime = lastReadTime;
+}
+- (void)completeSync {
+    mUpdated = NO;
 }
 @end

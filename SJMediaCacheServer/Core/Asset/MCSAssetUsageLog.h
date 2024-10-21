@@ -20,6 +20,10 @@ NS_ASSUME_NONNULL_BEGIN
 // The updatedTime has been changed to lastReadTime, representing the time of the last read.
 @property (nonatomic, readonly) NSTimeInterval updatedTime;
 @property (nonatomic, readonly) NSTimeInterval createdTime;
+
+@property (nonatomic, readonly) BOOL isUpdated;
+- (void)updateLastReadTime:(NSTimeInterval)lastReadTime;
+- (void)completeSync;
 @end
 
 NS_ASSUME_NONNULL_END

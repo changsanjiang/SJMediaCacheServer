@@ -25,6 +25,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSUInteger tsCount;
 - (nullable NSArray<id<HLSAssetSegment>> *)TsContents;
 
+@property (nonatomic, readonly) NSUInteger allItemsCount;
+@property (nonatomic, readonly) NSUInteger segmentsCount;
+- (nullable __kindof id<HLSItem>)itemAtIndex:(NSUInteger)index;
+
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 
 - (nullable id<MCSAssetContent>)getPlaylistContent; // retained, should release after;
@@ -84,5 +88,8 @@ NS_ASSUME_NONNULL_BEGIN
 //@property (nonatomic, readonly) BOOL isAudioRenditionAsset;
 //@property (nonatomic, readonly) BOOL isVideoRenditionAsset;
 //@property (nonatomic, readonly) BOOL isMasterAsset;
+@property (nonatomic, strong, readonly, nullable) id<HLSVariantStream> selectedVariantStream;
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> selectedAudioRendition;
+@property (nonatomic, strong, readonly, nullable) id<HLSRendition> selectedVideoRendition;
 @end
 NS_ASSUME_NONNULL_END

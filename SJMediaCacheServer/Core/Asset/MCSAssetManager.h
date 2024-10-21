@@ -53,18 +53,4 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, nullable) HLSVariantStreamSelectionHandler variantStreamSelectionHandler;
 @property (nonatomic, copy, nullable) HLSRenditionSelectionHandler renditionSelectionHandler;
 @end
-
-
-@interface MCSAssetManager (Internal)
-- (void)assetMetadataDidLoad:(id<MCSAsset>)asset;
-@end
-NS_ASSUME_NONNULL_END
-
-
-#import "HLSAsset.h"
-
-NS_ASSUME_NONNULL_BEGIN
-@interface HLSAsset (MCSAssetManagerExtended)
-@property (nonatomic, readonly, nullable) NSArray<HLSAsset *> *subAssets;
-@end
 NS_ASSUME_NONNULL_END

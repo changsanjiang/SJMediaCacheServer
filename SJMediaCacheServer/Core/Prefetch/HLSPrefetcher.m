@@ -1,6 +1,5 @@
 //
 //  HLSPrefetcher.m
-//  CocoaAsyncSocket
 //
 //  Created by BlueDancer on 2020/6/11.
 //
@@ -8,175 +7,77 @@
 #import "HLSPrefetcher.h"
 #import "MCSLogger.h"
 #import "MCSAssetManager.h"
-#import "NSURLRequest+MCS.h"  
-#import "HLSAsset.h" 
-#import "MCSUtils.h"
 #import "MCSError.h"
+#import "HLSAsset.h"
 
-@interface HLSItemProvider : NSObject
-@property (nonatomic, weak, nullable) HLSAsset *asset;
-@property (nonatomic, readonly, nullable) id<HLSItem> next;
-@property (nonatomic, readonly) NSUInteger curTsIndex;
-@property (nonatomic, readonly) NSUInteger curFragmentIndex;
-- (BOOL)isVariantStream:(id<HLSItem>)item;
-- (nullable NSArray<id<HLSItem>> *)renditionMediasForVariantItem:(id<HLSItem>)item;
-@end
+typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
+    HLSPrefetcherStateUnknown,
+    HLSPrefetcherStatePreparing,
+    HLSPrefetcherStatePrefetching,
+    HLSPrefetcherStateCompleted
+};
 
-@implementation HLSItemProvider
+@interface HLSPrefetcher ()<MCSAssetReaderDelegate, MCSPrefetcherDelegate> {
+    NSURL *mURL;
+    
+    HLSPrefetcherState mState;
+    __weak id<MCSPrefetcherDelegate> _Nullable mDelegate;
 
-- (void)dealloc {
-    [_asset readwriteRelease];
-}
+    id<MCSAssetReader> _Nullable mCurReader;
+    
+    NSUInteger mNumberOfPreloadedFiles; // NSNotFound to preload all files;
+    NSUInteger mNextItemIndex;
+    NSUInteger mNextSegmentIndex;
 
-- (void)setAsset:(nullable HLSAsset *)asset {
-    if ( asset != _asset ) {
-        [asset readwriteRetain];
-        [_asset readwriteRelease];
-        
-        _asset = asset;
-        _curFragmentIndex = NSNotFound;
-        _curTsIndex = NSNotFound;
-    }
-}
-
-- (nullable id<HLSItem>)next {
-    if ( _asset == nil )
-        return nil;
-
-    NSUInteger nextIndex = NSNotFound;
-    id<HLSItem> item = nil;
-    HLSAssetParser *parser = _asset.parser;
-    while ( YES ) {
-#warning next...
-//        nextIndex = (_curFragmentIndex == NSNotFound) ? 0 : (_curFragmentIndex + 1);
-//        item = [parser itemAtIndex:nextIndex];
-//        if ( item.type == MCSDataTypeHLSPlaylist && ![parser isVariantStream:item] )
-//            continue;
-//        if ( item.type == MCSDataTypeHLSSegment )
-//            _curTsIndex = (_curTsIndex == NSNotFound) ? 0 : (_curTsIndex + 1);
-//        _curFragmentIndex = nextIndex;
-        break;
-    }
-    return item;
-}
-
-- (BOOL)isVariantStream:(id<HLSItem>)item {
-#warning next...
-//    return [_asset.parser isVariantStream:item];
-    return NO;
-}
-
-- (nullable NSArray<id<HLSItem>> *)renditionMediasForVariantItem:(id<HLSItem>)item {
-#warning next...
-//    return [_asset.parser renditionMediasForVariantItem:item];
-    return nil;
+    NSUInteger mPreloadSize;
+    UInt64 mPrefetchedLength;
+    
+    /// variant stream and renditions
+    NSArray<id<MCSPrefetcher>> *_Nullable mAssociatedAssetPrefechers;
+    
+    float mProgress;
 }
 @end
-
-
-#pragma mark - mark
-
-@interface HLSRenditionsPrefetcher : NSObject<MCSPrefetcherDelegate>
-- (instancetype)initWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock;
-@property (nonatomic, readonly) float progress;
-- (void)prepare;
-- (void)cancel;
-@end
-
-@implementation HLSRenditionsPrefetcher {
-    HLSPrefetcher *_prefetcher;
-    void(^_Nullable _progressBlock)(float progress);
-    void(^_Nullable _completionBlock)(NSError *_Nullable error);
-}
-
-- (instancetype)initWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completed:(void(^_Nullable)(NSError *_Nullable error))completionBlock {
-    self = [super init];
-    if ( self ) {
-        _progressBlock = progressBlock;
-        _completionBlock = completionBlock;
-        _prefetcher = [HLSPrefetcher.alloc initWithURL:URL numberOfPreloadedFiles:num delegate:self];
-    }
-    return self;
-}
-
-- (float)progress {
-    return _prefetcher.progress;
-}
-
-- (void)prepare {
-    [_prefetcher prepare];
-}
-
-- (void)cancel {
-    [_prefetcher cancel];
-}
-
-#pragma mark - MCSPrefetcherDelegate
-
-- (void)prefetcher:(id<MCSPrefetcher>)prefetcher progressDidChange:(float)progress {
-    if ( _progressBlock != nil ) _progressBlock(progress);
-}
-
-- (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error {
-    if ( _completionBlock != nil ) _completionBlock(error);
-    if ( _progressBlock != nil ) _progressBlock = nil;
-    if ( _completionBlock != nil ) _completionBlock = nil;
-}
-@end
-
-
-#pragma mark - mark
-
-@interface HLSPrefetcher ()<MCSAssetReaderDelegate> {
-    id<MCSAssetReader>_Nullable _reader;
-    id<HLSItem> _Nullable _cur;
-    NSArray<id<HLSItem>> *_Nullable _renditionMedias;
-    NSArray<HLSRenditionsPrefetcher *> *_Nullable _renditionsPrefetchers;
-    HLSItemProvider *_itemProvider;
-    NSUInteger _tsLoadedLength;
-    NSUInteger _tsResponsedSize;
-    float _tsProgress;
-    float _renditionsProgress;
-    NSURL *_URL;
-    NSUInteger _preloadSize;
-    NSUInteger _numberOfPreloadedFiles;
-    BOOL _isCalledPrepare;
-    BOOL _isCompleted;
-}
-@end
-
 
 @implementation HLSPrefetcher
-@synthesize delegate = _delegate;
 
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
-    self = [super init];
-    if ( self ) {
-        _URL = URL;
-        _preloadSize = bytes;
-        _delegate = delegate;
-        _itemProvider = HLSItemProvider.alloc.init;
-    }
-    return self;
+    NSParameterAssert(bytes != 0);
+    return [self initWithURL:URL numberOfPreloadedFiles:0 preloadSize:bytes delegate:delegate];
 }
 
 - (instancetype)initWithURL:(NSURL *)URL numberOfPreloadedFiles:(NSUInteger)num delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
-    self = [super init];
-    if ( self ) {
-        _URL = URL;
-        _numberOfPreloadedFiles = num;
-        _delegate = delegate;
-        _itemProvider = HLSItemProvider.alloc.init;
-    }
-    return self;
+    return [self initWithURL:URL numberOfPreloadedFiles:num preloadSize:0 delegate:delegate];
 }
 
 - (instancetype)initWithURL:(NSURL *)URL delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
-    return [self initWithURL:URL numberOfPreloadedFiles:NSNotFound delegate:delegate];
+    return [self initWithURL:URL numberOfPreloadedFiles:NSNotFound preloadSize:0 delegate:delegate];
+}
+
+- (instancetype)initWithURL:(NSURL *)URL
+     numberOfPreloadedFiles:(NSUInteger)numberOfPreloadedFiles
+                preloadSize:(NSUInteger)preloadSize
+                   delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
+    self = [super init];
+    mURL = URL;
+    mNumberOfPreloadedFiles = numberOfPreloadedFiles;
+    mPreloadSize = preloadSize;
+    mDelegate = delegate;
+    return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { preloadSize: %lu, numberOfPreloadedFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)_numberOfPreloadedFiles];
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, preloadSize: %lu, numberOfPreloadedFiles: %lu, progress: %f };\n", mURL, NSStringFromClass(self.class), self, (unsigned long)mPreloadSize, (unsigned long)mNumberOfPreloadedFiles, self.progress];
+}
+
+- (nullable id<MCSPrefetcherDelegate>)delegate {
+    return mDelegate;
+}
+
+- (float)progress {
+    @synchronized (self) {
+        return mProgress;
+    }
 }
 
 - (void)dealloc {
@@ -185,222 +86,273 @@
 
 - (void)prepare {
     @synchronized (self) {
-        if ( _isCompleted || _isCalledPrepare )
-            return;
+        switch (mState) {
+            case HLSPrefetcherStateUnknown: {
+                mState = HLSPrefetcherStatePreparing;
+                
+                MCSPrefetcherDebugLog(@"%@: <%p>.prepare { URL: %@, preloadSize: %lu, numberOfPreloadedFiles: %lu };\n", mURL, NSStringFromClass(self.class), self, (unsigned long)mPreloadSize, (unsigned long)mNumberOfPreloadedFiles);
 
-        MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu, numberOfPreloadedFiles: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)_numberOfPreloadedFiles);
-        
-        _isCalledPrepare = YES;
-
-        NSURL *proxyURL = [MCSURL.shared generateProxyURLFromURL:_URL];
-        NSURLRequest *proxyRequest = [NSURLRequest.alloc initWithURL:proxyURL];
-        _reader = [MCSAssetManager.shared readerWithRequest:proxyRequest networkTaskPriority:0 delegate:self];
-        [_reader prepare];
+                NSURL *proxyURL = [MCSURL.shared generateProxyURLFromURL:mURL];
+                NSURLRequest *proxyRequest = [NSURLRequest.alloc initWithURL:proxyURL];
+                // playlist reader first
+                mCurReader = [MCSAssetManager.shared readerWithRequest:proxyRequest networkTaskPriority:0 delegate:self];
+                if ( mCurReader.contentDataType != MCSDataTypeHLSPlaylist ) {
+                    mState = HLSPrefetcherStateCompleted;
+                    [mCurReader abortWithError:nil];
+                    [self _notifyComplete:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+                        MCSErrorUserInfoObjectKey : self,
+                        MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"无效的预加载请求: URL=%@", mURL]
+                    }]];
+                    return;
+                }
+                [mCurReader prepare];
+            }
+                break;
+            case HLSPrefetcherStatePreparing:
+            case HLSPrefetcherStatePrefetching:
+            case HLSPrefetcherStateCompleted:
+                break;
+        }
     }
 }
 
 - (void)cancel {
     @synchronized (self) {
-        [self _cancel];
+        switch (mState) {
+            case HLSPrefetcherStateUnknown:
+            case HLSPrefetcherStatePreparing:
+            case HLSPrefetcherStatePrefetching: {
+                mState = HLSPrefetcherStateCompleted;
+                if ( mCurReader != nil ) [mCurReader abortWithError:nil];
+                if ( mAssociatedAssetPrefechers != nil ) [mAssociatedAssetPrefechers makeObjectsPerformSelector:@selector(cancel)];
+                [self _notifyComplete:[NSError mcs_errorWithCode:MCSCancelledError userInfo:@{
+                    MCSErrorUserInfoObjectKey : self,
+                    MCSErrorUserInfoReasonKey : @"预加载被取消了"
+                }]];
+            }
+                break;
+            case HLSPrefetcherStateCompleted:
+                break;
+        }
     }
 }
 
-- (float)progress {
-    @synchronized (self) {
-        float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionMedias.count != 0 ? 1 : 0));
-        return progress;
-    }
-}
- 
 #pragma mark - MCSAssetReaderDelegate
 
-- (void)reader:(id<MCSAssetReader>)reader didReceiveResponse:(id<MCSResponse>)response {
-    @synchronized (self) {
-#warning next ...
-//        if ( _cur.type == MCSDataTypeHLSSegment ) {
-//            _tsResponsedSize += response.range.length;
-//        }
-    }
-}
+- (void)reader:(id<MCSAssetReader>)reader didReceiveResponse:(id<MCSResponse>)response { }
 
 - (void)reader:(id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
     @synchronized (self) {
-        if ( _isCompleted ) return;
-        
-        if ( [reader seekToOffset:reader.offset + length] ) {
-            HLSAsset *asset = reader.asset;
-            CGFloat progress = 0;
-            
-#warning next ...
-//            // `Ts reader`
-//            if ( _cur.type == MCSDataTypeHLSSegment ) {
-//                _tsLoadedLength += length;
-//
-//                NSInteger totalLength = reader.response.range.length;
-//                // size mode
-//                if ( _preloadSize != 0 ) {
-//                    NSUInteger all = _preloadSize > _tsResponsedSize ? _preloadSize : _tsResponsedSize;
-//                    progress = _tsLoadedLength * 1.0 / all;
-//                }
-//                // num mode
-//                else {
-//                    CGFloat curProgress = (reader.offset - reader.response.range.location) * 1.0 / totalLength;
-//                    NSUInteger all = asset.tsCount > _numberOfPreloadedFiles ? _numberOfPreloadedFiles : asset.tsCount;
-//                    progress = (_itemProvider.curTsIndex + curProgress) / all;
-//                }
-//
-//                if ( progress > 1 ) progress = 1;
-//                _tsProgress = progress;
-//            }
-            
-            if ( _delegate != nil ) {
-                float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionMedias.count != 0 ? 1 : 0));
-                MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
-
-                [_delegate prefetcher:self progressDidChange:progress];
-            }
-            
-            if ( reader.status == MCSReaderStatusFinished ) {
-                _tsProgress == 1 ? [self _prefetchRenditionMedias] : [self _prepareNextFragment];
-            }
-        }
-    }
-}
-  
-- (void)reader:(id<MCSAssetReader>)reader didAbortWithError:(nullable NSError *)error {
-    @synchronized (self) {
-        [self _completeWithError:error ?: [NSError mcs_errorWithCode:MCSAbortError userInfo:@{
-            MCSErrorUserInfoObjectKey : self,
-            MCSErrorUserInfoReasonKey : @"预加载已被终止!"
-        }]];
-    }
-}
-
-#pragma mark -
-
-- (void)_prepareNextFragment {
-    // update asset
-    _itemProvider.asset = _reader.asset;
-    
-    // next item
-    _cur = _itemProvider.next;
-    
-    // All items loaded
-    if ( _cur == nil ) {
-        _tsProgress = 1.0;
-        [self _prefetchRenditionMedias];
-        return;
-    }
-    
-    if ( [_itemProvider isVariantStream:_cur] ) {
-        _renditionMedias = [_itemProvider renditionMediasForVariantItem:_cur];
-    }
-    
-    // prepare for reader
-#warning next ...
-//    NSURL *proxyURL = [MCSURL.shared generateProxyURLFromHLSProxyURI:_cur.URI];
-//    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:_cur.HTTPAdditionalHeaders];
-//    _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
-//    [_reader prepare];
-//    
-//    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, TsIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, (unsigned long)_itemProvider.curFragmentIndex, _itemProvider.curTsIndex, request);
-}
-
-- (void)_prefetchRenditionMedias {
-    if ( _renditionMedias.count == 0 ) {
-        [self _completeWithError:nil];
-        return;
-    }
-    
-    dispatch_group_t group = dispatch_group_create();
-    NSMutableArray<HLSRenditionsPrefetcher *> *prefetchers = [NSMutableArray arrayWithCapacity:_renditionMedias.count];
-    _renditionsPrefetchers = prefetchers;
-    __block NSError *error = nil;
-    for ( id<HLSItem> item in _renditionMedias ) {
-        dispatch_group_enter(group);
-        NSURL *URL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
-        HLSRenditionsPrefetcher *prefetcher = [HLSRenditionsPrefetcher.alloc initWithURL:URL numberOfPreloadedFiles:_itemProvider.curTsIndex + 1 progress:^(float progress) {
-            float allProgress = 0;
-            for ( HLSRenditionsPrefetcher *prefetcher in prefetchers ) {
-                allProgress += prefetcher.progress;
-            }
-            @synchronized (self) {
-                [self _updateRenditionsProgress:allProgress];
-            }
-        } completed:^(NSError * _Nullable err) {
-            if ( err != nil && error == nil ) {
-                error = err;
-                for ( HLSRenditionsPrefetcher *cur in prefetchers ) {
-                    [cur cancel];
+        switch (mState) {
+            case HLSPrefetcherStateUnknown:
+            case HLSPrefetcherStateCompleted:
+                break; // break;
+            case HLSPrefetcherStatePreparing:
+                mState = HLSPrefetcherStatePrefetching; // fallThrough;
+            case HLSPrefetcherStatePrefetching: {
+                if ( [reader seekToOffset:reader.offset + length] ) {
+                    // playlist, aes keys, subtitles 的加载不算到进度中;
+                    switch ( reader.contentDataType ) {
+                        case MCSDataTypeHLSPlaylist:
+                        case MCSDataTypeHLSAESKey:
+                        case MCSDataTypeHLSSubtitles:
+                            break;
+                        case MCSDataTypeHLSSegment: {
+                            float progress = mProgress;
+                            // size mode: specified size
+                            if ( mPreloadSize != 0 ) {
+                                mPrefetchedLength += length;
+                                 progress = mPrefetchedLength * 1.0f / mPreloadSize;
+                            }
+                            // num mode: specified num of segment files
+                            else {
+                                HLSAsset *hls = reader.asset;
+                                NSInteger segmentsCount = mNumberOfPreloadedFiles != NSNotFound ? MIN(mNumberOfPreloadedFiles, hls.segmentsCount) : hls.segmentsCount;
+                                float curProgress = reader.offset * 1.0f / reader.response.range.length;
+                                progress = (mNextSegmentIndex + curProgress) * 1.0f / segmentsCount;
+                            }
+                            
+                            MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
+                            mProgress = progress;
+                            [mDelegate prefetcher:self progressDidChange:progress];
+                        }
+                            break;
+                        case MCSDataTypeHLSMask:
+                        case MCSDataTypeHLS:
+                        case MCSDataTypeFILEMask:
+                        case MCSDataTypeFILE:
+                            break;
+                    }
+                    
+                    // finished
+                    if ( reader.status == MCSReaderStatusFinished ) {
+                        [self _readDidFinish:reader];
+                    }
                 }
             }
-            dispatch_group_leave(group);
-        }];
-        [prefetcher prepare];
-        [prefetchers addObject:prefetcher];
-    }
-    
-    dispatch_group_notify(group, dispatch_get_global_queue(0, 0), ^{
-        @synchronized (self) {
-            [self _completeWithError:error];
+                break;
         }
-    });
+    }
+}
+
+- (void)reader:(id<MCSAssetReader>)reader didAbortWithError:(nullable NSError *)error {
+    @synchronized (self) {
+        switch (mState) {
+            case HLSPrefetcherStateUnknown:
+            case HLSPrefetcherStatePreparing:
+            case HLSPrefetcherStatePrefetching: {
+                mState = HLSPrefetcherStateCompleted;
+                [self _notifyComplete:error];
+            }
+                break;
+            case HLSPrefetcherStateCompleted:
+                break;
+        }
+    }
+}
+
+#pragma mark - MCSPrefetcherDelegate: variant stream or rendition prefetcher
+
+- (void)prefetcher:(id<MCSPrefetcher>)prefetcher progressDidChange:(float)progress {
+    @synchronized (self) {
+        switch (mState) {
+            case HLSPrefetcherStateUnknown:
+            case HLSPrefetcherStateCompleted:
+            case HLSPrefetcherStatePreparing:
+                break; // break;
+            case HLSPrefetcherStatePrefetching: {
+                NSInteger index = [mAssociatedAssetPrefechers indexOfObject:prefetcher];
+                float progressAll = (index + progress) / mAssociatedAssetPrefechers.count;
+                mProgress = progressAll;
+                [mDelegate prefetcher:self progressDidChange:progressAll];
+            }
+                break;
+        }
+    }
+}
+
+- (void)prefetcher:(id<MCSPrefetcher>)prefetcher didCompleteWithError:(NSError *_Nullable)error {
+    @synchronized (self) {
+        switch (mState) {
+            case HLSPrefetcherStateUnknown:
+            case HLSPrefetcherStatePreparing:
+            case HLSPrefetcherStateCompleted:
+                break; // break;
+            case HLSPrefetcherStatePrefetching: {
+                if ( error != nil || prefetcher == mAssociatedAssetPrefechers.lastObject ) {
+                    mState = HLSPrefetcherStateCompleted;
+                    [self _notifyComplete:error];
+                    return;
+                }
+                
+                NSInteger nextIndex = [mAssociatedAssetPrefechers indexOfObject:prefetcher] + 1;
+                [mAssociatedAssetPrefechers[nextIndex] prepare];
+            }
+                break;
+        }
+    }
 }
 
 #pragma mark - unlocked
 
-/// unlocked
-- (void)_updateRenditionsProgress:(float)allRenditionsProgress {
-    if ( !_isCompleted ) {
-        _renditionsProgress = allRenditionsProgress;
-        
-        float progress = (_tsProgress + _renditionsProgress) / (1 + (_renditionMedias.count != 0 ? 1 : 0));
-        MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
-        
-        if ( _delegate != nil ) {
-            [_delegate prefetcher:self progressDidChange:progress];
+- (void)_readDidFinish:(id<MCSAssetReader>)reader {
+    HLSAsset *asset = reader.asset;
+    // first reader
+    // 判断接下来应该加载 keys and segments 还是加载 variant stream and renditions;
+    BOOL isFirstReader = reader.contentDataType == MCSDataTypeHLSPlaylist;
+    if ( isFirstReader ) {
+        id<HLSVariantStream> _Nullable selectedVariantStream = asset.selectedVariantStream;
+        // prefetch keys and segments
+        if ( selectedVariantStream == nil ) {
+            // nothing
+        }
+        // prefetch variant stream and renditions
+        else {
+            id<HLSRendition> _Nullable selectedAudioRendition = asset.selectedAudioRendition;
+            id<HLSRendition> _Nullable selectedVideoRendition = asset.selectedVideoRendition;
+            NSMutableArray<id<MCSPrefetcher>> *assPfc = NSMutableArray.array;
+            // variant stream prefetcher
+            [assPfc addObject:[HLSPrefetcher.alloc initWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedVariantStream.URI]
+                                         numberOfPreloadedFiles:mNumberOfPreloadedFiles
+                                                    preloadSize:mPreloadSize
+                                                       delegate:self]];
+            // rendition prefetchers
+            if ( selectedAudioRendition != nil ) {
+                [assPfc addObject:[HLSPrefetcher.alloc initWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedAudioRendition.URI]
+                                             numberOfPreloadedFiles:mNumberOfPreloadedFiles
+                                                        preloadSize:mPreloadSize
+                                                           delegate:self]];
+            }
+            if ( selectedVideoRendition != nil ) {
+                [assPfc addObject:[HLSPrefetcher.alloc initWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedVideoRendition.URI]
+                                             numberOfPreloadedFiles:mNumberOfPreloadedFiles
+                                                        preloadSize:mPreloadSize
+                                                           delegate:self]];
+            }
+            mAssociatedAssetPrefechers = assPfc.copy;
         }
     }
+    
+    mAssociatedAssetPrefechers == nil ? [self _prefetchNextItem:reader] : [mAssociatedAssetPrefechers.firstObject prepare];
+}
+
+- (void)_prefetchNextItem:(id<MCSAssetReader>)reader {
+    HLSAsset *asset = reader.asset;
+    BOOL isFirstReader = reader.contentDataType == MCSDataTypeHLSPlaylist;
+    // update next index
+    if ( !isFirstReader ) {
+        mNextItemIndex += 1;
+        
+        if ( reader.contentDataType == MCSDataTypeHLSSegment ) {
+            mNextSegmentIndex += 1;
+        }
+    }
+
+    // size mode: specified size
+    if ( mPreloadSize != 0 ) {
+        if ( mPrefetchedLength >= mPreloadSize ) {
+            mState = HLSPrefetcherStateCompleted;
+            [self _notifyComplete:nil];
+            return;
+        }
+    }
+    // num mode: specified num of segment files
+    else {
+        NSInteger segmentsCount = mNumberOfPreloadedFiles != NSNotFound ? MIN(mNumberOfPreloadedFiles, asset.segmentsCount) : asset.segmentsCount;
+        if ( mNextSegmentIndex >= segmentsCount ) {
+            mState = HLSPrefetcherStateCompleted;
+            [self _notifyComplete:nil];
+            return;
+        }
+    }
+    
+    // prefetch next item
+    __kindof id<HLSItem> nextItem = [asset itemAtIndex:mNextItemIndex];
+    NSURL *proxyURL = [MCSURL.shared generateProxyURLFromHLSProxyURI:nextItem.URI];
+    NSDictionary<NSString *, NSString *> *_Nullable headers = nil;
+    if ( [nextItem conformsToProtocol:@protocol(HLSSegment)] ) {
+        id<HLSSegment> segment = nextItem;
+        NSRange byteRange = segment.byteRange;
+        if ( byteRange.location != NSNotFound ) {
+            headers = @{ @"Range": [NSString stringWithFormat:@"bytes=%lu-%lu", byteRange.location, NSMaxRange(byteRange) - 1] };
+        }
+    }
+    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:proxyURL headers:headers];
+    mCurReader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
+    [mCurReader prepare];
+    
+    MCSPrefetcherDebugLog(@"%@: <%p>.prepareFragment { index:%lu, segmentIndex: %lu, request: %@ };\n", NSStringFromClass(self.class), self, mNextItemIndex, mNextSegmentIndex, request);
 }
 
 /// unlocked
-- (void)_completeWithError:(NSError *_Nullable)error {
-    if ( !_isCompleted ) {
-        _isCompleted = YES;
-        
-    #ifdef DEBUG
-        if ( error == nil )
-            MCSPrefetcherDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
-        else
-            MCSPrefetcherErrorLog(@"%@:  <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
-    #endif
-        
-        if ( _delegate != nil ) {
-            [_delegate prefetcher:self didCompleteWithError:error];
-        }
-    }
-}
-
-/// unlocked
-- (void)_cancel {
-    if ( !_isCompleted ) {
-        _isCompleted = YES;
-        
-        NSError *error = [NSError mcs_errorWithCode:MCSCancelledError userInfo:@{
-            MCSErrorUserInfoObjectKey : self,
-            MCSErrorUserInfoReasonKey : @"预加载被取消"
-        }];
-        [_reader abortWithError:error];
-        _reader = nil;
-        
-        [_renditionsPrefetchers makeObjectsPerformSelector:@selector(close)];
-        _renditionsPrefetchers = nil;
-        
-        MCSPrefetcherDebugLog(@"%@: <%p>.close;\n", NSStringFromClass(self.class), self);
-        
-        if ( _delegate != nil ) {
-            [_delegate prefetcher:self didCompleteWithError:error];
-        }
-    }
+- (void)_notifyComplete:(NSError *_Nullable)error {
+#ifdef DEBUG
+    if ( error == nil )
+        MCSPrefetcherDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
+    else
+        MCSPrefetcherErrorLog(@"%@:  <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
+#endif
+    
+    [mDelegate prefetcher:self didCompleteWithError:error];
 }
 @end

@@ -123,41 +123,48 @@
 
 /// 该操作将会对 content 进行一次 readwriteRetain, 请在不需要时, 调用一次 readwriteRelease.
 - (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error {
-    switch ( dataType ) {
-        case MCSDataTypeHLSMask:
-        case MCSDataTypeHLSPlaylist:
-        case MCSDataTypeHLSAESKey:
-        case MCSDataTypeHLSSegment:
-        case MCSDataTypeHLSSubtitles:
-        case MCSDataTypeHLS:
-        case MCSDataTypeFILEMask:
-            /* return */
-            return nil;
-        case MCSDataTypeFILE:
-            break;
-    }
-    NSString *pathExtension = response.pathExtension;
-    NSUInteger totalLength = response.totalLength;
-    NSUInteger offset = response.range.location;
-    id<MCSAssetContent>content = nil;
-    BOOL shouldNotify = NO;
     @synchronized (self) {
-        if ( !mMetadataReady ) {
-            mMetadataReady = YES;
-            _totalLength = totalLength;
-            _pathExtension = pathExtension;
-            shouldNotify = YES;
+        BOOL shouldNotify = NO;
+        @try {
+            switch ( dataType ) {
+                case MCSDataTypeHLSMask:
+                case MCSDataTypeHLSPlaylist:
+                case MCSDataTypeHLSAESKey:
+                case MCSDataTypeHLSSegment:
+                case MCSDataTypeHLSSubtitles:
+                case MCSDataTypeHLS:
+                case MCSDataTypeFILEMask:
+                    /* return */
+                    return nil;
+                case MCSDataTypeFILE:
+                    break;
+            }
+            NSString *pathExtension = response.pathExtension;
+            NSUInteger totalLength = response.totalLength;
+            NSUInteger offset = response.range.location;
+            if ( !mMetadataReady ) {
+                mMetadataReady = YES;
+                _totalLength = totalLength;
+                _pathExtension = pathExtension;
+                shouldNotify = YES;
+            }
+            id<MCSAssetContent> content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension error:error];
+            if ( content != nil ) {
+                [content readwriteRetain];
+                [mNodeList attachContentToNode:content placement:content.startPositionInAsset];
+            }
+            return content;
         }
-        
-        content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension error:error];
-        if ( content != nil ) {
-            [content readwriteRetain];
-            [mNodeList attachContentToNode:content placement:content.startPositionInAsset];
+        @finally {
+            if ( shouldNotify ) {
+                for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+                    if ( [observer respondsToSelector:@selector(assetDidLoadMetadata:)] ) {
+                        [observer assetDidLoadMetadata:self];
+                    }
+                }
+            }
         }
     }
-    
-    if ( shouldNotify ) [MCSAssetManager.shared assetMetadataDidLoad:self];
-    return content;
 }
 
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecoder:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecoder delegate:(nullable id<MCSAssetReaderDelegate>)delegate {

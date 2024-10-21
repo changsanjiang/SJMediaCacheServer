@@ -24,9 +24,9 @@
 
 #import "MCSUtils.h"
 
-static NSString *const DEMO_URL_HLS = @"http://replay.lanwuzhe.cn/recordings/z1.lanwuzhe.3819/1728777397_1728863797.m3u8";
+//static NSString *const DEMO_URL_HLS = @"http://replay.lanwuzhe.cn/recordings/z1.lanwuzhe.3819/1728777397_1728863797.m3u8";
 //static NSString *const DEMO_URL_HLS = @"https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8";
-//static NSString *const DEMO_URL_HLS = @"http://localhost/hls/prog_index.m3u8";
+static NSString *const DEMO_URL_HLS = @"http://localhost/hls/prog_index.m3u8";
 static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
 //static NSString *const DEMO_URL_HLS = @"http://192.168.1.112/hls/index.m3u8";
 //static NSString *const DEMO_URL_FILE = @"http://192.168.1.112/file/video.mp4";
@@ -56,8 +56,8 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     
     [SJMediaCacheServer.shared removeAllRemovableCaches];
     
-    [self _demo1];
-//    [self _demo2];
+//    [self _demo1];
+    [self _demo2];
 //    [self _demo3];
 //    [self _demo4];
 }
@@ -136,11 +136,11 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:1 * 1024 * 1024 progress:^(float progress) {
         
         // progress ...
-        
+        NSLog(@"prefetch: progress=%f", progress);
     } completed:^(NSError * _Nullable error) {
         
         // complete ...
-        NSLog(@"error: %@", error);
+        NSLog(@"prefetch: error: %@", error);
     }];
 }
 

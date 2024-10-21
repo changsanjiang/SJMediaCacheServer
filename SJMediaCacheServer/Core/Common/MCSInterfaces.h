@@ -80,6 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MCSAssetObserver <NSObject>
 @optional
+- (void)assetDidLoadMetadata:(id<MCSAsset>)asset; // 元数据加载完毕的回调
 - (void)assetDidRead:(id<MCSAsset>)asset; // asset正在被读取数据
 - (void)assetDidStore:(id<MCSAsset>)asset; // 所有相关数据存储完成的回调
 - (void)assetWillClear:(id<MCSAsset>)asset; // 本地文件缓存被清空前的回调
@@ -107,7 +108,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) MCSReaderStatus status;
 @property (nonatomic, copy, readonly, nullable) NSData *(^readDataDecoder)(NSURLRequest *request, NSUInteger offset, NSData *data);
 @property (nonatomic, weak, readonly, nullable) id<MCSAssetReaderDelegate> delegate;
-@property (nonatomic, strong, readonly, nullable) id<MCSAsset> asset;
+@property (nonatomic, strong, readonly, nullable) __kindof id<MCSAsset> asset;
+@property (nonatomic, readonly) MCSDataType contentDataType;
 @property (nonatomic, readonly) float networkTaskPriority;
 @property (nonatomic, strong, readonly, nullable) id<MCSResponse> response;
 @property (nonatomic, readonly) NSUInteger availableLength;

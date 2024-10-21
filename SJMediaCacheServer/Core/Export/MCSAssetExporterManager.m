@@ -304,18 +304,19 @@ static NSString *const MCSAssetExporterErrorUserInfoKey = @"MCSAssetExporterErro
         float progress = _progress;
         HLSAssetParser *parser = asset.parser;
         if ( parser != nil ) {
+#warning next ...
             // 获取所有相关的asset, 计算进度
-            NSMutableArray<HLSAsset *> *allAssets = [NSMutableArray arrayWithObject:asset];
-            NSArray<HLSAsset *> *subAssets = asset.subAssets;
-            if ( subAssets != nil ) {
-                [allAssets addObjectsFromArray:subAssets];
-            }
-            
-            float all = 0;
-            for ( HLSAsset *asset in allAssets ) {
-                all += [self _calculateProgressWithHLSAsset:asset];
-            }
-            progress = all / allAssets.count;
+//            NSMutableArray<HLSAsset *> *allAssets = [NSMutableArray arrayWithObject:asset];
+//            NSArray<HLSAsset *> *subAssets = asset.subAssets;
+//            if ( subAssets != nil ) {
+//                [allAssets addObjectsFromArray:subAssets];
+//            }
+//            
+//            float all = 0;
+//            for ( HLSAsset *asset in allAssets ) {
+//                all += [self _calculateProgressWithHLSAsset:asset];
+//            }
+//            progress = all / allAssets.count;
         }
         
         isChanged = progress != _progress;

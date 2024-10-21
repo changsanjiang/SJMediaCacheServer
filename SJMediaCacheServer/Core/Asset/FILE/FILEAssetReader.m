@@ -212,6 +212,10 @@
     return mDelegate;
 }
 
+- (MCSDataType)contentDataType {
+    return MCSDataTypeFILE;
+}
+
 
 #pragma mark - unlocked
 

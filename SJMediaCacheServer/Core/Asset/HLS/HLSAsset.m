@@ -102,22 +102,71 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     return [MCSRootDirectory assetPathForFilename:_name];
 }
 
+- (NSUInteger)allItemsCount {
+    @synchronized (self) {
+        return mParser != nil ? mParser.allItemsCount : 0;
+    }
+}
+
+- (NSUInteger)segmentsCount {
+    @synchronized (self) {
+        return mParser != nil ? mParser.segmentsCount : 0;
+    }
+}
+
+- (nullable __kindof id<HLSItem>)itemAtIndex:(NSUInteger)index {
+    @synchronized (self) {
+        if ( mParser != nil ) {
+            if ( index < mParser.allItemsCount ) {
+                return mParser.allItems[index];
+            }
+        }
+        return nil;
+    }
+}
+
 #pragma mark - VariantStream
 
 - (nullable HLSAsset *)selectedVariantStreamAsset {
-    return mVariantStreamAsset;
+    @synchronized (self) {
+        return mVariantStreamAsset;
+    }
 }
 
 - (nullable HLSAsset *)selectedAudioRenditionAsset {
-    return mAudioRenditionAsset;
+    @synchronized (self) {
+        return mAudioRenditionAsset;
+    }
 }
 
 - (nullable HLSAsset *)selectedVideoRenditionAsset {
-    return mVideoRenditionAsset;
+    @synchronized (self) {
+        return mVideoRenditionAsset;
+    }
 }
 
 - (nullable HLSAsset *)masterAsset {
-    return mMasterAsset;
+    @synchronized (self) {
+        return mMasterAsset;
+    }
+}
+
+- (nullable id<HLSVariantStream>)selectedVariantStream {
+    @synchronized (self) {
+        return mParser != nil ? mParser.variantStream : nil;
+    }
+}
+
+- (nullable id<HLSRendition>)selectedAudioRendition {
+    @synchronized (self) {
+        return mParser != nil ? mParser.audioRendition : nil;
+    }
+}
+
+- (nullable id<HLSRendition>)selectedVideoRendition {
+    @synchronized (self) {
+        return mParser != nil ? mParser.videoRendition : nil;
+    }
 }
 
 //@interface HLSAsset (VariantStream)
@@ -478,6 +527,12 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
             if ( filePath != nil ) {
                 mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
             }
+        }
+    }
+    // notify
+    for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+        if ( [observer respondsToSelector:@selector(assetDidLoadMetadata:)] ) {
+            [observer assetDidLoadMetadata:self];
         }
     }
         

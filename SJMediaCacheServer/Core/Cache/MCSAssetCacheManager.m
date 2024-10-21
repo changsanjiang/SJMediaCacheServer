@@ -13,6 +13,7 @@
 #import "MCSAssetManager.h"
 #import "MCSDatabase.h"
 #import "MCSQueue.h"
+#import "HLSAsset.h"
 
 typedef NS_ENUM(NSUInteger, MCSLimit) {
     MCSLimitNone,
@@ -22,6 +23,7 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     MCSLimitExpires,
 };
 
+/// 受保护的, 不会被删除的缓存
 @interface MCSAssetCacheTmpProtectedItem : NSObject<MCSSaveable>
 - (instancetype)initWithAsset:(id<MCSAsset>)asset;
 @property (nonatomic) NSInteger id;
@@ -370,15 +372,17 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     }
     
     if ( protectedHLSAssets.count != 0 ) {
-        NSArray<NSNumber *> *rootAssets = SJFoundationExtendedValuesForKey(@"asset", protectedHLSAssets);
-        NSMutableArray<NSNumber *> *array = rootAssets.mutableCopy;
-        for ( NSNumber *root in rootAssets ) {
-            HLSAsset *asset = [MCSAssetManager.shared queryAssetForAssetId:root.integerValue type:MCSAssetTypeHLS];
-            NSArray<HLSAsset *> *subAssets = asset.subAssets;
-            if ( subAssets != nil ) {
-                for ( HLSAsset *subAsset in subAssets ) {
-                    [array addObject:@(subAsset.id)];
-                }
+        NSArray<NSNumber *> *masterAssets = SJFoundationExtendedValuesForKey(@"asset", protectedHLSAssets);
+        NSMutableArray<NSNumber *> *array = masterAssets.mutableCopy;
+        for ( NSNumber *assetId in masterAssets ) {
+            HLSAsset *masterAsset = [MCSAssetManager.shared queryAssetForAssetId:assetId.integerValue type:MCSAssetTypeHLS];
+            HLSAsset *_Nullable selectedVariantStreamAsset = masterAsset.selectedVariantStreamAsset;
+            if ( selectedVariantStreamAsset  != nil ) {
+                HLSAsset *_Nullable selectedAudioRenditionAsset = masterAsset.selectedAudioRenditionAsset;
+                HLSAsset *_Nullable selectedVideoRenditionAsset = masterAsset.selectedVideoRenditionAsset;
+                [array addObject:@(selectedVariantStreamAsset.id)];
+                if ( selectedAudioRenditionAsset != nil ) [array addObject:@(selectedAudioRenditionAsset.id)];
+                if ( selectedVideoRenditionAsset != nil ) [array addObject:@(selectedVideoRenditionAsset.id)];
             }
         }
         protectedAssets[@(MCSAssetTypeHLS)] = array.copy;

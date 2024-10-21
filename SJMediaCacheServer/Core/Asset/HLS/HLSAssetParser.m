@@ -244,8 +244,7 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
     }];
     if ( pair != nil ) {
         startPos += prefix.length;
-        NSArray<NSString *> *keyValue = [pair componentsSeparatedByString:@"="];
-        NSString *value = keyValue[1];
+        NSString *value = [pair substringFromIndex:name.length + 1];
         if ( [value hasPrefix:@"\""] ) { // 移除双引号;
             startPos += 1; // @"\"".length();
             value = [value stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
@@ -659,9 +658,10 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
                                         currentURL:(NSURL *)currentURL
                      variantStreamSelectionHandler:(nullable HLSVariantStreamSelectionHandler)variantStreamSelectionHandler {
     if ( variantStreamSelectionHandler != nil ) {
-        return variantStreamSelectionHandler(streams, originalURL, currentURL);
+        id<HLSVariantStream> stream = variantStreamSelectionHandler(streams, originalURL, currentURL);
+        if ( stream != nil ) return stream;
     }
-    return streams[streams.count / 2]; // select middle stream
+    return streams[streams.count / 2]; // default select middle stream
 }
 
 + (id<HLSRendition>)selectRenditionInGroups:(NSDictionary<NSString *, id<HLSRenditionGroup>> *)groups
@@ -676,7 +676,8 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
     NSArray<id<HLSRendition>> *renditions = group.renditions;
     if ( renditions.count > 1 ) {
         if ( renditionSelectionHandler != nil ) {
-            return renditionSelectionHandler(renditionType, group, originalURL, currentURL);
+            id<HLSRendition> rendition = renditionSelectionHandler(renditionType, group, originalURL, currentURL);
+            if ( rendition != nil ) return rendition;
         }
     }
     
