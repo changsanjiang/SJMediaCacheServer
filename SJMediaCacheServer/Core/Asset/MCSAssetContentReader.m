@@ -360,13 +360,15 @@
 
 - (void)downloadTask:(id<MCSDownloadTask>)task didReceiveResponse:(id<MCSDownloadResponse>)response {
     if ( mHTTPContent == nil ) {
-        mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response]; // retain for write
+        NSError *error = nil;
+        mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response error:&error]; // retain for write
         
         if ( mHTTPContent == nil ) {
-            [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:@{
-                MCSErrorUserInfoObjectKey : response,
-                MCSErrorUserInfoReasonKey : @"创建content失败!"
-            }]];
+            NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+            userInfo[MCSErrorUserInfoObjectKey] = response;
+            userInfo[MCSErrorUserInfoReasonKey] = @"Create content failed!";
+            if ( error != nil ) userInfo[MCSErrorUserInfoErrorKey] = error;
+            [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidResponseError userInfo:userInfo]];
             return;
         }
         

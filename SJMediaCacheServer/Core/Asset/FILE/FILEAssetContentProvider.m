@@ -35,23 +35,27 @@
     return m.copy;
 }
 
-- (nullable id<MCSAssetContent>)createContentAtOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension {
+- (nullable id<MCSAssetContent>)createContentAtOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension error:(NSError **)errorPtr {
+    NSError *error = nil;
     if ( ![NSFileManager.defaultManager fileExistsAtPath:_directory] ) {
-        NSError *error = nil;
         [NSFileManager.defaultManager createDirectoryAtPath:_directory withIntermediateDirectories:YES attributes:nil error:&error];
-        if ( error != nil ) return nil;
     }
     
-    NSUInteger number = 0;
-    do {
-        NSString *filename = [self _filenameWithOffset:offset number:number pathExtension:pathExtension];
-        NSString *filePath = [self _contentFilePathForFilename:filename];
-        if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
-            [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
-            return [MCSAssetContent.alloc initWithFilePath:filePath startPositionInAsset:offset];
-        }
-        number += 1;
-    } while (true);
+    if ( error == nil ) {
+        NSUInteger number = 0;
+        do {
+            NSString *filename = [self _filenameWithOffset:offset number:number pathExtension:pathExtension];
+            NSString *filePath = [self _contentFilePathForFilename:filename];
+            if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+                [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
+                return [MCSAssetContent.alloc initWithFilePath:filePath startPositionInAsset:offset];
+            }
+            number += 1;
+        } while (true);
+    }
+    else {
+        if ( errorPtr != NULL ) *errorPtr = error;
+    }
     return nil;
 }
 

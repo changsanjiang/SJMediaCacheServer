@@ -167,9 +167,12 @@ MCSMD5(NSString *str) {
 }
 
 /// The proxyIdentifier format is: urlmd5.extension
-- (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url extension:(NSString *)extension {
+- (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url extension:(nullable NSString *)extension {
     NSString *identifier = [NSString stringWithFormat:@"%@.%@", MCSMD5(url.absoluteString), extension];
     return identifier;
+}
+- (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url {
+    return [self generateProxyIdentifierFromHLSOriginalURL:url extension:nil];
 }
 
 - (NSURL *)generateProxyURLFromHLSProxyURI:(NSString *)proxyURI {

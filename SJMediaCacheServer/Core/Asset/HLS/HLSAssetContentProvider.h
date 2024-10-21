@@ -16,10 +16,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSString *)loadPlaylistFilePath;
 - (nullable NSString *)writeContentsToPlaylist:(NSString *)contents error:(out NSError **)error;
 
-- (NSString *)getAESKeyFilePath:(NSString *)filename;
-//- (nullable NSString *)load
+- (nullable NSString *)loadAESKeyFilePathForIdentifier:(NSString *)identifier;
+- (nullable NSString *)writeDataToAESKey:(NSData *)data forIdentifier:(NSString *)identifier error:(out NSError **)error;
 
-- (NSString *)getSubtitlesFilePath:(NSString *)filename;
+- (nullable NSString *)loadSubtitlesFilePathForIdentifier:(NSString *)identifier;
+- (nullable NSString *)writeDataToSubtitles:(NSData *)data forIdentifier:(NSString *)identifier error:(out NSError **)error;
 
 - (nullable NSArray<NSString *> *)loadSegmentFilenames;
 - (NSString *)getSegmentIdentifierByFilename:(NSString *)filename byteRange:(NSRange *)byteRangePtr;

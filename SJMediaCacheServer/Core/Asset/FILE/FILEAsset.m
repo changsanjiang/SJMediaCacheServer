@@ -122,7 +122,7 @@
 }
 
 /// 该操作将会对 content 进行一次 readwriteRetain, 请在不需要时, 调用一次 readwriteRelease.
-- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response {
+- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error {
     switch ( dataType ) {
         case MCSDataTypeHLSMask:
         case MCSDataTypeHLSPlaylist:
@@ -149,9 +149,11 @@
             shouldNotify = YES;
         }
         
-        content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension];
-        [content readwriteRetain];
-        if ( content != nil ) [mNodeList attachContentToNode:content placement:content.startPositionInAsset];
+        content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension error:error];
+        if ( content != nil ) {
+            [content readwriteRetain];
+            [mNodeList attachContentToNode:content placement:content.startPositionInAsset];
+        }
     }
     
     if ( shouldNotify ) [MCSAssetManager.shared assetMetadataDidLoad:self];

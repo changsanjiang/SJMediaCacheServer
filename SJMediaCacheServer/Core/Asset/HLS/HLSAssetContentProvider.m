@@ -53,9 +53,42 @@
     return [mRootDir stringByAppendingPathComponent:filename];
 }
 
+- (nullable NSString *)loadAESKeyFilePathForIdentifier:(NSString *)identifier {
+    NSString *filePath = [self getAESKeyFilePath:identifier];
+    return [NSFileManager.defaultManager fileExistsAtPath:filePath] ? filePath : nil;
+}
+- (nullable NSString *)writeDataToAESKey:(NSData *)data forIdentifier:(NSString *)identifier error:(out NSError **)errorPtr {
+    NSError *error = nil;
+    if ( [self _createDir:&error] ) {
+        NSString *filePath = [self getAESKeyFilePath:identifier];
+        if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+            return filePath;
+        }
+    }
+    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+    return nil;
+}
+
 - (NSString *)getSubtitlesFilePath:(NSString *)filename {
     return [mRootDir stringByAppendingPathComponent:filename];
 }
+
+- (nullable NSString *)loadSubtitlesFilePathForIdentifier:(NSString *)identifier {
+    NSString *filePath = [self getSubtitlesFilePath:identifier];
+    return [NSFileManager.defaultManager fileExistsAtPath:filePath] ? filePath : nil;
+}
+- (nullable NSString *)writeDataToSubtitles:(NSData *)data forIdentifier:(NSString *)identifier error:(out NSError **)errorPtr {
+    NSError *error = nil;
+    if ( [self _createDir:&error] ) {
+        NSString *filePath = [self getSubtitlesFilePath:identifier];
+        if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+            return filePath;
+        }
+    }
+    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+    return nil;
+}
+
 
 - (nullable NSArray<NSString *> *)loadSegmentFilenames {
     NSMutableArray<NSString *> *m = nil;

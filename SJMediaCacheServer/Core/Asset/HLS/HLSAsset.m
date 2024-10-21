@@ -136,8 +136,6 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 #pragma mark - mark
 
-#warning next ... identifier 与 extension 的添加问题
-
 - (NSString *)generateAESKeyIdentifierWithOriginalURL:(NSURL *)originalURL {
     return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_KEY];
 }
@@ -239,8 +237,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         id<MCSAssetContent> _Nullable content = mAESKeyContents != nil ? mAESKeyContents[identifier] : nil;
         NSError *error = nil;
         if ( content == nil ) {
-            NSString *filePath = [mProvider getAESKeyFilePath:identifier];
-            if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+            NSString *filePath = [mProvider writeDataToAESKey:data forIdentifier:identifier error:&error];
+            if ( filePath != nil ) {
                 content = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath startPositionInAsset:0 length:data.length];
                 if ( mAESKeyContents == nil ) mAESKeyContents = NSMutableDictionary.dictionary;
                 mAESKeyContents[identifier] = content;
@@ -266,8 +264,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         if ( mSubtitlesContent == nil ) {
             NSString *identifier = [self generateSubtitlesIdentifierWithOriginalURL:originalURL];
             NSError *error = nil;
-            NSString *filePath = [mProvider getSubtitlesFilePath:identifier];
-            if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+            NSString *filePath = [mProvider writeDataToSubtitles:data forIdentifier:identifier error:&error];
+            if ( filePath != nil ) {
                 mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:data.length];
             }
             if ( error != nil && errorPtr != NULL ) *errorPtr = error;
@@ -406,15 +404,16 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 - (void)_onPlaylist:(NSString *)proxyPlaylistFilePath {
     NSParameterAssert(mParser != nil);
+    // playlist, aes key, subtitles 都属于小文件, 目录中只要存在对应文件就说明已下载完毕;
+
     // playlist content
     mPlaylistContent = [MCSAssetContent.alloc initWithFilePath:proxyPlaylistFilePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
     // find existing aes contents
     [mParser.keys enumerateObjectsUsingBlock:^(id<HLSKey>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:obj.URI];
         NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
-        NSString *filePath = [mProvider getAESKeyFilePath:identifier];
-        // playlist 与 aes key 都属于小文件, 目录中只要存在对应文件就说明已下载完毕;
-        if ( [NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+        NSString *filePath = [mProvider loadAESKeyFilePathForIdentifier:identifier];
+        if ( filePath != nil ) {
             if ( mAESKeyContents == nil ) mAESKeyContents = NSMutableDictionary.dictionary;
             mAESKeyContents[identifier] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
         }
@@ -474,9 +473,9 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         if ( selectedSubtitlesRendition != nil ) {
             NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:selectedSubtitlesRendition.URI];
             NSString *identifier = [self generateSubtitlesIdentifierWithOriginalURL:originalURL];
-            NSString *filePath = [mProvider getSubtitlesFilePath:identifier];
+            NSString *filePath = [mProvider loadSubtitlesFilePathForIdentifier:identifier];
             // 同样都是小文件, 目录中只要存在对应文件就说明已下载完毕;
-            if ( [NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
+            if ( filePath != nil ) {
                 mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
             }
         }
