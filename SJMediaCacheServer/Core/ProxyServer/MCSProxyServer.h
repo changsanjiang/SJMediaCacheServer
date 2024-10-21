@@ -18,12 +18,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)start;
 - (void)stop;
+
+@property (nonatomic, copy, nullable) void (^taskAbortCallback)(NSURLRequest *request, NSError *_Nullable error);
 @end
 
 @protocol MCSProxyServerDelegate <NSObject>
 - (id<MCSProxyTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate;
-- (void)server:(MCSProxyServer *)server serverURLDidChange:(NSURL *)serverURL;
-- (void)server:(MCSProxyServer *)server performTask:(id<MCSProxyTask>)task failure:(NSError *)error;
-
+- (void)serverDidStart:(MCSProxyServer *)server;
 @end
 NS_ASSUME_NONNULL_END

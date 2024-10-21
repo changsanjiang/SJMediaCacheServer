@@ -17,10 +17,6 @@
 #import "MCSDownload.h"
 #import "MCSPrefetcherManager.h"
 
-NSNotificationName const MCSPlayBackRequestTaskDidFailedNotification = @"MCSPlayBackRequestTaskDidFailedNotification";
-NSString *const MCSPlayBackRequestURLUserInfoKey = @"MCSPlayBackRequestURLUserInfoKey";
-NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailureUserInfoKey";
-
 @interface SJMediaCacheServer ()<MCSProxyServerDelegate>
 @property (nonatomic, strong, readonly) MCSProxyServer *server;
 @end
@@ -75,25 +71,13 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 
 #pragma mark - MCSProxyServerDelegate
 
-- (void)server:(MCSProxyServer *)server serverURLDidChange:(NSURL *)serverURL {
+- (void)serverDidStart:(MCSProxyServer *)server {
     MCSURL.shared.serverURL = _server.serverURL;
 }
 
 - (id<MCSProxyTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
     return [MCSProxyTask.alloc initWithRequest:request delegate:delegate];
 }
-
-- (void)server:(MCSProxyServer *)server performTask:(id<MCSProxyTask>)task failure:(NSError *)error {
-    NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] initWithCapacity:2];
-    NSURL *proxyURL = task.request.URL;
-    NSURL *URL = [MCSURL.shared restoreURLFromProxyURL:proxyURL];
-    userInfo[MCSPlayBackRequestURLUserInfoKey] = URL;
-    userInfo[MCSPlayBackRequestFailureUserInfoKey] = error;
-    
-    [NSNotificationCenter.defaultCenter postNotificationName:MCSPlayBackRequestTaskDidFailedNotification
-                                                      object:nil userInfo:userInfo];
-}
-
 @end
 
 
@@ -178,6 +162,13 @@ NSString *const MCSPlayBackRequestFailureUserInfoKey = @"MCSPlayBackRequestFailu
 
 - (void (^_Nullable)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))metricsHandler {
     return MCSDownload.shared.metricsHandler;
+}
+
+- (void)setProxyTaskAbortCallback:(void (^_Nullable)(NSURLRequest * _Nonnull, NSError * _Nullable))proxyTaskAbortCallback {
+    _server.taskAbortCallback = proxyTaskAbortCallback;
+}
+- (void (^_Nullable)(NSURLRequest * _Nonnull, NSError * _Nullable))proxyTaskAbortCallback {
+    return _server.taskAbortCallback;
 }
 @end
 

@@ -150,7 +150,7 @@
         
         _serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d", _localServer.listeningPort]];
         mHeartbeatManager.serverURL = _serverURL;
-        [_delegate server:self serverURLDidChange:_serverURL];
+        [_delegate serverDidStart:self];
         [mHeartbeatManager startHeartbeat];
         return YES;
     }
@@ -243,7 +243,7 @@
 - (void)task:(id<MCSProxyTask>)task didAbortWithError:(nullable NSError *)error {
     [_connection responseDidAbort:self];
     MCSProxyServer *server = _connection.proxyServer;
-    [server.delegate server:server performTask:task failure:error];
+    if ( server.taskAbortCallback != nil ) server.taskAbortCallback(task.request, error);
 }
 
 #pragma mark - Chunked
