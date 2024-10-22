@@ -10,11 +10,7 @@ Pod::Spec.new do |s|
   s.name             = 'SJMediaCacheServer'
   s.version          = '2.0.0'
   s.summary          = <<-DESC
-  SJMediaCacheServer is an HTTP media caching framework designed to efficiently proxy playback requests and cache media content locally. This enables seamless media playback by serving cached content, thus reducing network load and improving playback performance. SJMediaCacheServer supports widely used media formats such as MP3, MP4, and HLS (m3u8) streaming resources.
-
-  Additionally, the framework provides robust cache management capabilities, allowing you to set limits on cache count, maximum disk storage time, and available disk space, ensuring optimal cache control and resource utilization.
-
-  With its powerful preloading feature, SJMediaCacheServer allows users to preload a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
+  SJMediaCacheServer 是一个HTTP媒体缓存框架，旨在高效代理播放请求并将媒体内容缓存本地，从而实现无缝的媒体播放。通过使用缓存的内容，减少网络负载并提升播放性能。支持缓存常见的媒体格式，如 MP3、MP4 和 HLS (m3u8) 流媒体资源。
   DESC
 
 # This description is used to generate tags and improve search results.
