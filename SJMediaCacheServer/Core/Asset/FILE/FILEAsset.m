@@ -24,8 +24,8 @@
     FILEAssetContentNodeList *mNodeList;
     BOOL mPrepared;
     BOOL mMetadataReady;
-    BOOL mAssembled; // 文件组合完成; 已得到完整文件;
-    BOOL mFullyTrimmed;
+    BOOL mAssembled; // 是否已组合完成, 是否已得到完整内容; 虽然得到了完整内容, 但是文件夹下可能还存在正在读取的冗余数据;
+    BOOL mFullyTrimmed; // 所有冗余数据都已删除;
 }
 
 @property (nonatomic) NSInteger id; // saveable
@@ -196,6 +196,7 @@
             }
         }
         mAssembled = NO;
+        mFullyTrimmed = NO;
         [mNodeList removeAllNodes];
         [mProvider clear];
         for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
@@ -241,10 +242,10 @@
         FILEAssetContentNode *_Nullable head = mNodeList.head;
         FILEAssetContentNode *_Nullable curNode = head;
         while ( curNode != nil ) {
-            if ( curNode.numberOfContents > 1 ) [self _trimExcessContentsForNode:curNode];
+            if ( curNode.numberOfContents > 1 ) [self _trimRedundantContentsForNode:curNode];
             FILEAssetContentNode *_Nullable nextNode = curNode.next;
             if ( nextNode == nil ) break; // break;
-            if ( nextNode.numberOfContents > 1 ) [self _trimExcessContentsForNode:curNode];
+            if ( nextNode.numberOfContents > 1 ) [self _trimRedundantContentsForNode:curNode];
             id<MCSAssetContent> _Nullable writer = curNode.idleContent;
             id<MCSAssetContent> _Nullable reader = nextNode.longestContent;
             BOOL isNextNodeRemoved = NO;
@@ -282,12 +283,12 @@
 }
 
 /// unlocked
-- (void)_trimExcessContentsForNode:(FILEAssetContentNode *)node {
+- (void)_trimRedundantContentsForNode:(FILEAssetContentNode *)node {
     if ( node != nil && node.numberOfContents > 1 ) {
         // 同一段位置可能存在多个文件
         // 删除多余的无用的content
         id<MCSAssetContent> longestContent = node.longestContent;
-        [node trimExcessContentsWithTest:^BOOL(id<MCSAssetContent>  _Nonnull content, BOOL * _Nonnull stop) {
+        [node removeContentsWithTest:^BOOL(id<MCSAssetContent>  _Nonnull content, BOOL * _Nonnull stop) {
             if ( content != longestContent && content.readwriteCount == 0 ) {
                 [mProvider removeContent:content];
                 return YES;

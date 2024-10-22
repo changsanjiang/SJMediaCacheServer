@@ -39,9 +39,9 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     id<MCSAssetContent> _Nullable mSubtitlesContent;
     
     __weak HLSAsset *_Nullable mMasterAsset;
-    BOOL mStored;
     BOOL mPrepared;
-    BOOL mFullyTrimmed; // 多余的 segment 的内容已全部修剪删除, 只保留一个完整的 segment 文件;
+    BOOL mAssembled; // 是否已组合完成, 是否已得到完整内容; 虽然得到了完整内容, 但是文件夹下可能还存在正在读取的冗余数据;
+    BOOL mFullyTrimmed; // 所有冗余数据都已删除;
 }
 
 @property (nonatomic) NSInteger id; // saveable
@@ -127,7 +127,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 - (float)completeness {
     @synchronized (self) {
-        if ( mStored ) return 1;
+        if ( mAssembled ) return 1;
         if ( mParser == nil ) return 0;
         if ( mVariantStreamAsset == nil ) {
             if ( mParser.segmentsCount == 0 ) {
@@ -250,8 +250,10 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 - (BOOL)isStored {
     @synchronized (self) {
-        if ( !mStored ) [self _check];
-        return mStored;
+        if ( !mAssembled ) {
+            [self _check];
+        }
+        return mAssembled;
     }
 }
 
@@ -393,7 +395,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 [observer assetWillClear:self];
             }
         }
-        mStored = NO;
+        mAssembled = NO;
+        mFullyTrimmed = NO;
         mParser = nil;
         mPlaylistContent = nil;
         mAESKeyContents = nil;
@@ -453,8 +456,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     @synchronized (self) {
         [super readwriteRelease];
         if ( mMasterAsset != nil ) [mMasterAsset readwriteRelease];
-        if ( !mStored ) [self _check];
-        else if ( !mFullyTrimmed ) [self _trimExcessSegmentContents];
+        if ( !mAssembled ) [self _check];
+        else if ( !mFullyTrimmed ) [self _trimRedundantSegmentContents];
     }
 }
 
@@ -564,13 +567,13 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 }
 
 /// unlocked
-- (void)_trimExcessSegmentContents {
+- (void)_trimRedundantSegmentContents {
     if ( !mFullyTrimmed ) {
         __block BOOL isFullyTrimmed = mParser != nil && mParser.segmentsCount == mSegmentNodeMap.count;
         [mSegmentNodeMap enumerateNodesUsingBlock:^(HLSAssetSegmentNode * _Nonnull node, BOOL * _Nonnull stop) {
             id<HLSAssetSegment> _Nullable fullSegment = node.fullContent;
-            // trim excess contents
-            if ( fullSegment != nil && node.numberOfContents > 1 ) [self trimExcessContentsForNode:node reservedContent:fullSegment];
+            // trim redundant contents
+            if ( fullSegment != nil && node.numberOfContents > 1 ) [self trimRedundantContentsForNode:node reservedContent:fullSegment];
             if ( isFullyTrimmed && node.numberOfContents > 1 ) isFullyTrimmed = NO;
         }];
         if ( isFullyTrimmed ) mFullyTrimmed = isFullyTrimmed;
@@ -579,9 +582,9 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 
 /// unlocked
 ///
-/// update mStored and trim excess contents
+/// update mStored and trim redundant contents
 - (void)_check {
-    if ( mStored || mParser == nil ) return;
+    if ( mAssembled || mParser == nil ) return;
     if      ( mParser.segmentsCount != 0 ) {
         if ( mAESKeyContents.count != mParser.keys.count ) return;
         if ( mSegmentNodeMap.count != mParser.segmentsCount ) return;
@@ -590,17 +593,17 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         [mSegmentNodeMap enumerateNodesUsingBlock:^(HLSAssetSegmentNode * _Nonnull node, BOOL * _Nonnull stop) {
             id<HLSAssetSegment> _Nullable fullSegment = node.fullContent;
             if ( fullSegment != nil ) {
-                // trim excess contents
-                if ( node.numberOfContents > 1 ) [self trimExcessContentsForNode:node reservedContent:fullSegment];
+                // trim redundant contents
+                if ( node.numberOfContents > 1 ) [self trimRedundantContentsForNode:node reservedContent:fullSegment];
                 if ( isFullyTrimmed && node.numberOfContents > 1 ) isFullyTrimmed = NO;
             }
             else {
                 if ( isAllSegmentsCached ) isAllSegmentsCached = NO;
                 if ( isFullyTrimmed ) isFullyTrimmed = NO;
-                // check continue for trim excess contents
+                // check continue for trim redundant contents
             }
         }];
-        mStored = isAllSegmentsCached;
+        mAssembled = isAllSegmentsCached;
         if ( isFullyTrimmed ) mFullyTrimmed = isFullyTrimmed;
     }
     else if ( mParser.variantStream != nil ) {
@@ -608,15 +611,15 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         BOOL isAudioRenditionStored = mAudioRenditionAsset == nil || mAudioRenditionAsset.isStored;
         BOOL isVideoRenditionStored = mVideoRenditionAsset == nil || mVideoRenditionAsset.isStored;
         BOOL isSubtitlesRenditionStored = mParser.subtitlesRendition == nil || mSubtitlesContent != nil;
-        mStored = isVariantStreamStored && isAudioRenditionStored && isVideoRenditionStored && isSubtitlesRenditionStored;
+        mAssembled = isVariantStreamStored && isAudioRenditionStored && isVideoRenditionStored && isSubtitlesRenditionStored;
         mFullyTrimmed = YES;
     }
     else {
-        mStored = YES;
+        mAssembled = YES;
         mFullyTrimmed = YES;
     }
     
-    if ( mStored ) {
+    if ( mAssembled ) {
         for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
             if ( [observer respondsToSelector:@selector(assetDidStore:)] ) {
                 [observer assetDidStore:self];
@@ -625,10 +628,10 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     }
 }
 
-- (void)trimExcessContentsForNode:(HLSAssetSegmentNode *)node reservedContent:(id<HLSAssetSegment>)fullSegment {
+- (void)trimRedundantContentsForNode:(HLSAssetSegmentNode *)node reservedContent:(id<HLSAssetSegment>)fullSegment {
     // 同一段segment可能存在多个文件
     // 删除多余的无用的content
-    [node trimExcessContentsWithTest:^BOOL(id<HLSAssetSegment>  _Nonnull content, BOOL * _Nonnull stop) {
+    [node removeContentsWithTest:^BOOL(id<HLSAssetSegment>  _Nonnull content, BOOL * _Nonnull stop) {
         if ( content != fullSegment && content.readwriteCount == 0 ) {
             [mProvider removeSegment:content];
             return YES;

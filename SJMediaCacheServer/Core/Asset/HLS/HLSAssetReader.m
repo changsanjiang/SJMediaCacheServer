@@ -132,7 +132,9 @@
                     data = [mReader readDataOfLength:length];
                     mOffset = mReader.offset;
                     if ( data != nil && _readDataDecryptor != nil ) {
-                        data = _readDataDecryptor(mRequest, position, data);
+                        NSData *decrypted = _readDataDecryptor(mRequest, position, data);
+                        NSAssert(decrypted.length == data.length, @"Decrypted data length must equal input data length");
+                        data = decrypted;
                     }
                     return data;
                 }

@@ -155,13 +155,9 @@
     @synchronized (self) { delegate = mDelegateDictionary[@(dataTask.taskIdentifier)]; }
     __auto_type receivedDataEncryptor = _receivedDataEncryptor;
     if ( receivedDataEncryptor != nil ) {
-        NSData *newData = receivedDataEncryptor(dataTask.currentRequest, (NSUInteger)(dataTask.countOfBytesReceived - data.length), data);
-        if ( newData.length != data.length ) {
-            @throw [NSException exceptionWithName:NSGenericException 
-                                           reason:@"The length of the encoded data must be the same as the original data."
-                                         userInfo:nil];
-        }
-        data = newData;
+        NSData *encrypted = receivedDataEncryptor(dataTask.currentRequest, (NSUInteger)(dataTask.countOfBytesReceived - data.length), data);
+        NSAssert(encrypted.length == data.length, @"Encrypted data length must equal input data length.");
+        data = encrypted;
     }
     [delegate downloadTask:dataTask didReceiveData:data];
 }

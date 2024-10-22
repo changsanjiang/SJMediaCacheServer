@@ -25,10 +25,10 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
 
     id<MCSAssetReader> _Nullable mCurReader;
     
-    NSUInteger mPreloadFileCount; // num mode; NSNotFound to preload all files;
+    NSUInteger mPrefetchFileCount; // num mode; NSNotFound to preload all files;
 
-    NSUInteger mPreloadSize; // size mode;
-    UInt64 mPrefetchedLength; // size mode segments length
+    NSUInteger mPrefetchSize; // size mode;
+    UInt64 mLength; // size mode segments length
 
     NSUInteger mNextItemIndex;
     NSUInteger mNextSegmentIndex;
@@ -41,33 +41,33 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
 
 @implementation HLSPrefetcher
 
-- (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
+- (instancetype)initWithURL:(NSURL *)URL prefetchSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
     NSParameterAssert(bytes != 0);
-    return [self initWithURL:URL preloadFileCount:0 preloadSize:bytes delegate:delegate];
+    return [self initWithURL:URL prefetchFileCount:0 prefetchSize:bytes delegate:delegate];
 }
 
-- (instancetype)initWithURL:(NSURL *)URL preloadFileCount:(NSUInteger)num delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
-    return [self initWithURL:URL preloadFileCount:num preloadSize:0 delegate:delegate];
+- (instancetype)initWithURL:(NSURL *)URL prefetchFileCount:(NSUInteger)num delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
+    return [self initWithURL:URL prefetchFileCount:num prefetchSize:0 delegate:delegate];
 }
 
 - (instancetype)initWithURL:(NSURL *)URL delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
-    return [self initWithURL:URL preloadFileCount:NSNotFound preloadSize:0 delegate:delegate];
+    return [self initWithURL:URL prefetchFileCount:NSNotFound prefetchSize:0 delegate:delegate];
 }
 
 - (instancetype)initWithURL:(NSURL *)URL
-           preloadFileCount:(NSUInteger)preloadFileCount
-                preloadSize:(NSUInteger)preloadSize
+           prefetchFileCount:(NSUInteger)prefetchFileCount
+                prefetchSize:(NSUInteger)prefetchSize
                    delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
     self = [super init];
     mURL = URL;
-    mPreloadFileCount = preloadFileCount;
-    mPreloadSize = preloadSize;
+    mPrefetchFileCount = prefetchFileCount;
+    mPrefetchSize = prefetchSize;
     mDelegate = delegate;
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, preloadSize: %lu, preloadFileCount: %lu, progress: %f };\n", mURL, NSStringFromClass(self.class), self, (unsigned long)mPreloadSize, (unsigned long)mPreloadFileCount, self.progress];
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, prefetchSize: %lu, prefetchFileCount: %lu, progress: %f };\n", mURL, NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize, (unsigned long)mPrefetchFileCount, self.progress];
 }
 
 - (nullable id<MCSPrefetcherDelegate>)delegate {
@@ -90,7 +90,7 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
             case HLSPrefetcherStateUnknown: {
                 mState = HLSPrefetcherStatePreparing;
                 
-                MCSPrefetcherDebugLog(@"%@: <%p>.prepare { URL: %@, preloadSize: %lu, preloadFileCount: %lu };\n", mURL, NSStringFromClass(self.class), self, (unsigned long)mPreloadSize, (unsigned long)mPreloadFileCount);
+                MCSPrefetcherDebugLog(@"%@: <%p>.prepare { URL: %@, prefetchSize: %lu, prefetchFileCount: %lu };\n", mURL, NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize, (unsigned long)mPrefetchFileCount);
                 
                 HLSAsset *asset = [MCSAssetManager.shared assetWithURL:mURL];
                 if ( asset == nil || ![asset isKindOfClass:HLSAsset.class] ) {
@@ -177,14 +177,14 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
                         case MCSDataTypeHLSSegment: {
                             float progress = mProgress;
                             // size mode: specified size
-                            if ( mPreloadSize != 0 ) {
-                                mPrefetchedLength += length;
-                                 progress = mPrefetchedLength * 1.0f / mPreloadSize;
+                            if ( mPrefetchSize != 0 ) {
+                                mLength += length;
+                                 progress = mLength * 1.0f / mPrefetchSize;
                             }
                             // num mode: specified num of segment files
                             else {
                                 HLSAsset *hls = reader.asset;
-                                NSInteger segmentsCount = mPreloadFileCount != NSNotFound ? MIN(mPreloadFileCount, hls.segmentsCount) : hls.segmentsCount;
+                                NSInteger segmentsCount = mPrefetchFileCount != NSNotFound ? MIN(mPrefetchFileCount, hls.segmentsCount) : hls.segmentsCount;
                                 float curProgress = reader.offset * 1.0f / reader.response.range.length;
                                 progress = (mNextSegmentIndex + curProgress) * 1.0f / segmentsCount;
                             }
@@ -290,20 +290,20 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
             NSMutableArray<id<MCSPrefetcher>> *assPfc = NSMutableArray.array;
             // variant stream prefetcher
             [assPfc addObject:[HLSPrefetcher.alloc initWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedVariantStream.URI]
-                                              preloadFileCount:mPreloadFileCount
-                                                   preloadSize:mPreloadSize
+                                              prefetchFileCount:mPrefetchFileCount
+                                                   prefetchSize:mPrefetchSize
                                                       delegate:self]];
             // rendition prefetchers
             if ( selectedAudioRendition != nil ) {
                 [assPfc addObject:[HLSPrefetcher.alloc initWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedAudioRendition.URI]
-                                                  preloadFileCount:mPreloadFileCount
-                                                       preloadSize:mPreloadSize
+                                                  prefetchFileCount:mPrefetchFileCount
+                                                       prefetchSize:mPrefetchSize
                                                           delegate:self]];
             }
             if ( selectedVideoRendition != nil ) {
                 [assPfc addObject:[HLSPrefetcher.alloc initWithURL:[MCSURL.shared restoreURLFromHLSProxyURI:selectedVideoRendition.URI]
-                                                  preloadFileCount:mPreloadFileCount
-                                                       preloadSize:mPreloadSize
+                                                  prefetchFileCount:mPrefetchFileCount
+                                                       prefetchSize:mPrefetchSize
                                                           delegate:self]];
             }
             mAssociatedAssetPrefechers = assPfc.copy;
@@ -326,8 +326,8 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
     }
 
     // size mode: specified size
-    if ( mPreloadSize != 0 ) {
-        if ( mPrefetchedLength >= mPreloadSize ) {
+    if ( mPrefetchSize != 0 ) {
+        if ( mLength >= mPrefetchSize ) {
             mState = HLSPrefetcherStateCompleted;
             [self _notifyComplete:nil];
             return;
@@ -335,7 +335,7 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
     }
     // num mode: specified num of segment files
     else {
-        NSInteger segmentsCount = mPreloadFileCount != NSNotFound ? MIN(mPreloadFileCount, asset.segmentsCount) : asset.segmentsCount;
+        NSInteger segmentsCount = mPrefetchFileCount != NSNotFound ? MIN(mPrefetchFileCount, asset.segmentsCount) : asset.segmentsCount;
         if ( mNextSegmentIndex >= segmentsCount ) {
             mState = HLSPrefetcherStateCompleted;
             [self _notifyComplete:nil];

@@ -1,12 +1,11 @@
 
 # SJMediaCacheServer
 
-SJMediaCacheServer is a HTTP Media Caching Framework. It can cache FILE or HLS media.
+**SJMediaCacheServer** is an HTTP media caching framework designed to efficiently proxy playback requests and cache media content locally. This enables seamless media playback by serving cached content, thus reducing network load and improving playback performance. SJMediaCacheServer supports widely used media formats such as MP3, MP4, and HLS (m3u8) streaming resources.
 
-## Features
-- Support cache FILE and HLS media.
-- Support prefetch media. 
+Additionally, the framework provides robust cache management capabilities, allowing you to set limits on cache count, maximum disk storage time, and available disk space, ensuring optimal cache control and resource utilization.
 
+With its powerful preloading feature, SJMediaCacheServer allows users to preload a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
 
 ## Installation
 ```ruby
@@ -14,126 +13,96 @@ pod 'SJUIKit/SQLite3', :podspec => 'https://gitee.com/changsanjiang/SJUIKit/raw/
 pod 'SJMediaCacheServer'
 ```
 
-## 使用介绍
+# SJMediaCacheServer
 
-- https://juejin.im/post/5ee31be851882557525a8b18
+**SJMediaCacheServer** is an HTTP media caching framework designed to efficiently proxy playback requests and cache media content locally. This enables seamless media playback by serving cached content, thus reducing network load and improving playback performance. SJMediaCacheServer supports widely used media formats such as MP3, MP4, and HLS (m3u8) streaming resources.
 
-## Usage
+Additionally, the framework provides robust cache management capabilities, allowing you to set limits on cache count, maximum disk storage time, and available disk space, ensuring optimal cache control and resource utilization.
 
-- Play
-```Objective-C
-#import <SJMediaCacheServer/SJMediaCacheServer.h>
+With its powerful preloading feature, SJMediaCacheServer allows users to preload a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
 
-    NSURL *URL = [NSURL URLWithString:@"http://.../auido.mp3"];
-    NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
-    AVPlayer *player = [AVPlayer playerWithURL:playbackURL];
-    [player play];
-``` 
+## Features
 
-- Prefetch
-```Objective-C
-#import <SJMediaCacheServer/SJMediaCacheServer.h>
-    
-    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
-        NSLog(@"%lf", progress);
-    } completion:^(NSError * _Nullable error) {
-        NSLog(@"%@", error);
-    }];
-    
-    // The task to cancel the current prefetching.
-    id<MCSPrefetchTask> task = [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:20 * 1024 * 1024 progress:^(float progress) {
-        NSLog(@"%lf", progress);
-    } completion:^(NSError * _Nullable error) {
-        NSLog(@"%@", error);
-    }];
-    // cancel 
-    [task cancel];
-```
- 
-- Download request configuration
+- **Proxy Playback Requests**: Efficiently proxy playback requests by converting original URLs into local proxy URLs. The media player retrieves the data from the local server, which serves cached data if available, or fetches it from the remote server if necessary. This mechanism reduces network usage and enhances playback speed and reliability.
 
-```Objective-C
-    SJMediaCacheServer.shared.requestHandler = ^NSMutableURLRequest * _Nullable(NSMutableURLRequest * _Nonnull request) {
-        [request addValue:@"value1" forHTTPHeaderField:@"header filed1"];
-        [request addValue:@"value2" forHTTPHeaderField:@"header filed2"];
-      return request;
-    };
-```
+- **Support for Multiple Media Formats**: Compatible with popular media formats, including:
+    - MP3 (audio)
+    - MP4 (video)
+    - HLS (m3u8) streaming resources
 
-- Other configuration  
+- **Cache Management Options**:
+    - **Cache Count Limits**: Control the number of items stored in the cache to avoid overuse of local storage.
+    - **Maximum Disk Storage Time**: Configure how long items are retained in the cache before being purged, managing long-term storage effectively.
+    - **Available Disk Space Limits**: Ensure the cache stays within a specified disk usage limit, preventing cache overflow from occupying too much local storage.
 
-```Objective-C
-    @interface SJMediaCacheServer (Convert)
+- **Advanced Prefetching Capabilities**:
+    - **Concurrent Prefetching**: Use the `maxConcurrentPrefetchCount` property to control the maximum number of concurrent prefetch tasks, optimizing the preloading process without overwhelming system resources.
+    - **Flexible Prefetching Methods**:
+        - **Full Data Prefetching**: Use `prefetchWithURL:` to download all data related to a specific media asset, ensuring that the entire resource is available for playback without additional network requests.
+        - **Size-Specific Prefetching**: With `prefetchWithURL:prefetchSize:`, request a predefined amount of data for partial prefetching. This is particularly useful for optimizing both bandwidth and storage while ensuring smooth playback.
+        - **File Count Prefetching for HLS**: Leverage the `prefetchWithURL:prefetchFileCount:` method to prefetch a certain number of segment files for HLS assets. This ensures uninterrupted playback by caching multiple segments in advance, which is especially useful in low-bandwidth environments.
 
-    /// Resolve the identifier of the resource referenced by the URL.
-    ///
-    ///     The resource identifier represents a unique resource. When different URLs references the same resource, you can set the block to resolve the identifier.
-    ///
-    ///     This identifier will be used to identify the local cache. The same identifier will references the same cache.
-    ///
-    @property (nonatomic, copy, nullable) NSString *(^resolveResourceIdentifier)(NSURL *URL); // URL参数不固定时, 请设置该block返回一个唯一标识符
+- **Custom Request Configuration**:
+    - **Request Modification**: Modify outgoing requests by adding custom headers. Example:
+        ```objc
+        self.requestHandler = ^(NSMutableURLRequest *request) {
+            [request addValue:@"YourHeaderValue" forHTTPHeaderField:@"YourHeaderField"];
+        };
+        ```
 
-    /// Encode the received data.
-    ///
-    ///     This block will be invoked when the download server receives the data, where you can perform some encoding operations on the data.
-    ///
-    @property (nonatomic, copy, nullable) NSData *(^writeDataEncryptor)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对下载的数据进行加密
+    - **Custom HTTP Headers**: Configure HTTP headers for specific asset URLs, such as HLS keys or segments. Example:
+        ```objc
+        [self setHTTPHeaderField:@"YourHeaderField" withValue:@"YourHeaderValue" forAssetURL:assetURL ofType:MCSDataTypeHLS];
+        ```
 
-    /// Decode the read data.
-    ///
-    ///     This block will be invoked when the reader reads the data, where you can perform some decoding operations on the data.
-    ///
-    @property (nonatomic, copy, nullable) NSData *(^readDataDecryptor)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对读取的数据进行解密
+    - **Data Encryption & Decryption**: Encrypt data before writing to the cache and decrypt after reading. Example:
+        ```objc
+        self.writeDataEncryptor = ^NSData *(NSURLRequest *request, NSUInteger offset, NSData *data) {
+            return encryptedData; // Apply encryption
+        };
 
-    @end
+        self.readDataDecryptor = ^NSData *(NSURLRequest *request, NSUInteger offset, NSData *data) {
+            return decryptedData; // Apply decryption
+        };
+        ```
 
+    - **Asset Type & Identifier Resolution**: Use custom logic to determine the asset type and identifier. Example:
+        ```objc
+        self.resolveAssetType = ^MCSAssetType(NSURL *URL) {
+            return [URL.pathExtension isEqualToString:@"m3u8"] ? MCSAssetTypeHLS : MCSAssetTypeFILE;
+        };
 
-    @interface SJMediaCacheServer (Log)
+        self.resolveAssetIdentifier = ^NSString *(NSURL *URL) {
+            return [NSURLComponents componentsWithURL:URL resolvingAgainstBaseURL:NO].URL.absoluteString;
+        };
+        ```
 
-    /// Whether to open the console log, only in debug mode. release mode will not generate any logs.
-    ///
-    ///     If yes, the log will be output on the console. The default value is NO.
-    ///
-    @property (nonatomic, getter=isEnabledConsoleLog) BOOL enabledConsoleLog; // 是否开启控制日志
+## Example Use Case
+```objc
+@implementation YourPlayerController {
+    AVPlayer *_player;
+}
 
-    @end
+- (instancetype)initWithURL:(NSURL *)URL {
+    self = [super init];
+    if ( self ) {
+        // Convert the original URL to a proxy URL
+        NSURL *playbackURL = [SJMediaCacheServer.shared proxyURLFromURL:URL];
+        _player = [AVPlayer playerWithURL:playbackURL];
+    }
+    return self;
+}
 
+- (void)play {
+    [SJMediaCacheServer.shared setActive:YES];
+    [_player play];
+}
 
-    @interface SJMediaCacheServer (Cache)
-
-    /// The maximum number of resources the cache should hold.
-    ///
-    ///     If 0, there is no count limit. The default value is 0.
-    ///
-    ///     This is not a strict limit—if the cache goes over the limit, a resource in the cache could be evicted instantly, later, or possibly never, depending on the usage details of the resource.
-    ///
-    @property (nonatomic) NSUInteger cacheCountLimit; // 个数限制
-
-    /// The maximum length of time to keep a resource in the cache, in seconds.
-    ///
-    ///     If 0, there is no expiring limit.  The default value is 0.
-    ///
-    @property (nonatomic) NSTimeInterval cacheMaxDiskAge; // 保存时长限制
-
-    /// The maximum size of the disk cache, in bytes.
-    ///
-    ///     If 0, there is no cache size limit. The default value is 0.
-    ///
-    @property (nonatomic) NSUInteger cacheMaxDiskSize; // 缓存占用的磁盘空间限制
-
-    /// The maximum length of free disk space the device should reserved, in bytes.
-    ///
-    ///     When the free disk space of device is less than or equal to this value, some resources will be removed.
-    ///
-    ///     If 0, there is no disk space limit. The default value is 0.
-    ///
-    @property (nonatomic) NSUInteger cacheReservedFreeDiskSpace; // 剩余磁盘空间限制
-
-    /// Empties the cache. This method may blocks the calling thread until file delete finished.
-    ///
-    - (void)removeAllCaches; // 删除全部缓存
-    @end
-```
+- (void)seekToTime:(NSTimeInterval)time {
+    [SJMediaCacheServer.shared setActive:YES];
+    [_player seekToTime:time];
+}
+@end
 
 ## License
 

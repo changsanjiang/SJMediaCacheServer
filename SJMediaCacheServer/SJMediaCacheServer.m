@@ -46,7 +46,7 @@
     return self;
 }
 
-- (nullable NSURL *)playbackURLWithURL:(NSURL *)URL {
+- (nullable NSURL *)proxyURLFromURL:(NSURL *)URL {
     if ( URL == nil )
         return nil;
     
@@ -91,14 +91,14 @@
     return MCSPrefetcherManager.shared.maxConcurrentPrefetchCount;
 }
 
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize {
-    return [self prefetchWithURL:URL preloadSize:preloadSize progress:nil completion:nil];
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL prefetchSize:(NSUInteger)prefetchSize {
+    return [self prefetchWithURL:URL prefetchSize:prefetchSize progress:nil completion:nil];
 }
 
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL prefetchSize:(NSUInteger)prefetchSize progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
     if ( URL != nil ) {
         if ( _server.isRunning || [_server start] ) {
-            return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize progress:progressBlock completion:completionHandler];
+            return [MCSPrefetcherManager.shared prefetchWithURL:URL prefetchSize:prefetchSize progress:progressBlock completion:completionHandler];
         }
     }
     return nil;
@@ -113,10 +113,10 @@
     return nil;
 }
 
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadFileCount:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL prefetchFileCount:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
     if ( URL != nil ) {
         if ( _server.isRunning || [_server start] ) {
-            return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadFileCount:num progress:progressBlock completion:completionHandler];
+            return [MCSPrefetcherManager.shared prefetchWithURL:URL prefetchFileCount:num progress:progressBlock completion:completionHandler];
         }
     }
     return nil;

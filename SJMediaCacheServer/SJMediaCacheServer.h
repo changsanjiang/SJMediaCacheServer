@@ -19,42 +19,57 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SJMediaCacheServer : NSObject
 + (instancetype)shared;
 
-/// Convert the given URL to the playback URL.
+/// Convert the given URL to a proxy playback URL.
 ///
-/// @param URL An instance of NSURL that references a media asset.
+/// This method takes an original media asset URL and converts it to a local proxy server URL.
+/// The player will use this proxy URL to request media data from the local proxy server instead of directly
+/// requesting from the remote server. When the player requests data through the proxy URL, the proxy server
+/// will first check if the data is already cached locally. If cached data is found, it will be returned directly
+/// to the player. If the data is not cached, the proxy server will fetch the data from the remote server,
+/// cache it locally, and then return it to the player.
 ///
-/// @return Returns the HTTP proxy URL if the proxy service is running; otherwise, it returns the original parameter URL.
-/// If the provided URL is nil, this method will return nil.
+/// This process optimizes playback performance by reducing the need for repeated network requests, thus
+/// improving loading times and reducing bandwidth consumption on subsequent playback requests.
 ///
-/// @note This method may return nil if the input URL is nil.
+/// @param originalURL An instance of NSURL that references a media asset. This URL is the original source
+///                    from which the media data will be fetched if it is not cached locally.
+///
+/// @return Returns the proxy URL pointing to the local proxy server if the proxy service is running;
+///         otherwise, it returns the original URL. If the provided URL is nil, this method will return nil.
+///
+/// @note This method may return nil if the input URL is nil. Be sure to handle this scenario when using
+///       the returned playback URL.
 ///
 /// \code
 /// @implementation YourPlayerController {
-///     AVPlayer *_player
+///     AVPlayer *_player;
 /// }
 ///
 /// - (instancetype)initWithURL:(NSURL *)URL {
 ///     self = [super init];
-///     if ( self ) {
-///         NSURL *playbackURL = [SJMediaCacheServer.shared playbackURLWithURL:URL];
+///     if (self) {
+///         // Replace original URL with the proxy URL for playback
+///         NSURL *playbackURL = [SJMediaCacheServer.shared proxyURLFromURL:URL];
 ///         _player = [AVPlayer playerWithURL:playbackURL];
 ///     }
 ///     return self;
 /// }
 ///
 /// - (void)play {
+///     // Activate the proxy service and start playback
 ///     [SJMediaCacheServer.shared setActive:YES];
 ///     [_player play];
 /// }
 ///
 /// - (void)seekToTime:(NSTimeInterval)time {
+///     // Ensure the proxy service is active during seeking
 ///     [SJMediaCacheServer.shared setActive:YES];
 ///     [_player seekToTime:time];
 /// }
 /// @end
 /// \endcode
 ///
-- (nullable NSURL *)playbackURLWithURL:(NSURL *)URL; // 获取播放地址
+- (nullable NSURL *)proxyURLFromURL:(NSURL *)originalURL; // 获取代理播放地址
 
 @property (nonatomic, readonly, getter=isActive) BOOL active;
 
@@ -95,44 +110,47 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// @return The task to cancel the current prefetching, or nil if URL is nil.
 ///
-/// @note This method preloads all data for the asset referenced by the provided URL. If the URL is nil,
+/// @note This method prefetches all data for the asset referenced by the provided URL. If the URL is nil,
 ///       the method will return nil.
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler; // 预加载所有数据
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL
+                                       progress:(void(^_Nullable)(float progress))progressBlock
+                                     completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler; // 预取所有数据
 
 /// Prefetch a specified amount of data for the asset in the cache for future use. Assets are downloaded with low priority.
 ///
 /// This method handles two types of assets: FILE and HLS.
-/// - For FILE assets, it will preload the specified amount of data in bytes,
-///   unless the file is smaller than the specified preload size.
-/// - For HLS assets, it will attempt to preload multiple segment files
+/// - For FILE assets, it will prefetch the specified amount of data in bytes,
+///   unless the file is smaller than the specified prefetch size.
+/// - For HLS assets, it will attempt to prefetch multiple segment files
 ///   until the total size of the downloaded data is greater than or equal
-///   to the specified preload size.
+///   to the specified prefetch size.
 ///
 /// @param URL      An instance of NSURL that references a media asset.
-/// @param bytes    The size of data to preload in bytes. This value is a hint, and the actual
-///                 data downloaded may be larger than this size for HLS assets if multiple
-///                 segments are fetched to meet the size requirement.
+/// @param prefetchSize The size of data to prefetch in bytes. This value is a hint, and the actual
+///                     data downloaded may be larger than this size for HLS assets if multiple
+///                     segments are fetched to meet the size requirement.
 ///
 /// @return The task to cancel the current prefetching, or nil if URL is nil.
 ///
-/// @note This method preloads a specified size of data for the asset referenced by the provided URL.
+/// @note This method prefetches a specified size of data for the asset referenced by the provided URL.
 ///       If the URL is nil, the method will return nil.
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes; // 预加载指定大小的数据
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL
+                                   prefetchSize:(NSUInteger)prefetchSize; // 预取指定大小的数据
 
 /// Prefetch a specified amount of data for the asset in the cache for future use. Assets are downloaded with low priority.
 ///
 /// This method handles two types of assets: FILE and HLS.
-/// - For FILE assets, it will preload the specified amount of data in bytes,
-///   unless the file is smaller than the specified preload size.
-/// - For HLS assets, it will attempt to preload multiple segment files
+/// - For FILE assets, it will prefetch the specified amount of data in bytes,
+///   unless the file is smaller than the specified prefetch size.
+/// - For HLS assets, it will attempt to prefetch multiple segment files
 ///   until the total size of the downloaded data is greater than or equal
-///   to the specified preload size.
+///   to the specified prefetch size.
 ///
 /// This method also provides progress updates and a completion handler to
 /// notify when the prefetching is completed.
 ///
 /// @param URL            An instance of NSURL that references a media asset.
-/// @param bytes          The size of data to preload in bytes. This value is a hint, and the actual
+/// @param prefetchSize   The size of data to prefetch in bytes. This value is a hint, and the actual
 ///                       data downloaded may be larger than this size for HLS assets if multiple
 ///                       segments are fetched to meet the size requirement.
 /// @param progressBlock  A block that will be invoked when progress updates occur, reporting the
@@ -143,15 +161,17 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// @return The task to cancel the current prefetching, or nil if URL is nil.
 ///
-/// @note This method is particularly useful for managing data prefetching based on asset types and
-///       for providing user feedback through progress updates. If the URL is nil, the method will return nil.
-///
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler; // 预加载指定大小的数据
+/// @note This method prefetches a specified size of data for the asset referenced by the provided URL.
+///       If the URL is nil, the method will return nil.
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL
+                                   prefetchSize:(NSUInteger)prefetchSize
+                                       progress:(void(^_Nullable)(float progress))progressBlock
+                                     completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler; // 预取指定大小的数据
 
 /// Prefetch a designated number of files for the asset in the cache for future use. This method is primarily
 /// intended for HLS resources, as M3U8 playlists typically contain multiple segment files.
 ///
-/// The designated number of preloaded files must be greater than 0. However, the actual number of segment
+/// The designated number of prefetch files must be greater than 0. However, the actual number of segment
 /// files cached may be less than the specified number, as the number of segment.ts files in the M3U8
 /// playlist can be fewer than the provided value. For HLS assets, this method will download the designated
 /// number of segment files to be cached, if available. If the provided URL corresponds to a FILE resource,
@@ -160,7 +180,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// This method also provides progress updates and a completion handler to notify when the prefetching is completed.
 ///
 /// @param URL            An instance of NSURL that references a media asset.
-/// @param count          The designated number of preloaded segment files. This value must be greater than 0.
+/// @param prefetchFileCount The designated number of prefetch files. This value must be greater than 0.
 /// @param progressBlock  A block that will be invoked when progress updates occur, reporting the
 ///                       current progress as a float value between 0.0 and 1.0.
 /// @param completionHandler A block that will be invoked when the current prefetching is completed.
@@ -169,120 +189,108 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// @return The task to cancel the current prefetching, or nil if URL is nil.
 ///
-/// @note This method is useful for efficiently preloading multiple segment files for HLS assets,
+/// @note This method is useful for efficiently prefetching multiple segment files for HLS assets,
 ///       ensuring a smoother playback experience while also managing FILE resources as needed.
 ///       If the URL is nil, the method will return nil.
-///
-- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadFileCount:(NSUInteger)count progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler; // 预加载指定个数的文件
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL
+                              prefetchFileCount:(NSUInteger)prefetchFileCount
+                                       progress:(void(^_Nullable)(float progress))progressBlock
+                                     completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler; // 预取指定个数的文件
 
 /// Cancels all queued and executing prefetch tasks.
 ///
-- (void)cancelAllPrefetchTasks; // 取消所有的预加载任务
+- (void)cancelAllPrefetchTasks; // 取消所有的预取任务
 
 @end
 
 
+
 @interface SJMediaCacheServer (Request)
-/// The session configuration used when making requests to the remote server.
-/// This configuration allows users to customize various aspects of the network session, such as timeout intervals,
-/// caching policies, and protocol settings. Users can set this configuration to modify how the requests are handled.
+/// The session configuration used for requests to the remote server.
+/// Users can customize various aspects of the network session, such as timeout intervals,
+/// caching policies, and protocol settings. This property must be set before the proxy service
+/// is activated; otherwise, the configuration will not take effect. If not set, the default
+/// session configuration will be used.
 ///
-/// @note This property must be set before the proxy service is started(active); otherwise, the configuration will not take effect.
-///       If not set, the default session configuration will be used.
-///
+/// @note Example of setting a custom session configuration:
 /// \code
-/// // Example of setting a custom session configuration:
 /// NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
 /// config.timeoutIntervalForRequest = 30.0; // Set a custom timeout
 /// self.sessionConfiguration = config;
 /// \endcode
-///
 @property (nonatomic, strong, nullable) NSURLSessionConfiguration *sessionConfiguration;
 
-/// A block that is invoked when the local proxy server makes a request to the remote server.
-/// The block provides the request object, allowing users to modify it directly, such as adding custom headers.
+/// A block invoked when the local proxy server makes a request to the remote server.
+/// Users can modify the mutable request object directly, such as adding custom headers.
 ///
-/// @property requestHandler A block that accepts a mutable request object for modification.
-///                          The user can add headers or make other adjustments to the request.
-///                          Since the request is mutable, no return value is needed.
+/// @param request A mutable NSURLRequest object representing the outgoing request to the remote server.
 ///
-/// @param request   A mutable NSURLRequest object representing the outgoing request to the remote server.
-///
+/// @note Example of adding a custom header:
 /// \code
-/// // Example of adding a custom header:
 /// self.requestHandler = ^(NSMutableURLRequest *request) {
 ///     [request addValue:@"YourHeaderValue" forHTTPHeaderField:@"YourHeaderField"];
 /// };
 /// \endcode
-///
-@property (nonatomic, copy, nullable) void (^requestHandler)(NSMutableURLRequest *request); // 为下载请求添加请求头或做一些其他事情
+@property (nonatomic, copy, nullable) void (^requestHandler)(NSMutableURLRequest *request);
 
 /// Configures a custom HTTP header field for a specified asset URL, targeting specific data types
 /// such as AES keys or segment files in an HLS playlist.
 ///
-/// @param URL     An NSURL that references the media asset for which the HTTP header field should be set.
-/// @param field   The name of the HTTP header field to set. This field should be a valid HTTP header field name.
-/// @param value   The value to set for the specified HTTP header field. Pass nil to remove the header field.
+/// @param URL     An NSURL referencing the media asset for which the HTTP header field should be set.
+/// @param field   The name of the HTTP header field to set.
+/// @param value   The value for the specified HTTP header field (pass nil to remove the header).
 /// @param type    The type of data associated with the URL, such as AES key or segment file, represented by the MCSDataType enumeration.
 ///
+/// @note Example of appending a custom HTTP header for HLS assets:
 /// \code
-/// // For example, to append a custom HTTP header field to all requests related to an HLS asset
-/// // (including requests for AES keys or segment.ts files):
 /// [self setHTTPHeaderField:@"YourHeaderField" withValue:@"YourHeaderValue" forAssetURL:assetURL ofType:MCSDataTypeHLS];
 /// \endcode
-///
 - (void)setHTTPHeaderField:(NSString *)field withValue:(nullable NSString *)value forAssetURL:(NSURL *)URL ofType:(MCSDataType)type;
 
-/// Retrieves the custom HTTP headers that have been configured for a specified asset URL,
+/// Retrieves the custom HTTP headers configured for a specified asset URL,
 /// targeting specific data types such as AES keys or segment files in an HLS playlist.
 ///
-/// @param URL   An NSURL that references the media asset for which the HTTP headers should be retrieved.
-/// @param type  The type of data associated with the URL, such as AES key or segment file, represented by the MCSDataType enumeration.
+/// @param URL   An NSURL referencing the media asset for which the HTTP headers should be retrieved.
+/// @param type  The type of data associated with the URL, represented by the MCSDataType enumeration.
 ///
-/// @return A dictionary containing the configured HTTP headers for the specified asset URL and data type,
-///         where the keys are the header field names and the values are the corresponding header values.
-///         Returns nil if no headers are configured.
+/// @return A dictionary containing the configured HTTP headers, where the keys are the header field names
+///         and the values are the corresponding header values. Returns nil if no headers are configured.
 ///
+/// @note Example of retrieving HTTP headers for HLS segment requests:
 /// \code
-/// // For example, retrieve the HTTP headers set for HLS segment.ts requests:
 /// NSDictionary *headers = [self HTTPAdditionalHeadersForAssetURL:assetURL ofType:MCSDataTypeHLSSegment];
 /// \endcode
-///
 - (nullable NSDictionary<NSString *, NSString *> *)HTTPAdditionalHeadersForAssetURL:(NSURL *)URL ofType:(MCSDataType)type;
 
-/// A block that is called when the task has finished collecting metrics.
-/// This block allows external users to handle the metrics collected during the task's execution.
+/// A block called when the task has finished collecting metrics.
+/// This block allows external users to handle the collected metrics during the task's execution.
 /// If not set, no additional action is taken.
 ///
 /// @param session The session containing the task that finished collecting metrics.
 /// @param task    The task that finished collecting metrics.
 /// @param metrics The collected metrics for the task, containing detailed timing information.
 ///
+/// @note Example of handling collected metrics:
 /// \code
 /// self.metricsHandler = ^(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics) {
 ///     // Handle the collected metrics here, e.g., log them or send them to a server.
 /// };
 /// \endcode
-///
 @property (nonatomic, copy, nullable) void (^metricsHandler)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics);
 
 @property (nonatomic, copy, nullable) void (^proxyTaskAbortCallback)(NSURLRequest *request, NSError *_Nullable error);
 @end
 
-
 @interface SJMediaCacheServer (Convert)
 /// A block that determines the asset type (e.g., HLS or FILE) for a given URL.
-/// This block allows users to provide custom logic to resolve the type of media asset based on the URL.
-/// If not set, the default behavior will be used to resolve the asset type.
+/// Users can provide custom logic to resolve the type of media asset based on the URL.
+/// If not set, the default behavior will be used.
 ///
 /// @param URL The URL for which the asset type needs to be resolved.
 /// @return The asset type as an MCSAssetType value, such as HLS or FILE.
 ///
-/// @note This block is useful for scenarios where the asset type cannot be inferred from the URL alone,
-///       allowing users to implement custom logic for determining the asset type.
-///
+/// @note Example of setting a custom asset type resolution block:
 /// \code
-/// // Example of setting a custom resolveAssetType block:
 /// self.resolveAssetType = ^MCSAssetType(NSURL *URL) {
 ///     if ([URL.pathExtension isEqualToString:@"m3u8"]) {
 ///         return MCSAssetTypeHLS;
@@ -290,77 +298,63 @@ NS_ASSUME_NONNULL_BEGIN
 ///     return MCSAssetTypeFILE;
 /// };
 /// \endcode
-///
-@property (nonatomic, copy, nullable) MCSAssetType (^resolveAssetType)(NSURL *URL); // 返回这个URL指向的资源类型
+@property (nonatomic, copy, nullable) MCSAssetType (^resolveAssetType)(NSURL *URL);
 
 /// A block that resolves the unique asset identifier for a given URL.
-/// This is particularly useful when URLs contain dynamic or authentication parameters, but still refer to the same asset.
-/// Users can provide custom logic to generate a consistent identifier for such URLs (e.g., an MD5 hash).
-/// If this block is not set, the default behavior for resolving asset identifiers will be used.
+/// This is useful when URLs contain dynamic or authentication parameters that still refer to the same asset.
 ///
 /// @param URL The URL for which the asset identifier needs to be resolved.
-/// @return A unique identifier (e.g., a string) that represents the asset. If multiple URLs refer to the same asset, this block should return the same identifier for those URLs.
+/// @return A unique identifier representing the asset.
 ///
-/// @note This block helps ensure that different variations of the same URL (e.g., with different authentication tokens) are recognized as the same asset.
-///       Custom logic can be applied to strip irrelevant query parameters or to compute a consistent identifier.
-///
+/// @note Example of setting a custom asset identifier resolution block:
 /// \code
-/// // Example of setting a custom resolveAssetIdentifier block:
 /// self.resolveAssetIdentifier = ^NSString *(NSURL *URL) {
 ///     NSURLComponents *components = [NSURLComponents componentsWithURL:URL resolvingAgainstBaseURL:NO];
-///     components.query = nil; // ignore query parameters for identifier purposes
+///     components.query = nil; // Ignore query parameters for identifier purposes
 ///     return components.URL.absoluteString;
 /// };
 /// \endcode
-///
-@property (nonatomic, copy, nullable) NSString *(^resolveAssetIdentifier)(NSURL *URL); // URL参数不固定时, 请设置该block返回一个唯一标识符
+@property (nonatomic, copy, nullable) NSString *(^resolveAssetIdentifier)(NSURL *URL);
 
 /// A block that handles data encryption before it is written to the cache.
-/// This block allows for custom encryption logic to be applied to the data
+/// This allows for custom encryption logic to be applied to the data
 /// before it is stored in the cache.
-///
-/// @note The length of the data must remain the same after encryption to ensure
-///       correct handling of cache offsets and file integrity.
 ///
 /// @param request The original NSURLRequest for which the data is being written.
 /// @param offset  The offset within the file where the data will be written.
 /// @param data    The data to be encrypted before writing to the cache.
-/// @return The encrypted NSData to be written. The length of the returned data must
-///         match the input data.
+/// @return The encrypted NSData to be written; its length must match the input data length
+///         to ensure correct handling of cache offsets and file integrity.
 ///
+/// @note Example of implementing data encryption:
 /// \code
 /// self.writeDataEncryptor = ^NSData *(NSURLRequest *request, NSUInteger offset, NSData *data) {
 ///     // Implement your encryption logic here
-///     // The encryptedData.length must equal to data.length
+///     // Encrypted data length must equal input data length.
 ///     return encryptedData;
 /// };
 /// \endcode
-///
-@property (nonatomic, copy, nullable) NSData *(^writeDataEncryptor)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对下载的数据进行加密
+@property (nonatomic, copy, nullable) NSData *(^writeDataEncryptor)(NSURLRequest *request, NSUInteger offset, NSData *data);
 
 /// A block that handles data decryption after it is read from the cache.
-/// This block allows for custom decryption logic to be applied to the data
-/// after it is retrieved from the cache.
-///
-/// @note The length of the data must remain the same after decryption to ensure
-///       correct handling of cache offsets and data integrity.
+/// This allows for custom decryption logic to be applied to the data after retrieval.
 ///
 /// @param request The original NSURLRequest for which the data is being read.
-/// @param offset  The offset within the file where the data is being read.
+/// @param offset  The offset within the file for reading the data.
 /// @param data    The encrypted data read from the cache to be decrypted.
-/// @return The decrypted NSData to be used. The length of the returned data must
-///         match the input data.
+/// @return The decrypted NSData to be used; its length must match the input data length to ensure proper handling of cache offsets and data integrity.
 ///
+/// @note Example of implementing data decryption:
 /// \code
 /// self.readDataDecryptor = ^NSData *(NSURLRequest *request, NSUInteger offset, NSData *data) {
 ///     // Implement your decryption logic here
-///     // The decryptedData.length must equal to data.length
+///     // Decrypted data length must equal input data length.
 ///     return decryptedData;
 /// };
 /// \endcode
-///
-@property (nonatomic, copy, nullable) NSData *(^readDataDecryptor)(NSURLRequest *request, NSUInteger offset, NSData *data); // 对读取的数据进行解密
+@property (nonatomic, copy, nullable) NSData *(^readDataDecryptor)(NSURLRequest *request, NSUInteger offset, NSData *data);
 @end
+
 
 
 @interface SJMediaCacheServer (Log)
@@ -368,91 +362,84 @@ NS_ASSUME_NONNULL_BEGIN
 /// Whether to enable console logging, available only in debug mode.
 /// No logs will be generated in release mode.
 ///
-///     If set to YES, logs will be output to the console.
-///     The default value is NO.
+/// If set to YES, logs will be output to the console.
+/// The default value is NO.
 ///
 /// @note This setting is only effective in debug mode.
 ///       In release mode, logs will not be generated regardless of this setting.
-///
-@property (nonatomic, getter=isEnabledConsoleLog) BOOL enabledConsoleLog; // 是否开启控制日志
+@property (nonatomic, getter=isEnabledConsoleLog) BOOL enabledConsoleLog; // 是否开启控制台日志
 
 /// Specifies the logging options to determine which components should log their activities.
 ///
-///     The default value is MCSLogOptionDefault, which includes ProxyTask, Prefetcher, and Heartbeat logs.
-///     You can combine multiple options using the bitwise OR operator to enable logs from multiple components.
+/// The default value is MCSLogOptionDefault, which includes ProxyTask, Prefetcher, and Heartbeat logs.
+/// You can combine multiple options using the bitwise OR operator to enable logs from multiple components.
 ///
 /// @note Use `MCSLogOptionAll` to enable logs from all components.
-///
 @property (nonatomic) MCSLogOptions logOptions; // 设置日志选项, 以提供更加详细的日志.
 
 /// Specifies the logging level for the system.
 ///
-///     MCSLogLevelDebug provides detailed logging for debugging purposes.
-///     MCSLogLevelError only outputs error messages.
+/// MCSLogLevelDebug provides detailed logging for debugging purposes.
+/// MCSLogLevelError only outputs error messages.
 ///
-///     The default value is MCSLogLevelDebug.
+/// The default value is MCSLogLevelDebug.
 ///
 /// @note This can be used to control the verbosity of logs.
-///
 @property (nonatomic) MCSLogLevel logLevel;
+
 @end
 
 
 @interface SJMediaCacheServer (Cache)
+
 /// The maximum number of assets the cache should hold.
 ///
-///     If set to 0, there is no limit on the number of cached assets. The default value is 0.
-///     This is a soft limit, meaning the system may exceed this number temporarily
-///     depending on asset usage patterns and removal policies.
+/// If set to 0, there is no limit on the number of cached assets. The default value is 0.
+/// This is a soft limit, meaning the system may exceed this number temporarily
+/// depending on asset usage patterns and removal policies.
 ///
 /// @note If the limit is exceeded, cached assets may be removed to free space based on their usage.
-///
 @property (nonatomic) NSUInteger cacheCountLimit; // 个数限制
 
 /// The maximum amount of time to keep an asset in the cache, in seconds.
 ///
-///     If set to 0, cached assets will not expire based on age. The default value is 0.
+/// If set to 0, cached assets will not expire based on age. The default value is 0.
 ///
 /// @note Assets may be removed from the cache to free up space based on their age limit.
-///       The actual removal may occur instantly, later, or never, depending on asset usage and conditions.
-///
+/// The actual removal may occur instantly, later, or never, depending on asset usage and conditions.
 @property (nonatomic) NSTimeInterval cacheMaxDiskAge; // 保存时长限制
 
 /// The maximum size of the disk cache, in bytes.
 ///
-///     If set to 0, there is no limit on the cache size. The default value is 0.
+/// If set to 0, there is no limit on the cache size. The default value is 0.
 ///
 /// @note If the cache size exceeds this limit, cached assets may be removed to reduce the total cache size.
-///       This removal process depends on asset usage and priority.
-///
+/// This removal process depends on asset usage and priority.
 @property (nonatomic) NSUInteger cacheMaxDiskSize; // 缓存占用的磁盘空间限制
 
 /// The minimum free disk space, in bytes, that should be reserved on the device.
 ///
-///     If the available disk space is less than or equal to this value, cached assets will be removed
-///     to free up space on the device.
+/// If the available disk space is less than or equal to this value, cached assets will be removed
+/// to free up space on the device.
 ///
-///     If set to 0, no reserved disk space will be enforced. The default value is 0.
+/// If set to 0, no reserved disk space will be enforced. The default value is 0.
 ///
 /// @note This setting ensures that the device has a minimum amount of free space available,
-///       and cached assets may be removed accordingly to maintain this free space.
-///
+/// and cached assets may be removed accordingly to maintain this free space.
 @property (nonatomic) NSUInteger cacheReservedFreeDiskSpace; // 剩余磁盘空间限制
 
 /// Returns the total number of bytes used by all caches, excluding protected assets.
 ///
-///     This property provides the cumulative size of all cached assets in bytes,
-///     and it is updated automatically as assets are added or removed from the cache.
-///     Protected assets (e.g., exported assets) are not included in this calculation.
+/// This property provides the cumulative size of all cached assets in bytes,
+/// and it is updated automatically as assets are added or removed from the cache.
+/// Protected assets (e.g., exported assets) are not included in this calculation.
 ///
 /// @return The total size, in bytes, of all removable cached assets.
-///
 @property (nonatomic, readonly) UInt64 countOfBytesAllCaches; // 可被删除的缓存所占用的大小
 
 /// Removes the cache of the specified URL.
 ///
 /// If the cache for an asset is protected (e.g., an exported asset), it will not be removed.
-///
 - (BOOL)removeCacheForURL:(NSURL *)URL; // 删除某个缓存
 
 /// Removes all unprotected caches for assets.
@@ -460,9 +447,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// If the cache for an asset is protected (e.g., an exported asset), it will not be removed.
 ///
 /// This method may block the calling thread until the file deletion is finished.
-///
 /// Additionally, this method will cancel all reading or writing operations associated with the caches.
-///
 - (void)removeAllCaches;
 
 /// Checks if all data associated with the asset for the given URL has been fully cached.
@@ -479,6 +464,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///       be instantaneous, depending on the caching implementation and
 ///       the asset's current state.
 - (BOOL)isFullyStoredAssetForURL:(NSURL *)URL; // 查询指定URL的Asset的所有数据是否已完整缓存;
+
 @end
 
 /// What's the difference between export and prefetch?

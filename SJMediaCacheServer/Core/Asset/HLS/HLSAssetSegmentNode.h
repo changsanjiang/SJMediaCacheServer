@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) id<HLSAssetSegment> longestContent;
 @property (nonatomic, readonly, nullable) NSArray<id<HLSAssetSegment>> *contents;
 @property (nonatomic, readonly) NSUInteger numberOfContents;
-- (void)trimExcessContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<HLSAssetSegment> content, BOOL *stop))predicate; // 清理多余无用的 content;
+- (void)removeContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<HLSAssetSegment> content, BOOL *stop))predicate;
 @end
 
 

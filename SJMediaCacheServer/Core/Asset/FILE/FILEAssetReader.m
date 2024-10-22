@@ -100,7 +100,11 @@
                     data = [currentReader readDataOfLength:length];
                     if ( data == nil || data.length == 0 ) return nil;
                     NSUInteger readLength = data.length;
-                    if ( mReadDataDecryptor != nil ) data = mReadDataDecryptor(mRequest, mContentReaders.firstObject.range.location + mReadLength, data);
+                    if ( mReadDataDecryptor != nil ) {
+                        NSData *decrypted = mReadDataDecryptor(mRequest, mContentReaders.firstObject.range.location + mReadLength, data);
+                        NSAssert(decrypted.length == data.length, @"Decrypted data length must equal input data length");
+                        data = decrypted;
+                    }
                     mReadLength += readLength;
                 }
                 

@@ -58,7 +58,7 @@
     return mContents.count != 0 ? mContents.copy : nil;
 }
 
-- (void)trimExcessContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<MCSAssetContent> content, BOOL *stop))predicate {
+- (void)removeContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<MCSAssetContent> content, BOOL *stop))predicate {
     [mContents enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<MCSAssetContent>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         BOOL shouldRemove = predicate(obj, stop);
         if ( shouldRemove ) {
