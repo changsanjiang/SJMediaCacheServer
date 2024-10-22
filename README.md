@@ -1,4 +1,3 @@
-
 # SJMediaCacheServer
 
 **SJMediaCacheServer** is an HTTP media caching framework designed to efficiently proxy playback requests and cache media content locally. This enables seamless media playback by serving cached content, thus reducing network load and improving playback performance. SJMediaCacheServer supports widely used media formats such as MP3, MP4, and HLS (m3u8) streaming resources.
@@ -12,14 +11,6 @@ With its powerful preloading feature, SJMediaCacheServer allows users to preload
 pod 'SJUIKit/SQLite3', :podspec => 'https://gitee.com/changsanjiang/SJUIKit/raw/master/SJUIKit-YYModel.podspec'
 pod 'SJMediaCacheServer'
 ```
-
-# SJMediaCacheServer
-
-**SJMediaCacheServer** is an HTTP media caching framework designed to efficiently proxy playback requests and cache media content locally. This enables seamless media playback by serving cached content, thus reducing network load and improving playback performance. SJMediaCacheServer supports widely used media formats such as MP3, MP4, and HLS (m3u8) streaming resources.
-
-Additionally, the framework provides robust cache management capabilities, allowing you to set limits on cache count, maximum disk storage time, and available disk space, ensuring optimal cache control and resource utilization.
-
-With its powerful preloading feature, SJMediaCacheServer allows users to preload a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
 
 ## Features
 
