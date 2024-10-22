@@ -43,6 +43,21 @@
     return retv;
 }
 
+- (nullable id<MCSAssetContent>)idleContent {
+    id<MCSAssetContent> idle = nil;
+    for ( NSInteger i = 0 ; i < mContents.count ; ++ i ) {
+        id<MCSAssetContent> content = mContents[i];
+        if ( content.readwriteCount == 0 && (idle == nil || content.length > idle.length) ) {
+            idle = content;
+        }
+    }
+    return idle;
+}
+
+- (nullable NSArray<id<MCSAssetContent>> *)contents {
+    return mContents.count != 0 ? mContents.copy : nil;
+}
+
 - (void)trimExcessContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<MCSAssetContent> content, BOOL *stop))predicate {
     [mContents enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<MCSAssetContent>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         BOOL shouldRemove = predicate(obj, stop);
@@ -58,6 +73,10 @@
 
 - (void)addContent:(id<MCSAssetContent>)content {
     [mContents addObject:content];
+}
+
+- (void)removeContent:(id<MCSAssetContent>)content {
+    if ( content != nil ) [mContents removeObject:content];
 }
 
 - (void)removeContentAtIndex:(NSInteger)index {

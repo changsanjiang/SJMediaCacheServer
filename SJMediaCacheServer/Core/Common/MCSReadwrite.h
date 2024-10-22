@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSReadwrite : NSObject<MCSReadwriteReference>
 
-@property (nonatomic, readonly) NSInteger readwriteCount; // kvo
+@property (nonatomic, readonly) NSInteger readwriteCount;
 
 - (instancetype)readwriteRetain;
 - (void)readwriteRelease;

@@ -37,6 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSAssetContentReader (Hooks)
 - (void)didAbortWithError:(nullable NSError *)error;
+- (void)didClear;
 @end
 
 @interface MCSAssetFileContentReader : MCSAssetContentReader

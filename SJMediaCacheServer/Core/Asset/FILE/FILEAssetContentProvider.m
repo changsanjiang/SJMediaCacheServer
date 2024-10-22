@@ -67,6 +67,12 @@
     [NSFileManager.defaultManager removeItemAtPath:content.filePath error:NULL];
 }
 
+- (void)removeContents:(NSArray<id<MCSAssetContent>> *)contents {
+    [contents enumerateObjectsUsingBlock:^(id<MCSAssetContent>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self removeContent:obj];
+    }];
+}
+
 - (void)clear {
     [NSFileManager.defaultManager removeItemAtPath:_directory error:NULL];
 }

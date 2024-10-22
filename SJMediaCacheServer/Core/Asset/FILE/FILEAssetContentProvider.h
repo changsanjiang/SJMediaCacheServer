@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSAssetContent>)createContentAtOffset:(NSUInteger)offset pathExtension:(nullable NSString *)pathExtension error:(NSError **)error;
 - (nullable NSString *)contentFilePath:(id<MCSAssetContent>)content;
 - (void)removeContent:(id<MCSAssetContent>)content;
+- (void)removeContents:(NSArray<id<MCSAssetContent>> *)contents;
 - (void)clear;
 @end
 NS_ASSUME_NONNULL_END

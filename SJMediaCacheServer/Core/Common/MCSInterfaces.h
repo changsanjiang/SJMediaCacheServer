@@ -60,7 +60,33 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 #pragma mark -
-
+/// Before performing any operations on the asset's content,
+/// you must first call `readwriteRetain` to lock the asset for modifications.
+/// Once the operations are complete, you must call `readwriteRelease` to unlock it.
+///
+/// Example usage:
+///
+/// \code
+/// id<MCSAsset> asset;
+/// id<MCSAssetContent> content;
+///
+/// // Retain the asset for read/write operations
+/// [asset readwriteRetain];
+///
+/// // Retrieve the content for the specified data type and position
+/// content = [asset contentForDataType:xxx atPosition:xxx];
+///
+/// // Perform read operation
+/// NSData *data = [content readDataAtPosition:xxx capacity:xxx error:xxx];
+/// NSLog(@"%@", data);
+///
+/// // Release the content after read/write operation
+/// [content readwriteRelease];
+///
+/// // Release the asset after all operations are done
+/// [asset readwriteRelease];
+/// \endcode
+///
 @protocol MCSAsset <MCSReadwriteReference, MCSSaveable>
 - (instancetype)initWithName:(NSString *)name;
 @property (nonatomic, readonly) NSInteger id;
@@ -72,7 +98,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) float completeness; // 完成度
 
 - (void)prepare;
-- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error;
+- (nullable id<MCSAssetContent>)createContentWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error; // content readwrite is retained, should release after
 - (nullable id<MCSAssetReader>)readerWithRequest:(id<MCSRequest>)request networkTaskPriority:(float)networkTaskPriority readDataDecryptor:(NSData *(^_Nullable)(NSURLRequest *request, NSUInteger offset, NSData *data))readDataDecryptor delegate:(nullable id<MCSAssetReaderDelegate>)delegate;
 - (void)clear; // 清空本地文件缓存; 请谨慎调用;
 

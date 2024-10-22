@@ -247,9 +247,11 @@
     [_mContent removeObserver:self];
     [_mContent readwriteRelease];
     [_mContent closeRead];
+    [self didClear];
 }
 
 - (void)didAbortWithError:(nullable NSError *)error { }
+- (void)didClear { }
 @end
 
 
@@ -268,10 +270,6 @@
     return self;
 }
 
-- (void)dealloc {
-    [mFileContent readwriteRelease];
-}
- 
 - (void)prepareContent {
     MCSContentReaderDebugLog(@"%@: <%p>.prepareContent { range: %@, file: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(mReadRange), mFileContent);
     
@@ -285,6 +283,10 @@
     
     [mFileContent readwriteRetain];
     [self contentDidReady:mFileContent range:mReadRange];
+}
+
+- (void)didClear {
+    [mFileContent readwriteRelease];
 }
 @end
 
@@ -319,13 +321,9 @@
         mHTTPContent = content;
         mReadRange = range;
         mNetworkTaskPriority = priority;
-        [mHTTPContent readwriteRetain]; // retain to prevent deletion
+        if ( mHTTPContent != nil ) [mHTTPContent readwriteRetain]; // retain to prevent deletion
     }
     return self;
-}
-
-- (void)dealloc {
-    [mHTTPContent readwriteRelease]; // release
 }
 
 - (NSString *)description {
@@ -360,7 +358,7 @@
 - (void)downloadTask:(id<MCSDownloadTask>)task didReceiveResponse:(id<MCSDownloadResponse>)response {
     if ( mHTTPContent == nil ) {
         NSError *error = nil;
-        mHTTPContent = [mAsset createContentReadwriteWithDataType:mDataType response:response error:&error]; // retain for write
+        mHTTPContent = [mAsset createContentWithDataType:mDataType response:response error:&error]; // retain for write and prevent deletion
         
         if ( mHTTPContent == nil ) {
             NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
@@ -392,5 +390,9 @@
 
 - (void)didAbortWithError:(nullable NSError *)error {
     [mTask cancel];
+}
+
+- (void)didClear {
+    [mHTTPContent readwriteRelease]; // release
 }
 @end

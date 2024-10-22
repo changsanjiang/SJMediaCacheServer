@@ -30,27 +30,26 @@
 }
 
 - (nullable id<HLSAssetSegment>)fullContent {
-    id<HLSAssetSegment> retv = nil;
+    id<HLSAssetSegment> full = nil;
     for ( NSInteger i = 0 ; i < mContents.count ; ++ i ) {
         id<HLSAssetSegment> content = mContents[i];
         if ( content.length == content.byteRange.length ) {
-            retv = content;
+            full = content;
             break;
         }
     }
-    return retv;
+    return full;
 }
 
 - (nullable id<HLSAssetSegment>)idleContent {
-    id<HLSAssetSegment> retv = nil;
+    id<HLSAssetSegment> idle = nil;
     for ( NSInteger i = 0 ; i < mContents.count ; ++ i ) {
         id<HLSAssetSegment> content = mContents[i];
-        UInt64 length = content.length;
-        if ( content.readwriteCount == 0 && (retv == nil || content.length > retv.length) ) {
-            retv = content;
+        if ( content.readwriteCount == 0 && (idle == nil || content.length > idle.length) ) {
+            idle = content;
         }
     }
-    return retv;
+    return idle;
 }
 
 - (nullable id<HLSAssetSegment>)fullOrIdleContent {
@@ -59,14 +58,18 @@
 
 /// content.length 会随着写入随时变化, 这里动态返回当前长度最长的 content;
 - (nullable id<MCSAssetContent>)longestContent {
-    id<MCSAssetContent> retv = mContents.firstObject;
+    id<MCSAssetContent> longest = mContents.firstObject;
     for ( NSInteger i = 1 ; i < mContents.count ; ++ i ) {
         id<MCSAssetContent> content = mContents[i];
-        if ( content.length > retv.length ) {
-            retv = content;
+        if ( content.length > longest.length ) {
+            longest = content;
         }
     }
-    return retv;
+    return longest;
+}
+
+- (nullable NSArray<id<HLSAssetSegment>> *)contents {
+    return mContents.count > 0 ? mContents.copy : nil;
 }
 
 - (void)trimExcessContentsWithTest:(BOOL (NS_NOESCAPE ^)(id<HLSAssetSegment> content, BOOL *stop))predicate {

@@ -25,6 +25,7 @@
     BOOL mPrepared;
     BOOL mMetadataReady;
     BOOL mAssembled; // 文件组合完成; 已得到完整文件;
+    BOOL mFullyTrimmed;
 }
 
 @property (nonatomic) NSInteger id; // saveable
@@ -102,14 +103,12 @@
 
 - (BOOL)isStored {
     @synchronized (self) {
+        if ( !mAssembled ) {
+            [self _restructureContents];
+        }
         return mAssembled;
     }
 }
-
-- (nullable NSString *)filePathForContent:(id<MCSAssetContent>)content {
-    return [mProvider contentFilePath:content];
-}
-
 - (nullable NSString *)pathExtension {
     @synchronized (self) {
         return _pathExtension;
@@ -140,7 +139,7 @@
 }
 
 /// 该操作将会对 content 进行一次 readwriteRetain, 请在不需要时, 调用一次 readwriteRelease.
-- (nullable id<MCSAssetContent>)createContentReadwriteWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error {
+- (nullable id<MCSAssetContent>)createContentWithDataType:(MCSDataType)dataType response:(id<MCSDownloadResponse>)response error:(NSError **)error {
     @synchronized (self) {
         BOOL shouldNotify = NO;
         @try {
@@ -226,74 +225,57 @@
 
 #pragma mark - mark
 
-- (void)readwriteCountDidChange:(NSInteger)count {
-    if ( count == 0 ) {
-        @synchronized (self) {
-            [self _restructureContents];
-        }
+- (void)readwriteRelease {
+    @synchronized (self) {
+        [super readwriteRelease];
+        if ( !mFullyTrimmed ) [self _restructureContents];
     }
 }
 
 #pragma mark - mark
 
-/// 拆分重组内容. 将内容按指定字节拆分重组
+/// 重组内容. 合并数据并移除多余内容;
 ///
-/// unlocked
 - (void)_restructureContents {
-    if ( mAssembled || !mMetadataReady || self.readwriteCount != 0 ) return;
-
-    UInt64 capacity = 1 * 1024 * 1024;
-    FILEAssetContentNode *curNode = mNodeList.head;
-    while ( curNode != nil ) {
-        [self _trimExcessContentsForNode:curNode];
-        FILEAssetContentNode *nextNode = curNode.next;
-        if ( nextNode == nil ) break;
-        [self _trimExcessContentsForNode:nextNode];
-        
-        id<MCSAssetContent> write = curNode.longestContent;
-        id<MCSAssetContent> read = nextNode.longestContent;
-        
-        NSRange curRange = {write.position, write.length};
-        NSRange nextRange = {read.position, read.length};
-        if      ( MCSNSRangeContains(curRange, nextRange) ) {
-            [mProvider removeContent:read];
-            [mNodeList removeNode:nextNode];
-        }
-        else if ( NSMaxRange(curRange) == nextRange.location || NSIntersectionRange(curRange, nextRange).length != 0 ) { // 连续的或存在交集
-            NSRange readRange = { NSMaxRange(curRange), NSMaxRange(nextRange) - NSMaxRange(curRange) };   // 读取read中未相交的部分
-            [write readwriteRetain];
-            [read readwriteRetain];
-            NSError *error = nil;
-            UInt64 position = readRange.location;
-            while ( true ) { @autoreleasepool {
-                NSData *data = [read readDataAtPosition:position capacity:capacity error:&error];
-                if ( error != nil || data.length == 0 )
-                    break;
-                if ( ![write writeData:data error:&error] )
-                    break;
-                position += data.length;
-                if ( position == NSMaxRange(readRange) ) break;
-            }}
-            [read readwriteRelease];
-            [read closeRead];
-            [write readwriteRelease];
-            [write closeWrite];
-            
-            if ( error == nil ) {
-                [mProvider removeContent:read];
-                [mNodeList removeNode:nextNode];
+    if ( !mFullyTrimmed && mMetadataReady ) {
+        FILEAssetContentNode *_Nullable head = mNodeList.head;
+        FILEAssetContentNode *_Nullable curNode = head;
+        while ( curNode != nil ) {
+            if ( curNode.numberOfContents > 1 ) [self _trimExcessContentsForNode:curNode];
+            FILEAssetContentNode *_Nullable nextNode = curNode.next;
+            if ( nextNode == nil ) break; // break;
+            if ( nextNode.numberOfContents > 1 ) [self _trimExcessContentsForNode:curNode];
+            id<MCSAssetContent> _Nullable writer = curNode.idleContent;
+            id<MCSAssetContent> _Nullable reader = nextNode.longestContent;
+            BOOL isNextNodeRemoved = NO;
+            if ( writer != nil && reader != nil ) {
+                BOOL isDataMerged = [self _mergeContentDataTo:writer from:reader];
+                if ( isDataMerged && reader.readwriteCount == 0 ) { // remove reader;
+                    [mProvider removeContent:reader];
+                    [nextNode removeContent:reader];
+                    if ( nextNode.numberOfContents == 0 ) {
+                        [mNodeList removeNode:nextNode];
+                        isNextNodeRemoved = YES;
+                    }
+                }
             }
-
-            if ( NSMaxRange(curRange) != nextRange.location ) curNode = curNode.next;
+            if ( !isNextNodeRemoved ) {
+                curNode = nextNode;
+            }
         }
-    }
-    
-    mAssembled = mNodeList.head.longestContent.length == _totalLength;
-    
-    if ( mAssembled ) {
-        for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
-            if ( [observer respondsToSelector:@selector(assetDidStore:)] ) {
-                [observer assetDidStore:self];
+
+        if ( head != nil && head.longestContent.length == _totalLength ) {
+            if ( !mAssembled ) {
+                mAssembled = YES;
+                for ( id<MCSAssetObserver> observer in MCSAllHashTableObjects(mObservers) ) {
+                    if ( [observer respondsToSelector:@selector(assetDidStore:)] ) {
+                        [observer assetDidStore:self];
+                    }
+                }
+            }
+            
+            if ( !mFullyTrimmed ) {
+                mFullyTrimmed = mNodeList.count == 1 && head.numberOfContents == 1;
             }
         }
     }
@@ -301,7 +283,7 @@
 
 /// unlocked
 - (void)_trimExcessContentsForNode:(FILEAssetContentNode *)node {
-    if ( node.numberOfContents > 1 ) {
+    if ( node != nil && node.numberOfContents > 1 ) {
         // 同一段位置可能存在多个文件
         // 删除多余的无用的content
         id<MCSAssetContent> longestContent = node.longestContent;
@@ -313,5 +295,38 @@
             return NO;
         }];
     }
+}
+
+/// 合并数据; 被合并后返回 YES;
+- (BOOL)_mergeContentDataTo:(id<MCSAssetContent>)writer from:(id<MCSAssetContent>)reader {
+    if ( writer.readwriteCount != 0 ) return NO; // 如果 writer 正在被操作则直接 return;
+    NSRange curRange = { writer.position, writer.length };
+    NSRange nextRange = { reader.position, reader.length };
+    // 如果 writer 中包含 reader 的所有数据, return YES;
+    if      ( MCSNSRangeContains(curRange, nextRange) ) {
+        return YES;
+    }
+    // 连续的 或 存在交集;
+    // 合并未相交部分的数据;
+    else if ( NSMaxRange(curRange) == nextRange.location || NSIntersectionRange(curRange, nextRange).length != 0 ) {
+        UInt64 capacity = 8 * 1024 * 1024;
+        // 读取 read 中未相交的部分;
+        NSRange readRange = { NSMaxRange(curRange), NSMaxRange(nextRange) - NSMaxRange(curRange) };
+        NSError *error = nil;
+        UInt64 position = readRange.location;
+        while ( true ) { @autoreleasepool {
+            NSData *data = [reader readDataAtPosition:position capacity:capacity error:&error];
+            if ( error != nil || data.length == 0 )
+                break;
+            if ( ![writer writeData:data error:&error] )
+                break;
+            position += data.length;
+            if ( position == NSMaxRange(readRange) ) break;
+        }}
+        [reader closeRead];
+        [writer closeWrite];
+        return error == nil;
+    }
+    return NO;
 }
 @end
