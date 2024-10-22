@@ -478,6 +478,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// If you want to remove an exported asset, you must use the MCSExporterManager to do so. Prefetched assets, however, are automatically
 /// managed by the MCSCacheManager and may be removed without direct user intervention.
 ///
+/// 导出缓存, 让其不被缓存管理类删除; 播放还是通过 原始URL 播放即可;
+///
 @interface SJMediaCacheServer (Export)
 
 /// Register an observer to listen for export events.

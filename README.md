@@ -94,6 +94,7 @@ pod 'SJMediaCacheServer'
     [_player seekToTime:time];
 }
 @end
+```
 
 ## License
 
