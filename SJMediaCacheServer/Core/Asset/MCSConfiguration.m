@@ -8,20 +8,11 @@
 #import "MCSConfiguration.h"
 
 @interface MCSConfiguration () {
-    dispatch_semaphore_t _lock;
     NSMutableDictionary <NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_map;
 }
 @end
 
 @implementation MCSConfiguration
-- (instancetype)init {
-    self = [super init];
-    if ( self ) {
-        _lock = dispatch_semaphore_create(1);
-    }
-    return self;
-}
-
 - (void)setValue:(nullable NSString *)value forHTTPAdditionalHeaderField:(NSString *)HTTPHeaderField ofType:(MCSDataType)type {
     BOOL fallThrough = NO;
     switch ( (MCSDataType)(type & MCSDataTypeHLSMask) ) {
@@ -68,23 +59,21 @@
 }
 
 - (nullable NSDictionary<NSString *, NSString *> *)HTTPAdditionalHeadersForDataRequestsOfType:(MCSDataType)type {
-    NSDictionary<NSString *, NSString *> *headers = nil;
-    dispatch_semaphore_wait(_lock, DISPATCH_TIME_FOREVER);
-    headers = _map[@(type)];
-    dispatch_semaphore_signal(_lock);
-    return headers;
+    @synchronized (self) {
+        return _map[@(type)];
+    }
 }
 
 - (void)_setValue:(nullable NSString *)value forHTTPAdditionalHeaderField:(NSString *)HTTPHeaderField ofType:(MCSDataType)type fallThrough:(BOOL)fallThrough {
-    dispatch_semaphore_wait(_lock, DISPATCH_TIME_FOREVER);
-    if ( _map == nil ) _map = NSMutableDictionary.dictionary;
+    @synchronized (self) {
+        if ( _map == nil ) _map = NSMutableDictionary.dictionary;
 
-    NSNumber *key = @(type);
-    if ( _map[key][HTTPHeaderField] == nil || !fallThrough ) {
-        if ( _map[key] == nil ) _map[key] = NSMutableDictionary.dictionary;
-        _map[key][HTTPHeaderField] = value;
+        NSNumber *key = @(type);
+        if ( _map[key][HTTPHeaderField] == nil || !fallThrough ) {
+            if ( _map[key] == nil ) _map[key] = NSMutableDictionary.dictionary;
+            _map[key][HTTPHeaderField] = value;
+        }
     }
-    dispatch_semaphore_signal(_lock);
 }
 
 @end

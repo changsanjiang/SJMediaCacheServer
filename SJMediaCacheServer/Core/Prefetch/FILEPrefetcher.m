@@ -13,28 +13,39 @@
 #import "MCSError.h"
 #import "FILEAsset.h"
 
-@interface FILEPrefetcher () <MCSAssetReaderDelegate>
-@property (nonatomic) BOOL isCalledPrepare;
-@property (nonatomic) BOOL isCompleted;
+typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
+    FILEPrefetcherStateUnknown,
+    FILEPrefetcherStatePreparing,
+    FILEPrefetcherStatePrefetching,
+    FILEPrefetcherStateCompleted
+};
 
-@property (nonatomic, strong, nullable) id<MCSAssetReader> reader;
-@property (nonatomic) NSUInteger loadedLength;
+@interface FILEPrefetcher () <MCSAssetReaderDelegate> {
+    NSURL *mURL;
+    
+    FILEPrefetcherState mState;
+    __weak id<MCSPrefetcherDelegate> _Nullable mDelegate;
 
-@property (nonatomic, strong) NSURL *URL;
-@property (nonatomic) NSUInteger preloadSize;
-@property (nonatomic) float progress;
+    id<MCSAssetReader> mCurReader;
+
+    NSUInteger mPreloadSize;
+    UInt64 mPrefetchedLength;
+    
+    NSUInteger mSegmentSize; // 每次分段请求大小;
+    
+    float mProgress;
+}
 @end
 
 @implementation FILEPrefetcher
 @synthesize delegate = _delegate;
 
 - (instancetype)initWithURL:(NSURL *)URL preloadSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
+    NSParameterAssert(bytes != 0);
     self = [super init];
-    if ( self ) {
-        _delegate = delegate;
-        _URL = URL;
-        _preloadSize = bytes;
-    }
+    mDelegate = delegate;
+    mURL = URL;
+    mPreloadSize = bytes;
     return self;
 }
 
@@ -43,7 +54,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)self.preloadSize];
+    return [NSString stringWithFormat:@"%@:<%p> { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)mPreloadSize];
 }
 
 - (void)dealloc {
@@ -52,126 +63,155 @@
 
 - (float)progress {
     @synchronized (self) {
-        return _progress;
+        return mProgress;
     }
+}
+
+- (id<MCSPrefetcherDelegate>)delegate {
+    return mDelegate;
 }
 
 #pragma mark - mark
 
 - (void)prepare {
     @synchronized (self) {
-        if ( _isCompleted || _isCalledPrepare )
-             return;
-         
-         MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize);
-
-         _isCalledPrepare = YES;
-        
-        FILEAsset *asset = [MCSAssetManager.shared assetWithURL:_URL];
-        if ( asset == nil || ![asset isKindOfClass:FILEAsset.class] ) {
-            _isCompleted = YES;
-            [_delegate prefetcher:self didCompleteWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
-                MCSErrorUserInfoObjectKey : self,
-                MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"无效的预加载请求: URL=%@", _URL]
-            }]];
-            return;
+        switch (mState) {
+            case FILEPrefetcherStateUnknown: {
+                mState = FILEPrefetcherStatePreparing;
+                
+                MCSPrefetcherDebugLog(@"%@: <%p>.prepare { preloadSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)mPreloadSize);
+                
+                FILEAsset *asset = [MCSAssetManager.shared assetWithURL:mURL];
+                if ( asset == nil || ![asset isKindOfClass:FILEAsset.class] ) {
+                    [_delegate prefetcher:self didCompleteWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+                        MCSErrorUserInfoObjectKey : self,
+                        MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"无效的预加载请求: URL=%@", mURL]
+                    }]];
+                    return;
+                }
+                
+                if ( asset.isStored ) {
+                    mProgress = 1;
+                    [_delegate prefetcher:self didCompleteWithError:nil];
+                    return;
+                }
+                
+                NSURLRequest *request = [NSURLRequest mcs_requestWithURL:mURL range:NSMakeRange(0, 2)]; // 2 test file size
+                mCurReader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
+                [mCurReader prepare];
+            }
+                break;
+            case FILEPrefetcherStatePreparing:
+            case FILEPrefetcherStatePrefetching:
+            case FILEPrefetcherStateCompleted:
+                break;
         }
-    
-        if ( asset.isStored ) {
-            _isCompleted = YES;
-            _progress = 1;
-            [_delegate prefetcher:self didCompleteWithError:nil];
-            return;
-        }
-         
-         NSURLRequest *request = [NSURLRequest mcs_requestWithURL:_URL range:NSMakeRange(0, _preloadSize)];
-         _reader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
-         [_reader prepare];
     }
 }
 
 - (void)cancel {
     @synchronized (self) {
-        [self _cancel];
+        switch (mState) {
+            case FILEPrefetcherStateUnknown:
+            case FILEPrefetcherStatePreparing:
+            case FILEPrefetcherStatePrefetching: {
+                mState = FILEPrefetcherStateCompleted;
+                if ( mCurReader != nil ) [mCurReader abortWithError:nil];
+                [self _notifyComplete:[NSError mcs_errorWithCode:MCSCancelledError userInfo:@{
+                    MCSErrorUserInfoObjectKey : self,
+                    MCSErrorUserInfoReasonKey : @"预加载被取消了"
+                }]];
+            }
+                break;
+            case FILEPrefetcherStateCompleted:
+                break;
+        }
     }
 }
 
 #pragma mark -
 
 - (void)reader:(id<MCSAssetReader>)reader didReceiveResponse:(id<MCSResponse>)response {
-    /* nothing */
+    NSUInteger totalLength = response.totalLength;
+    mPreloadSize = MIN(mPreloadSize > 0 ? mPreloadSize : NSUIntegerMax, totalLength); // fix preloadSize
+    mSegmentSize = MAX(10 * 1024 * 1024, mPreloadSize * 0.05); // minSegmentSize: 10M
+    mState = FILEPrefetcherStatePrefetching;
 }
 
 - (void)reader:(nonnull id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
     @synchronized (self) {
-        if ( _isCompleted ) return;
-        
-        if ( [reader seekToOffset:reader.offset + length] ) {
-            _loadedLength += length;
-            
-            float progress = _loadedLength * 1.0 / reader.response.range.length;
-            if ( progress >= 1 ) progress = 1;
-            _progress = progress;
-            
-            MCSPrefetcherDebugLog(@"%@: <%p>.preload { preloadSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)_preloadSize, (unsigned long)reader.response.totalLength, progress);
-                        
-            if ( _delegate != nil ) {
-                [_delegate prefetcher:self progressDidChange:progress];
+        switch (mState) {
+            case FILEPrefetcherStateUnknown:
+            case FILEPrefetcherStateCompleted:
+            case FILEPrefetcherStatePreparing:
+                break;
+            case FILEPrefetcherStatePrefetching: {
+                if ( [reader seekToOffset:reader.offset + length] ) {
+                    mPrefetchedLength += length;
+                    
+                    float progress = mPrefetchedLength * 1.0 / mPreloadSize; // now preloadSize available
+                    if ( progress >= 1 ) progress = 1;
+                    mProgress = progress;
+                    
+                    MCSPrefetcherDebugLog(@"%@: <%p>.preload { preloadSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)mPreloadSize, (unsigned long)reader.response.totalLength, progress);
+                                
+                    if ( _delegate != nil ) {
+                        [_delegate prefetcher:self progressDidChange:progress];
+                    }
+                    
+                    if ( mCurReader.status == MCSReaderStatusFinished ) {
+                        [self _readDidFinish:reader];
+                    }
+                }
             }
-            
-            if ( _reader.status == MCSReaderStatusFinished ) {
-                [self _completeWithError:nil];
-            }
+                break;
         }
     }
 }
 
 - (void)reader:(id<MCSAssetReader>)reader didAbortWithError:(nullable NSError *)error {
     @synchronized (self) {
-        [self _completeWithError:error ?: [NSError mcs_errorWithCode:MCSAbortError userInfo:@{
-            MCSErrorUserInfoObjectKey : self,
-            MCSErrorUserInfoReasonKey : @"预加载已被终止!"
-        }]];
+        switch (mState) {
+            case FILEPrefetcherStateUnknown:
+            case FILEPrefetcherStatePreparing:
+            case FILEPrefetcherStatePrefetching: {
+                mState = FILEPrefetcherStateCompleted;
+                [self _notifyComplete:error ?: [NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+                    MCSErrorUserInfoObjectKey : self,
+                    MCSErrorUserInfoReasonKey : @"预加载已被终止!"
+                }]];
+            }
+                break;
+            case FILEPrefetcherStateCompleted:
+                break;
+        }
     }
 }
 
 #pragma mark - unlocked
 
-/// unlocked
-- (void)_completeWithError:(NSError *_Nullable)error {
-    if ( !_isCompleted ) {
-        _isCompleted = YES;
-        
-    #ifdef DEBUG
-        if ( error == nil )
-            MCSPrefetcherDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
-        else
-            MCSPrefetcherErrorLog(@"%@:  <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
-    #endif
-        
-        if ( _delegate != nil ) {
-            [_delegate prefetcher:self didCompleteWithError:error];
-        }
+- (void)_readDidFinish:(id<MCSAssetReader>)reader {
+    if ( mPrefetchedLength >= mPreloadSize ) {
+        mState = FILEPrefetcherStateCompleted;
+        [self _notifyComplete:nil];
+        return;
     }
+    
+    NSUInteger length = MIN(mSegmentSize, mPreloadSize - mPrefetchedLength);
+    NSRange nextRange = NSMakeRange(mPrefetchedLength, length);
+    NSURLRequest *request = [NSURLRequest mcs_requestWithURL:mURL range:nextRange];
+    mCurReader = [MCSAssetManager.shared readerWithRequest:request networkTaskPriority:0 delegate:self];
+    [mCurReader prepare];
 }
 
-/// unlocked
-- (void)_cancel {
-    if ( !_isCompleted ) {
-        _isCompleted = YES;
-        
-        NSError *error = [NSError mcs_errorWithCode:MCSCancelledError userInfo:@{
-            MCSErrorUserInfoObjectKey : self,
-            MCSErrorUserInfoReasonKey : @"预加载被取消"
-        }];
-        [_reader abortWithError:error];
-        _reader = nil;
-        
-        MCSPrefetcherDebugLog(@"%@: <%p>.cancel;\n", NSStringFromClass(self.class), self);
-        
-        if ( _delegate != nil ) {
-            [_delegate prefetcher:self didCompleteWithError:error];
-        }
-    }
+- (void)_notifyComplete:(NSError *_Nullable)error {
+#ifdef DEBUG
+    if ( error == nil )
+        MCSPrefetcherDebugLog(@"%@: <%p>.done;\n", NSStringFromClass(self.class), self);
+    else
+        MCSPrefetcherErrorLog(@"%@:  <%p>.error { error: %@ };\n", NSStringFromClass(self.class), self, error);
+#endif
+    
+    [mDelegate prefetcher:self didCompleteWithError:error];
 }
 @end

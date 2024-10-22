@@ -85,19 +85,17 @@
 
 - (nullable id<MCSDownloadTask>)downloadWithRequest:(NSURLRequest *)request priority:(float)priority delegate:(id<MCSDownloadTaskDelegate>)delegate {
     if ( request == nil ) return nil;
-    if ( mSession == nil ) {
-        @synchronized (self) {
-            if ( mSession == nil ) {
-                mSessionDelegateQueue = [[NSOperationQueue alloc] init];
-                mSessionDelegateQueue.qualityOfService = NSQualityOfServiceUserInteractive;
-                mSessionConfiguration = _initialSessionConfiguration;
-                if ( mSessionConfiguration == nil ) {
-                    mSessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
-                    mSessionConfiguration.timeoutIntervalForRequest = _timeoutInterval;
-                    mSessionConfiguration.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
-                }
-                mSession = [NSURLSession sessionWithConfiguration:mSessionConfiguration delegate:self delegateQueue:mSessionDelegateQueue];
+    @synchronized (self) {
+        if ( mSession == nil ) {
+            mSessionDelegateQueue = [[NSOperationQueue alloc] init];
+            mSessionDelegateQueue.qualityOfService = NSQualityOfServiceUserInteractive;
+            mSessionConfiguration = _initialSessionConfiguration;
+            if ( mSessionConfiguration == nil ) {
+                mSessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+                mSessionConfiguration.timeoutIntervalForRequest = _timeoutInterval;
+                mSessionConfiguration.requestCachePolicy = NSURLRequestReloadIgnoringCacheData;
             }
+            mSession = [NSURLSession sessionWithConfiguration:mSessionConfiguration delegate:self delegateQueue:mSessionDelegateQueue];
         }
     }
     

@@ -18,7 +18,7 @@
     return [self initWithMimeType:mimeType filePath:filePath totalLength:totalLength length:0 byteRange:byteRange];
 }
 - (instancetype)initWithMimeType:(nullable NSString *)mimeType filePath:(NSString *)filePath totalLength:(UInt64)totalLength length:(UInt64)length byteRange:(NSRange)byteRange {
-    self = [super initWithMimeType:mimeType filePath:filePath startPositionInAsset:byteRange.location length:length];
+    self = [super initWithMimeType:mimeType filePath:filePath position:byteRange.location length:length];
     _byteRange = byteRange;
     _totalLength = totalLength;
     return self;
@@ -26,7 +26,7 @@
 
 - (NSString *)description {
     @synchronized (self) {
-        return [NSString stringWithFormat:@"%@: <%p> { totalLength: %llu, byteRange=%@, startPositionInAsset: %llu, length: %llu, readwriteCount: %ld, filePath: %@ };\n", NSStringFromClass(self.class), self, self.totalLength, NSStringFromRange(self.byteRange), self.startPositionInAsset, self.length, (long)self.readwriteCount, self.filePath];
+        return [NSString stringWithFormat:@"%@: <%p> { totalLength: %llu, byteRange=%@, position: %llu, length: %llu, readwriteCount: %ld, filePath: %@ };\n", NSStringFromClass(self.class), self, self.totalLength, NSStringFromRange(self.byteRange), self.position, self.length, (long)self.readwriteCount, self.filePath];
     }
 }
 

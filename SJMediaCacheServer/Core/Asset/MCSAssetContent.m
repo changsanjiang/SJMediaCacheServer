@@ -14,35 +14,35 @@
 @implementation MCSAssetContent {
     NSString *mFilePath;
     UInt64 mLength;
-    UInt64 mStartPositionInAsset;
+    UInt64 mPosition;
     NSHashTable<id<MCSAssetContentObserver>> *_Nullable mObservers;
     
     NSFileHandle *_Nullable mWriter;
     NSFileHandle *_Nullable mReader;
 }
 
-- (instancetype)initWithMimeType:(nullable NSString *)mimeType filePath:(NSString *)filePath startPositionInAsset:(UInt64)position length:(UInt64)length {
+- (instancetype)initWithMimeType:(nullable NSString *)mimeType filePath:(NSString *)filePath position:(UInt64)position length:(UInt64)length {
     self = [super init];
     if ( self ) {
         mFilePath = filePath;
-        mStartPositionInAsset = position;
+        mPosition = position;
         mLength = length;
         _mimeType = mimeType;
     }
     return self;
 }
 
-- (instancetype)initWithFilePath:(NSString *)filePath startPositionInAsset:(UInt64)position length:(UInt64)length {
-    return [self initWithMimeType:MCSMimeTypeFromFileAtPath(filePath) filePath:filePath startPositionInAsset:position length:length];
+- (instancetype)initWithFilePath:(NSString *)filePath position:(UInt64)position length:(UInt64)length {
+    return [self initWithMimeType:MCSMimeTypeFromFileAtPath(filePath) filePath:filePath position:position length:length];
 }
 
-- (instancetype)initWithFilePath:(NSString *)filePath startPositionInAsset:(UInt64)position {
-    return [self initWithFilePath:filePath startPositionInAsset:position length:0];
+- (instancetype)initWithFilePath:(NSString *)filePath position:(UInt64)position {
+    return [self initWithFilePath:filePath position:position length:0];
 }
 
 - (NSString *)description {
     @synchronized (self) {
-        return [NSString stringWithFormat:@"%@: <%p> { startPositionInAsset: %llu, length: %llu, readwriteCount: %ld, filePath: %@ };\n", NSStringFromClass(self.class), self, mStartPositionInAsset, mLength, (long)self.readwriteCount, mFilePath];
+        return [NSString stringWithFormat:@"%@: <%p> { position: %llu, length: %llu, readwriteCount: %ld, filePath: %@ };\n", NSStringFromClass(self.class), self, mPosition, self.length, (long)self.readwriteCount, mFilePath];
     }
 }
 
@@ -68,15 +68,15 @@
     }
 }
 
-- (nullable NSData *)readDataAtPosition:(UInt64)posInAsset capacity:(UInt64)capacity error:(out NSError **)errorPtr {
-    if ( posInAsset < mStartPositionInAsset )
+- (nullable NSData *)readDataAtPosition:(UInt64)pos capacity:(UInt64)capacity error:(out NSError **)errorPtr {
+    if ( pos < mPosition )
         return nil;
     NSData *data = nil;
     NSError *error = nil;
     
     @synchronized (self) {
-        UInt64 endPos = mStartPositionInAsset + mLength;
-        if ( posInAsset >= endPos ) 
+        UInt64 endPos = mPosition + mLength;
+        if ( pos >= endPos ) 
             return nil;
         
         // create reader
@@ -84,7 +84,7 @@
         
         // read data
         if ( mReader != nil ) {
-            if ( [mReader mcs_seekToOffset:posInAsset - mStartPositionInAsset error:&error] ) {
+            if ( [mReader mcs_seekToOffset:pos - mPosition error:&error] ) {
                 data = [mReader mcs_readDataUpToLength:capacity error:&error];
             }
         }
@@ -94,8 +94,8 @@
     return data;
 }
 
-- (UInt64)startPositionInAsset {
-    return mStartPositionInAsset;
+- (UInt64)position {
+    return mPosition;
 }
 
 - (UInt64)length {

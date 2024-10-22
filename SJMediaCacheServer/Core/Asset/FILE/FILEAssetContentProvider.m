@@ -29,7 +29,7 @@
         NSString *filePath = [self _contentFilePathForFilename:filename];
         NSUInteger offset = [self _offsetForFilename:filename];
         NSUInteger length = (NSUInteger)[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
-        id<MCSAssetContent>content = [MCSAssetContent.alloc initWithFilePath:filePath startPositionInAsset:offset length:length];
+        id<MCSAssetContent>content = [MCSAssetContent.alloc initWithFilePath:filePath position:offset length:length];
         [m addObject:content];
     }
     return m.copy;
@@ -48,7 +48,7 @@
             NSString *filePath = [self _contentFilePathForFilename:filename];
             if ( ![NSFileManager.defaultManager fileExistsAtPath:filePath] ) {
                 [NSFileManager.defaultManager createFileAtPath:filePath contents:nil attributes:nil];
-                return [MCSAssetContent.alloc initWithFilePath:filePath startPositionInAsset:offset];
+                return [MCSAssetContent.alloc initWithFilePath:filePath position:offset];
             }
             number += 1;
         } while (true);

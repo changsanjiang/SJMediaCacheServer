@@ -65,7 +65,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@: <%p> { placement: %llu, maximumLength: %llu, contents: %lu };\n", NSStringFromClass(self.class), self, mPlacement, self.longestContent.length, (unsigned long)mContents.count];
+    return [NSString stringWithFormat:@"%@: <%p> { placement: %llu, maximumLength: %llu, contents: %@ };\n", NSStringFromClass(self.class), self, mPlacement, self.longestContent.length, mContents];
 }
 @end
 
@@ -78,6 +78,10 @@
     self = [super init];
     mNodes = NSMutableDictionary.dictionary;
     return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@: <%p> { nodes: %@ };\n", NSStringFromClass(self.class), self, mNodes];
 }
 
 - (NSUInteger)count {

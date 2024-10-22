@@ -184,7 +184,7 @@
                 _mRange = range;
                 _mContent = content;
                 [_mContent registerObserver:self];
-                NSRange contentRange = NSMakeRange(_mContent.startPositionInAsset, (NSInteger)_mContent.length);
+                NSRange contentRange = NSMakeRange(_mContent.position, (NSInteger)_mContent.length);
                 _mAvailableLength = NSIntersectionRange(contentRange, _mRange).length;
                 [_delegate readerWasReadyToRead:self];
                 if ( _mAvailableLength != 0 && _mReadLength < _mAvailableLength )
@@ -199,7 +199,7 @@
 
 - (void)content:(id<MCSAssetContent>)content didWriteDataWithLength:(NSUInteger)length {
     @synchronized (self) {
-        NSRange contentRange = NSMakeRange(_mContent.startPositionInAsset, content.length);
+        NSRange contentRange = NSMakeRange(_mContent.position, content.length);
         _mAvailableLength = NSIntersectionRange(contentRange, _mRange).length;
     }
     [_delegate reader:self hasAvailableDataWithLength:length];
@@ -275,7 +275,7 @@
 - (void)prepareContent {
     MCSContentReaderDebugLog(@"%@: <%p>.prepareContent { range: %@, file: %@ };\n", NSStringFromClass(self.class), self, NSStringFromRange(mReadRange), mFileContent);
     
-    if ( mReadRange.location < mFileContent.startPositionInAsset || NSMaxRange(mReadRange) > (mFileContent.startPositionInAsset + mFileContent.length) ) {
+    if ( mReadRange.location < mFileContent.position || NSMaxRange(mReadRange) > (mFileContent.position + mFileContent.length) ) {
         [self abortWithError:[NSError mcs_errorWithCode:MCSInvalidParameterError userInfo:@{
             MCSErrorUserInfoObjectKey : self,
             MCSErrorUserInfoReasonKey : @"请求范围错误, 请求范围未在内容范围中!"

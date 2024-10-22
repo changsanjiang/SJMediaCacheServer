@@ -297,7 +297,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         if ( content == nil ) {
             NSString *filePath = [mProvider writeDataToAESKey:data forIdentifier:identifier error:&error];
             if ( filePath != nil ) {
-                content = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath startPositionInAsset:0 length:data.length];
+                content = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath position:0 length:data.length];
                 if ( mAESKeyContents == nil ) mAESKeyContents = NSMutableDictionary.dictionary;
                 mAESKeyContents[identifier] = content;
             }
@@ -324,7 +324,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
             NSError *error = nil;
             NSString *filePath = [mProvider writeDataToSubtitles:data forIdentifier:identifier error:&error];
             if ( filePath != nil ) {
-                mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:data.length];
+                mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath position:0 length:data.length];
             }
             if ( error != nil && errorPtr != NULL ) *errorPtr = error;
         }
@@ -465,7 +465,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     // playlist, aes key, subtitles 都属于小文件, 目录中只要存在对应文件就说明已下载完毕;
 
     // playlist content
-    mPlaylistContent = [MCSAssetContent.alloc initWithFilePath:proxyPlaylistFilePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
+    mPlaylistContent = [MCSAssetContent.alloc initWithFilePath:proxyPlaylistFilePath position:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
     // find existing aes contents
     [mParser.keys enumerateObjectsUsingBlock:^(id<HLSKey>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:obj.URI];
@@ -473,7 +473,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         NSString *filePath = [mProvider loadAESKeyFilePathForIdentifier:identifier];
         if ( filePath != nil ) {
             if ( mAESKeyContents == nil ) mAESKeyContents = NSMutableDictionary.dictionary;
-            mAESKeyContents[identifier] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
+            mAESKeyContents[identifier] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath position:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
         }
     }];
     
@@ -534,7 +534,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
             NSString *filePath = [mProvider loadSubtitlesFilePathForIdentifier:identifier];
             // 同样都是小文件, 目录中只要存在对应文件就说明已下载完毕;
             if ( filePath != nil ) {
-                mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath startPositionInAsset:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
+                mSubtitlesContent = [MCSAssetContent.alloc initWithMimeType:MCSMimeType(originalURL.path.pathExtension) filePath:filePath position:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
             }
         }
     }

@@ -24,8 +24,6 @@
 
 #import "MCSUtils.h"
 
-//static NSString *const DEMO_URL_HLS = @"http://replay.lanwuzhe.cn/recordings/z1.lanwuzhe.3819/1728777397_1728863797.m3u8";
-//static NSString *const DEMO_URL_HLS = @"https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8";
 static NSString *const DEMO_URL_HLS = @"http://localhost/hls/prog_index.m3u8";
 static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpty.mp4";
 //static NSString *const DEMO_URL_HLS = @"http://192.168.1.112/hls/index.m3u8";
@@ -38,7 +36,8 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 @implementation SJViewController
 
 - (IBAction)test:(id)sender {
-    [self.navigationController pushViewController:SJDownloadsDemoViewController.new animated:YES];
+//    [self.navigationController pushViewController:SJDownloadsDemoViewController.new animated:YES];
+    [self _demo3];
 }
 
 - (BOOL)shouldAutorotate {
@@ -52,12 +51,10 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
     SJMediaCacheServer.shared.logOptions = MCSLogOptionContentReader;
 //    SJMediaCacheServer.shared.cacheCountLimit = 5;
-    
-    
-    [SJMediaCacheServer.shared removeAllCaches];
+//    [SJMediaCacheServer.shared removeAllCaches];
     
 //    [self _demo1];
-    [self _demo2];
+//    [self _demo2];
 //    [self _demo3];
 //    [self _demo4];
 }
@@ -133,14 +130,14 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
 }
 
 - (void)_prefetch:(NSURL *)URL {
-    [SJMediaCacheServer.shared prefetchWithURL:URL preloadSize:1 * 1024 * 1024 progress:^(float progress) {
+    [SJMediaCacheServer.shared prefetchWithURL:URL progress:^(float progress) {
         
         // progress ...
-        NSLog(@"prefetch: progress=%f", progress);
+        NSLog(@"prefetch: URL=%ld, progress=%f", URL.hash, progress);
     } completion:^(NSError * _Nullable error) {
         
         // complete ...
-        NSLog(@"prefetch: error: %@", error);
+        NSLog(@"prefetch: URL=%ld, error: %@", URL.hash, error);
     }];
 }
 
@@ -155,11 +152,3 @@ static NSString *const DEMO_URL_FILE = @"https://dh2.v.netease.com/2017/cg/fxtpt
     }];
 }
 @end
-
-
-
-//    NSInteger contentUnitBytes = 2 * 1024 * 1024;
-//        // 内容重组(按指定大小进行重组)
-//        id<MCSAssetContent> content = node.longestContent;
-//        // #warning next ...
-//        // 如何将内容重组

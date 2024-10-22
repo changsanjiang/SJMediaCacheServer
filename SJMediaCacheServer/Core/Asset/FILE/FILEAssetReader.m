@@ -47,9 +47,7 @@
         [mAsset readwriteRetain];
         [mAsset registerObserver:self];
         
-#ifdef DEBUG
         MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, mRequest.URL, asset, mRequest.allHTTPHeaderFields);
-#endif
     }
     return self;
 }
@@ -269,7 +267,7 @@
         NSMutableArray<id<MCSAssetContentReader>> *contentReaders = NSMutableArray.array;
         [mAsset enumerateContentNodesUsingBlock:^(FILEAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
             id<MCSAssetContent> content = node.longestContent;
-            NSRange available = NSMakeRange(content.startPositionInAsset, content.length);
+            NSRange available = NSMakeRange(content.position, content.length);
             NSRange intersection = NSIntersectionRange(curr, available);
             if ( intersection.length != 0 ) {
                 // undownloaded part

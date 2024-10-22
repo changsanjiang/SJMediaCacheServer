@@ -43,9 +43,7 @@
         [mAsset readwriteRetain];
         [mAsset registerObserver:self];
         
-#ifdef DEBUG
         MCSAssetReaderDebugLog(@"%@: <%p>.init { URL: %@, asset: %@, headers: %@ };\n", NSStringFromClass(self.class), self, mRequest.URL, asset, mRequest.allHTTPHeaderFields);
-#endif
     }
     return self;
 }

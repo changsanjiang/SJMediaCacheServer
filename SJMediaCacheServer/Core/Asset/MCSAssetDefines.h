@@ -13,13 +13,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol MCSAssetContent <MCSReadwriteReference> 
-- (nullable NSData *)readDataAtPosition:(UInt64)positionInAsset capacity:(UInt64)capacity error:(out NSError **)error;
+- (nullable NSData *)readDataAtPosition:(UInt64)position capacity:(UInt64)capacity error:(out NSError **)error;
 - (BOOL)rewindWithError:(out NSError **)error;
 - (BOOL)writeData:(NSData *)data error:(out NSError **)error;
 - (void)closeWrite;
 - (void)closeRead;
 - (void)close;
-@property (nonatomic, readonly) UInt64 startPositionInAsset;
+@property (nonatomic, readonly) UInt64 position;
 @property (nonatomic, readonly) UInt64 length;
 @property (nonatomic, strong, readonly, nullable) NSString *mimeType;
 

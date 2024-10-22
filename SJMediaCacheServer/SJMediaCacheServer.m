@@ -91,32 +91,35 @@
     return MCSPrefetcherManager.shared.maxConcurrentPrefetchCount;
 }
 
-- (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize {
-    if ( URL == nil )
-        return nil;
-    [self setActive:YES];
-    return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize];
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize {
+    return [self prefetchWithURL:URL preloadSize:preloadSize progress:nil completion:nil];
 }
 
-- (id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
-    if ( URL == nil )
-        return nil;
-    [self setActive:YES];
-    return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize progress:progressBlock completion:completionHandler];
+- (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadSize:(NSUInteger)preloadSize progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
+    if ( URL != nil ) {
+        if ( _server.isRunning || [_server start] ) {
+            return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadSize:preloadSize progress:progressBlock completion:completionHandler];
+        }
+    }
+    return nil;
 }
 
 - (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
-    if ( URL == nil )
-        return nil;
-    [self setActive:YES];
-    return [MCSPrefetcherManager.shared prefetchWithURL:URL progress:progressBlock completion:completionHandler];
+    if ( URL != nil ) {
+        if ( _server.isRunning || [_server start] ) {
+            return [MCSPrefetcherManager.shared prefetchWithURL:URL progress:progressBlock completion:completionHandler];
+        }
+    }
+    return nil;
 }
 
 - (nullable id<MCSPrefetchTask>)prefetchWithURL:(NSURL *)URL preloadFileCount:(NSUInteger)num progress:(void(^_Nullable)(float progress))progressBlock completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler {
-    if ( URL == nil )
-        return nil;
-    [self setActive:YES];
-    return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadFileCount:num progress:progressBlock completion:completionHandler];
+    if ( URL != nil ) {
+        if ( _server.isRunning || [_server start] ) {
+            return [MCSPrefetcherManager.shared prefetchWithURL:URL preloadFileCount:num progress:progressBlock completion:completionHandler];
+        }
+    }
+    return nil;
 }
 
 - (void)cancelAllPrefetchTasks {
@@ -144,16 +147,17 @@
 }
 
 - (void)setHTTPHeaderField:(NSString *)field withValue:(nullable NSString *)value forAssetURL:(NSURL *)URL ofType:(MCSDataType)type {
-    if ( URL == nil )
-        return;
-    id<MCSAsset> asset = [MCSAssetManager.shared assetWithURL:URL];
-    [asset.configuration setValue:value forHTTPAdditionalHeaderField:field ofType:type];
+    if ( URL != nil && field != nil ) {
+        id<MCSAsset> asset = [MCSAssetManager.shared assetWithURL:URL];
+        [asset.configuration setValue:value forHTTPAdditionalHeaderField:field ofType:type];
+    }
 }
 - (nullable NSDictionary<NSString *, NSString *> *)HTTPAdditionalHeadersForAssetURL:(NSURL *)URL ofType:(MCSDataType)type {
-    if ( URL == nil )
-        return nil;
-    id<MCSAsset> asset = [MCSAssetManager.shared assetWithURL:URL];
-    return [asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:type];
+    if ( URL != nil ) {
+        id<MCSAsset> asset = [MCSAssetManager.shared assetWithURL:URL];
+        return [asset.configuration HTTPAdditionalHeadersForDataRequestsOfType:type];
+    }
+    return nil;
 }
 
 - (void)setMetricsHandler:(void (^_Nullable)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))metricsHandler {
@@ -276,9 +280,7 @@
 }
 
 - (BOOL)isFullyStoredAssetForURL:(NSURL *)URL {
-    if ( URL == nil )
-        return NO;
-    return [MCSAssetManager.shared isAssetStoredForURL:URL];
+    return URL != nil ? [MCSAssetManager.shared isAssetStoredForURL:URL] : NO;
 }
 @end
 
@@ -313,10 +315,14 @@
 }
 
 - (nullable id<MCSExporter>)exportAssetWithURL:(NSURL *)URL shouldResume:(BOOL)shouldResume {
-    [self setActive:YES];
-    id<MCSExporter> exporter = [MCSExporterManager.shared exportAssetWithURL:URL];
-    if ( shouldResume ) [exporter resume];
-    return exporter;
+    if ( URL != nil ) {
+        if ( _server.isRunning || [_server start] ) {
+            id<MCSExporter> exporter = [MCSExporterManager.shared exportAssetWithURL:URL];
+            if ( shouldResume ) [exporter resume];
+            return exporter;
+        }
+    }
+    return nil;
 }
  
 - (MCSExportStatus)exportStatusForURL:(NSURL *)URL {

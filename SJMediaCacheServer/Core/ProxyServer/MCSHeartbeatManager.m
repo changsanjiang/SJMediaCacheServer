@@ -155,9 +155,7 @@
                 }];
             }];
             [mTimer resume];
-#ifdef DEBUG
-            NSLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
-#endif
+            MCSHearbeatDebugLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
         }
     }
 }
@@ -167,9 +165,7 @@
         if ( mTimer != nil ) {
             [mTimer invalidate];
             mTimer = nil;
-#ifdef DEBUG
-            NSLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
-#endif
+            MCSHearbeatDebugLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
         }
     }
 }
@@ -188,9 +184,8 @@
     request.timeoutInterval = _timeoutInterval;
     [request addValue:@"1" forHTTPHeaderField:@"MCS_PROXY_HEARTBEAT_FLAG"];
     [[NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-#ifdef DEBUG
-        NSLog(@"%@<%p>: %d : %s, status=%ld, error=%@", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd), [(NSHTTPURLResponse *)response statusCode], error);
-#endif
+        MCSHearbeatDebugLog(@"%@<%p>: %d : %s, status=%ld, error=%@", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd), [(NSHTTPURLResponse *)response statusCode], error);
+
         if ( error != nil && remainingRetries > 0 ) {
             [self sendHeartbeatWithRemainingRetries:remainingRetries - 1 completion:completionHandler];
             return;

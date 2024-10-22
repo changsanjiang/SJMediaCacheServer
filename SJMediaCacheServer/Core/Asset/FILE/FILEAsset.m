@@ -69,8 +69,9 @@
             mProvider = [FILEAssetContentProvider contentProviderWithDirectory:directory];
             mNodeList = [FILEAssetContentNodeList.alloc init];
             [mProvider.contents enumerateObjectsUsingBlock:^(id<MCSAssetContent>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                [mNodeList attachContentToNode:obj placement:obj.startPositionInAsset];
+                [mNodeList attachContentToNode:obj placement:obj.position];
             }];
+            mMetadataReady = mNodeList.count != 0;
             [self _restructureContents];
         }
     }
@@ -130,8 +131,8 @@
         [mNodeList enumerateNodesUsingBlock:^(FILEAssetContentNode * _Nonnull node, BOOL * _Nonnull stop) {
             id<MCSAssetContent> cur = node.longestContent;
             length += cur.length;
-            UInt64 prevPosition = prev.startPositionInAsset + prev.length;
-            if ( prevPosition > cur.startPositionInAsset ) length -= (prevPosition - cur.startPositionInAsset);
+            UInt64 prevPosition = prev.position + prev.length;
+            if ( prevPosition > cur.position ) length -= (prevPosition - cur.position);
             prev = cur;
         }];
         return length * 1.0f / _totalLength;
@@ -168,7 +169,7 @@
             id<MCSAssetContent> content = [mProvider createContentAtOffset:offset pathExtension:_pathExtension error:error];
             if ( content != nil ) {
                 [content readwriteRetain];
-                [mNodeList attachContentToNode:content placement:content.startPositionInAsset];
+                [mNodeList attachContentToNode:content placement:content.position];
             }
             return content;
         }
@@ -240,6 +241,7 @@
 /// unlocked
 - (void)_restructureContents {
     if ( mAssembled || !mMetadataReady || self.readwriteCount != 0 ) return;
+
     UInt64 capacity = 1 * 1024 * 1024;
     FILEAssetContentNode *curNode = mNodeList.head;
     while ( curNode != nil ) {
@@ -251,8 +253,8 @@
         id<MCSAssetContent> write = curNode.longestContent;
         id<MCSAssetContent> read = nextNode.longestContent;
         
-        NSRange curRange = {write.startPositionInAsset, write.length};
-        NSRange nextRange = {read.startPositionInAsset, read.length};
+        NSRange curRange = {write.position, write.length};
+        NSRange nextRange = {read.position, read.length};
         if      ( MCSNSRangeContains(curRange, nextRange) ) {
             [mProvider removeContent:read];
             [mNodeList removeNode:nextNode];
@@ -281,8 +283,9 @@
                 [mProvider removeContent:read];
                 [mNodeList removeNode:nextNode];
             }
+
+            if ( NSMaxRange(curRange) != nextRange.location ) curNode = curNode.next;
         }
-        curNode = curNode.next;
     }
     
     mAssembled = mNodeList.head.longestContent.length == _totalLength;
