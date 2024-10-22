@@ -25,7 +25,7 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
 
     id<MCSAssetReader> _Nullable mCurReader;
     
-    NSUInteger mPrefetchFileCount; // num mode; NSNotFound to preload all files;
+    NSUInteger mPrefetchFileCount; // num mode; NSNotFound to prefetch all files;
 
     NSUInteger mPrefetchSize; // size mode;
     UInt64 mLength; // size mode segments length
