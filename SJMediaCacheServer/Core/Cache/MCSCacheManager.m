@@ -143,27 +143,29 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
 
 - (void)setProtected:(BOOL)isProtected forCacheWithAsset:(id<MCSAsset>)asset {
     if ( asset != nil ) {
-        MCSProtectedCacheItem *item = (id)[_sqlite3 objectsForClass:MCSProtectedCacheItem.class conditions:@[
-            [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)],
-            [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)]
-        ] orderBy:nil error:NULL].firstObject;
-        
-        if ( isProtected ) {
-            // save
-            if ( item == nil ) {
-                _countOfProtectedAssets += 1;
-                item = [MCSProtectedCacheItem.alloc initWithAsset:asset];
-                [_sqlite3 save:item error:NULL];
-            }
+        @synchronized (self) {
+            MCSProtectedCacheItem *item = (id)[_sqlite3 objectsForClass:MCSProtectedCacheItem.class conditions:@[
+                [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)],
+                [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)]
+            ] orderBy:nil error:NULL].firstObject;
             
-            // return
-            return;
-        }
+            if ( isProtected ) {
+                // save
+                if ( item == nil ) {
+                    _countOfProtectedAssets += 1;
+                    item = [MCSProtectedCacheItem.alloc initWithAsset:asset];
+                    [_sqlite3 save:item error:NULL];
+                }
+                
+                // return
+                return;
+            }
 
-        // delete
-        if ( item != nil ) {
-            _countOfProtectedAssets -= 1;
-            [_sqlite3 removeObjectForClass:MCSProtectedCacheItem.class primaryKeyValue:@(item.id) error:NULL];
+            // delete
+            if ( item != nil ) {
+                _countOfProtectedAssets -= 1;
+                [_sqlite3 removeObjectForClass:MCSProtectedCacheItem.class primaryKeyValue:@(item.id) error:NULL];
+            }
         }
     }
 }

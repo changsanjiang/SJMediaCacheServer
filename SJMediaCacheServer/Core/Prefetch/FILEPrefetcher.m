@@ -54,7 +54,7 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { prefetchSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize];
+    return [NSString stringWithFormat:@"%@:<%p> { prefetchSize: %lu };\n", NSStringFromClass(self.class), self, (unsigned long)self.prefetchSize];
 }
 
 - (void)dealloc {
@@ -64,6 +64,12 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
 - (float)progress {
     @synchronized (self) {
         return mProgress;
+    }
+}
+
+- (NSUInteger)prefetchSize {
+    @synchronized (self) {
+        return mPrefetchSize;
     }
 }
 
@@ -132,10 +138,21 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
 #pragma mark -
 
 - (void)reader:(id<MCSAssetReader>)reader didReceiveResponse:(id<MCSResponse>)response {
-    NSUInteger totalLength = response.totalLength;
-    mPrefetchSize = MIN(mPrefetchSize > 0 ? mPrefetchSize : NSUIntegerMax, totalLength); // fix prefetchSize
-    mSegmentSize = MAX(10 * 1024 * 1024, mPrefetchSize * 0.05); // minSegmentSize: 10M
-    mState = FILEPrefetcherStatePrefetching;
+    @synchronized (self) {
+        switch (mState) {
+            case FILEPrefetcherStatePreparing: {
+                NSUInteger totalLength = response.totalLength;
+                mPrefetchSize = MIN(mPrefetchSize > 0 ? mPrefetchSize : NSUIntegerMax, totalLength); // fix prefetchSize
+                mSegmentSize = MAX(10 * 1024 * 1024, mPrefetchSize * 0.05); // minSegmentSize: 10M
+                mState = FILEPrefetcherStatePrefetching;
+            }
+                break;
+            case FILEPrefetcherStateUnknown:
+            case FILEPrefetcherStatePrefetching:
+            case FILEPrefetcherStateCompleted:
+                break;
+        }
+    }
 }
 
 - (void)reader:(nonnull id<MCSAssetReader>)reader hasAvailableDataWithLength:(NSUInteger)length {
@@ -153,7 +170,7 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
                     if ( progress >= 1 ) progress = 1;
                     mProgress = progress;
                     
-                    MCSPrefetcherDebugLog(@"%@: <%p>.preload { prefetchSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize, (unsigned long)reader.response.totalLength, progress);
+                    MCSPrefetcherDebugLog(@"%@: <%p>.prefetch { prefetchSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize, (unsigned long)reader.response.totalLength, progress);
                                 
                     if ( _delegate != nil ) {
                         [_delegate prefetcher:self progressDidChange:progress];

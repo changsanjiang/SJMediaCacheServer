@@ -4,7 +4,7 @@
 
 Additionally, the framework provides robust cache management capabilities, allowing you to set limits on cache count, maximum disk storage time, and available disk space, ensuring optimal cache control and resource utilization.
 
-With its powerful preloading feature, SJMediaCacheServer allows users to preload a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
+With its powerful prefetching feature, SJMediaCacheServer allows users to prefetch a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
 
 ## Installation
 ```ruby
@@ -27,7 +27,7 @@ pod 'SJMediaCacheServer'
     - **Available Disk Space Limits**: Ensure the cache stays within a specified disk usage limit, preventing cache overflow from occupying too much local storage.
 
 - **Advanced Prefetching Capabilities**:
-    - **Concurrent Prefetching**: Use the `maxConcurrentPrefetchCount` property to control the maximum number of concurrent prefetch tasks, optimizing the preloading process without overwhelming system resources.
+    - **Concurrent Prefetching**: Use the maxConcurrentPrefetchCount property to control the maximum number of concurrent prefetch tasks, optimizing the prefetching process without overwhelming system resources.
     - **Flexible Prefetching Methods**:
         - **Full Data Prefetching**: Use `prefetchWithURL:` to download all data related to a specific media asset, ensuring that the entire resource is available for playback without additional network requests.
         - **Size-Specific Prefetching**: With `prefetchWithURL:prefetchSize:`, request a predefined amount of data for partial prefetching. This is particularly useful for optimizing both bandwidth and storage while ensuring smooth playback.

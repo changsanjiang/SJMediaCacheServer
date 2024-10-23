@@ -93,11 +93,11 @@
 #pragma mark -
  
 - (void)start {
-    [self willChangeValueForKey:@"isExecuting"];
-    _isExecuting = YES;
-    [self didChangeValueForKey:@"isExecuting"];
-    
     @synchronized (self) {
+        [self willChangeValueForKey:@"isExecuting"];
+        _isExecuting = YES;
+        [self didChangeValueForKey:@"isExecuting"];
+
         if ( _isCancelled ) {
             [self _completeOperationIfExecuting];
             return;
