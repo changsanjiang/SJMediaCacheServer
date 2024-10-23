@@ -209,3 +209,71 @@
     [self contentDidReady:content range:NSMakeRange(0, content.length)];
 }
 @end
+
+
+@implementation HLSAssetInitializationContentReader {
+    HLSAsset *mAsset;
+    NSURLRequest *mRequest;
+    NSRange mByteRange;
+    float mPriority;
+    id<MCSDownloadTask> _Nullable mTask;
+}
+
+- (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate {
+    self = [super initWithAsset:asset delegate:delegate];
+    mAsset = asset;
+    mRequest = request;
+    mPriority = priority;
+    mByteRange = MCSRequestRange(MCSRequestGetContentRange(mRequest.allHTTPHeaderFields));
+    return self;
+}
+
+- (void)prepareContent {
+    
+    MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };\n", NSStringFromClass(self.class), self, mRequest.mcs_description);
+    
+    id<MCSAssetContent> content = [mAsset getInitializationContentWithOriginalURL:mRequest.URL byteRange:mByteRange];
+    if ( content != nil ) {
+        [self contentDidReady:content range:NSMakeRange(0, content.length)];
+    }
+    else {
+        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSInit]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable downloadError) {
+            @synchronized (self) {
+                [self _downloadDidCompleteWithData:data error:downloadError];
+            }
+        }];
+    }
+}
+
+- (void)didAbortWithError:(NSError *)error {
+    [mTask cancel];
+}
+
+#pragma mark - mark
+
+/// unlocked
+- (void)_downloadDidCompleteWithData:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
+    if ( self.status == MCSReaderStatusAborted ) return;
+    mTask = nil;
+    
+    NSError *error = nil;
+    if ( downloadError != nil ) {
+        error = [NSError mcs_errorWithCode:MCSDownloadError userInfo:@{
+            MCSErrorUserInfoErrorKey : downloadError,
+            MCSErrorUserInfoReasonKey : @"Initialization download failed!"
+        }];
+    }
+    
+    id<MCSAssetContent> content = nil;
+    if ( error == nil ) {
+        content = [mAsset createInitializationContentWithOriginalURL:mRequest.URL byteRange:mByteRange data:data error:&error]; // retain
+    }
+    
+    if ( error != nil ) {
+        [self abortWithError:error];
+        return;
+    }
+    [self contentDidReady:content range:NSMakeRange(content.position, content.length)];
+}
+@end
+

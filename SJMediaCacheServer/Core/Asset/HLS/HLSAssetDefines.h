@@ -12,11 +12,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 typedef NS_ENUM(NSUInteger, HLSItemType) {
-    HLSItemTypeKey,
-    HLSItemTypeSegment,
-    HLSItemTypeVariantStream,
-    HLSItemTypeIFrameStream, // ignored;
-    HLSItemTypeRendition,
+    HLSItemTypeKey, // #EXT-X-KEY
+    HLSItemTypeInitialization, // #EXT-X-MAP
+    HLSItemTypeSegment, // #EXTINF
+    HLSItemTypeVariantStream, // #EXT-X-STREAM-INF
+    HLSItemTypeIFrameStream, // // #EXT-X-I-FRAME-STREAM-INF; ignored;
+    HLSItemTypeRendition, // #EXT-X-MEDIA
 };
 
 @protocol HLSItem <NSObject>
@@ -28,6 +29,10 @@ typedef NS_ENUM(NSUInteger, HLSItemType) {
 
 @protocol HLSKey <HLSItem> // #EXT-X-KEY
 
+@end
+
+@protocol HLSInitialization <HLSItem> // #EXT-X-MAP
+@property (nonatomic, readonly) NSRange byteRange; // BYTERANGE or { NSNotFound, NSNotFound }; OPTIONAL: specifies byte range for initialization file
 @end
 
 @protocol HLSSegment <HLSItem> // #EXTINF
@@ -90,6 +95,7 @@ typedef NS_ENUM(NSUInteger, HLSRenditionType) {
 
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSItem>> *allItems;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSKey>> *keys;
+@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSInitialization>> *initializations;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSSegment>> *segments;
 
 // In the proxy playlist, the content related to iframe streams will be removed,

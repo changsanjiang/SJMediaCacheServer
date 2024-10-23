@@ -105,6 +105,10 @@
                 mReader = [HLSAssetSubtitlesContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
             }
                 break;
+            case MCSDataTypeHLSInit: {
+                
+            }
+                break;
             default: {
                 [self _abortWithError:[NSError mcs_errorWithCode:MCSFileError userInfo:@{
                     MCSErrorUserInfoObjectKey : mRequest,
@@ -320,6 +324,7 @@
                     case MCSDataTypeHLSPlaylist:
                     case MCSDataTypeHLSAESKey:
                     case MCSDataTypeHLSSubtitles:
+                    case MCSDataTypeHLSInit:
                     case MCSDataTypeHLS:
                     case MCSDataTypeFILEMask:
                     case MCSDataTypeFILE:

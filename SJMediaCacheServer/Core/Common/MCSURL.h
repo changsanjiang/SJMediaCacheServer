@@ -94,6 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param extension The file extension to be used in the identifier.
 /// @return The generated proxy identifier.
 - (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url extension:(nullable NSString *)extension;
+- (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url extension:(nullable NSString *)extension byteRange:(NSRange)byteRange;
 - (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url;
 
 /// Generates a full proxy URL based on the provided proxy URI.

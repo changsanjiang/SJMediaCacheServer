@@ -173,6 +173,7 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
                         case MCSDataTypeHLSPlaylist:
                         case MCSDataTypeHLSAESKey:
                         case MCSDataTypeHLSSubtitles:
+                        case MCSDataTypeHLSInit:
                             break;
                         case MCSDataTypeHLSSegment: {
                             float progress = mProgress;

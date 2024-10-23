@@ -35,6 +35,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL; // content readwrite is retained, should release after;
 - (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)error; // content readwrite is retained, should release after;
 
+- (nullable id<MCSAssetContent>)getInitializationContentWithOriginalURL:(NSURL *)originalURL byteRange:(NSRange)byteRange; // content readwrite is retained, should release after;
+- (nullable id<MCSAssetContent>)createInitializationContentWithOriginalURL:(NSURL *)originalURL byteRange:(NSRange)byteRange data:(NSData *)data error:(out NSError **)error; // content readwrite is retained, should release after;
+
 - (nullable id<MCSAssetContent>)getSubtitlesContentWithOriginalURL:(NSURL *)originalURL; // content readwrite is retained, should release after;
 - (nullable id<MCSAssetContent>)createSubtitlesContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)error; // retained, should release after;
 

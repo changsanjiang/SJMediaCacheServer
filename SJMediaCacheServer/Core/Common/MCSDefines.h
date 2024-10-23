@@ -21,7 +21,8 @@ typedef NS_OPTIONS(NSUInteger, MCSDataType) {
     MCSDataTypeHLSAESKey              = 2,
     MCSDataTypeHLSSegment             = 3, // ts
     MCSDataTypeHLSSubtitles           = 4, // External Subtitles
-    MCSDataTypeHLS                    = 1 << MCSDataTypeHLSPlaylist | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSSegment |  1 << MCSDataTypeHLSSubtitles,
+    MCSDataTypeHLSInit                = 5,
+    MCSDataTypeHLS                    = 1 << MCSDataTypeHLSPlaylist | 1 << MCSDataTypeHLSAESKey | 1 << MCSDataTypeHLSSegment |  1 << MCSDataTypeHLSSubtitles | MCSDataTypeHLSInit,
 
     MCSDataTypeFILEMask      = 0xFF00,
     MCSDataTypeFILE          = 1 << 8,

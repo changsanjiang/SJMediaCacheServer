@@ -142,14 +142,18 @@ MCSMD5(NSString *str) {
 @implementation MCSURL (HLS)
 - (MCSDataType)dataTypeForHLSProxyURL:(NSURL *)proxyURL {
     NSString *extension = proxyURL.path.pathExtension;
+    if ( [extension isEqualToString:HLS_EXTENSION_SEGMENT] )
+        return MCSDataTypeHLSSegment;
+
     if ( [extension isEqualToString:HLS_EXTENSION_PLAYLIST] )
         return MCSDataTypeHLSPlaylist;
     
     if ( [extension isEqualToString:HLS_EXTENSION_KEY] )
         return MCSDataTypeHLSAESKey;
-
-    if ( [extension isEqualToString:HLS_EXTENSION_SEGMENT] )
-        return MCSDataTypeHLSSegment;
+    
+    if ( [extension isEqualToString:HLS_EXTENSION_INIT] ) {
+        return MCSDataTypeHLSInit;
+    }
     
     if ( [extension isEqualToString:HLS_EXTENSION_SUBTITLES] )
         return MCSDataTypeHLSSubtitles;
@@ -168,11 +172,23 @@ MCSMD5(NSString *str) {
 
 /// The proxyIdentifier format is: urlmd5.extension
 - (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url extension:(nullable NSString *)extension {
-    NSString *identifier = [NSString stringWithFormat:@"%@.%@", MCSMD5(url.absoluteString), extension];
-    return identifier;
+    return [self generateProxyIdentifierFromHLSOriginalURL:url extension:extension byteRange:NSMakeRange(NSNotFound, NSNotFound)];
 }
+
 - (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url {
-    return [self generateProxyIdentifierFromHLSOriginalURL:url extension:nil];
+    return MCSMD5(url.absoluteString);
+}
+
+/// The proxyIdentifier format is: urlmd5_range.location_range.length.extension
+- (NSString *)generateProxyIdentifierFromHLSOriginalURL:(NSURL *)url extension:(nullable NSString *)extension byteRange:(NSRange)byteRange {
+    NSString *identifier = [self generateProxyIdentifierFromHLSOriginalURL:url];
+    if ( byteRange.location != NSNotFound && byteRange.length != NSNotFound ) {
+        identifier = [identifier stringByAppendingFormat:@"_%ld_%ld", byteRange.location, byteRange.length];
+    }
+    if ( extension != nil && extension.length != 0 ) {
+        return [identifier stringByAppendingFormat:@".%@", extension];
+    }
+    return identifier;
 }
 
 - (NSURL *)generateProxyURLFromHLSProxyURI:(NSString *)proxyURI {

@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSItem>> *allItems;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSKey>> *keys;
+@property (nonatomic, strong, readonly, nullable) NSArray<id<HLSInitialization>> *initializations;
 @property (nonatomic, strong, readonly, nullable) NSArray<id<HLSSegment>> *segments;
 
 /// Represents the selected variant stream. If there are variant streams in the m3u8, only one can be selected.

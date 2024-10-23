@@ -17,6 +17,7 @@
 // https://tools.ietf.org/html/rfc8216
 
 static NSString *const EXT_X_KEY = @"#EXT-X-KEY:";
+static NSString *const EXT_X_MAP = @"#EXT-X-MAP:";
 static NSString *const EXTINF = @"#EXTINF:";
 static NSString *const EXT_X_BYTERANGE = @"#EXT-X-BYTERANGE:";
 static NSString *const EXT_X_MEDIA = @"#EXT-X-MEDIA:";
@@ -39,9 +40,11 @@ static NSString *const HLS_ATTR_SUBTITLES = @"SUBTITLES";
 static NSString *const HLS_ATTR_CLOSED_CAPTIONS = @"CLOSED-CAPTIONS";
 static NSString *const HLS_ATTR_AVERAGE_BANDWIDTH = @"AVERAGE-BANDWIDTH";
 static NSString *const HLS_ATTR_FRAME_RATE = @"FRAME-RATE";
+static NSString *const HLS_ATTR_BYTERANGE = @"BYTERANGE";
 
-static NSString *const HLS_CTX_BYTERANGE_PREV_END = @"BYTERANGE_PREV_END";
-static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
+static NSString *const HLS_CTX_LAST_ITEM = @"HLS_CTX_LAST_ITEM";
+static NSString *const HLS_CTX_LAST_BYTERANGE_END = @"HLS_CTX_LAST_BYTERANGE_END";
+static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
 
 @interface HLSItem : NSObject<HLSItem>
 @property (nonatomic, copy, nullable) NSString *URI;
@@ -82,6 +85,18 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
 }
 @end
 
+@interface HLSInitialization : HLSItem<HLSInitialization>
+@property (nonatomic) NSRange byteRange;
+@end
+
+@implementation HLSInitialization
+- (HLSItemType)itemType {
+    return HLSItemTypeKey;
+}
+- (NSString *)fileExtension {
+    return HLS_EXTENSION_INIT;
+}
+@end
 
 /// #EXTINF: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.1
 /// #EXT-X-BYTERANGE: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.2
@@ -323,6 +338,7 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
 @interface HLSAssetParser () {
     NSArray<id<HLSItem>> *_Nullable mAllItems;
     NSArray<id<HLSKey>> *_Nullable mKeys;
+    NSArray<id<HLSInitialization>> *_Nullable mInitializations;
     NSArray<id<HLSSegment>> *_Nullable mSegments;
 //    NSArray<id<HLSVariantStream>> *_Nullable mVariantStreams;
 //    NSArray<id<HLSIFrameStream>> *_Nullable mIFrameStreams;
@@ -358,11 +374,13 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
         
         __block NSMutableArray<id<HLSVariantStream>> *_Nullable variantStreams;
         __block NSMutableDictionary<NSString *, HLSRenditionGroup *> *_Nullable renditionGroups;
+        // find variant streams and renditions
         [parsingItems enumerateObjectsUsingBlock:^(__kindof HLSItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             switch ( obj.itemType ) {
                 case HLSItemTypeKey:
                 case HLSItemTypeSegment:
                 case HLSItemTypeIFrameStream:
+                case HLSItemTypeInitialization:
                     break;
                 case HLSItemTypeVariantStream: {
                     if ( variantStreams == nil ) variantStreams = NSMutableArray.array;
@@ -429,6 +447,7 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
             switch (obj.itemType) {
                 case HLSItemTypeKey:
                 case HLSItemTypeSegment:
+                case HLSItemTypeInitialization:
                     break;
                 case HLSItemTypeVariantStream: {
                     // remove unselected variant streams
@@ -505,9 +524,9 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
         HLSSegment *segment = ctx[HLS_CTX_LAST_ITEM];
         NSParameterAssert([segment isKindOfClass:HLSSegment.class]);
         NSString *byteRange = [tagLine substringFromIndex:EXT_X_BYTERANGE.length];
-        NSNumber *prevEnd = ctx[HLS_CTX_BYTERANGE_PREV_END];
+        NSNumber *prevEnd = ctx[HLS_CTX_LAST_BYTERANGE_END];
         segment.byteRange = [self parseByteRange:byteRange prevEnd:prevEnd.longLongValue];
-        ctx[HLS_CTX_BYTERANGE_PREV_END] = @(NSMaxRange(segment.byteRange));
+        ctx[HLS_CTX_LAST_BYTERANGE_END] = @(NSMaxRange(segment.byteRange));
     }
     /// #EXT-X-KEY: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.4
     ///
@@ -528,6 +547,24 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
             key.length = tagLine.length;
             [parsingItems addObject:key];
         }
+    }
+    /// #EXT-X-MAP: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.2.5
+    ///
+    /// #EXT-X-MAP:URI="init.mp4",BYTERANGE="1000@2000"
+    else if ( [tagLine hasPrefix:EXT_X_MAP] ) {
+        NSString *attributesString = [tagLine substringFromIndex:EXT_X_MAP.length];
+        NSUInteger startPos = 0; // URI startPos
+        NSString *URI = [attributesString hls_findValueForAttribute:HLS_ATTR_URI startPos:&startPos];
+        NSString *byteRange = [attributesString hls_findValueForAttribute:HLS_ATTR_BYTERANGE startPos:NULL];
+        NSNumber *prevEnd = ctx[HLS_CTX_LAST_INIT_END];
+        HLSInitialization *init = [HLSInitialization.alloc init];
+        init.URI = URI;
+        init.URIStartPosition = EXT_X_MAP.length + startPos + offset;
+        init.byteRange = [self parseByteRange:byteRange prevEnd:prevEnd.longLongValue];
+        init.startPosition = offset;
+        init.length = tagLine.length;
+        [parsingItems addObject:init];
+        ctx[HLS_CTX_LAST_INIT_END] = @(NSMaxRange(init.byteRange));
     }
     /// #EXT-X-MEDIA: https://datatracker.ietf.org/doc/html/rfc8216#section-4.3.4.1
     ///
@@ -693,6 +730,7 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
     if ( parsingItems.count != 0 ) {
         NSMutableArray<__kindof HLSItem *> *allItems = NSMutableArray.array;
         __block NSMutableArray<id<HLSKey>> *_Nullable keys;
+        __block NSMutableArray<id<HLSInitialization>> *_Nullable inits;
         __block NSMutableArray<id<HLSSegment>> *_Nullable segments;
         __block NSMutableDictionary<NSString *, HLSRenditionGroup *> *_Nullable groups;
         __block id<HLSVariantStream> _Nullable selectedVariantStream;
@@ -701,6 +739,12 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
                 case HLSItemTypeKey: {
                     if ( keys == nil ) keys = NSMutableArray.array;
                     [keys addObject:obj];
+                    [allItems addObject:obj];
+                    break;
+                }
+                case HLSItemTypeInitialization: {
+                    if ( inits == nil ) inits = NSMutableArray.array;
+                    [inits addObject:obj];
                     [allItems addObject:obj];
                     break;
                 }
@@ -737,6 +781,7 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
             }
         }];
         if ( keys != nil ) mKeys = keys.copy;
+        if ( inits != nil ) mInitializations = inits.copy;
         if ( segments != nil ) mSegments = segments.copy;
 //        if ( variantStreams != nil ) mVariantStreams = variantStreams.copy;
 //        if ( groups != nil ) mGroups = groups.copy;
@@ -772,6 +817,10 @@ static NSString *const HLS_CTX_LAST_ITEM = @"LAST_ITEM";
 
 - (nullable NSArray<id<HLSKey>> *)keys {
     return mKeys;
+}
+
+- (nullable NSArray<id<HLSInitialization>> *)initializations {
+    return mInitializations;
 }
 
 - (nullable NSArray<id<HLSSegment>> *)segments {

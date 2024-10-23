@@ -29,8 +29,9 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     MCSConfiguration *mConfiguration;
     HLSAssetContentProvider *mProvider;
     id<MCSAssetContent> _Nullable mPlaylistContent;
-    NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mAESKeyContents; // { identifier: content }
-    NSMutableDictionary<NSString *, id<HLSItem>> *_Nullable mSegmentURIItems; // { nodeIdentifier: item }
+    NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mAESKeys; // { identifier: content }
+    NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mInitializations; // { identifier: content }
+    NSMutableDictionary<NSString *, id<HLSItem>> *_Nullable mSegments; // { nodeIdentifier: item }
     HLSAssetSegmentNodeMap *mSegmentNodeMap; // ts
     
     HLSAsset *_Nullable mVariantStreamAsset;
@@ -232,6 +233,10 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_SUBTITLES];
 }
 
+- (NSString *)generateInitializationIdentifierWithOriginalURL:(NSURL *)originalURL {
+    return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_INIT];
+}
+
 - (NSString *)generateSegmentIdentifierWithOriginalURL:(NSURL *)originalURL {
     return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_SEGMENT];
 }
@@ -288,7 +293,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 - (nullable id<MCSAssetContent>)getAESKeyContentWithOriginalURL:(NSURL *)originalURL {
     @synchronized (self) {
         NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
-        id<MCSAssetContent> _Nullable content = mAESKeyContents != nil ? mAESKeyContents[identifier] : nil;
+        id<MCSAssetContent> _Nullable content = mAESKeys != nil ? mAESKeys[identifier] : nil;
         return content != nil ? [content readwriteRetain] : nil;
     }
 }
@@ -296,20 +301,28 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 - (nullable id<MCSAssetContent>)createAESKeyContentWithOriginalURL:(NSURL *)originalURL data:(NSData *)data error:(out NSError **)errorPtr {
     @synchronized (self) {
         NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
-        id<MCSAssetContent> _Nullable content = mAESKeyContents != nil ? mAESKeyContents[identifier] : nil;
+        id<MCSAssetContent> _Nullable content = mAESKeys != nil ? mAESKeys[identifier] : nil;
         NSError *error = nil;
         if ( content == nil ) {
             NSString *filePath = [mProvider writeDataToAESKey:data forIdentifier:identifier error:&error];
             if ( filePath != nil ) {
                 content = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath position:0 length:data.length];
-                if ( mAESKeyContents == nil ) mAESKeyContents = NSMutableDictionary.dictionary;
-                mAESKeyContents[identifier] = content;
+                if ( mAESKeys == nil ) mAESKeys = NSMutableDictionary.dictionary;
+                mAESKeys[identifier] = content;
             }
             if ( error != nil && errorPtr != NULL ) *errorPtr = error;
         }
         return content != nil ? [content readwriteRetain] : nil;
     }
 }
+
+- (nullable id<MCSAssetContent>)getInitializationContentWithOriginalURL:(NSURL *)originalURL byteRange:(NSRange)byteRange {
+#warning next ...
+}
+- (nullable id<MCSAssetContent>)createInitializationContentWithOriginalURL:(NSURL *)originalURL byteRange:(NSRange)byteRange data:(NSData *)data error:(out NSError **)error {
+    
+}
+
 
 - (nullable id<MCSAssetContent>)getSubtitlesContentWithOriginalURL:(NSURL *)originalURL {
     @synchronized (self) {
@@ -363,6 +376,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         case MCSDataTypeHLSPlaylist:
         case MCSDataTypeHLSAESKey:
         case MCSDataTypeHLSSubtitles:
+        case MCSDataTypeHLSInit:
         case MCSDataTypeHLS:
         case MCSDataTypeFILEMask:
         case MCSDataTypeFILE: return nil; /* return nil; */
@@ -372,7 +386,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:response.originalRequest.URL];
                 NSRange byteRange = MCSRequestRange(MCSRequestGetContentRange(response.originalRequest.allHTTPHeaderFields));
                 NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
-                id<HLSItem> item = mSegmentURIItems[nodeIdentifier];
+                id<HLSItem> item = mSegments[nodeIdentifier];
                 NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
                 BOOL isSubrange = byteRange.length != NSNotFound;
@@ -399,8 +413,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         mFullyTrimmed = NO;
         mParser = nil;
         mPlaylistContent = nil;
-        mAESKeyContents = nil;
-        mSegmentURIItems = nil;
+        mAESKeys = nil;
+        mSegments = nil;
         [mSegmentNodeMap removeAllNodes];
         if ( mVariantStreamAsset != nil ) {
             [mVariantStreamAsset clear];
@@ -489,19 +503,19 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
         NSString *filePath = [mProvider loadAESKeyFilePathForIdentifier:identifier];
         if ( filePath != nil ) {
-            if ( mAESKeyContents == nil ) mAESKeyContents = NSMutableDictionary.dictionary;
-            mAESKeyContents[identifier] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath position:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
+            if ( mAESKeys == nil ) mAESKeys = NSMutableDictionary.dictionary;
+            mAESKeys[identifier] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath position:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
         }
     }];
     
     if ( mParser.segmentsCount != 0 ) {
-        mSegmentURIItems = NSMutableDictionary.dictionary;
+        mSegments = NSMutableDictionary.dictionary;
         [mParser.segments enumerateObjectsUsingBlock:^(id<HLSSegment>  _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {
             NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
             NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:originalURL];
             NSRange byteRange = item.byteRange;
             NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
-            mSegmentURIItems[nodeIdentifier] = item;
+            mSegments[nodeIdentifier] = item;
         }];
         
         // find existing segment contents
@@ -511,7 +525,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 NSRange byteRange = { NSNotFound, NSNotFound };
                 NSString *segmentIdentifier = [mProvider getSegmentIdentifierByFilename:filename byteRange:&byteRange];
                 NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
-                id<HLSItem> item = mSegmentURIItems[nodeIdentifier];
+                id<HLSItem> item = mSegments[nodeIdentifier];
                 NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
                 id<HLSAssetSegment> content = [mProvider getSegmentByFilename:filename mimeType:mimeType];
@@ -586,7 +600,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 - (void)_check {
     if ( mAssembled || mParser == nil ) return;
     if      ( mParser.segmentsCount != 0 ) {
-        if ( mAESKeyContents.count != mParser.keys.count ) return;
+        if ( mAESKeys.count != mParser.keys.count ) return;
         if ( mSegmentNodeMap.count != mParser.segmentsCount ) return;
         __block BOOL isAllSegmentsCached = YES;
         __block BOOL isFullyTrimmed = YES;

@@ -149,6 +149,7 @@
                 case MCSDataTypeHLSAESKey:
                 case MCSDataTypeHLSSegment:
                 case MCSDataTypeHLSSubtitles:
+                case MCSDataTypeHLSInit:
                 case MCSDataTypeHLS:
                 case MCSDataTypeFILEMask:
                     /* return */
