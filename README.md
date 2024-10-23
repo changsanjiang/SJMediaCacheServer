@@ -1,10 +1,8 @@
 # SJMediaCacheServer
 
-**SJMediaCacheServer** is an HTTP media caching framework designed to efficiently proxy playback requests and cache media content locally. This enables seamless media playback by serving cached content, thus reducing network load and improving playback performance. SJMediaCacheServer supports widely used media formats such as MP3, MP4, and HLS (m3u8) streaming resources.
+**SJMediaCacheServer** is an efficient HTTP media caching framework designed to proxy media data requests and prioritize serving cached data, thereby reducing network traffic and enhancing playback smoothness. The framework supports two types of remote resources: file-based media, such as common formats like MP3, AAC, WAV, FLAC, OGG, MP4, and MOV, as well as HLS (HTTP Live Streaming) streams. It automatically parses HLS playlists and proxies individual media segments.
 
-Additionally, the framework provides robust cache management capabilities, allowing you to set limits on cache count, maximum disk storage time, and available disk space, ensuring optimal cache control and resource utilization.
-
-With its powerful prefetching feature, SJMediaCacheServer allows users to prefetch a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
+The design of SJMediaCacheServer effectively reduces the number of network requests by serving cached content, thereby improving the playback experience for remote media resources whenever possible.
 
 ## Installation
 ```ruby
@@ -16,10 +14,9 @@ pod 'SJMediaCacheServer'
 
 - **Proxy Playback Requests**: Efficiently proxy playback requests by converting original URLs into local proxy URLs. The media player retrieves the data from the local server, which serves cached data if available, or fetches it from the remote server if necessary. This mechanism reduces network usage and enhances playback speed and reliability.
 
-- **Support for Multiple Media Formats**: Compatible with popular media formats, including:
-    - MP3 (audio)
-    - MP4 (video)
-    - HLS (m3u8) streaming resources
+- **Format Support**: Supports two types of remote resources: 
+    - file-based media (e.g., MP3, AAC, WAV, FLAC, OGG, MP4, MOV) 
+    - HLS (HTTP Live Streaming) streams.
 
 - **Cache Management Options**:
     - **Cache Count Limits**: Control the number of items stored in the cache to avoid overuse of local storage.
