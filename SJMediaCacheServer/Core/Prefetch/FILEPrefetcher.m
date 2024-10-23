@@ -170,7 +170,7 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
                     if ( progress >= 1 ) progress = 1;
                     mProgress = progress;
                     
-                    MCSPrefetcherDebugLog(@"%@: <%p>.preload { prefetchSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize, (unsigned long)reader.response.totalLength, progress);
+                    MCSPrefetcherDebugLog(@"%@: <%p>.prefetch { prefetchSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize, (unsigned long)reader.response.totalLength, progress);
                                 
                     if ( _delegate != nil ) {
                         [_delegate prefetcher:self progressDidChange:progress];

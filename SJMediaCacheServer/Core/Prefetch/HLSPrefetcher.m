@@ -189,7 +189,7 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
                                 progress = (mNextSegmentIndex + curProgress) * 1.0f / segmentsCount;
                             }
                             
-                            MCSPrefetcherDebugLog(@"%@: <%p>.preload { progress: %f };\n", NSStringFromClass(self.class), self, progress);
+                            MCSPrefetcherDebugLog(@"%@: <%p>.prefetch { progress: %f };\n", NSStringFromClass(self.class), self, progress);
                             mProgress = progress;
                             [mDelegate prefetcher:self progressDidChange:progress];
                         }

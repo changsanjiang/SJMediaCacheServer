@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
 
   Additionally, the framework provides robust cache management capabilities, allowing you to set limits on cache count, maximum disk storage time, and available disk space, ensuring optimal cache control and resource utilization.
 
-  With its powerful preloading feature, SJMediaCacheServer allows users to preload a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
+  With its powerful prefetching feature, SJMediaCacheServer allows users to prefetch a specified number of bytes in advance, ensuring that the cached content is quickly accessible from the local server during playback.
   DESC
 
 # This description is used to generate tags and improve search results.
