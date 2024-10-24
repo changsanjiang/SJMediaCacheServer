@@ -106,7 +106,7 @@
             }
                 break;
             case MCSDataTypeHLSInit: {
-                
+                mReader = [HLSAssetInitializationContentReader.alloc initWithAsset:mAsset request:mRequest networkTaskPriority:_networkTaskPriority delegate:self];
             }
                 break;
             default: {

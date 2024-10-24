@@ -73,6 +73,52 @@
     return nil;
 }
 
+- (NSString *)getInitializationFilePathByFilename:(NSString *)filename {
+    return [mRootDir stringByAppendingPathComponent:filename];
+}
+- (nullable NSArray<NSString *> *)loadInitializationFilenames {
+    NSMutableArray<NSString *> *m = nil;
+    for ( NSString *filename in [NSFileManager.defaultManager contentsOfDirectoryAtPath:mRootDir error:NULL] ) {
+        if ( [filename hasPrefix:INIT_FILE_NAME_PREFIX] ) {
+            if ( m == nil ) m = NSMutableArray.array;
+            [m addObject:filename];
+        }
+    }
+    return m;
+}
+- (NSString *)getInitializationIdentifierByFilename:(NSString *)filename totalLength:(UInt64 *)totalLengthPtr byteRange:(NSRange *)byteRangePtr {
+    return [self _getIdentifierByFilename:filename totalLength:totalLengthPtr byteRange:byteRangePtr];
+}
+
+- (id<MCSAssetContent>)getInitializationByFilename:(NSString *)filename mimeType:(nullable NSString *)mimeType {
+    NSString *filePath = [self getInitializationFilePathByFilename:filename];
+    UInt64 totalLength = 0;
+    NSRange byteRange = { NSNotFound, NSNotFound };
+    [self _getIdentifierByFilename:filename totalLength:&totalLength byteRange:&byteRange];
+    BOOL isSubrange = byteRange.location != NSNotFound;
+    UInt64 length = [NSFileManager.defaultManager mcs_fileSizeAtPath:filePath];
+    return !isSubrange ? [MCSAssetContent.alloc initWithMimeType:mimeType filePath:filePath position:0 length:length] :
+                         [MCSAssetContent.alloc initWithMimeType:mimeType filePath:filePath position:byteRange.location length:byteRange.length];
+}
+- (nullable id<MCSAssetContent>)writeDataToInitialization:(NSData *)data forIdentifier:(NSString *)identifier mimeType:(nullable NSString *)mimeType error:(out NSError **)errorPtr {
+    return [self writeDataToInitialization:data forIdentifier:identifier mimeType:mimeType totalLength:data.length byteRange:NSMakeRange(NSNotFound, NSNotFound) error:errorPtr];
+}
+- (nullable id<MCSAssetContent>)writeDataToInitialization:(NSData *)data forIdentifier:(NSString *)identifier mimeType:(nullable NSString *)mimeType totalLength:(NSUInteger)totalLength byteRange:(NSRange)byteRange error:(out NSError **)errorPtr {
+    NSError *error = nil;
+    if ( [self _createDir:&error] ) {
+        BOOL isSubrange = byteRange.location != NSNotFound && totalLength != byteRange.length;
+        NSString *filename = !isSubrange ? [self _generateFilenameWithPrefix:INIT_FILE_NAME_PREFIX1 identifier:identifier totalLength:totalLength number:0] :
+                                           [self _generateFilenameWithPrefix:INIT_FILE_NAME_PREFIX2 identifier:identifier totalLength:totalLength number:0 byteRange:byteRange];
+        NSString *filePath = [self getInitializationFilePathByFilename:filename];
+        if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
+            return !isSubrange ? [MCSAssetContent.alloc initWithMimeType:mimeType filePath:filePath position:0 length:data.length] :
+                                 [MCSAssetContent.alloc initWithMimeType:mimeType filePath:filePath position:byteRange.location length:byteRange.length];
+        }
+    }
+    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+    return nil;
+}
+
 - (NSString *)getSubtitlesFilePath:(NSString *)filename {
     return [mRootDir stringByAppendingPathComponent:filename];
 }
@@ -85,37 +131,6 @@
     NSError *error = nil;
     if ( [self _createDir:&error] ) {
         NSString *filePath = [self getSubtitlesFilePath:identifier];
-        if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
-            return filePath;
-        }
-    }
-    if ( error != nil && errorPtr != NULL ) *errorPtr = error;
-    return nil;
-}
-
-- (nullable NSArray<NSString *> *)loadInitializationFilenames {
-    NSMutableArray<NSString *> *m = nil;
-    for ( NSString *filename in [NSFileManager.defaultManager contentsOfDirectoryAtPath:mRootDir error:NULL] ) {
-        if ( [filename hasPrefix:INIT_FILE_NAME_PREFIX] ) {
-            if ( m == nil ) m = NSMutableArray.array;
-            [m addObject:filename];
-        }
-    }
-    return m;
-}
-- (NSString *)getInitializationIdentifierByFilename:(NSString *)filename byteRange:(NSRange *)byteRangePtr {
-    return [self _getIdentifierByFilename:filename totalLength:NULL byteRange:byteRangePtr];
-}
-- (nullable NSString *)writeDataToInitialization:(NSData *)data forIdentifier:(NSString *)identifier error:(out NSError **)error {
-    return [self writeDataToInitialization:data forIdentifier:identifier byteRange:NSMakeRange(NSNotFound, NSNotFound) error:error];
-}
-- (nullable NSString *)writeDataToInitialization:(NSData *)data forIdentifier:(NSString *)identifier byteRange:(NSRange)byteRange error:(out NSError **)errorPtr {
-    NSError *error = nil;
-    if ( [self _createDir:&error] ) {
-        BOOL isSubrange = byteRange.location != NSNotFound;
-        NSString *filename = !isSubrange ? [self _generateFilenameWithPrefix:INIT_FILE_NAME_PREFIX1 identifier:identifier totalLength:0 number:0] :
-                                           [self _generateFilenameWithPrefix:INIT_FILE_NAME_PREFIX2 identifier:identifier totalLength:0 number:0 byteRange:byteRange];
-        NSString *filePath = [mRootDir stringByAppendingPathComponent:filename];
         if ( [data writeToFile:filePath options:NSDataWritingAtomic error:&error] ) {
             return filePath;
         }

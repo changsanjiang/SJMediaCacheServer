@@ -38,7 +38,7 @@
         [self contentDidReady:content range:NSMakeRange(0, content.length)];
     }
     else {
-        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable error) {
+        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSPlaylist]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, id<MCSDownloadResponse> _Nullable response, NSData * _Nullable data, NSError * _Nullable error) {
             @synchronized (self) {
                 [self _downloadDidCompleteWithTask:task data:data error:error];
             }
@@ -105,7 +105,7 @@
         [self contentDidReady:content range:NSMakeRange(0, content.length)];
     }
     else {
-        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable downloadError) {
+        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, id<MCSDownloadResponse> _Nullable response, NSData * _Nullable data, NSError * _Nullable downloadError) {
             @synchronized (self) {
                 [self _downloadDidCompleteWithData:data error:downloadError];
             }
@@ -170,7 +170,7 @@
         [self contentDidReady:content range:NSMakeRange(0, content.length)];
     }
     else {
-        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSSubtitles]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable downloadError) {
+        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSSubtitles]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, id<MCSDownloadResponse> _Nullable response, NSData * _Nullable data, NSError * _Nullable downloadError) {
             @synchronized (self) {
                 [self _downloadDidCompleteWithData:data error:downloadError];
             }
@@ -214,7 +214,6 @@
 @implementation HLSAssetInitializationContentReader {
     HLSAsset *mAsset;
     NSURLRequest *mRequest;
-    NSRange mByteRange;
     float mPriority;
     id<MCSDownloadTask> _Nullable mTask;
 }
@@ -224,7 +223,6 @@
     mAsset = asset;
     mRequest = request;
     mPriority = priority;
-    mByteRange = MCSRequestRange(MCSRequestGetContentRange(mRequest.allHTTPHeaderFields));
     return self;
 }
 
@@ -232,14 +230,15 @@
     
     MCSContentReaderDebugLog(@"%@: <%p>.prepare { request: %@\n };\n", NSStringFromClass(self.class), self, mRequest.mcs_description);
     
-    id<MCSAssetContent> content = [mAsset getInitializationContentWithOriginalURL:mRequest.URL byteRange:mByteRange];
+    NSRange byteRange = MCSRequestRange(MCSRequestGetContentRange(mRequest.allHTTPHeaderFields));
+    id<MCSAssetContent> content = [mAsset getInitializationContentWithOriginalURL:mRequest.URL byteRange:byteRange];
     if ( content != nil ) {
-        [self contentDidReady:content range:NSMakeRange(0, content.length)];
+        [self contentDidReady:content range:NSMakeRange(content.position, content.length)];
     }
     else {
-        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSInit]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, NSData * _Nullable data, NSError * _Nullable downloadError) {
+        mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSInit]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, id<MCSDownloadResponse> _Nullable response, NSData * _Nullable data, NSError * _Nullable downloadError) {
             @synchronized (self) {
-                [self _downloadDidCompleteWithData:data error:downloadError];
+                [self _downloadDidCompleteWithResponse:response data:data error:downloadError];
             }
         }];
     }
@@ -252,7 +251,7 @@
 #pragma mark - mark
 
 /// unlocked
-- (void)_downloadDidCompleteWithData:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
+- (void)_downloadDidCompleteWithResponse:(id<MCSDownloadResponse> _Nullable)response data:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
     if ( self.status == MCSReaderStatusAborted ) return;
     mTask = nil;
     
@@ -266,7 +265,7 @@
     
     id<MCSAssetContent> content = nil;
     if ( error == nil ) {
-        content = [mAsset createInitializationContentWithOriginalURL:mRequest.URL byteRange:mByteRange data:data error:&error]; // retain
+        content = [mAsset createInitializationContentWithOriginalURL:mRequest.URL response:response data:data error:&error]; // retain
     }
     
     if ( error != nil ) {

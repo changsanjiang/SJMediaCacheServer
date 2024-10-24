@@ -31,7 +31,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     id<MCSAssetContent> _Nullable mPlaylistContent;
     NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mAESKeys; // { identifier: content }
     NSMutableDictionary<NSString *, id<MCSAssetContent>> * _Nullable mInitializations; // { identifier: content }
-    NSMutableDictionary<NSString *, id<HLSItem>> *_Nullable mSegments; // { nodeIdentifier: item }
+    NSMutableDictionary<NSString *, id<HLSItem>> *_Nullable mSegmentItems; // { nodeIdentifier: item }
     HLSAssetSegmentNodeMap *mSegmentNodeMap; // ts
     
     HLSAsset *_Nullable mVariantStreamAsset;
@@ -237,12 +237,16 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_INIT];
 }
 
+- (NSString *)generateInitializationKeyWithIdentifier:(NSString *)initializationIdentifier byteRange:(NSRange)byteRange {
+    return byteRange.location == NSNotFound ? initializationIdentifier : [initializationIdentifier stringByAppendingFormat:@"_%lu_%lu", byteRange.location, byteRange.length];
+}
+
 - (NSString *)generateSegmentIdentifierWithOriginalURL:(NSURL *)originalURL {
     return [MCSURL.shared generateProxyIdentifierFromHLSOriginalURL:originalURL extension:HLS_EXTENSION_SEGMENT];
 }
 
 /// @param byteRange #EXT-X-BYTERANGE or { NSNotFound, NSNotFound }
-- (NSString *)generateSegmentNodeIdentifierWithSegmentIdentifier:(NSString *)segmentIdentifier requestHeaderByteRange:(NSRange)byteRange {
+- (NSString *)generateSegmentNodeIdentifierWithIdentifier:(NSString *)segmentIdentifier requestHeaderByteRange:(NSRange)byteRange {
     return byteRange.location == NSNotFound ? segmentIdentifier : [NSString stringWithFormat:@"%@_%lu_%lu", segmentIdentifier, byteRange.location, byteRange.length];
 }
 
@@ -302,8 +306,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     @synchronized (self) {
         NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
         id<MCSAssetContent> _Nullable content = mAESKeys != nil ? mAESKeys[identifier] : nil;
-        NSError *error = nil;
         if ( content == nil ) {
+            NSError *error = nil;
             NSString *filePath = [mProvider writeDataToAESKey:data forIdentifier:identifier error:&error];
             if ( filePath != nil ) {
                 content = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath position:0 length:data.length];
@@ -317,12 +321,35 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 }
 
 - (nullable id<MCSAssetContent>)getInitializationContentWithOriginalURL:(NSURL *)originalURL byteRange:(NSRange)byteRange {
-#warning next ...
+    @synchronized (self) {
+        NSString *identifier = [self generateInitializationIdentifierWithOriginalURL:originalURL];
+        NSString *initKey = [self generateInitializationKeyWithIdentifier:identifier byteRange:byteRange];
+        id<MCSAssetContent> _Nullable content = mInitializations != nil ? mInitializations[initKey] : nil;
+        return content != nil ? [content readwriteRetain] : nil;
+    }
 }
-- (nullable id<MCSAssetContent>)createInitializationContentWithOriginalURL:(NSURL *)originalURL byteRange:(NSRange)byteRange data:(NSData *)data error:(out NSError **)error {
-    
+- (nullable id<MCSAssetContent>)createInitializationContentWithOriginalURL:(NSURL *)originalURL response:(id<MCSDownloadResponse>)response data:(NSData *)data error:(out NSError **)errorPtr {
+    @synchronized (self) {
+        NSString *identifier = [self generateInitializationIdentifierWithOriginalURL:originalURL];
+        NSRange byteRange = MCSRequestRange(MCSRequestGetContentRange(response.originalRequest.allHTTPHeaderFields));
+        NSString *initKey = [self generateInitializationKeyWithIdentifier:identifier byteRange:byteRange];
+        id<MCSAssetContent> _Nullable content = mInitializations != nil ? mInitializations[initKey] : nil;
+        if ( content == nil ) {
+            NSError *error = nil;
+            BOOL isSubrange = byteRange.length != NSNotFound;
+            NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
+            UInt64 totalLength = response.totalLength;
+            content = !isSubrange ? [mProvider writeDataToInitialization:data forIdentifier:identifier mimeType:mimeType error:&error] :
+                                    [mProvider writeDataToInitialization:data forIdentifier:identifier mimeType:mimeType totalLength:totalLength byteRange:byteRange error:&error];
+            if ( content != nil ) {
+                if ( mInitializations == nil ) mInitializations = NSMutableDictionary.dictionary;
+                mInitializations[initKey] = content;
+            }
+            if ( error != nil && errorPtr != NULL ) *errorPtr = error;
+        }
+        return content != nil ? [content readwriteRetain] : nil;
+    }
 }
-
 
 - (nullable id<MCSAssetContent>)getSubtitlesContentWithOriginalURL:(NSURL *)originalURL {
     @synchronized (self) {
@@ -360,7 +387,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
 - (id<HLSAssetSegment>)getSegmentContentWithOriginalURL:(NSURL *)originalURL byteRange:(NSRange)byteRange {
     @synchronized (self) {
         NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:originalURL];
-        NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
+        NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
         HLSAssetSegmentNode *node = [mSegmentNodeMap nodeForIdentifier:nodeIdentifier];
         if ( node != nil ) {
             id<HLSAssetSegment> segment = node.fullOrIdleContent;
@@ -385,8 +412,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 id<HLSAssetSegment>content = nil;
                 NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:response.originalRequest.URL];
                 NSRange byteRange = MCSRequestRange(MCSRequestGetContentRange(response.originalRequest.allHTTPHeaderFields));
-                NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
-                id<HLSItem> item = mSegments[nodeIdentifier];
+                NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
+                id<HLSItem> item = mSegmentItems[nodeIdentifier];
                 NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
                 BOOL isSubrange = byteRange.length != NSNotFound;
@@ -414,7 +441,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         mParser = nil;
         mPlaylistContent = nil;
         mAESKeys = nil;
-        mSegments = nil;
+        mSegmentItems = nil;
         [mSegmentNodeMap removeAllNodes];
         if ( mVariantStreamAsset != nil ) {
             [mVariantStreamAsset clear];
@@ -498,34 +525,63 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
     // playlist content
     mPlaylistContent = [MCSAssetContent.alloc initWithFilePath:proxyPlaylistFilePath position:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:proxyPlaylistFilePath]];
     // find existing aes contents
-    [mParser.keys enumerateObjectsUsingBlock:^(id<HLSKey>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:obj.URI];
-        NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
-        NSString *filePath = [mProvider loadAESKeyFilePathForIdentifier:identifier];
-        if ( filePath != nil ) {
-            if ( mAESKeys == nil ) mAESKeys = NSMutableDictionary.dictionary;
-            mAESKeys[identifier] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath position:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
+    if ( mParser.keys != nil ) {
+        [mParser.keys enumerateObjectsUsingBlock:^(id<HLSKey>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:obj.URI];
+            NSString *identifier = [self generateAESKeyIdentifierWithOriginalURL:originalURL];
+            NSString *filePath = [mProvider loadAESKeyFilePathForIdentifier:identifier];
+            if ( filePath != nil ) {
+                if ( mAESKeys == nil ) mAESKeys = NSMutableDictionary.dictionary;
+                mAESKeys[identifier] = [MCSAssetContent.alloc initWithMimeType:HLS_AES_KEY_MIME_TYPE filePath:filePath position:0 length:[NSFileManager.defaultManager mcs_fileSizeAtPath:filePath]];
+            }
+        }];
+    }
+    // find existing init contents
+    if ( mParser.initializations != nil ) {
+        NSArray<NSString *> *existingInitFilenames = [mProvider loadInitializationFilenames];
+        if ( existingInitFilenames != nil ) {
+            NSMutableDictionary<NSString *, id<HLSInitialization>> *itemMap = NSMutableDictionary.dictionary;
+            [mParser.initializations enumerateObjectsUsingBlock:^(id<HLSInitialization>  _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {
+                NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
+                NSString *identifier = [self generateInitializationIdentifierWithOriginalURL:originalURL];
+                NSString *initKey = [self generateInitializationKeyWithIdentifier:identifier byteRange:item.byteRange];
+                itemMap[initKey] = item;
+            }];
+            [existingInitFilenames enumerateObjectsUsingBlock:^(NSString * _Nonnull filename, NSUInteger idx, BOOL * _Nonnull stop) {
+                NSRange byteRange = { NSNotFound, NSNotFound };
+                UInt64 totalLength = 0;
+                NSString *identifier = [mProvider getInitializationIdentifierByFilename:filename totalLength:&totalLength byteRange:&byteRange];
+                NSString *initKey = [self generateInitializationKeyWithIdentifier:identifier byteRange:byteRange];
+                id<HLSInitialization> item = itemMap[initKey];
+                if ( item != nil ) {
+                    NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
+                    NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
+                    id<MCSAssetContent> content = [mProvider getInitializationByFilename:filename mimeType:mimeType];
+                    if ( mInitializations == nil ) mInitializations = NSMutableDictionary.dictionary;
+                    mInitializations[initKey] = content;
+                }
+            }];
         }
-    }];
+    }
     
+    // find existing segment contents
     if ( mParser.segmentsCount != 0 ) {
-        mSegments = NSMutableDictionary.dictionary;
+        mSegmentItems = NSMutableDictionary.dictionary;
         [mParser.segments enumerateObjectsUsingBlock:^(id<HLSSegment>  _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {
             NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
             NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:originalURL];
             NSRange byteRange = item.byteRange;
-            NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
-            mSegments[nodeIdentifier] = item;
+            NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
+            mSegmentItems[nodeIdentifier] = item;
         }];
         
-        // find existing segment contents
         NSArray<NSString *> *existingFilenames = [mProvider loadSegmentFilenames];
-        if ( existingFilenames.count != 0 ) {
+        if ( existingFilenames != nil ) {
             [existingFilenames enumerateObjectsUsingBlock:^(NSString * _Nonnull filename, NSUInteger idx, BOOL * _Nonnull stop) {
                 NSRange byteRange = { NSNotFound, NSNotFound };
                 NSString *segmentIdentifier = [mProvider getSegmentIdentifierByFilename:filename byteRange:&byteRange];
-                NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithSegmentIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
-                id<HLSItem> item = mSegments[nodeIdentifier];
+                NSString *nodeIdentifier = [self generateSegmentNodeIdentifierWithIdentifier:segmentIdentifier requestHeaderByteRange:byteRange];
+                id<HLSItem> item = mSegmentItems[nodeIdentifier];
                 NSURL *originalURL = [MCSURL.shared restoreURLFromHLSProxyURI:item.URI];
                 NSString *mimeType = MCSMimeType(originalURL.path.pathExtension);
                 id<HLSAssetSegment> content = [mProvider getSegmentByFilename:filename mimeType:mimeType];

@@ -168,19 +168,19 @@ NS_ASSUME_NONNULL_BEGIN
                                        progress:(void(^_Nullable)(float progress))progressBlock
                                      completion:(void(^_Nullable)(NSError *_Nullable error))completionHandler; // 预取指定大小的数据
 
-/// Prefetch a designated number of files for the asset in the cache for future use. This method is primarily
+/// Prefetch a specified number of files for the asset in the cache for future use. This method is primarily
 /// intended for HLS resources, as M3U8 playlists typically contain multiple segment files.
 ///
-/// The designated number of prefetch files must be greater than 0. However, the actual number of segment
+/// The specified number of prefetch files must be greater than 0. However, the actual number of segment
 /// files cached may be less than the specified number, as the number of segment.ts files in the M3U8
-/// playlist can be fewer than the provided value. For HLS assets, this method will download the designated
+/// playlist can be fewer than the provided value. For HLS assets, this method will download the specified
 /// number of segment files to be cached, if available. If the provided URL corresponds to a FILE resource,
 /// since FILE only contains a single file, the entire FILE resource will be cached.
 ///
 /// This method also provides progress updates and a completion handler to notify when the prefetching is completed.
 ///
 /// @param URL            An instance of NSURL that references a media asset.
-/// @param prefetchFileCount The designated number of prefetch files. This value must be greater than 0.
+/// @param prefetchFileCount The specified number of prefetch files. This value must be greater than 0.
 /// @param progressBlock  A block that will be invoked when progress updates occur, reporting the
 ///                       current progress as a float value between 0.0 and 1.0.
 /// @param completionHandler A block that will be invoked when the current prefetching is completed.
@@ -207,7 +207,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SJMediaCacheServer (Request)
 /// The session configuration used for requests to the remote server.
-/// Users can customize various aspects of the network session, such as timeout intervals,
+/// You can customize various aspects of the network session, such as timeout intervals,
 /// caching policies, and protocol settings. This property must be set before the proxy service
 /// is activated; otherwise, the configuration will not take effect. If not set, the default
 /// session configuration will be used.
@@ -221,7 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) NSURLSessionConfiguration *sessionConfiguration;
 
 /// A block invoked when the local proxy server makes a request to the remote server.
-/// Users can modify the mutable request object directly, such as adding custom headers.
+/// You can modify the mutable request object directly, such as adding custom headers.
 ///
 /// @param request A mutable NSURLRequest object representing the outgoing request to the remote server.
 ///
@@ -263,7 +263,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSDictionary<NSString *, NSString *> *)HTTPAdditionalHeadersForAssetURL:(NSURL *)URL ofType:(MCSDataType)type;
 
 /// A block called when the task has finished collecting metrics.
-/// This block allows external users to handle the collected metrics during the task's execution.
+/// This block allows you to handle the collected metrics during the task's execution.
 /// If not set, no additional action is taken.
 ///
 /// @param session The session containing the task that finished collecting metrics.
@@ -283,7 +283,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SJMediaCacheServer (Convert)
 /// A block that determines the asset type (e.g., HLS or FILE) for a given URL.
-/// Users can provide custom logic to resolve the type of media asset based on the URL.
+/// You can provide custom logic to resolve the type of media asset based on the URL.
 /// If not set, the default behavior will be used.
 ///
 /// @param URL The URL for which the asset type needs to be resolved.

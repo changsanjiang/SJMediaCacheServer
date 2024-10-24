@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MCSContents : NSObject
  
-+ (id<MCSDownloadTask>)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority completion:(void(^)(id<MCSDownloadTask> task, NSData *_Nullable data, NSError *_Nullable error))completionHandler;
++ (id<MCSDownloadTask>)request:(NSURLRequest *)request networkTaskPriority:(float)networkTaskPriority completion:(void(^)(id<MCSDownloadTask> task, id<MCSDownloadResponse> _Nullable response, NSData *_Nullable data, NSError *_Nullable error))completionHandler;
 
 @end
 
