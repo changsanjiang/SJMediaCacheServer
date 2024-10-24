@@ -115,11 +115,11 @@ MCSMD5(NSString *str) {
     }
     
     // Check if the URL path contains HLS-specific extensions.
-    NSString *pathExtensionn = URL.path.pathExtension;
-    return ([pathExtensionn isEqualToString:HLS_EXTENSION_PLAYLIST] ||
-            [pathExtensionn isEqualToString:HLS_EXTENSION_SEGMENT] ||
-            [pathExtensionn isEqualToString:HLS_EXTENSION_KEY] ||
-            [pathExtensionn isEqualToString:HLS_EXTENSION_SUBTITLES] ) ? MCSAssetTypeHLS : MCSAssetTypeFILE;
+    NSString *pathExtension = URL.path.pathExtension;
+    return ([pathExtension isEqualToString:HLS_EXTENSION_PLAYLIST] ||
+            [pathExtension isEqualToString:HLS_EXTENSION_SEGMENT] ||
+            [pathExtension isEqualToString:HLS_EXTENSION_KEY] ||
+            [pathExtension isEqualToString:HLS_EXTENSION_SUBTITLES] ) ? MCSAssetTypeHLS : MCSAssetTypeFILE;
 }
 
 /// Encodes the given URL string into a base64 format.
