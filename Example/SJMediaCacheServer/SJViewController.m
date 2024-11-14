@@ -11,7 +11,7 @@
 #import <SJVideoPlayer/SJVideoPlayer.h>
 #import <Masonry/Masonry.h>
 
-static NSString *const DEMO_URL_FILE = @"https://xy2.v.netease.com/2024/0705/64ba5c013ee90db19d399f0255ab9103qt.mp4";
+static NSString *const DEMO_URL = @"http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8";
 
 @interface SJViewController ()
 @property (nonatomic, strong, nullable) SJVideoPlayer *player;
@@ -37,7 +37,7 @@ static NSString *const DEMO_URL_FILE = @"https://xy2.v.netease.com/2024/0705/64b
 }
 
 - (IBAction)play:(id)sender {
-    NSURL *playbackURL = [SJMediaCacheServer.shared proxyURLFromURL:[NSURL URLWithString:DEMO_URL_FILE]];
+    NSURL *playbackURL = [SJMediaCacheServer.shared proxyURLFromURL:[NSURL URLWithString:DEMO_URL]];
     _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
 }
 @end

@@ -67,7 +67,7 @@ typedef NS_ENUM(NSUInteger, HLSPrefetcherState) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, prefetchSize: %lu, prefetchFileCount: %lu, progress: %f };\n", mURL, NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize, (unsigned long)mPrefetchFileCount, self.progress];
+    return [NSString stringWithFormat:@"%@:<%p> { URL: %@, prefetchSize: %lu, prefetchFileCount: %lu, progress: %f };\n", NSStringFromClass(self.class), self, mURL, (unsigned long)mPrefetchSize, (unsigned long)mPrefetchFileCount, self.progress];
 }
 
 - (nullable id<MCSPrefetcherDelegate>)delegate {
