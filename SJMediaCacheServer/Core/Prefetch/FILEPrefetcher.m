@@ -38,7 +38,6 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
 @end
 
 @implementation FILEPrefetcher
-@synthesize delegate = _delegate;
 
 - (instancetype)initWithURL:(NSURL *)URL prefetchSize:(NSUInteger)bytes delegate:(nullable id<MCSPrefetcherDelegate>)delegate {
     NSParameterAssert(bytes != 0);
@@ -89,7 +88,7 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
                 
                 FILEAsset *asset = [MCSAssetManager.shared assetWithURL:mURL];
                 if ( asset == nil || ![asset isKindOfClass:FILEAsset.class] ) {
-                    [_delegate prefetcher:self didCompleteWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
+                    [mDelegate prefetcher:self didCompleteWithError:[NSError mcs_errorWithCode:MCSAbortError userInfo:@{
                         MCSErrorUserInfoObjectKey : self,
                         MCSErrorUserInfoReasonKey : [NSString stringWithFormat:@"无效的预加载请求: URL=%@", mURL]
                     }]];
@@ -98,7 +97,7 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
                 
                 if ( asset.isStored ) {
                     mProgress = 1;
-                    [_delegate prefetcher:self didCompleteWithError:nil];
+                    [mDelegate prefetcher:self didCompleteWithError:nil];
                     return;
                 }
                 
@@ -172,9 +171,7 @@ typedef NS_ENUM(NSUInteger, FILEPrefetcherState) {
                     
                     MCSPrefetcherDebugLog(@"%@: <%p>.prefetch { prefetchSize: %lu, total: %lu, progress: %f };\n", NSStringFromClass(self.class), self, (unsigned long)mPrefetchSize, (unsigned long)reader.response.totalLength, progress);
                                 
-                    if ( _delegate != nil ) {
-                        [_delegate prefetcher:self progressDidChange:progress];
-                    }
+                    [mDelegate prefetcher:self progressDidChange:progress];
                     
                     if ( mCurReader.status == MCSReaderStatusFinished ) {
                         [self _readDidFinish:reader];
