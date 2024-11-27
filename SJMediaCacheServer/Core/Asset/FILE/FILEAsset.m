@@ -160,6 +160,9 @@
             NSString *pathExtension = response.pathExtension;
             NSUInteger totalLength = response.totalLength;
             NSUInteger offset = response.range.location;
+            
+            if ( totalLength == NSUIntegerMax ) return nil;
+            
             if ( !mMetadataReady ) {
                 mMetadataReady = YES;
                 _totalLength = totalLength;

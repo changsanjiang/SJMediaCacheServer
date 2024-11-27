@@ -12,6 +12,7 @@
 #import "MCSUtils.h"
 #import "MCSLogger.h"
 #import "NSURLRequest+MCS.h"
+#import "MCSConsts.h"
 
 @interface NSURLSessionTask (MCSDownloadExtended)<MCSDownloadTask>
 
@@ -58,15 +59,26 @@
         mDefaultResponseHandler = ^id<MCSDownloadResponse> _Nullable (NSURLSessionTask *task, NSURLResponse *response) {
             if ( ![response isKindOfClass:NSHTTPURLResponse.class] ) return nil;
             NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
-            MCSResponseContentRange contentRange = MCSResponseGetContentRange(res);
-            if ( MCSResponseRangeIsUndefined(contentRange) ) return nil;
-            NSRange range = MCSResponseRange(contentRange);
-            NSUInteger totalLength = contentRange.totalLength;
-
             NSInteger statusCode = res.statusCode;
             NSString *_Nullable contentType = MCSResponseGetContentType(res);
             NSString *_Nullable pathExtension = MCSSuggestedPathExtension(res);
-            return [MCSDownloadResponse.alloc initWithOriginalRequest:task.originalRequest currentRequest:task.currentRequest statusCode:statusCode pathExtension:pathExtension totalLength:totalLength range:range contentType:contentType];
+            switch (statusCode) {
+                case 206: {
+                    MCSResponseContentRange contentRange = MCSResponseGetContentRange(res);
+                    if ( MCSResponseRangeIsUndefined(contentRange) ) return nil;
+                    NSRange range = MCSResponseRange(contentRange);
+                    NSUInteger totalLength = contentRange.totalLength;
+                    return [MCSDownloadResponse.alloc initWithOriginalRequest:task.originalRequest currentRequest:task.currentRequest statusCode:statusCode pathExtension:pathExtension totalLength:totalLength range:range contentType:contentType];
+                }
+                    break;
+                case 200: {
+                    NSUInteger totalLength = MCSResponseGetContentLength(res) ?: NSUIntegerMax;
+                    NSRange range = NSMakeRange(0, totalLength);
+                    return [MCSDownloadResponse.alloc initWithOriginalRequest:task.originalRequest currentRequest:task.currentRequest statusCode:statusCode pathExtension:pathExtension totalLength:totalLength range:range contentType:contentType];
+                }
+                    break;
+                default: return nil;
+            }
         };
         _responseHandler = mDefaultResponseHandler;
     }

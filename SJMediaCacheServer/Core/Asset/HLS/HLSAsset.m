@@ -408,6 +408,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         case MCSDataTypeFILEMask:
         case MCSDataTypeFILE: return nil; /* return nil; */
         case MCSDataTypeHLSSegment: { // only segment
+            if ( response.totalLength == NSUIntegerMax ) return nil;
+            
             @synchronized (self) {
                 id<HLSAssetSegment>content = nil;
                 NSString *segmentIdentifier = [self generateSegmentIdentifierWithOriginalURL:response.originalRequest.URL];

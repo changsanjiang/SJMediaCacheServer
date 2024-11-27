@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark -
 
 @protocol MCSResponse <NSObject>
-@property (nonatomic, readonly) NSUInteger totalLength;
+@property (nonatomic, readonly) NSUInteger totalLength; // 200请求时, NSUIntegerMax表示服务器未提供content-length;
 @property (nonatomic, readonly) NSRange range; // 206请求时length不为0
 @property (nonatomic, copy, readonly) NSString *contentType; // default is "application/octet-stream"
 @end
