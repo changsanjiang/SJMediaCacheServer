@@ -80,11 +80,12 @@
 - (UInt64)countOfBytesNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
     @synchronized (self) {
         __block UInt64 size = 0;
-        [assets enumerateKeysAndObjectsUsingBlock:^(MCSAssetTypeNumber * _Nonnull key, NSArray<MCSAssetIDNumber *> * _Nonnull list, BOOL * _Nonnull stop) {
-            for ( NSString *name in [self _queryAssetNamesInTableForType:key.integerValue assetsNotIn:list] ) {
-                size += [NSFileManager.defaultManager mcs_directorySizeAtPath:[MCSRootDirectory assetPathForFilename:name]];
-            }
-        }];
+        for ( NSString *name in [self _queryAssetNamesInTableForType:MCSAssetTypeFILE assetsNotIn:assets[@(MCSAssetTypeFILE)] ?: [NSArray arrayWithObject:@(0)]] ) {
+            size += [NSFileManager.defaultManager mcs_directorySizeAtPath:[MCSRootDirectory assetPathForFilename:name]];
+        }
+        for ( NSString *name in [self _queryAssetNamesInTableForType:MCSAssetTypeHLS assetsNotIn:assets[@(MCSAssetTypeHLS)] ?: [NSArray arrayWithObject:@(0)]] ) {
+            size += [NSFileManager.defaultManager mcs_directorySizeAtPath:[MCSRootDirectory assetPathForFilename:name]];
+        }
         return size;
     }
 }
@@ -92,11 +93,12 @@
 - (UInt64)countOfBytesIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
     @synchronized (self) {
         __block UInt64 size = 0;
-        [assets enumerateKeysAndObjectsUsingBlock:^(MCSAssetTypeNumber * _Nonnull key, NSArray<MCSAssetIDNumber *> * _Nonnull list, BOOL * _Nonnull stop) {
-            for ( NSString *name in [self _queryAssetNamesInTableForType:key.integerValue assetsIn:list] ) {
-                size += [NSFileManager.defaultManager mcs_directorySizeAtPath:[MCSRootDirectory assetPathForFilename:name]];
-            }
-        }];
+        for ( NSString *name in [self _queryAssetNamesInTableForType:MCSAssetTypeFILE assetsIn:assets[@(MCSAssetTypeFILE)] ?: [NSArray arrayWithObject:@(0)]] ) {
+            size += [NSFileManager.defaultManager mcs_directorySizeAtPath:[MCSRootDirectory assetPathForFilename:name]];
+        }
+        for ( NSString *name in [self _queryAssetNamesInTableForType:MCSAssetTypeHLS assetsIn:assets[@(MCSAssetTypeHLS)] ?: [NSArray arrayWithObject:@(0)]] ) {
+            size += [NSFileManager.defaultManager mcs_directorySizeAtPath:[MCSRootDirectory assetPathForFilename:name]];
+        }
         return size;
     }
 }
@@ -398,16 +400,30 @@
 }
 
 - (nullable NSArray<NSString *> *)_queryAssetNamesInTableForType:(MCSAssetType)type assetsIn:(NSArray<MCSAssetIDNumber *> *)assetIds {
-    NSArray<NSDictionary *> *values = [mSqlite3 queryDataForClass:MCSAssetUsageLog.class resultColumns:@[@"name"] conditions:@[
-        [SJSQLite3Condition.alloc initWithCondition:[NSString stringWithFormat:@"(assetType = %ld AND asset IN (%@))", type, assetIds]]
-    ] orderBy:nil error:NULL];
+    NSString *assetTableName;
+    switch (type) {
+        case MCSAssetTypeFILE:
+            assetTableName = @"FILEAsset";
+            break;
+        case MCSAssetTypeHLS:
+            assetTableName = @"HLSAsset";
+            break;
+    }
+    NSArray<SJSQLite3RowData *> *values = [mSqlite3 exec:[NSString stringWithFormat:@"SELECT name FROM %@ INNER JOIN MCSAssetUsageLog ON (MCSAssetUsageLog.assetType = %ld AND MCSAssetUsageLog.asset IN (%@)) WHERE MCSAssetUsageLog.asset = %@.id;", assetTableName, type, assetIds, assetTableName] error:NULL];
     return SJFoundationExtendedValuesForKey(@"name", values);
 }
 
 - (nullable NSArray<NSString *> *)_queryAssetNamesInTableForType:(MCSAssetType)type assetsNotIn:(NSArray<MCSAssetIDNumber *> *)assetIds {
-    NSArray<NSDictionary *> *values = [mSqlite3 queryDataForClass:MCSAssetUsageLog.class resultColumns:@[@"name"] conditions:@[
-        [SJSQLite3Condition.alloc initWithCondition:[NSString stringWithFormat:@"(assetType = %ld AND asset NOT IN (%@))", type, assetIds]]
-    ] orderBy:nil error:NULL];
+    NSString *assetTableName;
+    switch (type) {
+        case MCSAssetTypeFILE:
+            assetTableName = @"FILEAsset";
+            break;
+        case MCSAssetTypeHLS:
+            assetTableName = @"HLSAsset";
+            break;
+    }
+    NSArray<SJSQLite3RowData *> *values = [mSqlite3 exec:[NSString stringWithFormat:@"SELECT name FROM %@ INNER JOIN MCSAssetUsageLog ON (MCSAssetUsageLog.assetType = %ld AND MCSAssetUsageLog.asset NOT IN (%@)) WHERE MCSAssetUsageLog.asset = %@.id;", assetTableName, type, assetIds, assetTableName] error:NULL];
     return SJFoundationExtendedValuesForKey(@"name", values);
 }
 

@@ -249,22 +249,22 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
 
 @implementation NSString (HLS)
 - (nullable NSString *)hls_findValueForAttribute:(NSString *)name startPos:(NSUInteger *)startPosPtr {
-    NSArray<NSString *> *attributePairs = [self componentsSeparatedByString:@","];
-    NSString *prefix = [name stringByAppendingString:@"="];
-    __block NSUInteger startPos = 0;
-    NSString *pair = [attributePairs mcs_firstOrNull:^BOOL(NSString * _Nonnull obj) {
-        if ( [obj hasPrefix:prefix] ) return YES;
-        startPos += obj.length + 1; // + @",".length();
-        return NO;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"([A-Z0-9\\-]+)=((?:\"[^\"]+\")|(?:[^,]+))" options:kNilOptions error:NULL];
+    NSArray<NSTextCheckingResult *> *results = [regex matchesInString:self options:kNilOptions range:NSMakeRange(0, self.length)];
+    NSTextCheckingResult *result = [results mcs_firstOrNull:^BOOL(NSTextCheckingResult * _Nonnull obj) {
+        NSString *matchedName = obj.numberOfRanges == 3 ? [self substringWithRange:[obj rangeAtIndex:1]] : nil;
+        return matchedName && [matchedName isEqualToString:name];
     }];
-    if ( pair != nil ) {
-        startPos += prefix.length;
-        NSString *value = [pair substringFromIndex:name.length + 1];
+    
+    if ( result != nil ) {
+        NSRange valueRange = [result rangeAtIndex:2];
+        NSUInteger valuePos = valueRange.location;
+        NSString *value = [self substringWithRange:valueRange];
         if ( [value hasPrefix:@"\""] ) { // 移除双引号;
-            startPos += 1; // @"\"".length();
-            value = [value stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
+            valuePos += 1; // @"\"".length();
+            value = [value substringWithRange:NSMakeRange(1, value.length - 2)];
         }
-        if ( startPosPtr != NULL ) *startPosPtr = startPos;
+        if ( startPosPtr != NULL ) *startPosPtr = valuePos;
         return value;
     }
     return nil;
@@ -285,53 +285,14 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
 }
 
 - (NSString *)hls_restoreOriginalUrl:(NSURL *)resourceURL {
-    static NSString *const HLS_PREFIX_LOCALHOST = @"http://localhost";
-    static NSString *const HLS_PREFIX_DIR_ROOT = @"/";
-    static NSString *const HLS_PREFIX_DIR_PARENT = @"../";
-    static NSString *const HLS_PREFIX_DIR_CURRENT = @"./";
-     
-    NSString *url = nil;
-    /// /video/name.m3u8
-    ///
-    if      ( [self hasPrefix:HLS_PREFIX_DIR_ROOT] ) {
-        NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", resourceURL.scheme, resourceURL.host]];
-        NSString *subpath = self;
-        url = [rootDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
-    }
-    /// ../video/name.m3u8
-    /// ../../video/name.m3u8
-    ///
-    else if ( [self hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
-        NSURL *curDir = resourceURL.mcs_URLByRemovingLastPathComponentAndQuery;
-        NSURL *parentDir = curDir;
-        NSString *subpath = self;
-        while ( [subpath hasPrefix:HLS_PREFIX_DIR_PARENT] ) {
-            parentDir = parentDir.mcs_URLByRemovingLastPathComponentAndQuery;
-            subpath = [subpath substringFromIndex:HLS_PREFIX_DIR_PARENT.length];
+    if ( [self containsString:@"://"] ) {
+        NSString *localhost = @"http://localhost";
+        if ( [self hasPrefix:localhost] ) {
+            return [NSURL URLWithString:[self substringFromIndex:localhost.length] relativeToURL:resourceURL].absoluteString;
         }
-        url = [parentDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
+        return self;
     }
-    /// ./video/name.m3u8
-    else if ( [self hasPrefix:HLS_PREFIX_DIR_CURRENT] ) {
-        NSURL *curDir = resourceURL.mcs_URLByRemovingLastPathComponentAndQuery;
-        NSString *subpath = [self substringFromIndex:HLS_PREFIX_DIR_CURRENT.length];
-        url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
-    }
-    /// http://localhost
-    else if ( [self hasPrefix:HLS_PREFIX_LOCALHOST] ) {
-        NSURL *rootDir = [NSURL URLWithString:[NSString stringWithFormat:@"%@://%@", resourceURL.scheme, resourceURL.host]];
-        NSString *subpath = [self substringFromIndex:HLS_PREFIX_LOCALHOST.length];
-        url = [rootDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
-    }
-    else if ( [self containsString:@"://"] ) {
-        url = self;
-    }
-    else {
-        NSURL *curDir = resourceURL.mcs_URLByRemovingLastPathComponentAndQuery;
-        NSString *subpath = self;
-        url = [curDir mcs_URLByAppendingPathComponent:subpath].absoluteString;
-    }
-    return url;
+    return [NSURL URLWithString:self relativeToURL:resourceURL].absoluteString;
 }
 @end
 
@@ -394,6 +355,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
                     HLSRenditionGroup *group = renditionGroups[key];
                     if ( group == nil ) {
                         group = [HLSRenditionGroup.alloc init];
+                        group.renditionType = rendition.renditionType;
                         renditionGroups[key] = group;
                     }
                     [group addRendition:rendition];
@@ -493,13 +455,19 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
     NSInteger lastLineIndex = lines.count - 1;
     __block NSUInteger offset = 0;
     [lines enumerateObjectsUsingBlock:^(NSString *line, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ( shouldTrim && trimmedPlaylist.length != 0 ) [trimmedPlaylist appendString:@"\n"];
+        
         // 去除行首尾的空白字符; 每一行要么是一个标签(以 #EXT 开头), 要么是一个 URI
-        NSString *trimmedLine = shouldTrim ? [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] : line;
+        NSString *curLine = shouldTrim ? [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] : line;
         // 跳过空行和注释
-        if      ( [trimmedLine hasPrefix:@"#EXT"] ) [self handleTag:trimmedLine offset:offset parsingItems:parsingItems context:ctx]; // 这是一个标签行
-        else if ( ![trimmedLine isEqualToString:@""] ) [self handleURI:trimmedLine offset:offset context:ctx]; // 这是一个 URI 行
-        if ( shouldTrim ) idx != lastLineIndex ? [trimmedPlaylist appendFormat:@"%@\n", trimmedLine] : [trimmedPlaylist appendString:trimmedLine];
-        offset += trimmedLine.length + 1; // + @"\n"
+        BOOL isTag = [curLine hasPrefix:@"#EXT"];
+        BOOL isComments = !isTag && [curLine hasPrefix:@"#"];
+        BOOL isUri = !isTag && !isComments && curLine.length > 0;
+        if      ( isTag ) [self handleTag:curLine offset:offset parsingItems:parsingItems context:ctx]; // 这是一个标签行
+        else if ( isUri ) [self handleURI:curLine offset:offset context:ctx]; // 这是一个 URI 行
+        
+        if ( shouldTrim && !isComments ) [trimmedPlaylist appendString:curLine];
+        offset = (shouldTrim ? trimmedPlaylist.length : (offset + curLine.length)) + 1; // + @"\n"
     }];
     return shouldTrim ? trimmedPlaylist : playlist;
 }
@@ -520,7 +488,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
     /// #EXTINF:8.766667,
     /// #EXT-X-BYTERANGE:9194528@9662832
     /// segment.ts
-    else if ( [tagLine hasPrefix:EXT_X_BYTERANGE] ) {
+    else if ( [tagLine hasPrefix:EXT_X_BYTERANGE]  ) {
         HLSSegment *segment = ctx[HLS_CTX_LAST_ITEM];
         NSParameterAssert([segment isKindOfClass:HLSSegment.class]);
         NSString *byteRange = [tagLine substringFromIndex:EXT_X_BYTERANGE.length];
