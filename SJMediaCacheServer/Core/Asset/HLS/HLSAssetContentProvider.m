@@ -197,6 +197,7 @@
 
 - (void)clear {
     [NSFileManager.defaultManager removeItemAtPath:mRootDir error:NULL];
+    mDirCreated = NO;
 }
 
 #pragma mark - mark

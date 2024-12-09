@@ -210,9 +210,9 @@ typedef NS_ENUM(NSUInteger, MCSLimit) {
     return [_sqlite3 objectsForClass:MCSProtectedCacheItem.class conditions:@[
         [SJSQLite3Condition conditionWithColumn:@"assetType" value:@(asset.type)],
         [SJSQLite3Condition conditionWithColumn:@"asset" value:@(asset.id)]
-    ] orderBy:nil error:NULL].count == 0;
+    ] orderBy:nil error:NULL].count != 0;
 }
-
+ 
 - (void)_removeAssetsForLimit:(MCSLimit)limit {
     NSInteger count = MCSAssetManager.shared.countOfAllAssets - _countOfProtectedAssets;
 
