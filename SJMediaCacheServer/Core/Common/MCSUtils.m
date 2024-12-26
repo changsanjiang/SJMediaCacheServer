@@ -224,7 +224,7 @@ MCSSuggestedPathExtension(NSHTTPURLResponse *response) {
         return extension;
     
     NSString *contentType = MCSResponseGetContentType(response);
-    return contentType.lastPathComponent;
+    return [contentType componentsSeparatedByString:@";"].firstObject.lastPathComponent;
 }
 
 #ifdef DEBUG
