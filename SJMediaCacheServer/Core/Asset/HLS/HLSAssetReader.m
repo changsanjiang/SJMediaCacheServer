@@ -99,6 +99,7 @@
                 else {
                     mReader = [MCSAssetHTTPContentReader.alloc initWithAsset:mAsset request:mRequest rangeInAsset:content.byteRange contentReadwrite:content networkTaskPriority:_networkTaskPriority dataType:MCSDataTypeHLSSegment delegate:self];
                 }
+                [content readwriteRelease];
             }
                 break;
             case MCSDataTypeHLSSubtitles: {
