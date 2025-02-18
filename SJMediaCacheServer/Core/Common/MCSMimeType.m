@@ -17,7 +17,7 @@ MCSMimeTypeFromFileAtPath(NSString *path) {
 
 FOUNDATION_EXPORT NSString *
 MCSMimeType(NSString *filenameExtension) {
-    assert(filenameExtension != nil);
+    if ( filenameExtension == nil ) filenameExtension = @"";
     NSString *mimeType = nil;
     if ( @available(iOS 14.0, *) ) {
         UTType *type = [UTType typeWithFilenameExtension:filenameExtension];

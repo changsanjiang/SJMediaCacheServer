@@ -327,6 +327,7 @@
     if ( exporter == nil ) {
         MCSAssetType type = [MCSURL.shared assetTypeForURL:URL];
         exporter = [MCSExporter.alloc initWithURLString:URL.absoluteString name:name type:type];
+        exporter.delegate = self;
         [MCSCacheManager.shared setProtected:YES forCacheWithURL:URL];
         [mSqlite3 save:exporter error:NULL];
         mExporters[name] = exporter;
@@ -345,6 +346,7 @@
         ] orderBy:nil error:NULL].firstObject;
         // add into memory
         if ( exporter != nil ) {
+            exporter.delegate = self;
             mExporters[name] = exporter;
         }
     }
