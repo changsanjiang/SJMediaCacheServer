@@ -28,6 +28,10 @@ NS_ASSUME_NONNULL_BEGIN
                                  maximumLength:(uint32_t)maximumLength
                                     completion:(nw_connection_receive_completion_t)completion;
 
+- (dispatch_data_t)createData:(NSData *)data;
+- (dispatch_data_t)createDataWithString:(NSString *)string;
+- (dispatch_data_t)createDataWithString:(NSString *)string encoding:(NSStringEncoding)encoding;
+
 - (void)sendData:(dispatch_data_t)data
          context:(nw_content_context_t)context
       isComplete:(bool)isComplete

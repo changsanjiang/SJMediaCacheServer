@@ -69,6 +69,16 @@
     nw_connection_receive(mConnection, minimumIncompleteLength, maximumLength, completion);
 }
 
+- (dispatch_data_t)createData:(NSData *)data {
+    return dispatch_data_create(data.bytes, data.length, mQueue, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
+}
+- (dispatch_data_t)createDataWithString:(NSString *)string {
+    return [self createDataWithString:string encoding:NSUTF8StringEncoding];
+}
+- (dispatch_data_t)createDataWithString:(NSString *)string encoding:(NSStringEncoding)encoding {
+    return [self createData:[string dataUsingEncoding:encoding]];
+}
+
 - (void)sendData:(dispatch_data_t)data
          context:(nw_content_context_t)context
       isComplete:(_Bool)isComplete

@@ -60,12 +60,10 @@ static NSString *const DEMO_URL = @"http://devimages.apple.com/iphone/samples/bi
             NSLog(@"收到消息: %@, %p", receivedMessage, connection);
             
             // 发送响应
-            NSData *sendMessage = [@"HTTP/1.1 500 Internal Server Error\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding];
-            dispatch_data_t data = dispatch_data_create(sendMessage.bytes, sendMessage.length, connection.queue, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
+            dispatch_data_t data = [connection createDataWithString:@"HTTP/1.1 500 Internal Server Error\r\n\r\n"];
             [connection sendData:data context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:true completion:^(nw_error_t  _Nullable error) {
-                
+                [connection close];
             }];
-            [connection close];
         }];
     };
     [_socketServer start];
@@ -91,6 +89,7 @@ static NSString *const DEMO_URL = @"http://devimages.apple.com/iphone/samples/bi
 
     NSMutableURLRequest *req = [NSMutableURLRequest.alloc initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu/%ld", _socketServer.port, random()]]];
     req.HTTPMethod = @"HEAD";
+    NSLog(@"req: %@", req);
     [[NSURLSession.sharedSession dataTaskWithRequest:req completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         NSLog(@"response= %@", response);
     }] resume];
