@@ -13,6 +13,8 @@
 #import <Network/Network.h>
 
 #import <SJMediaCacheServer/MCTcpSocketServer.h>
+#import <SJMediaCacheServer/MCHttpRequest.h>
+#import <SJMediaCacheServer/MCHttpResponse.h>
 
 static NSString *const DEMO_URL = @"http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8";
 
@@ -43,28 +45,26 @@ static NSString *const DEMO_URL = @"http://devimages.apple.com/iphone/samples/bi
     }];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownloader;
     
     _socketServer = [MCTcpSocketServer.alloc init];
     __weak typeof(self) _self = self;
-    _socketServer.onListen = ^(uint16_t port) {
-        __strong typeof(_self) self = _self;
-        if ( self == nil ) return;
-        
-    };
     _socketServer.onConnect = ^(MCTcpSocketConnection * _Nonnull connection) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
-        [connection receiveDataWithMinimumIncompleteLength:1 maximumLength:1024 completion:^(dispatch_data_t  _Nullable content, nw_content_context_t  _Nullable context, bool is_complete, nw_error_t  _Nullable error) {
-            NSString *receivedMessage = [NSString.alloc initWithData:(NSData *)content encoding:NSUTF8StringEncoding];
-            NSLog(@"收到消息: %@, %p", receivedMessage, connection);
-            
-            // 发送响应
-            dispatch_data_t data = [connection createDataWithString:@"HTTP/1.1 500 Internal Server Error\r\n\r\n"];
-            [connection sendData:data context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:true completion:^(nw_error_t  _Nullable error) {
-                [connection close];
-            }];
-        }];
+        [MCHttpResponse processConnection:connection];
+        
+        
+//        [connection receiveDataWithMinimumIncompleteLength:1 maximumLength:1024 completion:^(dispatch_data_t  _Nullable content, nw_content_context_t  _Nullable context, bool is_complete, nw_error_t  _Nullable error) {
+//            NSString *receivedMessage = [NSString.alloc initWithData:(NSData *)content encoding:NSUTF8StringEncoding];
+//            NSLog(@"收到消息: %@, %p", receivedMessage, connection);
+//            
+//            // 发送响应
+//            dispatch_data_t data = [connection createDataWithString:@"HTTP/1.1 500 Internal Server Error\r\n\r\n"];
+//            [connection sendData:data context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:true completion:^(nw_error_t  _Nullable error) {
+//                [connection close];
+//            }];
+//        }];
     };
     [_socketServer start];
 }
@@ -75,9 +75,11 @@ static NSString *const DEMO_URL = @"http://devimages.apple.com/iphone/samples/bi
 #endif
 
     
-//    NSURL *playbackURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", _server.port]];
-//    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+//    NSURL *playbackURL = [SJMediaCacheServer.shared proxyURLFromURL:[NSURL URLWithString:DEMO_URL]];
     
+    NSURL *playbackURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu/url_proxy/iphone/samples/bipbop/bipbopall.m3u8?url=aHR0cDovL2RldmltYWdlcy5hcHBsZS5jb20vaXBob25lL3NhbXBsZXMvYmlwYm9wL2JpcGJvcGFsbC5tM3U4", _socketServer.port]];
+    _player.URLAsset = [SJVideoPlayerURLAsset.alloc initWithURL:playbackURL startPosition:0];
+
 //    [self connectToServer];
     [self test];
 }
@@ -87,8 +89,10 @@ static NSString *const DEMO_URL = @"http://devimages.apple.com/iphone/samples/bi
     NSLog(@"%d : %s", __LINE__, sel_getName(_cmd));
 #endif
 
-    NSMutableURLRequest *req = [NSMutableURLRequest.alloc initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu/%ld", _socketServer.port, random()]]];
-    req.HTTPMethod = @"HEAD";
+
+    
+    NSMutableURLRequest *req = [NSMutableURLRequest.alloc initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu/url_proxy/iphone/samples/bipbop/bipbopall.m3u8?url=aHR0cDovL2RldmltYWdlcy5hcHBsZS5jb20vaXBob25lL3NhbXBsZXMvYmlwYm9wL2JpcGJvcGFsbC5tM3U4", _socketServer.port]]];
+    req.HTTPMethod = @"GET";
     NSLog(@"req: %@", req);
     [[NSURLSession.sharedSession dataTaskWithRequest:req completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         NSLog(@"response= %@", response);

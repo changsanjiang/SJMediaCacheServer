@@ -24,8 +24,6 @@
     
     __weak typeof(self) _self = self;
     nw_connection_set_state_changed_handler(connection, ^(nw_connection_state_t state, nw_error_t  _Nullable error) {
-        __strong typeof(_self) self = _self;
-        if ( self == nil ) return;
 #ifdef DEBUG
         switch (state) {
             case nw_connection_state_invalid:
@@ -48,7 +46,9 @@
                 break;
         }
 #endif
-        
+        __strong typeof(_self) self = _self;
+        if ( self == nil ) return;
+
         if ( self->_onStateChange ) self->_onStateChange(self, state, error);
     });
     nw_connection_set_queue(connection, queue);
@@ -61,6 +61,10 @@
 
 - (void)dealloc {
     nw_connection_cancel(mConnection);
+}
+
+- (void)start {
+    nw_connection_start(mConnection);
 }
 
 - (void)receiveDataWithMinimumIncompleteLength:(uint32_t)minimumIncompleteLength
@@ -122,14 +126,20 @@
     return atomic_load_explicit(&mRunning, memory_order_relaxed);
 }
 
-- (void)start {
+- (BOOL)start {
     @synchronized (self) {
         if ( self.isRunning ) {
-            return;
+            return YES;
+        }
+        
+        [self _startServer];
+        
+        if ( self.port == 0 ) {
+            return NO;
         }
         
         atomic_store(&mRunning, YES);
-        [self _restartServer];
+        return YES;
     }
 }
 
@@ -148,87 +158,100 @@
     }
 }
 
-- (void)_restartServer {
-    @synchronized (self) {
-        if ( mListener ) {
-            nw_listener_cancel(mListener);
-        }
-        
-        nw_parameters_t parameters = nw_parameters_create_secure_tcp(NW_PARAMETERS_DISABLE_PROTOCOL, NW_PARAMETERS_DEFAULT_CONFIGURATION);
-        nw_parameters_set_local_only(parameters, true);
-        
-        uint16_t port = self.port;
-        if ( port == 0 ) {
-            mListener = nw_listener_create(parameters);
-        }
-        else {
-            char port_str[6];
-            sprintf(port_str, "%hu", port);
-            mListener = nw_listener_create_with_port(port_str, parameters);
-        }
-        nw_listener_set_new_connection_limit(mListener, NW_LISTENER_INFINITE_CONNECTION_LIMIT);
-        nw_listener_set_queue(mListener, mServerQueue);
-        __weak typeof(self) _self = self;
-        nw_listener_set_state_changed_handler(mListener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
-            __strong typeof(_self) self = _self;
-            if ( self == nil ) return;
+
+- (void)_startServer {
+    [self _startServerWithPort:0];
+}
+
+- (void)_startServerWithPort:(uint16_t)port {
+    __block dispatch_semaphore_t sync = dispatch_semaphore_create(0);
+    char port_str[6];
+    sprintf(port_str, "%hu", port);
+
+    nw_parameters_t parameters = nw_parameters_create_secure_tcp(NW_PARAMETERS_DISABLE_PROTOCOL, NW_PARAMETERS_DEFAULT_CONFIGURATION);
+    nw_endpoint_t endpoint = nw_endpoint_create_host("127.0.0.1", port_str);
+    nw_parameters_set_local_endpoint(parameters, endpoint);
+    mListener = nw_listener_create(parameters);
+    nw_listener_set_new_connection_limit(mListener, NW_LISTENER_INFINITE_CONNECTION_LIMIT);
+    nw_listener_set_queue(mListener, mServerQueue);
+    __weak typeof(self) _self = self;
+    nw_listener_set_state_changed_handler(mListener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
+        __strong typeof(_self) self = _self;
+        if ( self == nil ) return;
 #ifdef DEBUG
-            switch (state) {
-                case nw_listener_state_invalid:
-                    NSLog(@"nw_listener_state_invalid");
-                    break;
-                case nw_listener_state_waiting:
-                    NSLog(@"nw_listener_state_waiting");
-                    break;
-                case nw_listener_state_ready:
-                    NSLog(@"nw_listener_state_ready");
-                    break;
-                case nw_listener_state_failed:
-                    NSLog(@"nw_listener_state_failed");
-                    break;
-                case nw_listener_state_cancelled:
-                    NSLog(@"nw_listener_state_cancelled");
-                    break;
-            }
+        switch (state) {
+            case nw_listener_state_invalid:
+                NSLog(@"nw_listener_state_invalid");
+                break;
+            case nw_listener_state_waiting:
+                NSLog(@"nw_listener_state_waiting");
+                break;
+            case nw_listener_state_ready:
+                NSLog(@"nw_listener_state_ready");
+                break;
+            case nw_listener_state_failed:
+                NSLog(@"nw_listener_state_failed");
+                break;
+            case nw_listener_state_cancelled:
+                NSLog(@"nw_listener_state_cancelled");
+                break;
+        }
 #endif
-            
-            @synchronized (self) {
-                switch (state) {
-                    case nw_listener_state_ready: {
-                        if ( self.port == 0 ) {
-                            uint16_t port = nw_listener_get_port(self->mListener);
-                            atomic_store(&self->mPort, port);
-                            if ( self->_onListen ) self->_onListen(port);
-                        }
-                    }
-                        break;
-                    case nw_listener_state_waiting:
-                        break;
-                    case nw_listener_state_invalid:
-                    case nw_listener_state_failed:
-                    case nw_listener_state_cancelled: {
-                        [self _setNeedsRestartServer];
-                    }
-                        break;
+        switch (state) {
+            case nw_listener_state_ready: {
+                if ( port == 0 ) {
+                    atomic_store(&self->mPort, nw_listener_get_port(self->mListener));
+                }
+                if ( sync ) {
+                    dispatch_semaphore_signal(sync);
+                    sync = nil;
                 }
             }
-        });
-        nw_listener_set_new_connection_handler(mListener, ^(nw_connection_t  _Nonnull connection) {
-            __strong typeof(_self) self = _self;
-            if ( self == nil ) return;
-            if ( !self->_onConnect ) {
-                nw_connection_cancel(connection);
-                return;
+                break;
+            case nw_listener_state_waiting:
+                break;
+            case nw_listener_state_invalid:
+            case nw_listener_state_failed:
+            case nw_listener_state_cancelled: {
+                if ( sync ) {
+                    dispatch_semaphore_signal(sync);
+                    sync = nil;
+                }
             }
-            
-            MCTcpSocketConnection *wrapper = [MCTcpSocketConnection.alloc initWithConnection:connection queue:self->mConnectionQueue];
-            self->_onConnect(wrapper);
-        });
-        nw_listener_start(mListener);
+                break;
+        }
+    });
+    nw_listener_set_new_connection_handler(mListener, ^(nw_connection_t  _Nonnull connection) {
+        __strong typeof(_self) self = _self;
+        if ( self == nil ) return;
+        @synchronized (self) {
+            [self _onConnect:connection];
+        }
+    });
+    nw_listener_start(mListener);
+    dispatch_semaphore_wait(sync, DISPATCH_TIME_FOREVER);
+}
+
+- (void)_onStateChange:(nw_listener_state_t)state error:(nw_error_t _Nullable)error {
+
+}
+
+- (void)_onConnect:(nw_connection_t)connection {
+    if ( !_onConnect ) {
+        nw_connection_cancel(connection);
+        return;
     }
+    
+    MCTcpSocketConnection *wrapper = [MCTcpSocketConnection.alloc initWithConnection:connection queue:self->mConnectionQueue];
+    _onConnect(wrapper);
 }
 
 - (void)_setNeedsRestartServer {
     
 }
+
+- (void)_restartServer {
+    [self _startServerWithPort:self.port];
+}
+
 @end

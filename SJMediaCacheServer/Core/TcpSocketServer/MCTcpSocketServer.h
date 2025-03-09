@@ -11,18 +11,19 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @interface MCTcpSocketServer : NSObject
-@property (nonatomic, copy, nullable) void(^onListen)(uint16_t port);
 @property (nonatomic, copy, nullable) void(^onConnect)(MCTcpSocketConnection *connection);
 @property (nonatomic, readonly) uint16_t port;
 @property (nonatomic, readonly, getter=isRunning) BOOL running;
-- (void)start;
+- (BOOL)start;
 - (void)stop;
 @end
 
 @interface MCTcpSocketConnection : NSObject
-@property (nonatomic, copy, nullable) void(^onStateChange)(MCTcpSocketConnection* connection, nw_connection_state_t state, nw_error_t error);
+@property (nonatomic, copy, nullable) void(^onStateChange)(MCTcpSocketConnection* connection, nw_connection_state_t state, nw_error_t _Nullable error);
 @property (nonatomic, readonly) nw_connection_state_t state;
 @property (nonatomic, readonly) dispatch_queue_t queue;
+
+- (void)start;
 
 - (void)receiveDataWithMinimumIncompleteLength:(uint32_t)minimumIncompleteLength
                                  maximumLength:(uint32_t)maximumLength

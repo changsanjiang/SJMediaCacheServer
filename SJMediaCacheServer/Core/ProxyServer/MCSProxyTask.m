@@ -87,6 +87,10 @@
     return _reader.status == MCSReaderStatusFinished;
 }
 
+- (BOOL)isAborted {
+    return _reader.status == MCSReaderStatusAborted;
+}
+
 - (void)close {
 #ifdef DEBUG
     MCSProxyTaskDebugLog(@"%@: <%p>.close { after (%lf) seconds };\n\n", NSStringFromClass(self.class), self, MCSEndTime(_startTime));
