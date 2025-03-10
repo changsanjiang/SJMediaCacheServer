@@ -44,8 +44,6 @@
             MCSURL.shared.serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
         };
         
-        [_server start];
-        
         self.resolveAssetIdentifier = ^NSString * _Nonnull(NSURL * _Nonnull URL) {
             NSURLComponents *components = [NSURLComponents componentsWithURL:URL resolvingAgainstBaseURL:NO];
             components.query = nil; // ignore query parameters for identifier purposes
