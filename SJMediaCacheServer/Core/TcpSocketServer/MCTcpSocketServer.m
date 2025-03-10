@@ -232,7 +232,7 @@
                     if ( self == nil ) return;
                     @synchronized (self) {
                         if ( self.isRunning ) {
-                            [self _setNeedsRestartServer];
+                            [self _restartServer];
                         }
                     }
                 }];
@@ -286,7 +286,6 @@
         if ( self == nil ) return;
         @synchronized (self) {
             if ( self.isRunning && self->mShouldRestartServer ) {
-                self->mShouldRestartServer = NO;
                 [self _restartServer];
             }
         }
@@ -294,6 +293,7 @@
 }
 
 - (void)_restartServer {
+    mShouldRestartServer = NO;
     [self _startServerWithPort:self.port];
 }
 
