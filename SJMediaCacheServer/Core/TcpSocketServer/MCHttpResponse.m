@@ -22,14 +22,15 @@
     id mStrongSelf;
     BOOL mHeaderHasSent;
     BOOL mSending;
-    BOOL mDataEnd;
+    BOOL mClosed;
 }
 
 + (void)processConnection:(MCTcpSocketConnection *)connection {
-#pragma clang diagnostic push
-#pragma clang diagnostic warning "-Wunused-value"
-    [MCHttpResponse.alloc initWithConnection:connection];
-#pragma clang diagnostic pop
+    [MCHttpResponse httpResponseWithConnection:connection];
+}
+
++ (instancetype)httpResponseWithConnection:(MCTcpSocketConnection *)connection {
+    return [MCHttpResponse.alloc initWithConnection:connection];
 }
 
 - (instancetype)initWithConnection:(MCTcpSocketConnection *)connection {
@@ -61,12 +62,7 @@
         case nw_connection_state_invalid:
         case nw_connection_state_failed:
         case nw_connection_state_cancelled: {
-            if ( mTask ) {
-                [mTask close];
-                mTask = nil;
-            }
-            mConnection = nil;
-            mStrongSelf = nil;
+            [self _close];
         }
             break;
     }
@@ -83,6 +79,10 @@
                 return;
             }
             
+            if ( self->mClosed ) {
+                return;
+            }
+            
             [self _processRequestWithData:content];
         }
     }];
@@ -90,11 +90,10 @@
 
 - (void)_closeConnectionWithError:(NSString * _Nullable)desc {
     NSMutableString *message = [NSMutableString.alloc init];
-    NSData *json = nil;
     [message appendString:@"HTTP/1.1 500 Internal Server Error\r\n"];
     if ( desc ) {
         [message appendString:@"Content-Type: application/json\r\n"];
-        [message appendFormat:@"Error-Message: %@\r\n", desc];
+        [message appendFormat:@"MC-Error-Message: %@\r\n", desc];
     }
     [message appendString:@"\r\n"];
     
@@ -111,19 +110,34 @@
 }
 
 - (void)_close {
+    if ( mClosed ) {
+        return;
+    }
+    
+    mClosed = YES;
+    if ( mTask ) {
+        [mTask close];
+        mTask = nil;
+    }
     [mConnection close];
+    mConnection = nil;
+    mStrongSelf = nil;
 }
 
 - (void)_processRequestWithData:(dispatch_data_t)content {
-    [self _closeConnectionWithError:@"AAA"];
-    return;
-    
-    
     NSError *error = nil;
     MCHttpRequest *req = [MCHttpRequest parseRequestWithData:content error:&error];
     if ( req == nil ) {
         [self _closeConnectionWithError:error.userInfo[NSLocalizedDescriptionKey]];
         return;
+    }
+    
+    NSString *range = req.headers[@"Range"];
+    if ( range ) {
+        if ( ![MCHttpRequestRange parseRequestRangeWithHeader:range error:&error] ) {
+            [self _closeConnectionWithError:error.userInfo[NSLocalizedDescriptionKey]];
+            return;
+        }
     }
     
     NSString *host = req.headers[@"Host"];
@@ -165,7 +179,7 @@
 #pragma mark - name
 
 - (void)_onDataSendable {
-    if ( mSending ) {
+    if ( mSending || mClosed ) {
         return;
     }
     
