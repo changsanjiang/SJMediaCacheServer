@@ -180,7 +180,7 @@
     nw_listener_set_state_changed_handler(mListener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
-#ifdef DEBUG
+#ifdef SJDEBUG
         switch (state) {
             case nw_listener_state_invalid:
                 NSLog(@"nw_listener_state_invalid");
