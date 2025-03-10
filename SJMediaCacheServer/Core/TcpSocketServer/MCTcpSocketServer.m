@@ -117,6 +117,10 @@
     return self;
 }
 
+- (void)dealloc {
+    [self stop];
+}
+
 - (uint16_t)port {
     return atomic_load_explicit(&mPort, memory_order_relaxed);
 }
@@ -156,6 +160,8 @@
         }
         
         if ( mListener ) {
+            nw_listener_set_new_connection_handler(mListener, nil);
+            nw_listener_set_state_changed_handler(mListener, nil);
             nw_listener_cancel(mListener);
             mListener = NULL;
         }
@@ -249,14 +255,17 @@
                     break;
                 case nw_listener_state_failed:
                 case nw_listener_state_cancelled: {
-                    nw_listener_set_state_changed_handler(listener, nil);
-                    nw_listener_set_new_connection_handler(listener, nil);
+                    nw_listener_t strongListener = listener;
+                    nw_listener_set_new_connection_handler(strongListener, nil);
+                    nw_listener_set_state_changed_handler(strongListener, nil);
                     if ( state != nw_listener_state_cancelled ) {
-                        nw_listener_cancel(listener);
+                        nw_listener_cancel(strongListener);
                     }
-                    @synchronized (self) {
-                        if ( self.isRunning && listener == self->mListener ) [self _setNeedsRestartServer];
-                    }
+                    dispatch_async(self->mServerQueue, ^{
+                        @synchronized (self) {
+                            if ( self.isRunning && strongListener == self->mListener ) [self _setNeedsRestartServer];
+                        }
+                    });
                 }
                     break;
             }
