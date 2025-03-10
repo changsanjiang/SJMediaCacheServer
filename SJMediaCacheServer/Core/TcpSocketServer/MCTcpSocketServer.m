@@ -25,7 +25,7 @@
     
     __weak typeof(self) _self = self;
     nw_connection_set_state_changed_handler(connection, ^(nw_connection_state_t state, nw_error_t  _Nullable error) {
-#ifdef SJDEBUG
+#ifdef SJDEBUG1
         switch (state) {
             case nw_connection_state_invalid:
                 NSLog(@"nw_connection_state_invalid");
@@ -279,8 +279,12 @@
         }
     });
     nw_listener_start(listener);
-    dispatch_semaphore_wait(sync, DISPATCH_TIME_FOREVER);
-    mListener = listener;
+    if ( dispatch_semaphore_wait(sync, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC))) == 0 ) {
+        mListener = listener;
+    }
+    else {
+        nw_listener_cancel(listener); // Timeout occurred after 2 seconds
+    }
 }
 
 - (void)_onConnect:(nw_connection_t)connection {
