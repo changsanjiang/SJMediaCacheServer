@@ -10,7 +10,6 @@
 #import "MCTcpSocketServer.h"
 #import "MCHttpRequest.h"
 #import "MCHttpRequestRange.h"
-#import "MCSUtils.h"
 #import "MCPin.h"
 
 @interface MCHttpResponse ()<MCSProxyTaskDelegate>
@@ -208,7 +207,7 @@
         NSMutableString *message = [NSMutableString.alloc init];
         // 206
         if ( response.range.length > 0 ) {
-            [message appendString:@"HTTP/1.1 200 OK\r\n"];
+            [message appendString:@"HTTP/1.1 206 OK\r\n"];
             [message appendString:@"Server: localhost\r\n"];
             [message appendFormat:@"Content-Type: %@\r\n", response.contentType ?: @"application/octet-stream"];
             [message appendString:@"Accept-Ranges: bytes\r\n"];
@@ -247,12 +246,8 @@
     
     mSending = YES;
     dispatch_data_t content = [mConnection createData:data];
-    
-    uint64_t startTime = MCSStartTime();
     __weak typeof(self) _self = self;
     [mConnection sendData:content context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:mTask.isDone completion:^(nw_error_t  _Nullable error) {
-        NSLog(@"send data complete: error=%@, after (%f)", error, MCSEndTime(startTime));
-        
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
         @synchronized (self) {

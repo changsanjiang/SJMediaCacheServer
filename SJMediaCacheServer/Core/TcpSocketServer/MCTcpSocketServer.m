@@ -25,7 +25,7 @@
     
     __weak typeof(self) _self = self;
     nw_connection_set_state_changed_handler(connection, ^(nw_connection_state_t state, nw_error_t  _Nullable error) {
-#ifdef DEBUG
+#ifdef SJDEBUG
         switch (state) {
             case nw_connection_state_invalid:
                 NSLog(@"nw_connection_state_invalid");
@@ -202,7 +202,9 @@
 #endif
         // 设置端口号
         if ( port == 0 ) {
-            atomic_store(&self->mPort, nw_listener_get_port(self->mListener));
+            uint16_t p = nw_listener_get_port(self->mListener);
+            atomic_store(&self->mPort, p);
+            if ( self->_onListen ) self->_onListen(p);
         }
         
         // 释放同步锁

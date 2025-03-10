@@ -277,8 +277,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// };
 /// \endcode
 @property (nonatomic, copy, nullable) void (^metricsHandler)(NSURLSession *session, NSURLSessionTask *task, NSURLSessionTaskMetrics *metrics);
-
-@property (nonatomic, copy, nullable) void (^proxyTaskAbortCallback)(NSURLRequest *request, NSError *_Nullable error);
 @end
 
 @interface SJMediaCacheServer (Convert)

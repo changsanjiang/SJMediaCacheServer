@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SJMediaCacheServer'
-  s.version          = '2.0.8'
+  s.version          = '2.1.0'
   s.summary          = <<-DESC
   SJMediaCacheServer 是一个高效的 HTTP 媒体缓存框架，旨在代理媒体数据请求并优先提供缓存数据，从而减少网络流量并增强播放的流畅性。该框架支持两种类型的远程资源：基于文件的媒体，如 MP3、AAC、WAV、FLAC、OGG、MP4 和 MOV 等常见格式，以及 HLS（HTTP Live Streaming）流。它会自动解析 HLS 播放列表并代理各个媒体片段。
   DESC
@@ -33,12 +33,6 @@ Pod::Spec.new do |s|
   s.source_files = 'SJMediaCacheServer/*.{h,m}'
   s.subspec 'Core' do |ss|
     ss.source_files = 'SJMediaCacheServer/Core/**/*.{h,m}'
-    ss.dependency 'SJMediaCacheServer/KTVCocoaHTTPServer'
-  end
-  
-  s.subspec 'KTVCocoaHTTPServer' do |ss|
-    ss.source_files = 'SJMediaCacheServer/KTVCocoaHTTPServer/**/*.{h,m}'
-    ss.dependency 'CocoaAsyncSocket'
   end
   
   s.dependency 'SJUIKit/SQLite3'

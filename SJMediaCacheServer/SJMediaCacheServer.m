@@ -7,7 +7,8 @@
 //
 
 #import "SJMediaCacheServer.h"
-#import "MCSProxyServer.h"
+#import "MCTcpSocketServer.h"
+#import "MCHttpResponse.h"
 #import "MCSAssetManager.h"
 #import "MCSCacheManager.h"
 #import "MCSExporterManager.h"
@@ -17,8 +18,9 @@
 #import "MCSDownload.h"
 #import "MCSPrefetcherManager.h"
 
-@interface SJMediaCacheServer ()<MCSProxyServerDelegate>
-@property (nonatomic, strong, readonly) MCSProxyServer *server;
+@interface SJMediaCacheServer () {
+    MCTcpSocketServer *_server;
+}
 @end
 
 @implementation SJMediaCacheServer
@@ -34,8 +36,13 @@
 - (instancetype)init {
     self = [super init];
     if ( self ) {
-        _server = [MCSProxyServer.alloc init];
-        _server.delegate = self;
+        _server = [MCTcpSocketServer.alloc init];
+        _server.onConnect = ^(MCTcpSocketConnection * _Nonnull connection) {
+            [MCHttpResponse processConnection:connection];
+        };
+        _server.onListen = ^(uint16_t port) {
+            MCSURL.shared.serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
+        };
         
         self.resolveAssetIdentifier = ^NSString * _Nonnull(NSURL * _Nonnull URL) {
             NSURLComponents *components = [NSURLComponents componentsWithURL:URL resolvingAgainstBaseURL:NO];
@@ -67,16 +74,6 @@
 
 - (void)setActive:(BOOL)active {
     active ? [_server start] : [_server stop];
-}
-
-#pragma mark - MCSProxyServerDelegate
-
-- (void)serverDidStart:(MCSProxyServer *)server {
-    MCSURL.shared.serverURL = _server.serverURL;
-}
-
-- (id<MCSProxyTask>)server:(MCSProxyServer *)server taskWithRequest:(NSURLRequest *)request delegate:(id<MCSProxyTaskDelegate>)delegate {
-    return [MCSProxyTask.alloc initWithRequest:request delegate:delegate];
 }
 @end
 
@@ -166,13 +163,6 @@
 
 - (void (^_Nullable)(NSURLSession * _Nonnull, NSURLSessionTask * _Nonnull, NSURLSessionTaskMetrics * _Nonnull))metricsHandler {
     return MCSDownload.shared.metricsHandler;
-}
-
-- (void)setProxyTaskAbortCallback:(void (^_Nullable)(NSURLRequest * _Nonnull, NSError * _Nullable))proxyTaskAbortCallback {
-    _server.taskAbortCallback = proxyTaskAbortCallback;
-}
-- (void (^_Nullable)(NSURLRequest * _Nonnull, NSError * _Nullable))proxyTaskAbortCallback {
-    return _server.taskAbortCallback;
 }
 @end
 
