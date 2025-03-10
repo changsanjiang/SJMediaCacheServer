@@ -45,7 +45,7 @@ static NSString *const DEMO_URL = @"http://devimages.apple.com/iphone/samples/bi
     }];
     
     SJMediaCacheServer.shared.enabledConsoleLog = YES;
-    SJMediaCacheServer.shared.logOptions = MCSLogOptionDownloader;
+    SJMediaCacheServer.shared.logOptions = MCSLogOptionHeartbeat;
     
     _socketServer = [MCTcpSocketServer.alloc init];
     __weak typeof(self) _self = self;

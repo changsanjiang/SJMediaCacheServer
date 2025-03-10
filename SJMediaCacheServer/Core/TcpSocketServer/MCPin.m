@@ -1,16 +1,16 @@
 //
-//  MCSHeartbeatManager.m
+//  MCPin.m
 //  SJMediaCacheServer
 //
-//  Created by db on 2024/10/11.
+//  Created by db on 2025/3/10.
 //
 
-#import "MCSHeartbeatManager.h"
-#import "HTTPMessage.h"
+#import "MCPin.h"
+#import "MCHttpRequest.h"
 #import "MCSLogger.h"
 
-@interface MCSTimer : NSObject
-- (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCSTimer *timer))block;
+@interface MCTimer : NSObject
+- (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCTimer *timer))block;
 
 @property (nonatomic, readonly, getter=isValid) BOOL valid;
 
@@ -19,7 +19,7 @@
 - (void)invalidate;
 @end
  
-@implementation MCSTimer {
+@implementation MCTimer {
     dispatch_semaphore_t _semaphore;
     dispatch_source_t _timer;
     NSTimeInterval _timeInterval;
@@ -29,7 +29,7 @@
 }
 
 /// @param start 启动后延迟多少秒回调block
-- (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCSTimer *timer))block {
+- (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCTimer *timer))block {
     self = [super init];
     if ( self ) {
         _repeats = repeats;
@@ -94,41 +94,41 @@
 
 @end
 
-@implementation MCSHeartbeatManager {
-    MCSTimer *mTimer;
-    void(^mFailureHandler)(MCSHeartbeatManager *mgr);
+#pragma mark - MCPin
+
+@implementation MCPin {
+    NSURL *mReqURL; // 请求地址
+    NSTimeInterval mReqInterval; // 请求间隔
+    NSTimeInterval mReqTimeoutInterval; // 2s; 超时;
+    NSInteger mReqAttempts; // 3次; 失败重试次数;
+    void(^mFailureHandler)(void);
+    MCTimer *mTimer;
 }
 
-- (instancetype)initWithInterval:(NSTimeInterval)heartbeatInterval failureHandler:(void(^)(MCSHeartbeatManager *mgr))block {
++ (BOOL)isPinReq:(MCHttpRequest *)req {
+    NSString *flag = [req.method isEqualToString:@"HEAD"] ? req.headers[@"MC-PIN-REQ"] : nil;
+    return flag && [flag isEqualToString:@"1"];
+}
+
+- (instancetype)initWithPort:(uint16_t)port interval:(NSTimeInterval)interval failureHandler:(void(^)(void))failureHandler {
     self = [super init];
-    mFailureHandler = block;
-    _heartbeatInterval = heartbeatInterval ?: 5;
-    _timeoutInterval = 2;
-    _maxAttempts = 3;
+    mReqURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
+    mReqInterval = interval;
+    mReqTimeoutInterval = 2;
+    mReqAttempts = 3;
+    mFailureHandler = failureHandler;
     return self;
 }
 
 - (void)dealloc {
-    [mTimer invalidate];
+    if ( mTimer ) [mTimer invalidate];
 }
 
-- (void)setHeartbeatInterval:(NSTimeInterval)heartbeatInterval {
-    if ( _heartbeatInterval != heartbeatInterval ) {
-        _heartbeatInterval = heartbeatInterval;
-        @synchronized (self) {
-            if ( mTimer != nil ) {
-                [self stopHeartbeat];
-                [self startHeartbeat];
-            }
-        }
-    }
-}
-
-- (void)startHeartbeat {
+- (void)start {
     @synchronized (self) {
         if ( mTimer == nil ) {
             __weak typeof(self) _self = self;
-            mTimer = [MCSTimer.alloc initWithQueue:dispatch_get_global_queue(0, 0) start:_heartbeatInterval interval:_heartbeatInterval repeats:YES block:^(MCSTimer *timer) {
+            mTimer = [MCTimer.alloc initWithQueue:dispatch_get_global_queue(0, 0) start:mReqInterval interval:mReqInterval repeats:YES block:^(MCTimer *timer) {
                 __strong typeof(_self) self = _self;
                 if ( self == nil ) {
                     [timer invalidate];
@@ -145,8 +145,8 @@
                     @synchronized (self) {
                         if ( timer == self->mTimer ) {
                             if ( error != nil ) {
-                                [self stopHeartbeat];
-                                self->mFailureHandler(self);
+                                [self stop];
+                                self->mFailureHandler();
                                 return;
                             }
                             [timer resume];
@@ -158,9 +158,10 @@
             MCSHeartbeatDebugLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
         }
     }
+
 }
 
-- (void)stopHeartbeat {
+- (void)stop {
     @synchronized (self) {
         if ( mTimer != nil ) {
             [mTimer invalidate];
@@ -170,19 +171,17 @@
     }
 }
 
-- (BOOL)isHeartBeatRequest:(HTTPMessage *)msg {
-    return [msg.method isEqualToString: @"HEAD"] && [[msg headerField:@"MCS_PROXY_HEARTBEAT_FLAG"] isEqualToString:@"1"];
-}
+#pragma mark -
 
 - (void)sendHeartbeatWithCompletion:(void(^)(NSError *_Nullable error))completionHandler {
-    [self sendHeartbeatWithRemainingRetries:_maxAttempts completion:completionHandler];
+    [self sendHeartbeatWithRemainingRetries:mReqAttempts completion:completionHandler];
 }
 
 - (void)sendHeartbeatWithRemainingRetries:(NSInteger)remainingRetries completion:(void(^)(NSError *_Nullable error))completionHandler {
-    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:self.serverURL];
+    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:mReqURL];
     request.HTTPMethod = @"HEAD";
-    request.timeoutInterval = _timeoutInterval;
-    [request addValue:@"1" forHTTPHeaderField:@"MCS_PROXY_HEARTBEAT_FLAG"];
+    request.timeoutInterval = mReqTimeoutInterval;
+    [request addValue:@"1" forHTTPHeaderField:@"MC-PIN-REQ"];
     [[NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         MCSHeartbeatDebugLog(@"%@<%p>: %d : %s, status=%ld, error=%@", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd), [(NSHTTPURLResponse *)response statusCode], error);
 

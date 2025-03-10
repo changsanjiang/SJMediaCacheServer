@@ -7,6 +7,7 @@
 
 #import "MCTcpSocketServer.h"
 #import <stdatomic.h>
+#import "MCPin.h"
 
 @interface MCTcpSocketConnection () {
     nw_connection_t mConnection;
@@ -59,10 +60,6 @@
     return mQueue;
 }
 
-- (void)dealloc {
-    nw_connection_cancel(mConnection);
-}
-
 - (void)start {
     nw_connection_start(mConnection);
 }
@@ -105,6 +102,8 @@
     dispatch_queue_t mServerQueue;
     dispatch_queue_t mConnectionQueue;
     nw_listener_t mListener;
+    MCPin *mPin;
+    BOOL mShouldRestartServer;
 }
 @end
 
@@ -151,13 +150,17 @@
         
         atomic_store(&mRunning, NO);
         
+        if ( mPin ) {
+            [mPin stop];
+            mPin = nil;
+        }
+        
         if ( mListener ) {
             nw_listener_cancel(mListener);
             mListener = NULL;
         }
     }
 }
-
 
 - (void)_startServer {
     [self _startServerWithPort:0];
@@ -197,28 +200,31 @@
                 break;
         }
 #endif
-        switch (state) {
-            case nw_listener_state_ready: {
-                if ( port == 0 ) {
-                    atomic_store(&self->mPort, nw_listener_get_port(self->mListener));
-                }
-                if ( sync ) {
+        // 设置端口号
+        if ( port == 0 ) {
+            atomic_store(&self->mPort, nw_listener_get_port(self->mListener));
+        }
+        
+        // 释放同步锁
+        if ( sync ) {
+            switch (state) {
+                case nw_listener_state_invalid:
+                    break;
+                case nw_listener_state_waiting:
+                    break;
+                case nw_listener_state_ready:
+                case nw_listener_state_failed:
+                case nw_listener_state_cancelled: {
                     dispatch_semaphore_signal(sync);
                     sync = nil;
                 }
+                    break;
             }
-                break;
-            case nw_listener_state_waiting:
-                break;
-            case nw_listener_state_invalid:
-            case nw_listener_state_failed:
-            case nw_listener_state_cancelled: {
-                if ( sync ) {
-                    dispatch_semaphore_signal(sync);
-                    sync = nil;
-                }
-            }
-                break;
+        }
+        
+        // 通知状态发生变化
+        @synchronized (self) {
+            [self _onStateChange:state error:error];
         }
     });
     nw_listener_set_new_connection_handler(mListener, ^(nw_connection_t  _Nonnull connection) {
@@ -233,7 +239,35 @@
 }
 
 - (void)_onStateChange:(nw_listener_state_t)state error:(nw_error_t _Nullable)error {
-
+    switch (state) {
+        case nw_listener_state_invalid:
+        case nw_listener_state_waiting:
+            break;
+        case nw_listener_state_ready: {
+            // 创建pin
+            if ( !mPin ) {
+                __weak typeof(self) _self = self;
+                mPin = [MCPin.alloc initWithPort:self.port interval:2 failureHandler:^{
+                    __strong typeof(_self) self = _self;
+                    if ( self == nil ) return;
+                    @synchronized (self) {
+                        if ( self.running ) {
+                            [self _setNeedsRestartServer];
+                        }
+                    }
+                }];
+                [mPin start];
+            }
+        }
+            break;
+        case nw_listener_state_failed:
+        case nw_listener_state_cancelled: {
+            if ( self.running ) {
+                [self _setNeedsRestartServer];
+            }
+        }
+            break;
+    }
 }
 
 - (void)_onConnect:(nw_connection_t)connection {
@@ -247,7 +281,18 @@
 }
 
 - (void)_setNeedsRestartServer {
-    
+    mShouldRestartServer = YES;
+    __weak typeof(self) _self = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
+        __strong typeof(_self) self = _self;
+        if ( self == nil ) return;
+        @synchronized (self) {
+            if ( self.running && self->mShouldRestartServer ) {
+                self->mShouldRestartServer = NO;
+                [self _restartServer];
+            }
+        }
+    });
 }
 
 - (void)_restartServer {

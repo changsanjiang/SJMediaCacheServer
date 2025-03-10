@@ -11,6 +11,7 @@
 #import "MCHttpRequest.h"
 #import "MCHttpRequestRange.h"
 #import "MCSUtils.h"
+#import "MCPin.h"
 
 @interface MCHttpResponse ()<MCSProxyTaskDelegate>
 
@@ -129,6 +130,11 @@
     MCHttpRequest *req = [MCHttpRequest parseRequestWithData:content error:&error];
     if ( req == nil ) {
         [self _closeConnectionWithError:error.userInfo[NSLocalizedDescriptionKey]];
+        return;
+    }
+    
+    if ( [MCPin isPinReq:req] ) {
+        [self _sendPinResponse];
         return;
     }
     
@@ -262,5 +268,18 @@
     }
     mSending = NO;
     [self _onDataSendable];
+}
+
+- (void)_sendPinResponse {
+    NSString *message = @"HTTP/1.1 200 OK\r\n\r\n";
+    dispatch_data_t content = [mConnection createDataWithString:message];
+    __weak typeof(self) _self = self;
+    [mConnection sendData:content context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:YES completion:^(nw_error_t  _Nullable error) {
+        __strong typeof(_self) self = _self;
+        if ( self == nil ) return;
+        @synchronized (self) {
+            [self _close];
+        }
+    }];
 }
 @end
