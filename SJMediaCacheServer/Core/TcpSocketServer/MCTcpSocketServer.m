@@ -254,16 +254,11 @@
                 case nw_listener_state_ready:
                     break;
                 case nw_listener_state_failed:
+                    nw_listener_cancel(listener); // fall through
                 case nw_listener_state_cancelled: {
-                    nw_listener_t strongListener = listener;
-                    nw_listener_set_new_connection_handler(strongListener, nil);
-                    nw_listener_set_state_changed_handler(strongListener, nil);
-                    if ( state != nw_listener_state_cancelled ) {
-                        nw_listener_cancel(strongListener);
-                    }
                     dispatch_async(self->mServerQueue, ^{
                         @synchronized (self) {
-                            if ( self.isRunning && strongListener == self->mListener ) [self _setNeedsRestartServer];
+                            if ( self.isRunning && listener == self->mListener ) [self _setNeedsRestartServer];
                         }
                     });
                 }
