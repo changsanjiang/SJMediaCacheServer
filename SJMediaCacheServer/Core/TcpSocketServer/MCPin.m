@@ -155,7 +155,7 @@
                 }];
             }];
             [mTimer resume];
-            MCSHeartbeatDebugLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
+            MCSHeartbeatDebugLog(@"%@<%p>: %d : %s\n", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
         }
     }
 
@@ -166,7 +166,7 @@
         if ( mTimer != nil ) {
             [mTimer invalidate];
             mTimer = nil;
-            MCSHeartbeatDebugLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
+            MCSHeartbeatDebugLog(@"%@<%p>: %d : %s\n", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
         }
     }
 }
@@ -183,7 +183,7 @@
     request.timeoutInterval = mReqTimeoutInterval;
     [request addValue:@"1" forHTTPHeaderField:@"MC-PIN-REQ"];
     [[NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        MCSHeartbeatDebugLog(@"%@<%p>: %d : %s, status=%ld, error=%@", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd), [(NSHTTPURLResponse *)response statusCode], error);
+        MCSHeartbeatDebugLog(@"%@<%p>: %d : %s, status=%ld, error=%@\n", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd), [(NSHTTPURLResponse *)response statusCode], error);
 
         if ( error != nil && remainingRetries > 0 ) {
             [self sendHeartbeatWithRemainingRetries:remainingRetries - 1 completion:completionHandler];

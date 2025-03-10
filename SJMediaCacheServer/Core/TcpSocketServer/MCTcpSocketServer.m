@@ -175,7 +175,6 @@
     nw_endpoint_t endpoint = nw_endpoint_create_host("127.0.0.1", port_str);
     nw_parameters_set_local_endpoint(parameters, endpoint);
     mListener = nw_listener_create(parameters);
-    nw_listener_set_new_connection_limit(mListener, NW_LISTENER_INFINITE_CONNECTION_LIMIT);
     nw_listener_set_queue(mListener, mServerQueue);
     __weak typeof(self) _self = self;
     nw_listener_set_state_changed_handler(mListener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
@@ -224,9 +223,38 @@
             }
         }
         
-        // 通知状态发生变化
-        @synchronized (self) {
-            [self _onStateChange:state error:error];
+        // 启动 pin
+        if ( state == nw_listener_state_ready ) {
+            if ( !self->mPin ) {
+                __weak typeof(self) _self = self;
+                self->mPin = [MCPin.alloc initWithPort:self.port interval:2 failureHandler:^{
+                    __strong typeof(_self) self = _self;
+                    if ( self == nil ) return;
+                    @synchronized (self) {
+                        if ( self.isRunning ) {
+                            [self _setNeedsRestartServer];
+                        }
+                    }
+                }];
+            }
+            [self->mPin start];
+        }
+        
+        // 报错时重启
+        if ( self.isRunning ) {
+            switch (state) {
+                case nw_listener_state_invalid:
+                case nw_listener_state_waiting:
+                case nw_listener_state_ready:
+                    break;
+                case nw_listener_state_failed:
+                case nw_listener_state_cancelled: {
+                    @synchronized (self) {
+                        if ( self.isRunning ) [self _setNeedsRestartServer];
+                    }
+                }
+                    break;
+            }
         }
     });
     nw_listener_set_new_connection_handler(mListener, ^(nw_connection_t  _Nonnull connection) {
@@ -238,38 +266,6 @@
     });
     nw_listener_start(mListener);
     dispatch_semaphore_wait(sync, DISPATCH_TIME_FOREVER);
-}
-
-- (void)_onStateChange:(nw_listener_state_t)state error:(nw_error_t _Nullable)error {
-    switch (state) {
-        case nw_listener_state_invalid:
-        case nw_listener_state_waiting:
-            break;
-        case nw_listener_state_ready: {
-            // 创建pin
-            if ( !mPin ) {
-                __weak typeof(self) _self = self;
-                mPin = [MCPin.alloc initWithPort:self.port interval:2 failureHandler:^{
-                    __strong typeof(_self) self = _self;
-                    if ( self == nil ) return;
-                    @synchronized (self) {
-                        if ( self.running ) {
-                            [self _setNeedsRestartServer];
-                        }
-                    }
-                }];
-                [mPin start];
-            }
-        }
-            break;
-        case nw_listener_state_failed:
-        case nw_listener_state_cancelled: {
-            if ( self.running ) {
-                [self _setNeedsRestartServer];
-            }
-        }
-            break;
-    }
 }
 
 - (void)_onConnect:(nw_connection_t)connection {
@@ -289,7 +285,7 @@
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
         @synchronized (self) {
-            if ( self.running && self->mShouldRestartServer ) {
+            if ( self.isRunning && self->mShouldRestartServer ) {
                 self->mShouldRestartServer = NO;
                 [self _restartServer];
             }
