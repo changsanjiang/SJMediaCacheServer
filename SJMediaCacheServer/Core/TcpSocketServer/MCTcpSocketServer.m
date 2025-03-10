@@ -174,10 +174,10 @@
     nw_parameters_t parameters = nw_parameters_create_secure_tcp(NW_PARAMETERS_DISABLE_PROTOCOL, NW_PARAMETERS_DEFAULT_CONFIGURATION);
     nw_endpoint_t endpoint = nw_endpoint_create_host("127.0.0.1", port_str);
     nw_parameters_set_local_endpoint(parameters, endpoint);
-    mListener = nw_listener_create(parameters);
-    nw_listener_set_queue(mListener, mServerQueue);
+    nw_listener_t listener = nw_listener_create(parameters);
+    nw_listener_set_queue(listener, mServerQueue);
     __weak typeof(self) _self = self;
-    nw_listener_set_state_changed_handler(mListener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
+    nw_listener_set_state_changed_handler(listener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
 #ifdef SJDEBUG
@@ -201,7 +201,7 @@
 #endif
         // 设置端口号
         if ( port == 0 ) {
-            uint16_t p = nw_listener_get_port(self->mListener);
+            uint16_t p = nw_listener_get_port(listener);
             atomic_store(&self->mPort, p);
             if ( self->_onListen ) self->_onListen(p);
         }
@@ -249,23 +249,29 @@
                     break;
                 case nw_listener_state_failed:
                 case nw_listener_state_cancelled: {
+                    nw_listener_set_state_changed_handler(listener, nil);
+                    nw_listener_set_new_connection_handler(listener, nil);
+                    if ( state != nw_listener_state_cancelled ) {
+                        nw_listener_cancel(listener);
+                    }
                     @synchronized (self) {
-                        if ( self.isRunning ) [self _setNeedsRestartServer];
+                        if ( self.isRunning && listener == self->mListener ) [self _setNeedsRestartServer];
                     }
                 }
                     break;
             }
         }
     });
-    nw_listener_set_new_connection_handler(mListener, ^(nw_connection_t  _Nonnull connection) {
+    nw_listener_set_new_connection_handler(listener, ^(nw_connection_t  _Nonnull connection) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
         @synchronized (self) {
             [self _onConnect:connection];
         }
     });
-    nw_listener_start(mListener);
+    nw_listener_start(listener);
     dispatch_semaphore_wait(sync, DISPATCH_TIME_FOREVER);
+    mListener = listener;
 }
 
 - (void)_onConnect:(nw_connection_t)connection {
@@ -293,6 +299,11 @@
 }
 
 - (void)_restartServer {
+    if ( mListener ) {
+        nw_listener_cancel(mListener);
+        mListener = nil;
+    }
+    
     mShouldRestartServer = NO;
     [self _startServerWithPort:self.port];
 }
