@@ -34,6 +34,7 @@
 
 @property (nonatomic, copy, nullable) HLSVariantStreamSelectionHandler variantStreamSelectionHandler;
 @property (nonatomic, copy, nullable) HLSRenditionSelectionHandler renditionSelectionHandler;
+@property (nonatomic, copy, nullable) HLSKeyDecryptionHandler keyDecryptionHandler;
 @end
 
 @implementation MCSAssetManager
@@ -304,6 +305,11 @@
             __strong typeof(_self) self = _self;
             if ( self == nil ) return nil;
             return self.renditionSelectionHandler != nil ? self.renditionSelectionHandler(renditionType, renditionGroup, originalURL, currentURL) : nil;
+        };
+        hls.keyDecryptionHandler = ^NSData * _Nonnull(NSData * _Nonnull data, NSURL * _Nonnull originalURL, NSURL * _Nonnull currentURL) {
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return data;
+            return self.keyDecryptionHandler != nil ? self.keyDecryptionHandler(data, originalURL, currentURL) : data;
         };
     }
     return asset;

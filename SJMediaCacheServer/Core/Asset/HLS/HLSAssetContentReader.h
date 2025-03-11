@@ -6,6 +6,7 @@
 //
 
 #import "MCSAssetContentReader.h"
+#import "HLSAssetDefines.h"
 @class HLSAsset;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -20,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface HLSAssetKeyContentReader : MCSAssetContentReader
 
 - (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate;
+;
 
 @end
 

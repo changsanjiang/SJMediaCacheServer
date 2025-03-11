@@ -53,5 +53,6 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MCSAssetManager (HLSVariantStreamAsset)
 @property (nonatomic, copy, nullable) HLSVariantStreamSelectionHandler variantStreamSelectionHandler;
 @property (nonatomic, copy, nullable) HLSRenditionSelectionHandler renditionSelectionHandler;
+@property (nonatomic, copy, nullable) HLSKeyDecryptionHandler keyDecryptionHandler;
 @end
 NS_ASSUME_NONNULL_END

@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy, nullable) HLSVariantStreamSelectionHandler variantStreamSelectionHandler;
 @property (nonatomic, copy, nullable) HLSRenditionSelectionHandler renditionSelectionHandler;
+@property (nonatomic, copy, nullable) HLSKeyDecryptionHandler keyDecryptionHandler;
 
 
 @property (nonatomic, readonly) NSUInteger allItemsCount;

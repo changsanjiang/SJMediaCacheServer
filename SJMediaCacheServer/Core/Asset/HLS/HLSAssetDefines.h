@@ -148,5 +148,8 @@ typedef id<HLSRendition> _Nullable (^HLSRenditionSelectionHandler)(HLSRenditionT
 @property (nonatomic, readonly) UInt64 totalLength; // segment file totalLength or #EXT-X-BYTERANGE:1544984@1007868
 @property (nonatomic, readonly) NSRange byteRange; // segment file {0, totalLength} or #EXT-X-BYTERANGE:1544984@1007868
 @end
+
+
+typedef NSData * _Nonnull (^HLSKeyDecryptionHandler)(NSData *data, NSURL *originalURL, NSURL *currentURL);
 NS_ASSUME_NONNULL_END
 #endif /* HLSAssetDefines_h */

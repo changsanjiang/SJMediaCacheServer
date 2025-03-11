@@ -86,6 +86,7 @@
     NSURLRequest *mRequest;
     float mPriority;
     id<MCSDownloadTask> _Nullable mTask;
+    HLSKeyDecryptionHandler _Nullable mDecryptionHandler;
 }
 
 - (instancetype)initWithAsset:(HLSAsset *)asset request:(NSURLRequest *)request networkTaskPriority:(float)priority delegate:(id<MCSAssetContentReaderDelegate>)delegate {
@@ -93,6 +94,7 @@
     mAsset = asset;
     mRequest = request;
     mPriority = priority;
+    mDecryptionHandler = asset.keyDecryptionHandler;
     return self;
 }
 
@@ -107,7 +109,7 @@
     else {
         mTask = [MCSContents request:[mRequest mcs_requestWithHTTPAdditionalHeaders:[mAsset.configuration HTTPAdditionalHeadersForDataRequestsOfType:MCSDataTypeHLSAESKey]] networkTaskPriority:mPriority completion:^(id<MCSDownloadTask>  _Nonnull task, id<MCSDownloadResponse> _Nullable response, NSData * _Nullable data, NSError * _Nullable downloadError) {
             @synchronized (self) {
-                [self _downloadDidCompleteWithData:data error:downloadError];
+                [self _downloadDidCompleteWithResponse:response data:data error:downloadError];
             }
         }];
     }
@@ -120,7 +122,7 @@
 #pragma mark - mark
 
 /// unlocked
-- (void)_downloadDidCompleteWithData:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
+- (void)_downloadDidCompleteWithResponse:(id<MCSDownloadResponse>)response data:(NSData *_Nullable)data error:(NSError *_Nullable)downloadError {
     if ( self.status == MCSReaderStatusAborted ) return;
     mTask = nil;
     
@@ -130,6 +132,10 @@
             MCSErrorUserInfoErrorKey : downloadError,
             MCSErrorUserInfoReasonKey : @"AES key download failed!"
         }];
+    }
+    
+    if ( data != nil && mDecryptionHandler != nil ) {
+        data = mDecryptionHandler(data, response.originalRequest.URL, response.currentRequest.URL);
     }
     
     id<MCSAssetContent> content = nil;

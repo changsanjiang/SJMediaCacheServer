@@ -189,19 +189,19 @@
 #ifdef SJDEBUG
         switch (state) {
             case nw_listener_state_invalid:
-                NSLog(@"nw_listener_state_invalid");
+                NSLog(@"nw_listener_state_invalid: %p", listener);
                 break;
             case nw_listener_state_waiting:
-                NSLog(@"nw_listener_state_waiting");
+                NSLog(@"nw_listener_state_waiting: %p", listener);
                 break;
             case nw_listener_state_ready:
-                NSLog(@"nw_listener_state_ready");
+                NSLog(@"nw_listener_state_ready: %p", listener);
                 break;
             case nw_listener_state_failed:
-                NSLog(@"nw_listener_state_failed");
+                NSLog(@"nw_listener_state_failed: %p", listener);
                 break;
             case nw_listener_state_cancelled:
-                NSLog(@"nw_listener_state_cancelled");
+                NSLog(@"nw_listener_state_cancelled: %p", listener);
                 break;
         }
 #endif
