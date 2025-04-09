@@ -8,6 +8,9 @@
 #import "MCTcpSocketServer.h"
 #import <stdatomic.h>
 #import "MCPin.h"
+#import "MCSRootDirectory.h"
+#import "NSFileHandle+MCS.h"
+#import "NSFileManager+MCS.h"
 
 @interface MCTcpSocketConnection () {
     nw_connection_t mConnection;
@@ -108,6 +111,19 @@
 @end
 
 @implementation MCTcpSocketServer
+#ifdef DEBUG
+static NSString *MCErrorLogsFilePath;
++ (void)initialize {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        MCErrorLogsFilePath = [MCSRootDirectory.path stringByAppendingPathComponent:@"err_logs.txt"];
+        if ( ![NSFileManager.defaultManager fileExistsAtPath:MCErrorLogsFilePath] ) {
+            [NSFileManager.defaultManager createFileAtPath:MCErrorLogsFilePath contents:nil attributes:nil];
+        }
+    });
+}
+#endif
+
 - (instancetype)init {
     self = [super init];
     mPort = ATOMIC_VAR_INIT(0);
@@ -184,6 +200,21 @@
     nw_listener_set_queue(listener, mServerQueue);
     __weak typeof(self) _self = self;
     nw_listener_set_state_changed_handler(listener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
+#ifdef DEBUG
+        if ( error ) {
+            NSDate *date = NSDate.new;
+            NSDateFormatter *formatter = [NSDateFormatter.alloc init];
+            [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+            
+            NSString *errLog = [NSString stringWithFormat:@"[%@] domain: %d, code: %d, desc: %@\n", [formatter stringFromDate:date], nw_error_get_error_domain(error), nw_error_get_error_code(error), error];
+            
+            NSFileHandle *fileHandle = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:MCErrorLogsFilePath] error:NULL];
+            [fileHandle seekToEndOfFile];
+            [fileHandle writeData:[errLog dataUsingEncoding:NSUTF8StringEncoding]];
+            [fileHandle closeFile];
+        }
+#endif
+        
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
 #ifdef SJDEBUG
@@ -258,7 +289,7 @@
                 case nw_listener_state_cancelled: {
                     dispatch_async(self->mServerQueue, ^{
                         @synchronized (self) {
-                            if ( self.isRunning && listener == self->mListener ) [self _setNeedsRestartServer];
+                            if ( self.isRunning && (listener == self->mListener || self->mListener == nil) ) [self _setNeedsRestartServer];
                         }
                     });
                 }

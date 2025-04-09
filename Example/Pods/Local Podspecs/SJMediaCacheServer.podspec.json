@@ -20,7 +20,9 @@
   },
   "source_files": "SJMediaCacheServer/*.{h,m}",
   "dependencies": {
-    "SJUIKit/SQLite3": []
+    "SJUIKit/SQLite3": [
+
+    ]
   },
   "resource_bundles": {
     "SJMediaCacheServer": [
