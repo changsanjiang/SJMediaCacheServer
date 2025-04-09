@@ -67,14 +67,6 @@
     // param URL
     return URL;
 }
-
-- (BOOL)isActive {
-    return _server.isRunning;
-}
-
-- (void)setActive:(BOOL)active {
-    active ? [_server start] : [_server stop];
-}
 @end
 
 
