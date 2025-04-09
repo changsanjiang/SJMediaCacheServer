@@ -14,9 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)isPinReq:(MCHttpRequest *)req;
 
 // @param failureHandler 失败回调; 失败后会自动停止pin, 如需继续 pin 需要重新调用 start;
-- (instancetype)initWithPort:(uint16_t)port interval:(NSTimeInterval)interval failureHandler:(void(^)(void))failureHandler;
+- (instancetype)initWithInterval:(NSTimeInterval)interval failureHandler:(void(^)(void))failureHandler;
 
-- (void)start;
+- (void)startWithPort:(uint16_t)port;
 - (void)stop;
 
 @end

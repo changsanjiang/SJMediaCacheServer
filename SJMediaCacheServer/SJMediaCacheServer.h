@@ -54,46 +54,11 @@ NS_ASSUME_NONNULL_BEGIN
 ///     }
 ///     return self;
 /// }
-///
-/// - (void)play {
-///     // Activate the proxy service and start playback
-///     [SJMediaCacheServer.shared setActive:YES];
-///     [_player play];
-/// }
-///
-/// - (void)seekToTime:(NSTimeInterval)time {
-///     // Ensure the proxy service is active during seeking
-///     [SJMediaCacheServer.shared setActive:YES];
-///     [_player seekToTime:time];
-/// }
 /// @end
 /// \endcode
 ///
 - (nullable NSURL *)proxyURLFromURL:(NSURL *)originalURL; // 获取代理播放地址
 
-@property (nonatomic, readonly, getter=isActive) BOOL active;
-
-/// Set the active state of the socket proxy service.
-///
-/// @param active A Boolean value indicating whether to activate the proxy service.
-/// When the app enters the background, the socket proxy service may be interrupted by the system.
-/// Therefore, it is recommended to call this method to activate the proxy service when playback is in progress.
-///
-/// \code
-/// @implementation YourPlayerController
-/// - (void)play {
-///     [SJMediaCacheServer.shared setActive:YES];
-///     [_player play];
-/// }
-///
-/// - (void)seekToTime:(NSTimeInterval)time {
-///     [SJMediaCacheServer.shared setActive:YES];
-///     [_player seekToTime:time];
-/// }
-/// @end
-/// \endcode
-///
-- (void)setActive:(BOOL)active;
 @end
 
 

@@ -200,13 +200,16 @@ static NSString *MCErrorLogsFilePath;
     nw_listener_set_queue(listener, mServerQueue);
     __weak typeof(self) _self = self;
     nw_listener_set_state_changed_handler(listener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
+        __strong typeof(_self) self = _self;
+        if ( self == nil ) return;
+        
 #ifdef DEBUG
         if ( error ) {
             NSDate *date = NSDate.new;
             NSDateFormatter *formatter = [NSDateFormatter.alloc init];
             [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
             
-            NSString *errLog = [NSString stringWithFormat:@"[%@] domain: %d, code: %d, desc: %@\n", [formatter stringFromDate:date], nw_error_get_error_domain(error), nw_error_get_error_code(error), error];
+            NSString *errLog = [NSString stringWithFormat:@"[%@] port: %d, domain: %d, code: %d, desc: %@\n", [formatter stringFromDate:date], self.port, nw_error_get_error_domain(error), nw_error_get_error_code(error), error];
             
             NSFileHandle *fileHandle = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:MCErrorLogsFilePath] error:NULL];
             [fileHandle seekToEndOfFile];
@@ -215,8 +218,6 @@ static NSString *MCErrorLogsFilePath;
         }
 #endif
         
-        __strong typeof(_self) self = _self;
-        if ( self == nil ) return;
 #ifdef SJDEBUG
         switch (state) {
             case nw_listener_state_invalid:
@@ -236,11 +237,24 @@ static NSString *MCErrorLogsFilePath;
                 break;
         }
 #endif
+        // 如果端口号被占用了, 将当前端口号置0重新分配;
+        if ( error ) {
+            nw_error_domain_t err_domain = nw_error_get_error_domain(error);
+            if ( err_domain == nw_error_domain_posix ) {
+                int err_code = nw_error_get_error_code(error);
+                if ( err_code == EADDRINUSE ) {
+                    atomic_store(&self->mPort, 0);
+                }
+            }
+        }
+        
         // 设置端口号
-        if ( port == 0 ) {
+        if ( state == nw_listener_state_ready ) {
             uint16_t p = nw_listener_get_port(listener);
-            atomic_store(&self->mPort, p);
-            if ( self->_onListen ) self->_onListen(p);
+            if ( p != self.port ) {
+                atomic_store(&self->mPort, p);
+                if ( self->_onListen ) self->_onListen(p);
+            }
         }
         
         // 释放同步锁
@@ -264,7 +278,7 @@ static NSString *MCErrorLogsFilePath;
         if ( state == nw_listener_state_ready ) {
             if ( !self->mPin ) {
                 __weak typeof(self) _self = self;
-                self->mPin = [MCPin.alloc initWithPort:self.port interval:2 failureHandler:^{
+                self->mPin = [MCPin.alloc initWithInterval:2 failureHandler:^{
                     __strong typeof(_self) self = _self;
                     if ( self == nil ) return;
                     @synchronized (self) {
@@ -274,27 +288,20 @@ static NSString *MCErrorLogsFilePath;
                     }
                 }];
             }
-            [self->mPin start];
+            [self->mPin startWithPort:self.port];
         }
         
         // 报错时重启
-        if ( self.isRunning ) {
-            switch (state) {
-                case nw_listener_state_invalid:
-                case nw_listener_state_waiting:
-                case nw_listener_state_ready:
-                    break;
-                case nw_listener_state_failed:
-                    nw_listener_cancel(listener); // fall through
-                case nw_listener_state_cancelled: {
-                    dispatch_async(self->mServerQueue, ^{
-                        @synchronized (self) {
-                            if ( self.isRunning && (listener == self->mListener || self->mListener == nil) ) [self _setNeedsRestartServer];
-                        }
-                    });
+        if ( self.isRunning && error ) {
+            dispatch_async(self->mServerQueue, ^{
+                @synchronized (self) {
+                    if ( self.isRunning && (listener == self->mListener || self->mListener == nil) ) [self _setNeedsRestartServer];
                 }
-                    break;
-            }
+            });
+        }
+        
+        if ( state == nw_listener_state_failed ) {
+            nw_listener_cancel(listener);
         }
     });
     nw_listener_set_new_connection_handler(listener, ^(nw_connection_t  _Nonnull connection) {

@@ -110,9 +110,8 @@
     return flag && [flag isEqualToString:@"1"];
 }
 
-- (instancetype)initWithPort:(uint16_t)port interval:(NSTimeInterval)interval failureHandler:(void(^)(void))failureHandler {
+- (instancetype)initWithInterval:(NSTimeInterval)interval failureHandler:(void(^)(void))failureHandler {
     self = [super init];
-    mReqURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
     mReqInterval = interval;
     mReqTimeoutInterval = 2;
     mReqAttempts = 3;
@@ -124,8 +123,10 @@
     if ( mTimer ) [mTimer invalidate];
 }
 
-- (void)start {
+- (void)startWithPort:(uint16_t)port {
     @synchronized (self) {
+        mReqURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
+        
         if ( mTimer == nil ) {
             __weak typeof(self) _self = self;
             mTimer = [MCTimer.alloc initWithQueue:dispatch_get_global_queue(0, 0) start:mReqInterval interval:mReqInterval repeats:YES block:^(MCTimer *timer) {
