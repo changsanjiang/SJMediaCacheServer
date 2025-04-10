@@ -97,7 +97,6 @@
 #pragma mark - MCPin
 
 @implementation MCPin {
-    NSURL *mReqURL; // 请求地址
     NSTimeInterval mReqInterval; // 请求间隔
     NSTimeInterval mReqTimeoutInterval; // 2s; 超时;
     NSInteger mReqAttempts; // 3次; 失败重试次数;
@@ -125,61 +124,64 @@
 
 - (void)startWithPort:(uint16_t)port {
     @synchronized (self) {
-        mReqURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
+        [self _clearTimer];
         
-        if ( mTimer == nil ) {
-            __weak typeof(self) _self = self;
-            mTimer = [MCTimer.alloc initWithQueue:dispatch_get_global_queue(0, 0) start:mReqInterval interval:mReqInterval repeats:YES block:^(MCTimer *timer) {
+        NSURL *reqURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
+        __weak typeof(self) _self = self;
+        mTimer = [MCTimer.alloc initWithQueue:dispatch_get_global_queue(0, 0) start:mReqInterval interval:mReqInterval repeats:YES block:^(MCTimer *timer) {
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) {
+                [timer invalidate];
+                return;
+            }
+            [timer suspend];
+            @synchronized (self) { if ( timer != self->mTimer ) return; }
+            [self sendHeartbeatWithReqURL:reqURL completion:^(NSError * _Nullable error) {
                 __strong typeof(_self) self = _self;
                 if ( self == nil ) {
                     [timer invalidate];
                     return;
                 }
-                [timer suspend];
-                @synchronized (self) { if ( timer != self->mTimer ) return; }
-                [self sendHeartbeatWithCompletion:^(NSError * _Nullable error) {
-                    __strong typeof(_self) self = _self;
-                    if ( self == nil ) {
-                        [timer invalidate];
-                        return;
-                    }
-                    @synchronized (self) {
-                        if ( timer == self->mTimer ) {
-                            if ( error != nil ) {
-                                [self stop];
-                                self->mFailureHandler();
-                                return;
-                            }
-                            [timer resume];
+                @synchronized (self) {
+                    if ( timer == self->mTimer ) {
+                        if ( error != nil ) {
+                            [self stop];
+                            self->mFailureHandler();
+                            return;
                         }
+                        [timer resume];
                     }
-                }];
+                }
             }];
-            [mTimer resume];
-            MCSHeartbeatDebugLog(@"%@<%p>: %d : %s\n", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
-        }
+        }];
+        [mTimer resume];
+        MCSHeartbeatDebugLog(@"%@<%p>: %d : %s\n", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
     }
 
 }
 
 - (void)stop {
     @synchronized (self) {
-        if ( mTimer != nil ) {
-            [mTimer invalidate];
-            mTimer = nil;
-            MCSHeartbeatDebugLog(@"%@<%p>: %d : %s\n", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
-        }
+        [self _clearTimer];
+    }
+}
+
+- (void)_clearTimer {
+    if ( mTimer != nil ) {
+        [mTimer invalidate];
+        mTimer = nil;
+        MCSHeartbeatDebugLog(@"%@<%p>: %d : %s\n", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
     }
 }
 
 #pragma mark -
 
-- (void)sendHeartbeatWithCompletion:(void(^)(NSError *_Nullable error))completionHandler {
-    [self sendHeartbeatWithRemainingRetries:mReqAttempts completion:completionHandler];
+- (void)sendHeartbeatWithReqURL:(NSURL *)reqURL completion:(void(^)(NSError *_Nullable error))completionHandler {
+    [self sendHeartbeatWithReqURL:reqURL remainingRetries:mReqAttempts completion:completionHandler];
 }
 
-- (void)sendHeartbeatWithRemainingRetries:(NSInteger)remainingRetries completion:(void(^)(NSError *_Nullable error))completionHandler {
-    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:mReqURL];
+- (void)sendHeartbeatWithReqURL:(NSURL *)reqURL remainingRetries:(NSInteger)remainingRetries completion:(void(^)(NSError *_Nullable error))completionHandler {
+    NSMutableURLRequest *request = [NSMutableURLRequest.alloc initWithURL:reqURL];
     request.HTTPMethod = @"HEAD";
     request.timeoutInterval = mReqTimeoutInterval;
     [request addValue:@"1" forHTTPHeaderField:@"MC-PIN-REQ"];
@@ -187,7 +189,7 @@
         MCSHeartbeatDebugLog(@"%@<%p>: %d : %s, status=%ld, error=%@\n", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd), [(NSHTTPURLResponse *)response statusCode], error);
 
         if ( error != nil && remainingRetries > 0 ) {
-            [self sendHeartbeatWithRemainingRetries:remainingRetries - 1 completion:completionHandler];
+            [self sendHeartbeatWithReqURL:reqURL remainingRetries:remainingRetries - 1 completion:completionHandler];
             return;
         }
         completionHandler(error);

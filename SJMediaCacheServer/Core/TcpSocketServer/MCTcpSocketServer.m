@@ -205,16 +205,7 @@ static NSString *MCErrorLogsFilePath;
         
 #ifdef DEBUG
         if ( error ) {
-            NSDate *date = NSDate.new;
-            NSDateFormatter *formatter = [NSDateFormatter.alloc init];
-            [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
-            
-            NSString *errLog = [NSString stringWithFormat:@"[%@] port: %d, domain: %d, code: %d, desc: %@\n", [formatter stringFromDate:date], self.port, nw_error_get_error_domain(error), nw_error_get_error_code(error), error];
-            
-            NSFileHandle *fileHandle = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:MCErrorLogsFilePath] error:NULL];
-            [fileHandle seekToEndOfFile];
-            [fileHandle writeData:[errLog dataUsingEncoding:NSUTF8StringEncoding]];
-            [fileHandle closeFile];
+            [self _logError:error];
         }
 #endif
         
@@ -261,7 +252,6 @@ static NSString *MCErrorLogsFilePath;
         if ( sync ) {
             switch (state) {
                 case nw_listener_state_invalid:
-                    break;
                 case nw_listener_state_waiting:
                     break;
                 case nw_listener_state_ready:
@@ -283,7 +273,11 @@ static NSString *MCErrorLogsFilePath;
                     if ( self == nil ) return;
                     @synchronized (self) {
                         if ( self.isRunning ) {
-                            [self _restartServer];
+                            if ( self->mListener ) {
+                                nw_listener_cancel(self->mListener);
+                                self->mListener = nil;
+                            }
+                            [self _setNeedsRestartServer];
                         }
                     }
                 }];
@@ -292,16 +286,18 @@ static NSString *MCErrorLogsFilePath;
         }
         
         // 报错时重启
-        if ( self.isRunning && error ) {
-            dispatch_async(self->mServerQueue, ^{
+        if ( state == nw_listener_state_failed ) {
+            dispatch_async(dispatch_get_global_queue(0, 0), ^{
                 @synchronized (self) {
-                    if ( self.isRunning && (listener == self->mListener || self->mListener == nil) ) [self _setNeedsRestartServer];
+                    if ( self.isRunning && self->mListener == listener ) {
+                        if ( self->mListener ) {
+                            nw_listener_cancel(self->mListener);
+                            self->mListener = nil;
+                        }
+                        [self _setNeedsRestartServer];
+                    }
                 }
             });
-        }
-        
-        if ( state == nw_listener_state_failed ) {
-            nw_listener_cancel(listener);
         }
     });
     nw_listener_set_new_connection_handler(listener, ^(nw_connection_t  _Nonnull connection) {
@@ -311,13 +307,8 @@ static NSString *MCErrorLogsFilePath;
             [self _onConnect:connection];
         }
     });
+    mListener = listener;
     nw_listener_start(listener);
-    if ( dispatch_semaphore_wait(sync, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC))) == 0 ) {
-        mListener = listener;
-    }
-    else {
-        nw_listener_cancel(listener); // Timeout occurred after 2 seconds
-    }
 }
 
 - (void)_onConnect:(nw_connection_t)connection {
@@ -331,17 +322,19 @@ static NSString *MCErrorLogsFilePath;
 }
 
 - (void)_setNeedsRestartServer {
-    mShouldRestartServer = YES;
-    __weak typeof(self) _self = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
-        __strong typeof(_self) self = _self;
-        if ( self == nil ) return;
-        @synchronized (self) {
-            if ( self.isRunning && self->mShouldRestartServer ) {
-                [self _restartServer];
+    if ( !mShouldRestartServer ) {
+        mShouldRestartServer = YES;
+        __weak typeof(self) _self = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
+            __strong typeof(_self) self = _self;
+            if ( self == nil ) return;
+            @synchronized (self) {
+                if ( self.isRunning && self->mShouldRestartServer ) {
+                    [self _restartServer];
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 - (void)_restartServer {
@@ -354,4 +347,26 @@ static NSString *MCErrorLogsFilePath;
     [self _startServerWithPort:self.port];
 }
 
+#ifdef DEBUG
+- (void)_logMsg:(NSString *)msg {
+    [self _logMsg:msg level:@"I"];
+}
+
+- (void)_logError:(nw_error_t)error {
+    NSString *log = [NSString stringWithFormat:@"port: %d, domain: %d, code: %d, desc: %@", self.port, nw_error_get_error_domain(error), nw_error_get_error_code(error), error];
+    [self _logMsg:log level:@"E"];
+}
+
+- (void)_logMsg:(NSString *)msg level:(NSString *)level {
+    NSDate *date = NSDate.new;
+    NSDateFormatter *formatter = [NSDateFormatter.alloc init];
+    [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    
+    NSString *content = [NSString stringWithFormat:@"%@ %@: %@\n", [formatter stringFromDate:date], level, msg];
+    NSFileHandle *fileHandle = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:MCErrorLogsFilePath] error:NULL];
+    [fileHandle seekToEndOfFile];
+    [fileHandle writeData:[content dataUsingEncoding:NSUTF8StringEncoding]];
+    [fileHandle closeFile];
+}
+#endif
 @end
