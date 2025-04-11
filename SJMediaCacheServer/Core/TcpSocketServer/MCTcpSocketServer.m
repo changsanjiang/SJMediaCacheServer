@@ -130,6 +130,23 @@ static NSString *MCErrorLogsFilePath;
     mRunning = ATOMIC_VAR_INIT(NO);
     mServerQueue = dispatch_queue_create("lib.sj.MCTcpSocketServer", DISPATCH_QUEUE_SERIAL);
     mConnectionQueue = dispatch_queue_create("lib.sj.MCTcpSocketConnection", DISPATCH_QUEUE_SERIAL);
+    __weak typeof(self) _self = self;
+    mPin = [MCPin.alloc initWithInterval:2 failureHandler:^{
+        __strong typeof(_self) self = _self;
+        if ( self == nil ) return;
+        @synchronized (self) {
+            if ( self.isRunning ) {
+#ifdef DEBUG
+                [self _logMsg:[NSString stringWithFormat:@"Pin failed! Listener: %@, Port: %u", self->mListener, self.port]];
+#endif
+                if ( self->mListener ) {
+                    nw_listener_cancel(self->mListener);
+                    self->mListener = nil;
+                }
+                [self _setNeedsRestartServer];
+            }
+        }
+    }];
     return self;
 }
 
@@ -189,6 +206,10 @@ static NSString *MCErrorLogsFilePath;
 }
 
 - (void)_startServerWithPort:(uint16_t)port {
+#ifdef DEBUG
+    [self _logMsg:[NSString stringWithFormat:@"Start Server with Port: %u;", port]];
+#endif
+    
     __block dispatch_semaphore_t sync = dispatch_semaphore_create(0);
     char port_str[6];
     sprintf(port_str, "%hu", port);
@@ -204,6 +225,8 @@ static NSString *MCErrorLogsFilePath;
         if ( self == nil ) return;
         
 #ifdef DEBUG
+        [self _logMsg:[NSString stringWithFormat:@"Server state change: %@, %u, %d;", listener, port, state]];
+        
         if ( error ) {
             [self _logError:error];
         }
@@ -240,12 +263,14 @@ static NSString *MCErrorLogsFilePath;
         }
         
         // 设置端口号
+        // 启动 pin
         if ( state == nw_listener_state_ready ) {
             uint16_t p = nw_listener_get_port(listener);
             if ( p != self.port ) {
                 atomic_store(&self->mPort, p);
                 if ( self->_onListen ) self->_onListen(p);
             }
+            [self->mPin startWithPort:p];
         }
         
         // 释放同步锁
@@ -262,27 +287,6 @@ static NSString *MCErrorLogsFilePath;
                 }
                     break;
             }
-        }
-        
-        // 启动 pin
-        if ( state == nw_listener_state_ready ) {
-            if ( !self->mPin ) {
-                __weak typeof(self) _self = self;
-                self->mPin = [MCPin.alloc initWithInterval:2 failureHandler:^{
-                    __strong typeof(_self) self = _self;
-                    if ( self == nil ) return;
-                    @synchronized (self) {
-                        if ( self.isRunning ) {
-                            if ( self->mListener ) {
-                                nw_listener_cancel(self->mListener);
-                                self->mListener = nil;
-                            }
-                            [self _setNeedsRestartServer];
-                        }
-                    }
-                }];
-            }
-            [self->mPin startWithPort:self.port];
         }
         
         // 报错时重启
@@ -309,6 +313,7 @@ static NSString *MCErrorLogsFilePath;
     });
     mListener = listener;
     nw_listener_start(listener);
+    dispatch_semaphore_wait(sync, DISPATCH_TIME_FOREVER);
 }
 
 - (void)_onConnect:(nw_connection_t)connection {
@@ -322,6 +327,10 @@ static NSString *MCErrorLogsFilePath;
 }
 
 - (void)_setNeedsRestartServer {
+#ifdef DEBUG
+    [self _logMsg:[NSString stringWithFormat:@"SetNeedsRestartServer; ShouldRestartServer: %d;", mShouldRestartServer]];
+#endif
+    
     if ( !mShouldRestartServer ) {
         mShouldRestartServer = YES;
         __weak typeof(self) _self = self;
@@ -338,6 +347,10 @@ static NSString *MCErrorLogsFilePath;
 }
 
 - (void)_restartServer {
+#ifdef DEBUG
+    [self _logMsg:[NSString stringWithFormat:@"Restart Server; Listener: %@, Port: %u;", mListener, self.port]];
+#endif
+    
     if ( mListener ) {
         nw_listener_cancel(mListener);
         mListener = nil;
@@ -353,7 +366,7 @@ static NSString *MCErrorLogsFilePath;
 }
 
 - (void)_logError:(nw_error_t)error {
-    NSString *log = [NSString stringWithFormat:@"port: %d, domain: %d, code: %d, desc: %@", self.port, nw_error_get_error_domain(error), nw_error_get_error_code(error), error];
+    NSString *log = [NSString stringWithFormat:@"Port: %d, Domain: %d, Code: %d, Desc: %@", self.port, nw_error_get_error_domain(error), nw_error_get_error_code(error), error];
     [self _logMsg:log level:@"E"];
 }
 
