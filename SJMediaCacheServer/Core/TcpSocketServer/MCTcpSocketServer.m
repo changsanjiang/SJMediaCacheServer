@@ -147,6 +147,10 @@ static NSString *MCErrorLogsFilePath;
             }
         }
     }];
+    
+#ifdef DEBUG
+    [self _logMsg:@"Init;"];
+#endif
     return self;
 }
 
