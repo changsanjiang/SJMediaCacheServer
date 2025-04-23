@@ -405,6 +405,8 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
         case MCSDataTypeHLSSubtitles:
         case MCSDataTypeHLSInit:
         case MCSDataTypeHLS:
+        case MCSDataTypeLocalFileMask:
+        case MCSDataTypeLocalFile:
         case MCSDataTypeFILEMask:
         case MCSDataTypeFILE: return nil; /* return nil; */
         case MCSDataTypeHLSSegment: { // only segment
@@ -428,6 +430,7 @@ static NSString *HLS_AES_KEY_MIME_TYPE = @"application/octet-stream";
                 return nil;
             }
         }
+            break;
     }
 }
 

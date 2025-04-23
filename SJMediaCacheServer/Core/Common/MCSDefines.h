@@ -11,8 +11,11 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSUInteger, MCSAssetType) {
+    // remote file
     MCSAssetTypeFILE,
-    MCSAssetTypeHLS
+    MCSAssetTypeHLS,
+    // local file
+    MCSAssetTypeLocalFile,
 };
 
 typedef NS_OPTIONS(NSUInteger, MCSDataType) {
@@ -26,6 +29,9 @@ typedef NS_OPTIONS(NSUInteger, MCSDataType) {
 
     MCSDataTypeFILEMask      = 0xFF00,
     MCSDataTypeFILE          = 1 << 8,
+    
+    MCSDataTypeLocalFileMask     = 0xFF0000,
+    MCSDataTypeLocalFile         = 1 << 16,
 };
 
 

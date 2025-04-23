@@ -57,9 +57,6 @@
     if ( URL == nil )
         return nil;
     
-    if ( URL.isFileURL )
-        return URL;
-
     // proxy URL
     if ( _server.isRunning || [_server start] )
         return [MCSURL.shared generateProxyURLFromURL:URL];

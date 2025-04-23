@@ -122,6 +122,9 @@
                 }
             }
                 break;
+            case MCSAssetTypeLocalFile: {
+                break;
+            }
         }
         [_prefetcher prepare];
         

@@ -152,6 +152,8 @@
                 case MCSDataTypeHLSInit:
                 case MCSDataTypeHLS:
                 case MCSDataTypeFILEMask:
+                case MCSDataTypeLocalFileMask:
+                case MCSDataTypeLocalFile:
                     /* return */
                     return nil;
                 case MCSDataTypeFILE:

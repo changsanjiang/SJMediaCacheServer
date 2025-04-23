@@ -15,9 +15,8 @@
 #import "NSFileManager+MCS.h"
  
 #import "FILEAsset.h"
- 
-#import "HLSAssetReader.h"
 #import "HLSAsset.h"
+#import "LocalFileAsset.h"
 
 #import "MCSRootDirectory.h"
 #import "MCSConsts.h"
@@ -414,6 +413,9 @@
         case MCSAssetTypeHLS:
             assetTableName = @"HLSAsset";
             break;
+        case MCSAssetTypeLocalFile:
+            assetTableName = @"LocalFileAsset";
+            break;
     }
     NSArray<SJSQLite3RowData *> *values = [mSqlite3 exec:[NSString stringWithFormat:@"SELECT name FROM %@ INNER JOIN MCSAssetUsageLog ON (MCSAssetUsageLog.assetType = %ld AND MCSAssetUsageLog.asset IN (%@)) WHERE MCSAssetUsageLog.asset = %@.id;", assetTableName, type, assetIds, assetTableName] error:NULL];
     return SJFoundationExtendedValuesForKey(@"name", values);
@@ -427,6 +429,9 @@
             break;
         case MCSAssetTypeHLS:
             assetTableName = @"HLSAsset";
+            break;
+        case MCSAssetTypeLocalFile:
+            assetTableName = @"LocalFileAsset";
             break;
     }
     NSArray<SJSQLite3RowData *> *values = [mSqlite3 exec:[NSString stringWithFormat:@"SELECT name FROM %@ INNER JOIN MCSAssetUsageLog ON (MCSAssetUsageLog.assetType = %ld AND MCSAssetUsageLog.asset NOT IN (%@)) WHERE MCSAssetUsageLog.asset = %@.id;", assetTableName, type, assetIds, assetTableName] error:NULL];
@@ -480,6 +485,13 @@
 }
  
 - (Class)_assetClassForType:(MCSAssetType)type {
-    return type == MCSAssetTypeFILE ? FILEAsset.class : HLSAsset.class;
+    switch (type) {
+        case MCSAssetTypeFILE:
+            return FILEAsset.class;
+        case MCSAssetTypeHLS:
+            return HLSAsset.class;
+        case MCSAssetTypeLocalFile:
+            return LocalFileAsset.class;
+    }
 }
 @end

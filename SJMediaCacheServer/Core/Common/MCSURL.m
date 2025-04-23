@@ -109,6 +109,10 @@ MCSMD5(NSString *str) {
 - (MCSAssetType)assetTypeForURL:(NSURL *)URL {
     NSURL *originalURL = [self restoreURLFromProxyURL:URL];
     
+    if ( originalURL.isFileURL ) {
+        return MCSAssetTypeLocalFile;
+    }
+    
     // Use the resolveAssetType block if it exists.
     if ( _resolveAssetType != nil ) {
         return _resolveAssetType(originalURL);
