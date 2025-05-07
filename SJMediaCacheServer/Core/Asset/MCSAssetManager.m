@@ -187,21 +187,44 @@
         // 过滤被使用中的资源
         NSMutableSet<NSNumber *> *readwriteFileAssets = NSMutableSet.set;
         NSMutableSet<NSNumber *> *readwriteHLSAssets = NSMutableSet.set;
+        NSMutableSet<NSNumber *> *readwriteLocalFileAssets = NSMutableSet.set;
         [mAssets enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id<MCSAsset>  _Nonnull asset, BOOL * _Nonnull stop) {
             if ( asset.readwriteCount > 0 ) {
-                NSMutableSet<NSNumber *> *set = (asset.type == MCSAssetTypeFILE ? readwriteFileAssets : readwriteHLSAssets);
+                NSMutableSet<NSNumber *> *set = nil;
+                switch ( (MCSAssetType)key.integerValue ) {
+                    case MCSAssetTypeFILE:
+                        set = readwriteFileAssets;
+                        break;
+                    case MCSAssetTypeHLS:
+                        set = readwriteHLSAssets;
+                        break;
+                    case MCSAssetTypeLocalFile:
+                        set = readwriteLocalFileAssets;
+                        break;
+                }
                 [set addObject:@(asset.id)];
             }
         }];
         
         // not in
         [assets enumerateKeysAndObjectsUsingBlock:^(MCSAssetTypeNumber * _Nonnull key, NSArray<MCSAssetIDNumber *> * _Nonnull obj, BOOL * _Nonnull stop) {
-            NSMutableSet<NSNumber *> *set = (key.integerValue == MCSAssetTypeFILE ? readwriteFileAssets : readwriteHLSAssets);
+            NSMutableSet<NSNumber *> *set = nil;
+            switch ( (MCSAssetType)key.integerValue ) {
+                case MCSAssetTypeFILE:
+                    set = readwriteFileAssets;
+                    break;
+                case MCSAssetTypeHLS:
+                    set = readwriteHLSAssets;
+                    break;
+                case MCSAssetTypeLocalFile:
+                    set = readwriteLocalFileAssets;
+                    break;
+            }
             [set addObjectsFromArray:obj];
         }];
         
         // 全部处于使用中
-        NSInteger count = readwriteFileAssets.count + readwriteHLSAssets.count;
+        NSInteger count = readwriteFileAssets.count + readwriteHLSAssets.count + readwriteLocalFileAssets.count;
         if ( count == mCountOfAllAssets )
             return;
         
@@ -212,19 +235,20 @@
         
         NSString *s0 = [readwriteFileAssets.allObjects componentsJoinedByString:@","];
         NSString *s1 = [readwriteHLSAssets.allObjects componentsJoinedByString:@","];
-        
+        NSString *s2 = [readwriteLocalFileAssets.allObjects componentsJoinedByString:@","];
+
         NSArray<SJSQLite3RowData *> *rows = nil;
         if ( countLimit != NSNotFound ) {
             rows = [mSqlite3 exec:[NSString stringWithFormat:
-                                   @"SELECT * FROM MCSAssetUsageLog WHERE ( (asset NOT IN (%@) AND assetType = 0) OR (asset NOT IN (%@) AND assetType = 1) ) \
+                                   @"SELECT * FROM MCSAssetUsageLog WHERE ( (asset NOT IN (%@) AND assetType = %ld) OR (asset NOT IN (%@) AND assetType = %ld) OR (asset NOT IN (%@) AND assetType = %ld) ) \
                                                                       AND updatedTime <= %lf \
                                                                  ORDER BY updatedTime ASC \
-                                                                    LIMIT 0, %ld;", s0, s1, timeLimit, (long)countLimit] error:NULL];
+                                                                    LIMIT 0, %ld;", s0, MCSAssetTypeFILE, s1, MCSAssetTypeHLS, s2, MCSAssetTypeLocalFile, timeLimit, (long)countLimit] error:NULL];
         }
         else {
             rows = [mSqlite3 exec:[NSString stringWithFormat:
-                            @"SELECT * FROM MCSAssetUsageLog WHERE ( (asset NOT IN (%@) AND assetType = 0) OR (asset NOT IN (%@) AND assetType = 1) ) \
-                                                               AND updatedTime <= %lf;", s0, s1, timeLimit] error:NULL];
+                            @"SELECT * FROM MCSAssetUsageLog WHERE ( (asset NOT IN (%@) AND assetType = %ld) OR (asset NOT IN (%@) AND assetType = %ld) OR (asset NOT IN (%@) AND assetType = %ld) ) \
+                                                               AND updatedTime <= %lf;", s0, MCSAssetTypeFILE, s1, MCSAssetTypeHLS, s2, MCSAssetTypeLocalFile, timeLimit] error:NULL];
         }
         NSArray<MCSAssetUsageLog *> *logs = [mSqlite3 objectsForClass:MCSAssetUsageLog.class rowDatas:rows error:NULL];
         if ( logs.count == 0 )
@@ -374,24 +398,39 @@
 ///
 /// unlocked
 - (nullable NSArray<id<MCSAsset>> *)_queryAssetsNotIn:(nullable NSDictionary<MCSAssetTypeNumber *, NSArray<MCSAssetIDNumber *> *> *)assets {
-    
     NSMutableSet<NSNumber *> *FILEAssets = NSMutableSet.set;
     NSMutableSet<NSNumber *> *HLSAssets = NSMutableSet.set;
-    // not in
-    [assets enumerateKeysAndObjectsUsingBlock:^(MCSAssetTypeNumber * _Nonnull key, NSArray<MCSAssetIDNumber *> * _Nonnull obj, BOOL * _Nonnull stop) {
-        NSMutableSet<NSNumber *> *set = (key.integerValue == MCSAssetTypeFILE ? FILEAssets : HLSAssets);
-        [set addObjectsFromArray:obj];
-    }];
+    NSMutableSet<NSNumber *> *localFileAssets = NSMutableSet.set;
     
     [FILEAssets addObject:@(0)];
     [HLSAssets addObject:@(0)];
+    [localFileAssets addObject:@(0)];
     
+    // not in
+    [assets enumerateKeysAndObjectsUsingBlock:^(MCSAssetTypeNumber * _Nonnull key, NSArray<MCSAssetIDNumber *> * _Nonnull obj, BOOL * _Nonnull stop) {
+        NSMutableSet<NSNumber *> *set = nil;
+        switch ( (MCSAssetType)key.integerValue ) {
+            case MCSAssetTypeFILE:
+                set = FILEAssets;
+                break;
+            case MCSAssetTypeHLS:
+                set = HLSAssets;
+                break;
+            case MCSAssetTypeLocalFile:
+                set = localFileAssets;
+                break;
+        }
+        [set addObjectsFromArray:obj];
+    }];
+
     NSString *s0 = [FILEAssets.allObjects componentsJoinedByString:@","];
     NSString *s1 = [HLSAssets.allObjects componentsJoinedByString:@","];
-    
+    NSString *s2 = [localFileAssets.allObjects componentsJoinedByString:@","];
+
     NSArray<SJSQLite3RowData *> *rows = [mSqlite3 exec:[NSString stringWithFormat:
-                                                        @"SELECT * FROM MCSAssetUsageLog WHERE (asset NOT IN (%@) AND assetType = 0) \
-                                                                                            OR (asset NOT IN (%@) AND assetType = 1);", s0, s1] error:NULL];
+                                                        @"SELECT * FROM MCSAssetUsageLog WHERE (asset NOT IN (%@) AND assetType = %ld) \
+                                                                                            OR (asset NOT IN (%@) AND assetType = %ld) \
+                                                                                            OR (asset NOT IN (%@) AND assetType = %ld);", s0, MCSAssetTypeFILE, s1, MCSAssetTypeHLS, s2, MCSAssetTypeLocalFile] error:NULL];
     NSArray<MCSAssetUsageLog *> *logs = [mSqlite3 objectsForClass:MCSAssetUsageLog.class rowDatas:rows error:NULL];
     if ( logs.count == 0 )
         return nil;
