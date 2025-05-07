@@ -28,10 +28,10 @@ PODS:
     - SJUIKit/ObserverHelper
     - SJUIKit/Queues
     - SJUIKit/SQLite3
-  - SJMediaCacheServer (2.1.0):
-    - SJMediaCacheServer/Core (= 2.1.0)
+  - SJMediaCacheServer (2.1.3):
+    - SJMediaCacheServer/Core (= 2.1.3)
     - SJUIKit/SQLite3
-  - SJMediaCacheServer/Core (2.1.0):
+  - SJMediaCacheServer/Core (2.1.3):
     - SJUIKit/SQLite3
   - SJUIKit/AttributesFactory (0.0.0.52):
     - SJUIKit/AttributesFactory/Deprecated (= 0.0.0.52)
@@ -86,11 +86,11 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
   SJBaseVideoPlayer: c8f2fdb374ec2c946c37b1f39eee24f0812a979b
-  SJMediaCacheServer: 81e1f98ad72548d4d8c6d2099235506418815ce8
+  SJMediaCacheServer: 333776e1614ae309aa9db561c9d2d711c6764bbd
   SJUIKit: 8246b1001e616b0dbd090309fd58cdd609ae3fd4
   SJVideoPlayer: f819c5074aea5192fe624784f8a7e820e45b85cf
   YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30
 
 PODFILE CHECKSUM: e3cdcc57ae13e948a10fe93300ee725653c7cea5
 
-COCOAPODS: 1.15.0
+COCOAPODS: 1.16.2

@@ -244,6 +244,7 @@
 }
 
 - (void)_clear {
+    [self willClear];
     [_mContent removeObserver:self];
     [_mContent readwriteRelease];
     [_mContent closeRead];
@@ -251,6 +252,7 @@
 }
 
 - (void)didAbortWithError:(nullable NSError *)error { }
+- (void)willClear { }
 - (void)didClear { }
 @end
 
@@ -285,7 +287,7 @@
     [self contentDidReady:mFileContent range:mReadRange];
 }
 
-- (void)didClear {
+- (void)willClear {
     [mFileContent readwriteRelease];
 }
 @end
@@ -392,7 +394,7 @@
     [mTask cancel];
 }
 
-- (void)didClear {
+- (void)willClear {
     [mHTTPContent readwriteRelease]; // release
 }
 @end

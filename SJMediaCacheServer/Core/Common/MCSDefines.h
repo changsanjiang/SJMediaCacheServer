@@ -11,10 +11,11 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSUInteger, MCSAssetType) {
-    // remote file
+    // remote file(http或https文件: http://xxx/xxx.mp4)
     MCSAssetTypeFILE,
+    // hls
     MCSAssetTypeHLS,
-    // local file
+    // local file(本地文件: file://xxx/xxx.mp4)
     MCSAssetTypeLocalFile,
 };
 
