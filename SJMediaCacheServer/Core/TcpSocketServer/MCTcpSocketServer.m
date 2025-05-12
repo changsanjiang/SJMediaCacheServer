@@ -214,7 +214,8 @@ static NSString *MCErrorLogsFilePath;
     [self _logMsg:[NSString stringWithFormat:@"Start Server with Port: %u;", port]];
 #endif
     
-    __block dispatch_semaphore_t sync = dispatch_semaphore_create(0);
+    dispatch_semaphore_t sync = dispatch_semaphore_create(0);
+    __block dispatch_semaphore_t syncPtr = sync;
     char port_str[6];
     sprintf(port_str, "%hu", port);
 
@@ -278,7 +279,7 @@ static NSString *MCErrorLogsFilePath;
         }
         
         // 释放同步锁
-        if ( sync ) {
+        if ( syncPtr ) {
             switch (state) {
                 case nw_listener_state_invalid:
                 case nw_listener_state_waiting:
@@ -286,8 +287,8 @@ static NSString *MCErrorLogsFilePath;
                 case nw_listener_state_ready:
                 case nw_listener_state_failed:
                 case nw_listener_state_cancelled: {
-                    dispatch_semaphore_signal(sync);
-                    sync = nil;
+                    dispatch_semaphore_signal(syncPtr);
+                    syncPtr = nil;
                 }
                     break;
             }
