@@ -34,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (dispatch_data_t)createDataWithString:(NSString *)string;
 - (dispatch_data_t)createDataWithString:(NSString *)string encoding:(NSStringEncoding)encoding;
 
-- (void)sendData:(dispatch_data_t)data
+- (void)sendData:(nullable dispatch_data_t)data
          context:(nw_content_context_t)context
       isComplete:(bool)isComplete
       completion:(nw_connection_send_completion_t)completion;

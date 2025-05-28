@@ -59,6 +59,12 @@
     return self;
 }
 
+#ifdef SJDEBUG
+- (void)dealloc {
+    NSLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
+}
+#endif
+
 - (dispatch_queue_t)queue {
     return mQueue;
 }
@@ -83,7 +89,7 @@
     return [self createData:[string dataUsingEncoding:encoding]];
 }
 
-- (void)sendData:(dispatch_data_t)data
+- (void)sendData:(nullable dispatch_data_t)data
          context:(nw_content_context_t)context
       isComplete:(_Bool)isComplete
       completion:(nw_connection_send_completion_t)completion {

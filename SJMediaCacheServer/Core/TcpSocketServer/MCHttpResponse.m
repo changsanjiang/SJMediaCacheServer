@@ -42,15 +42,23 @@
     connection.onStateChange = ^(MCTcpSocketConnection * _Nonnull connection, nw_connection_state_t state, nw_error_t  _Nullable error) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
-        @synchronized (self) {
-            [self _connectionStateDidChange:state error:error];
-        }
+        [self _connectionStateDidChange:state error:error];
     };
     [connection start];
     return self;
 }
 
+#ifdef SJDEBUG
+- (void)dealloc {
+    NSLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
+}
+#endif
+
 - (void)_connectionStateDidChange:(nw_connection_state_t)state error:(nw_error_t _Nullable)error {
+    if ( mClosed ) {
+        return;
+    }
+    
     switch (state) {
         case nw_connection_state_waiting:
         case nw_connection_state_preparing:
@@ -73,39 +81,35 @@
     [mConnection receiveDataWithMinimumIncompleteLength:1 maximumLength:4 * 1024 * 1024 completion:^(dispatch_data_t  _Nullable content, nw_content_context_t  _Nullable context, _Bool is_complete, nw_error_t  _Nullable err) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
-        @synchronized (self) {
-            if ( err ) {
-                [self _closeConnectionWithError:@"Data receive failed."];
-                return;
-            }
-            
-            if ( self->mClosed ) {
-                return;
-            }
-            
-            [self _processRequestWithData:content];
+        if ( err ) {
+            [self _closeConnectionWithError:@"Data receive failed."];
+            return;
         }
+        
+        if ( self->mClosed ) {
+            return;
+        }
+        
+        [self _processRequestWithData:content];
     }];
 }
 
 - (void)_closeConnectionWithError:(NSString * _Nullable)desc {
     NSMutableString *message = [NSMutableString.alloc init];
     [message appendString:@"HTTP/1.1 500 Internal Server Error\r\n"];
+    [message appendString:@"Content-Length: 0\r\n"];
+    [message appendString:@"Connection: close\r\n"];
     if ( desc ) {
-        [message appendString:@"Content-Type: application/json\r\n"];
         [message appendFormat:@"MC-Error-Message: %@\r\n", desc];
     }
     [message appendString:@"\r\n"];
     
-    NSData *data = [message dataUsingEncoding:NSUTF8StringEncoding];
-    dispatch_data_t content = [mConnection createData:data];
+    dispatch_data_t content = [mConnection createDataWithString:message];
     __weak typeof(self) _self = self;
-    [mConnection sendData:content context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:NO completion:^(nw_error_t  _Nullable error) {
+    [mConnection sendData:content context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:YES completion:^(nw_error_t  _Nullable error) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
-        @synchronized (self) {
-            [self _close];
-        }
+        [self _close];
     }];
 }
 
@@ -120,7 +124,6 @@
         mTask = nil;
     }
     [mConnection close];
-    mConnection = nil;
     mStrongSelf = nil;
 }
 
@@ -164,21 +167,21 @@
 #pragma mark - MCSProxyTaskDelegate
 
 - (void)task:(id<MCSProxyTask>)task didReceiveResponse:(id<MCSResponse>)response {
-    @synchronized (self) {
+    dispatch_async(mConnection.queue, ^{
         [self _onDataSendable];
-    }
+    });
 }
 
 - (void)task:(id<MCSProxyTask>)task hasAvailableDataWithLength:(NSUInteger)length {
-    @synchronized (self) {
+    dispatch_async(mConnection.queue, ^{
         [self _onDataSendable];
-    }
+    });
 }
 
 - (void)task:(id<MCSProxyTask>)task didAbortWithError:(nullable NSError *)error {
-    @synchronized (self) {
-        [self _closeConnectionWithError:error.userInfo[NSLocalizedDescriptionKey]];
-    }
+    dispatch_async(mConnection.queue, ^{
+        [self _close];
+    });
 }
 
 #pragma mark - name
@@ -230,10 +233,8 @@
         [mConnection sendData:content context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:NO completion:^(nw_error_t  _Nullable error) {
             __strong typeof(_self) self = _self;
             if ( self == nil ) return;
-            @synchronized (self) {
-                self->mHeaderHasSent = error == nil;
-                [self _onDataSendCompleteWithError:error];
-            }
+            self->mHeaderHasSent = error == nil;
+            [self _onDataSendCompleteWithError:error];
         }];
         
         return; // return;
@@ -250,19 +251,20 @@
     [mConnection sendData:content context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:mTask.isDone completion:^(nw_error_t  _Nullable error) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
-        @synchronized (self) {
-            [self _onDataSendCompleteWithError:error];
-        }
+        [self _onDataSendCompleteWithError:error];
     }];
 }
 
 - (void)_onDataSendCompleteWithError:(nw_error_t _Nullable)error {
     if ( error ) {
-        [self _closeConnectionWithError:@"Data send failed."];
+        [self _close];
         return;
     }
-    mSending = NO;
-    [self _onDataSendable];
+    
+    dispatch_async(self->mConnection.queue, ^{
+        self->mSending = NO;
+        [self _onDataSendable];
+    });
 }
 
 - (void)_sendPinResponse {
@@ -272,9 +274,7 @@
     [mConnection sendData:content context:NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT isComplete:YES completion:^(nw_error_t  _Nullable error) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
-        @synchronized (self) {
-            [self _close];
-        }
+        [self _close];
     }];
 }
 @end
