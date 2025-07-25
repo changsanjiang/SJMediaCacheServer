@@ -164,9 +164,9 @@
 - (void)removeAllAssets {
     @synchronized (self) {
         NSMutableArray<NSNumber *> *memoryExporterIds = mExporters.count != 0 ? ([NSMutableArray arrayWithCapacity:mExporters.count]) : nil;
-        for ( MCSExporter *exporter in mExporters ) {
+        [mExporters enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, MCSExporter * _Nonnull exporter, BOOL * _Nonnull stop) {
             [memoryExporterIds addObject:@(exporter.id)];
-        }
+        }];
         
         NSArray<SJSQLite3Condition *> *conditions = nil;
         if ( memoryExporterIds.count != 0 ) {
