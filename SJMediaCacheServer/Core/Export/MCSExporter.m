@@ -250,7 +250,7 @@
 }
 
 - (void)_notifyProgressChange {
-    [_delegate exporter:self statusDidChange:_progress];
+    [_delegate exporter:self progressDidChange:_progress];
     dispatch_async(dispatch_get_main_queue(), ^{
         if ( self.progressDidChangeExecuteBlock != nil ) self.progressDidChangeExecuteBlock(self);
     });
