@@ -297,7 +297,7 @@
             NSArray<id<MCSExportObserver>> *observers = MCSAllHashTableObjects(self->mObservers);
             dispatch_async(dispatch_get_main_queue(), ^{
                 for ( id<MCSExportObserver> observer in observers ) {
-                    if ( [observer respondsToSelector:@selector(exporter:statusDidChange:)] ) {
+                    if ( [observer respondsToSelector:@selector(exporter:failedWithError:)] ) {
                         [observer exporter:exporter failedWithError:error];
                     }
                 }
