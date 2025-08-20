@@ -19,6 +19,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SJMediaCacheServer : NSObject
 + (instancetype)shared;
 
+/// Enable AirPlay support by using device's actual IP address instead of localhost
+/// This property allows the media cache server to be accessible from external devices
+/// such as Apple TV for AirPlay streaming. Default is YES.
+@property (nonatomic) BOOL enableAirPlaySupport;
+
 /// Convert the given URL to a proxy playback URL.
 ///
 /// This method takes an original media asset URL and converts it to a local proxy server URL.
@@ -450,7 +455,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// You do not need to unregister the observer. If you forget or are unable to remove the observer, the manager will remove it automatically.
 ///
 - (void)registerExportObserver:(id<MCSExportObserver>)observer; // 监听导出相关的事件
- 
+
 /// Remove the export observer.
 ///
 /// You do not need to manually unregister the observer. If the observer is no longer needed, it will be removed automatically.
@@ -498,9 +503,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// @return The exporter for the asset, or nil if the asset cannot be exported.
 ///
 - (nullable id<MCSExporter>)exportAssetWithURL:(NSURL *)URL shouldResume:(BOOL)shouldResume; // 获取exporter, 如果不存在将会创建.
- 
+
 - (MCSExportStatus)exportStatusForURL:(NSURL *)URL; // 当前状态
-- (float)exportProgressForURL:(NSURL *)URL; // 当前进度 
+- (float)exportProgressForURL:(NSURL *)URL; // 当前进度
 
 /// Synchronize the cache progress to the export task associated with the given asset URL.
 ///
