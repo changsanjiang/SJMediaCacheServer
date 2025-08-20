@@ -7,6 +7,7 @@
 //
 
 #import "HLSAssetParser.h"
+#import "MCSNetworkUtils.h"
 #import "MCSError.h"
 #import "MCSURL.h"
 #import "NSURLRequest+MCS.h"
@@ -255,7 +256,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
         NSString *matchedName = obj.numberOfRanges == 3 ? [self substringWithRange:[obj rangeAtIndex:1]] : nil;
         return matchedName && [matchedName isEqualToString:name];
     }];
-    
+
     if ( result != nil ) {
         NSRange valueRange = [result rangeAtIndex:2];
         NSUInteger valuePos = valueRange.location;
@@ -286,10 +287,19 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
 
 - (NSString *)hls_restoreOriginalUrl:(NSURL *)resourceURL {
     if ( [self containsString:@"://"] ) {
+        // Check for localhost and device IP addresses
         NSString *localhost = @"http://localhost";
+        NSString *deviceIP = [MCSNetworkUtils getLocalIPAddress];
+
         if ( [self hasPrefix:localhost] ) {
             return [NSURL URLWithString:[self substringFromIndex:localhost.length] relativeToURL:resourceURL].absoluteString;
         }
+
+        // Also check for device IP address
+        if (deviceIP && [self hasPrefix:[NSString stringWithFormat:@"http://%@", deviceIP]]) {
+            return [NSURL URLWithString:[self substringFromIndex:(deviceIP.length + 7)] relativeToURL:resourceURL].absoluteString;
+        }
+
         return self;
     }
     return [NSURL URLWithString:self relativeToURL:resourceURL].absoluteString;
@@ -327,12 +337,12 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
             MCSErrorUserInfoReasonKey : @"Empty data or unsupported format!"
         }];
     }
-    
+
     NSMutableString *_Nullable proxyPlaylist = nil;;
     if ( playlist != nil ) {
         NSMutableArray<__kindof HLSItem *> *parsingItems = NSMutableArray.array;
         proxyPlaylist = (NSMutableString *)[self parse:playlist shouldTrim:YES parsingItems:parsingItems];
-        
+
         __block NSMutableArray<id<HLSVariantStream>> *_Nullable variantStreams;
         __block NSMutableDictionary<NSString *, HLSRenditionGroup *> *_Nullable renditionGroups;
         // find variant streams and renditions
@@ -363,7 +373,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
                 }
             }
         }];
-        
+
         // selected variant stream
         id<HLSVariantStream> _Nullable selectedVariantStream = nil;
         // selected renditions
@@ -380,7 +390,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
 //                NSString *key = [audioGroupID stringByAppendingFormat:@"_%ld", HLSRenditionTypeAudio];
 //                HLSRenditionGroup *group = renditionGroups[key];
 //                NSParameterAssert(group != nil);
-//                selectedAudioRendition = 
+//                selectedAudioRendition =
 //                    group.renditions.count > 1 ? [self selectRenditionInGroup:group originalURL:originalURL currentURL:currentURL renditionSelectionHandler:renditionSelectionHandler] :
 //                                                 group.renditions.firstObject;
 //            }
@@ -403,7 +413,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
                                                                                            currentURL:currentURL
                                                                             renditionSelectionHandler:renditionSelectionHandler];
         }
-        
+
         [parsingItems enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(__kindof HLSItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             BOOL shouldRemove = NO;
             switch (obj.itemType) {
@@ -427,13 +437,13 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
                     break;
                 }
             }
-            
+
             // remove contents
             if ( shouldRemove ) {
                 [proxyPlaylist replaceCharactersInRange:NSMakeRange(obj.startPosition, obj.length) withString:@""];
                 return; // return;
             }
-            
+
             // replace URI with proxy url
             NSString *URI = obj.URI;
             if ( URI == nil ) return;
@@ -456,7 +466,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
     __block NSUInteger offset = 0;
     [lines enumerateObjectsUsingBlock:^(NSString *line, NSUInteger idx, BOOL * _Nonnull stop) {
         if ( shouldTrim && trimmedPlaylist.length != 0 ) [trimmedPlaylist appendString:@"\n"];
-        
+
         // 去除行首尾的空白字符; 每一行要么是一个标签(以 #EXT 开头), 要么是一个 URI
         NSString *curLine = shouldTrim ? [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] : line;
         // 跳过空行和注释
@@ -465,7 +475,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
         BOOL isUri = !isTag && !isComments && curLine.length > 0;
         if      ( isTag ) [self handleTag:curLine offset:offset parsingItems:parsingItems context:ctx]; // 这是一个标签行
         else if ( isUri ) [self handleURI:curLine offset:offset context:ctx]; // 这是一个 URI 行
-        
+
         if ( shouldTrim && !isComments ) [trimmedPlaylist appendString:curLine];
         offset = (shouldTrim ? trimmedPlaylist.length : (offset + curLine.length)) + 1; // + @"\n"
     }];
@@ -658,7 +668,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
     return NSMakeRange(location, length);
 }
 
-+ (id<HLSVariantStream>)selectVariantStreamInArray:(NSArray<id<HLSVariantStream>> *)streams 
++ (id<HLSVariantStream>)selectVariantStreamInArray:(NSArray<id<HLSVariantStream>> *)streams
                                        originalURL:(NSURL *)originalURL
                                         currentURL:(NSURL *)currentURL
                      variantStreamSelectionHandler:(nullable HLSVariantStreamSelectionHandler)variantStreamSelectionHandler {
@@ -685,7 +695,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
             if ( rendition != nil ) return rendition;
         }
     }
-    
+
     return [renditions mcs_firstOrNull:^BOOL(id<HLSRendition>  _Nonnull obj) {
         return obj.isDefault; // select default rendition
     }] ?: renditions.firstObject; // or first;

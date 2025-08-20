@@ -8,6 +8,7 @@
 #import "MCPin.h"
 #import "MCHttpRequest.h"
 #import "MCSLogger.h"
+#import "MCSNetworkUtils.h"
 
 @interface MCTimer : NSObject
 - (instancetype)initWithQueue:(dispatch_queue_t)queue start:(NSTimeInterval)start interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(MCTimer *timer))block;
@@ -18,7 +19,7 @@
 - (void)suspend;
 - (void)invalidate;
 @end
- 
+
 @implementation MCTimer {
     dispatch_semaphore_t _semaphore;
     dispatch_source_t _timer;
@@ -125,8 +126,15 @@
 - (void)startWithPort:(uint16_t)port {
     @synchronized (self) {
         [self _clearTimer];
-        
-        NSURL *reqURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
+
+        // Get device IP address for AirPlay support
+        NSString *deviceIP = @"127.0.0.1"; // Default to localhost
+        // For AirPlay support, we need to use the device's actual IP address
+        NSString *localIP = [MCSNetworkUtils getLocalIPAddress];
+        if (localIP) {
+            deviceIP = localIP;
+        }
+        NSURL *reqURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@:%hu", deviceIP, port]];
         __weak typeof(self) _self = self;
         mTimer = [MCTimer.alloc initWithQueue:dispatch_get_global_queue(0, 0) start:mReqInterval interval:mReqInterval repeats:YES block:^(MCTimer *timer) {
             __strong typeof(_self) self = _self;

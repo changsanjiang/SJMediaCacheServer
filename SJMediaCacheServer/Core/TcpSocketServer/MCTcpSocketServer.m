@@ -11,6 +11,7 @@
 #import "MCSRootDirectory.h"
 #import "NSFileHandle+MCS.h"
 #import "NSFileManager+MCS.h"
+#import "MCSNetworkUtils.h"
 
 @interface MCTcpSocketConnection () {
     nw_connection_t mConnection;
@@ -25,7 +26,7 @@
     self = [super init];
     mConnection = connection;
     mQueue = queue;
-    
+
     __weak typeof(self) _self = self;
     nw_connection_set_state_changed_handler(connection, ^(nw_connection_state_t state, nw_error_t  _Nullable error) {
 #ifdef SJDEBUG1
@@ -153,7 +154,7 @@ static NSString *MCErrorLogsFilePath;
             }
         }
     }];
-    
+
 #ifdef DEBUG
     [self _logMsg:@"Init;"];
 #endif
@@ -177,13 +178,13 @@ static NSString *MCErrorLogsFilePath;
         if ( self.isRunning ) {
             return YES;
         }
-        
+
         [self _startServer];
-        
+
         if ( self.port == 0 ) {
             return NO;
         }
-        
+
         atomic_store(&mRunning, YES);
         return YES;
     }
@@ -194,14 +195,14 @@ static NSString *MCErrorLogsFilePath;
         if ( !self.isRunning ) {
             return;
         }
-        
+
         atomic_store(&mRunning, NO);
-        
+
         if ( mPin ) {
             [mPin stop];
             mPin = nil;
         }
-        
+
         if ( mListener ) {
             nw_listener_set_new_connection_handler(mListener, nil);
             nw_listener_set_state_changed_handler(mListener, nil);
@@ -219,14 +220,23 @@ static NSString *MCErrorLogsFilePath;
 #ifdef DEBUG
     [self _logMsg:[NSString stringWithFormat:@"Start Server with Port: %u;", port]];
 #endif
-    
+
     dispatch_semaphore_t sync = dispatch_semaphore_create(0);
     __block dispatch_semaphore_t syncPtr = sync;
     char port_str[6];
     sprintf(port_str, "%hu", port);
 
     nw_parameters_t parameters = nw_parameters_create_secure_tcp(NW_PARAMETERS_DISABLE_PROTOCOL, NW_PARAMETERS_DEFAULT_CONFIGURATION);
-    nw_endpoint_t endpoint = nw_endpoint_create_host("127.0.0.1", port_str);
+
+    // Get device IP address for AirPlay support
+    NSString *deviceIP = @"127.0.0.1"; // Default to localhost
+    // For AirPlay support, we need to use the device's actual IP address
+    NSString *localIP = [MCSNetworkUtils getLocalIPAddress];
+    if (localIP) {
+        deviceIP = localIP;
+    }
+
+    nw_endpoint_t endpoint = nw_endpoint_create_host(deviceIP.UTF8String, port_str);
     nw_parameters_set_local_endpoint(parameters, endpoint);
     nw_listener_t listener = nw_listener_create(parameters);
     nw_listener_set_queue(listener, mServerQueue);
@@ -234,15 +244,15 @@ static NSString *MCErrorLogsFilePath;
     nw_listener_set_state_changed_handler(listener, ^(nw_listener_state_t state, nw_error_t  _Nullable error) {
         __strong typeof(_self) self = _self;
         if ( self == nil ) return;
-        
+
 #ifdef DEBUG
         [self _logMsg:[NSString stringWithFormat:@"Server state change: %@, %u, %d;", listener, port, state]];
-        
+
         if ( error ) {
             [self _logError:error];
         }
 #endif
-        
+
 #ifdef SJDEBUG
         switch (state) {
             case nw_listener_state_invalid:
@@ -272,7 +282,7 @@ static NSString *MCErrorLogsFilePath;
                 }
             }
         }
-        
+
         // 设置端口号
         // 启动 pin
         if ( state == nw_listener_state_ready ) {
@@ -283,7 +293,7 @@ static NSString *MCErrorLogsFilePath;
             }
             [self->mPin startWithPort:p];
         }
-        
+
         // 释放同步锁
         if ( syncPtr ) {
             switch (state) {
@@ -299,7 +309,7 @@ static NSString *MCErrorLogsFilePath;
                     break;
             }
         }
-        
+
         // 报错时重启
         if ( state == nw_listener_state_failed ) {
             dispatch_async(dispatch_get_global_queue(0, 0), ^{
@@ -332,7 +342,7 @@ static NSString *MCErrorLogsFilePath;
         nw_connection_cancel(connection);
         return;
     }
-    
+
     MCTcpSocketConnection *wrapper = [MCTcpSocketConnection.alloc initWithConnection:connection queue:self->mConnectionQueue];
     _onConnect(wrapper);
 }
@@ -341,7 +351,7 @@ static NSString *MCErrorLogsFilePath;
 #ifdef DEBUG
     [self _logMsg:[NSString stringWithFormat:@"SetNeedsRestartServer; ShouldRestartServer: %d;", mShouldRestartServer]];
 #endif
-    
+
     if ( !mShouldRestartServer ) {
         mShouldRestartServer = YES;
         __weak typeof(self) _self = self;
@@ -361,12 +371,12 @@ static NSString *MCErrorLogsFilePath;
 #ifdef DEBUG
     [self _logMsg:[NSString stringWithFormat:@"Restart Server; Listener: %@, Port: %u;", mListener, self.port]];
 #endif
-    
+
     if ( mListener ) {
         nw_listener_cancel(mListener);
         mListener = nil;
     }
-    
+
     mShouldRestartServer = NO;
     [self _startServerWithPort:self.port];
 }
@@ -385,7 +395,7 @@ static NSString *MCErrorLogsFilePath;
     NSDate *date = NSDate.new;
     NSDateFormatter *formatter = [NSDateFormatter.alloc init];
     [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
-    
+
     NSString *content = [NSString stringWithFormat:@"%@ %@: %@\n", [formatter stringFromDate:date], level, msg];
     NSFileHandle *fileHandle = [NSFileHandle mcs_fileHandleForWritingToURL:[NSURL fileURLWithPath:MCErrorLogsFilePath] error:NULL];
     [fileHandle seekToEndOfFile];

@@ -17,9 +17,11 @@
 #import "MCSLogger.h"
 #import "MCSDownload.h"
 #import "MCSPrefetcherManager.h"
+#import "MCSNetworkUtils.h"
 
 @interface SJMediaCacheServer () {
     MCTcpSocketServer *_server;
+    BOOL _enableAirPlaySupport;
 }
 @end
 
@@ -36,14 +38,23 @@
 - (instancetype)init {
     self = [super init];
     if ( self ) {
+        _enableAirPlaySupport = YES; // Default to enabled
         _server = [MCTcpSocketServer.alloc init];
         _server.onConnect = ^(MCTcpSocketConnection * _Nonnull connection) {
             [MCHttpResponse processConnection:connection];
         };
         _server.onListen = ^(uint16_t port) {
-            MCSURL.shared.serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%hu", port]];
+            // Get device IP address for AirPlay support
+            NSString *deviceIP = @"127.0.0.1"; // Default to localhost
+            if (self->_enableAirPlaySupport) {
+                NSString *localIP = [MCSNetworkUtils getLocalIPAddress];
+                if (localIP) {
+                    deviceIP = localIP;
+                }
+            }
+            MCSURL.shared.serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@:%hu", deviceIP, port]];
         };
-        
+
         self.resolveAssetIdentifier = ^NSString * _Nonnull(NSURL * _Nonnull URL) {
             NSURLComponents *components = [NSURLComponents componentsWithURL:URL resolvingAgainstBaseURL:NO];
             components.query = nil; // ignore query parameters for identifier purposes
@@ -56,7 +67,7 @@
 - (nullable NSURL *)proxyURLFromURL:(NSURL *)URL {
     if ( URL == nil )
         return nil;
-    
+
     // proxy URL
     if ( _server.isRunning || [_server start] )
         return [MCSURL.shared generateProxyURLFromURL:URL];
@@ -64,6 +75,15 @@
     // param URL
     return URL;
 }
+
+- (BOOL)enableAirPlaySupport {
+    return _enableAirPlaySupport;
+}
+
+- (void)setEnableAirPlaySupport:(BOOL)enableAirPlaySupport {
+    _enableAirPlaySupport = enableAirPlaySupport;
+}
+
 @end
 
 
@@ -72,7 +92,7 @@
 - (void)setMaxConcurrentPrefetchCount:(NSInteger)maxConcurrentPrefetchCount {
     MCSPrefetcherManager.shared.maxConcurrentPrefetchCount = maxConcurrentPrefetchCount;
 }
- 
+
 - (NSInteger)maxConcurrentPrefetchCount {
     return MCSPrefetcherManager.shared.maxConcurrentPrefetchCount;
 }
@@ -268,7 +288,7 @@
 - (void)registerExportObserver:(id<MCSExportObserver>)observer {
     [MCSExporterManager.shared registerObserver:observer];
 }
- 
+
 - (void)removeExportObserver:(id<MCSExportObserver>)observer {
     [MCSExporterManager.shared removeObserver:observer];
 }
@@ -303,7 +323,7 @@
     }
     return nil;
 }
- 
+
 - (MCSExportStatus)exportStatusForURL:(NSURL *)URL {
     return [MCSExporterManager.shared statusForURL:URL];
 }
